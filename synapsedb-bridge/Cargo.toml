@@ -6,11 +6,21 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+default = []
+tokio = ["dep:tokio"]
+
 [dependencies]
 thiserror = { workspace = true }
 tracing = { workspace = true }
+libc = { workspace = true }
+tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
 fluxbench = { workspace = true }
 tracing-subscriber = { workspace = true }
+
+[[bench]]
+name = "throughput"
+harness = false

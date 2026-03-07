@@ -23,14 +23,24 @@
 //! Pump 50 GB of dummy data Tokio→TPC→Tokio. Memory must stay flat.
 //! Throughput must exceed 5 GB/s on a modern x86_64 machine.
 
+pub mod async_bridge;
+pub mod backpressure;
 pub mod buffer;
 pub mod envelope;
 pub mod error;
+pub mod eventfd;
 pub mod metrics;
 pub mod telemetry;
+#[cfg(feature = "tokio")]
+pub mod tokio_fd;
 pub mod waker;
 
+pub use async_bridge::{BridgeChannel, ControlHandle, DataHandle, PinnedDataHandle};
+pub use backpressure::{BackpressureConfig, BackpressureController, PressureState};
 pub use buffer::{Consumer, Producer, RingBuffer};
 pub use envelope::{Request, Response};
 pub use error::{BridgeError, Result};
+pub use eventfd::{EventFd, WakePair};
 pub use metrics::BridgeMetrics;
+#[cfg(feature = "tokio")]
+pub use tokio_fd::AsyncControlHandle;
