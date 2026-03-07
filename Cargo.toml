@@ -71,5 +71,8 @@ rand = "0.9"
 numr = "0.5"
 nexar = "0.1"
 
+# Compression
+zstd = "0.13"
+
 # Benchmarking
 fluxbench = "0.1"

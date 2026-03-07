@@ -1,2 +1,4 @@
-// Timeseries engine: Gorilla XOR + Zstd dictionary encoding.
-// Phase 4 — not yet implemented.
+pub mod bucket;
+pub mod compress;
+pub mod gorilla;
+pub mod memtable;

@@ -44,6 +44,9 @@ nexar = { workspace = true }
 # CRDTs (needed for LoroValue in engine layer)
 loro = { workspace = true }
 
+# Compression
+zstd = { workspace = true }
+
 # System calls (eventfd for TPC wake)
 libc = { workspace = true }
 
