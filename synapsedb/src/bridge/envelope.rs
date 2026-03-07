@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use crate::engine::graph::edge_store::Direction;
 use crate::types::{Lsn, ReadConsistency, RequestId, TenantId, VShardId};
 
 /// Request envelope: Control Plane -> Data Plane.
@@ -123,6 +124,51 @@ pub enum PhysicalPlan {
     PointDelete {
         collection: String,
         document_id: String,
+    },
+
+    /// Insert a graph edge with properties.
+    EdgePut {
+        src_id: String,
+        label: String,
+        dst_id: String,
+        properties: Vec<u8>,
+    },
+
+    /// Delete a graph edge.
+    EdgeDelete {
+        src_id: String,
+        label: String,
+        dst_id: String,
+    },
+
+    /// Graph hop traversal: BFS from start nodes via label, bounded by depth.
+    GraphHop {
+        start_nodes: Vec<String>,
+        edge_label: Option<String>,
+        direction: Direction,
+        depth: usize,
+    },
+
+    /// Immediate 1-hop neighbors lookup.
+    GraphNeighbors {
+        node_id: String,
+        edge_label: Option<String>,
+        direction: Direction,
+    },
+
+    /// Shortest path between two nodes.
+    GraphPath {
+        src: String,
+        dst: String,
+        edge_label: Option<String>,
+        max_depth: usize,
+    },
+
+    /// Materialize a subgraph as edge tuples.
+    GraphSubgraph {
+        start_nodes: Vec<String>,
+        edge_label: Option<String>,
+        depth: usize,
     },
 
     /// WAL append (write path).

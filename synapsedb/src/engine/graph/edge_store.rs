@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use redb::{Database, TableDefinition};
+use redb::{Database, ReadableTable, TableDefinition};
 
 /// Edge table: composite key `"src_id\x00edge_label\x00dst_id"` → edge properties (MessagePack).
 ///
@@ -316,6 +316,32 @@ impl EdgeStore {
         }
 
         Ok(visited.into_iter().collect())
+    }
+
+    /// Scan all forward edges in the store. Used for CSR rebuild on startup.
+    pub fn scan_all_edges(&self) -> crate::Result<Vec<Edge>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| redb_err("begin_read", e))?;
+        let table = read_txn
+            .open_table(EDGES)
+            .map_err(|e| redb_err("open edges", e))?;
+
+        let mut edges = Vec::new();
+        let range = table.iter().map_err(|e| redb_err("iter", e))?;
+        for entry in range {
+            let (key, val) = entry.map_err(|e| redb_err("iter", e))?;
+            if let Some((src, label, dst)) = parse_edge_key(key.value()) {
+                edges.push(Edge {
+                    src_id: src.to_string(),
+                    label: label.to_string(),
+                    dst_id: dst.to_string(),
+                    properties: val.value().to_vec(),
+                });
+            }
+        }
+        Ok(edges)
     }
 
     /// Count edges from a source node, optionally filtered by label.

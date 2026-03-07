@@ -10,6 +10,8 @@ use synapsedb_crdt::constraint::ConstraintSet;
 use crate::bridge::dispatch::{BridgeRequest, BridgeResponse};
 use crate::bridge::envelope::{ErrorCode, PhysicalPlan, Response, Status};
 use crate::engine::crdt::tenant_state::TenantCrdtEngine;
+use crate::engine::graph::csr::CsrIndex;
+use crate::engine::graph::edge_store::EdgeStore;
 use crate::engine::sparse::btree::SparseEngine;
 use crate::engine::vector::hnsw::{HnswIndex, HnswParams};
 use crate::types::{Lsn, TenantId};
@@ -27,7 +29,7 @@ use super::task::{ExecutionTask, TaskState};
 ///
 /// This type is intentionally `!Send` — pinned to a single core.
 pub struct CoreLoop {
-    core_id: usize,
+    pub(super) core_id: usize,
 
     /// SPSC channel: receives requests from Control Plane.
     request_rx: Consumer<BridgeRequest>,
@@ -42,13 +44,19 @@ pub struct CoreLoop {
     watermark: Lsn,
 
     /// redb-backed sparse/metadata engine for this core.
-    sparse: SparseEngine,
+    pub(crate) sparse: SparseEngine,
 
     /// Per-tenant CRDT engines, lazily initialized on first access.
     crdt_engines: HashMap<TenantId, TenantCrdtEngine>,
 
     /// Per-collection HNSW vector indexes, lazily initialized on first insert.
     vector_indexes: HashMap<String, HnswIndex>,
+
+    /// redb-backed graph edge storage for this core.
+    pub(super) edge_store: EdgeStore,
+
+    /// In-memory CSR adjacency index, rebuilt from edge_store on startup.
+    pub(super) csr: CsrIndex,
 }
 
 impl CoreLoop {
@@ -65,6 +73,10 @@ impl CoreLoop {
         let sparse_path = data_dir.join(format!("sparse/core-{core_id}.redb"));
         let sparse = SparseEngine::open(&sparse_path)?;
 
+        let graph_path = data_dir.join(format!("graph/core-{core_id}.redb"));
+        let edge_store = EdgeStore::open(&graph_path)?;
+        let csr = CsrIndex::rebuild_from(&edge_store)?;
+
         Ok(Self {
             core_id,
             request_rx,
@@ -74,6 +86,8 @@ impl CoreLoop {
             sparse,
             crdt_engines: HashMap::new(),
             vector_indexes: HashMap::new(),
+            edge_store,
+            csr,
         })
     }
 
@@ -144,7 +158,7 @@ impl CoreLoop {
         processed
     }
 
-    fn response_ok(&self, task: &ExecutionTask) -> Response {
+    pub(super) fn response_ok(&self, task: &ExecutionTask) -> Response {
         Response {
             request_id: task.request_id(),
             status: Status::Ok,
@@ -156,7 +170,7 @@ impl CoreLoop {
         }
     }
 
-    fn response_with_payload(&self, task: &ExecutionTask, payload: Vec<u8>) -> Response {
+    pub(super) fn response_with_payload(&self, task: &ExecutionTask, payload: Vec<u8>) -> Response {
         Response {
             request_id: task.request_id(),
             status: Status::Ok,
@@ -168,7 +182,7 @@ impl CoreLoop {
         }
     }
 
-    fn response_error(&self, task: &ExecutionTask, error_code: ErrorCode) -> Response {
+    pub(super) fn response_error(&self, task: &ExecutionTask, error_code: ErrorCode) -> Response {
         Response {
             request_id: task.request_id(),
             status: Status::Error,
@@ -231,14 +245,22 @@ impl CoreLoop {
                     }
                     None => index.search(query_vector, *top_k, ef),
                 };
-                let payload = serde_json::to_vec(
-                    &results
-                        .iter()
-                        .map(|r| serde_json::json!({"id": r.id, "distance": r.distance}))
-                        .collect::<Vec<_>>(),
-                )
-                .unwrap_or_default();
-                self.response_with_payload(task, payload)
+                let serializable: Vec<_> = results
+                    .iter()
+                    .map(|r| serde_json::json!({"id": r.id, "distance": r.distance}))
+                    .collect();
+                match serde_json::to_vec(&serializable) {
+                    Ok(payload) => self.response_with_payload(task, payload),
+                    Err(e) => {
+                        warn!(core = self.core_id, error = %e, "vector search serialization failed");
+                        self.response_error(
+                            task,
+                            ErrorCode::Internal {
+                                detail: e.to_string(),
+                            },
+                        )
+                    }
+                }
             }
 
             PhysicalPlan::RangeScan {
@@ -256,10 +278,18 @@ impl CoreLoop {
                     upper.as_deref(),
                     *limit,
                 ) {
-                    Ok(results) => {
-                        let payload = serde_json::to_vec(&results).unwrap_or_default();
-                        self.response_with_payload(task, payload)
-                    }
+                    Ok(results) => match serde_json::to_vec(&results) {
+                        Ok(payload) => self.response_with_payload(task, payload),
+                        Err(e) => {
+                            warn!(core = self.core_id, error = %e, "range scan serialization failed");
+                            self.response_error(
+                                task,
+                                ErrorCode::Internal {
+                                    detail: e.to_string(),
+                                },
+                            )
+                        }
+                    },
                     Err(e) => {
                         warn!(core = self.core_id, error = %e, "sparse range scan failed");
                         self.response_error(
@@ -372,6 +402,45 @@ impl CoreLoop {
                 }
             }
 
+            PhysicalPlan::EdgePut {
+                src_id,
+                label,
+                dst_id,
+                properties,
+            } => self.execute_edge_put(task, src_id, label, dst_id, properties),
+
+            PhysicalPlan::EdgeDelete {
+                src_id,
+                label,
+                dst_id,
+            } => self.execute_edge_delete(task, src_id, label, dst_id),
+
+            PhysicalPlan::GraphHop {
+                start_nodes,
+                edge_label,
+                direction,
+                depth,
+            } => self.execute_graph_hop(task, start_nodes, edge_label, *direction, *depth),
+
+            PhysicalPlan::GraphNeighbors {
+                node_id,
+                edge_label,
+                direction,
+            } => self.execute_graph_neighbors(task, node_id, edge_label, *direction),
+
+            PhysicalPlan::GraphPath {
+                src,
+                dst,
+                edge_label,
+                max_depth,
+            } => self.execute_graph_path(task, src, dst, edge_label, *max_depth),
+
+            PhysicalPlan::GraphSubgraph {
+                start_nodes,
+                edge_label,
+                depth,
+            } => self.execute_graph_subgraph(task, start_nodes, edge_label, *depth),
+
             PhysicalPlan::WalAppend { payload } => {
                 debug!(core = self.core_id, len = payload.len(), "wal append");
                 self.response_ok(task)
@@ -404,6 +473,7 @@ impl CoreLoop {
 mod tests {
     use super::*;
     use crate::bridge::envelope::{Priority, Request};
+    use crate::engine::graph::edge_store::Direction;
     use crate::types::*;
     use std::time::{Duration, Instant};
     use synapsedb_bridge::buffer::RingBuffer;
@@ -728,6 +798,192 @@ mod tests {
         let resp = resp_rx.try_pop().unwrap();
         assert_eq!(resp.inner.status, Status::Ok);
         assert_eq!(&*resp.inner.payload, b"hello world");
+    }
+
+    #[test]
+    fn edge_put_and_graph_neighbors() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        // Insert edges: alice -KNOWS-> bob, alice -KNOWS-> carol
+        for dst in &["bob", "carol"] {
+            req_tx
+                .try_push(BridgeRequest {
+                    inner: make_request(PhysicalPlan::EdgePut {
+                        src_id: "alice".into(),
+                        label: "KNOWS".into(),
+                        dst_id: dst.to_string(),
+                        properties: vec![],
+                    }),
+                })
+                .unwrap();
+        }
+        core.tick();
+        resp_rx.try_pop().unwrap();
+        resp_rx.try_pop().unwrap();
+
+        // Query neighbors.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::GraphNeighbors {
+                    node_id: "alice".into(),
+                    edge_label: Some("KNOWS".into()),
+                    direction: Direction::Out,
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+        let payload = String::from_utf8(resp.inner.payload.to_vec()).unwrap();
+        assert!(payload.contains("bob"), "payload: {payload}");
+        assert!(payload.contains("carol"), "payload: {payload}");
+    }
+
+    #[test]
+    fn graph_hop_traversal() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        // a -> b -> c
+        for (s, d) in &[("a", "b"), ("b", "c")] {
+            req_tx
+                .try_push(BridgeRequest {
+                    inner: make_request(PhysicalPlan::EdgePut {
+                        src_id: s.to_string(),
+                        label: "NEXT".into(),
+                        dst_id: d.to_string(),
+                        properties: vec![],
+                    }),
+                })
+                .unwrap();
+        }
+        core.tick();
+        resp_rx.try_pop().unwrap();
+        resp_rx.try_pop().unwrap();
+
+        // Hop 2 from a.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::GraphHop {
+                    start_nodes: vec!["a".into()],
+                    edge_label: Some("NEXT".into()),
+                    direction: Direction::Out,
+                    depth: 2,
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+        let nodes: Vec<String> = serde_json::from_slice(&resp.inner.payload).unwrap();
+        assert!(nodes.contains(&"a".to_string()));
+        assert!(nodes.contains(&"b".to_string()));
+        assert!(nodes.contains(&"c".to_string()));
+    }
+
+    #[test]
+    fn graph_path_and_subgraph() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        // a -> b -> c
+        for (s, d) in &[("a", "b"), ("b", "c")] {
+            req_tx
+                .try_push(BridgeRequest {
+                    inner: make_request(PhysicalPlan::EdgePut {
+                        src_id: s.to_string(),
+                        label: "L".into(),
+                        dst_id: d.to_string(),
+                        properties: vec![],
+                    }),
+                })
+                .unwrap();
+        }
+        core.tick();
+        resp_rx.try_pop().unwrap();
+        resp_rx.try_pop().unwrap();
+
+        // Shortest path a -> c.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::GraphPath {
+                    src: "a".into(),
+                    dst: "c".into(),
+                    edge_label: Some("L".into()),
+                    max_depth: 5,
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+        let path: Vec<String> = serde_json::from_slice(&resp.inner.payload).unwrap();
+        assert_eq!(path, vec!["a", "b", "c"]);
+
+        // Subgraph from a, depth 2.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::GraphSubgraph {
+                    start_nodes: vec!["a".into()],
+                    edge_label: None,
+                    depth: 2,
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+        let edges: Vec<serde_json::Value> = serde_json::from_slice(&resp.inner.payload).unwrap();
+        assert_eq!(edges.len(), 2);
+    }
+
+    #[test]
+    fn edge_delete_updates_csr() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        // Insert then delete.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::EdgePut {
+                    src_id: "x".into(),
+                    label: "R".into(),
+                    dst_id: "y".into(),
+                    properties: vec![],
+                }),
+            })
+            .unwrap();
+        core.tick();
+        resp_rx.try_pop().unwrap();
+
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::EdgeDelete {
+                    src_id: "x".into(),
+                    label: "R".into(),
+                    dst_id: "y".into(),
+                }),
+            })
+            .unwrap();
+        core.tick();
+        resp_rx.try_pop().unwrap();
+
+        // Neighbors should be empty now.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::GraphNeighbors {
+                    node_id: "x".into(),
+                    edge_label: None,
+                    direction: Direction::Out,
+                }),
+            })
+            .unwrap();
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        let neighbors: Vec<serde_json::Value> =
+            serde_json::from_slice(&resp.inner.payload).unwrap();
+        assert!(neighbors.is_empty());
     }
 
     #[test]
