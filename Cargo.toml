@@ -1,5 +1,5 @@
 [workspace]
-members = ["synapsedb", "synapsedb-bridge", "synapsedb-wal", "synapsedb-mem", "synapsedb-crdt"]
+members = ["synapsedb", "synapsedb-bridge", "synapsedb-wal", "synapsedb-mem", "synapsedb-crdt", "synapsedb-raft", "synapsedb-cluster"]
 resolver = "2"
 
 [workspace.package]
@@ -14,6 +14,8 @@ synapsedb-bridge = { path = "synapsedb-bridge" }
 synapsedb-wal = { path = "synapsedb-wal" }
 synapsedb-mem = { path = "synapsedb-mem" }
 synapsedb-crdt = { path = "synapsedb-crdt" }
+synapsedb-raft = { path = "synapsedb-raft" }
+synapsedb-cluster = { path = "synapsedb-cluster" }
 
 # Async runtimes
 tokio = { version = "1", features = ["full"] }
@@ -61,6 +63,9 @@ rmpv = "1"
 # Storage
 redb = "2"
 roaring = "0.10"
+
+# Random
+rand = "0.9"
 
 # Ecosystem
 numr = "0.5"
