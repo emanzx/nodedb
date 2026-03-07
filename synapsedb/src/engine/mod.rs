@@ -1,4 +1,5 @@
 pub mod crdt;
+pub mod document;
 pub mod graph;
 pub mod sparse;
 pub mod timeseries;

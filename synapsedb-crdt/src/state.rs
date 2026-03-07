@@ -49,6 +49,15 @@ impl CrdtState {
         Ok(())
     }
 
+    /// Read a single row's fields as a `LoroValue::Map`.
+    ///
+    /// Returns the deep value of the row (all nested containers resolved),
+    /// or `None` if the row does not exist.
+    pub fn read_row(&self, collection: &str, row_id: &str) -> Option<LoroValue> {
+        let path = format!("{collection}/{row_id}");
+        Some(self.doc.get_by_str_path(&path)?.get_deep_value())
+    }
+
     /// Check if a row exists in a collection.
     pub fn row_exists(&self, collection: &str, row_id: &str) -> bool {
         let coll = self.doc.get_map(collection);

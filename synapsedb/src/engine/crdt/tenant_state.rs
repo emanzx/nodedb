@@ -40,6 +40,14 @@ impl TenantCrdtEngine {
         }
     }
 
+    /// Read a single row's fields as a `LoroValue`.
+    ///
+    /// Returns the deep value of the row (all nested containers resolved),
+    /// or `None` if the row does not exist.
+    pub fn read_row(&self, collection: &str, row_id: &str) -> Option<LoroValue> {
+        self.state.read_row(collection, row_id)
+    }
+
     /// Pre-validate a proposed change (fast-reject before Raft).
     pub fn pre_validate(&self, change: &ProposedChange) -> PreValidationResult {
         pre_validate::pre_validate(&self.validator, &self.state, change)
