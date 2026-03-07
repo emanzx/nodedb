@@ -93,9 +93,12 @@ impl Dispatcher {
     /// Uses the vShard router to determine which core handles this request,
     /// then pushes it into that core's SPSC request queue.
     pub fn dispatch(&mut self, request: envelope::Request) -> crate::Result<()> {
-        let core_id = self.router.resolve(request.vshard_id).ok_or_else(|| {
-            crate::Error::Bridge(format!("no core for vshard {}", request.vshard_id))
-        })?;
+        let core_id =
+            self.router
+                .resolve(request.vshard_id)
+                .ok_or_else(|| crate::Error::Dispatch {
+                    detail: format!("no core for vshard {}", request.vshard_id),
+                })?;
 
         let channel = &mut self.cores[core_id];
 
@@ -113,7 +116,9 @@ impl Dispatcher {
         channel
             .request_tx
             .try_push(BridgeRequest { inner: request })
-            .map_err(|e| crate::Error::Bridge(format!("core {core_id}: {e}")))?;
+            .map_err(|e| crate::Error::Dispatch {
+                detail: format!("core {core_id}: {e}"),
+            })?;
 
         Ok(())
     }

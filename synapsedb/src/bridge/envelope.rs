@@ -6,7 +6,7 @@ use crate::types::{Lsn, ReadConsistency, RequestId, TenantId, VShardId};
 
 /// Request envelope: Control Plane -> Data Plane.
 ///
-/// Every field is mandatory per TDD Section 10.1.
+/// Every field is mandatory.
 #[derive(Debug, Clone)]
 pub struct Request {
     /// Globally unique request identifier (monotonic per connection).
@@ -36,7 +36,7 @@ pub struct Request {
 
 /// Response envelope: Data Plane -> Control Plane.
 ///
-/// Every field is mandatory per TDD Section 10.1.
+/// Every field is mandatory.
 #[derive(Debug, Clone)]
 pub struct Response {
     /// Echoed request identifier for correlation.
@@ -204,7 +204,7 @@ pub enum Status {
 
 /// Deterministic error codes returned by the Data Plane.
 ///
-/// Per TDD Section 11.3: final outcomes are explicit, never opaque strings.
+/// Final outcomes are explicit, never opaque strings.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ErrorCode {
     /// Request exceeded its deadline.

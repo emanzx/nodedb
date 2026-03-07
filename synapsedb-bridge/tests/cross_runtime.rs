@@ -6,7 +6,7 @@
 //! - Thread 2: Simulated TPC core using raw epoll on eventfd (sync push/pop).
 //!
 //! This is the critical validation that the eventfd-based waking works across
-//! different event loops — the #1 architectural risk in the TDD.
+//! different event loops.
 //!
 //! Requires the `tokio` feature: `cargo test -p synapsedb-bridge --features tokio`
 

@@ -28,8 +28,9 @@ pub fn init_governor(
         engine_limits,
     };
 
-    let governor = MemoryGovernor::new(config)
-        .map_err(|e| crate::Error::Config(format!("failed to initialize memory governor: {e}")))?;
+    let governor = MemoryGovernor::new(config).map_err(|e| crate::Error::Config {
+        detail: format!("failed to initialize memory governor: {e}"),
+    })?;
 
     info!(
         global_ceiling,

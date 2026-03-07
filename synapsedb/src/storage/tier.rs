@@ -1,4 +1,4 @@
-/// Storage tier classification per TDD Section 7.
+/// Storage tier classification.
 ///
 /// Data flows downward: L0 → L1 → L2 as it ages and cools.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

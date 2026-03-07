@@ -46,10 +46,14 @@ impl QueryContext {
             .session
             .sql(sql)
             .await
-            .map_err(|e| crate::Error::Bridge(format!("SQL parse error: {e}")))?;
+            .map_err(|e| crate::Error::PlanError {
+                detail: format!("SQL parse: {e}"),
+            })?;
         let plan = df
             .into_optimized_plan()
-            .map_err(|e| crate::Error::Bridge(format!("plan optimization error: {e}")))?;
+            .map_err(|e| crate::Error::PlanError {
+                detail: format!("optimization: {e}"),
+            })?;
         Ok(plan)
     }
 

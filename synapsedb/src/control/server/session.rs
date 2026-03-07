@@ -96,9 +96,9 @@ impl Session {
             let payload_len = u32::from_be_bytes(len_buf);
             if payload_len > MAX_FRAME_SIZE {
                 warn!(payload_len, "frame too large, closing connection");
-                return Err(crate::Error::Bridge(format!(
-                    "frame size {payload_len} exceeds maximum {MAX_FRAME_SIZE}"
-                )));
+                return Err(crate::Error::BadRequest {
+                    detail: format!("frame size {payload_len} exceeds maximum {MAX_FRAME_SIZE}"),
+                });
             }
 
             // Read payload.
@@ -128,12 +128,16 @@ impl Session {
     /// Parse a request frame and dispatch to the Data Plane.
     async fn handle_frame(&self, request_id: RequestId, payload: &[u8]) -> crate::Result<Vec<u8>> {
         // Parse the JSON request body.
-        let body: serde_json::Value = serde_json::from_slice(payload)
-            .map_err(|e| crate::Error::Bridge(format!("invalid JSON: {e}")))?;
+        let body: serde_json::Value =
+            serde_json::from_slice(payload).map_err(|e| crate::Error::BadRequest {
+                detail: format!("invalid JSON: {e}"),
+            })?;
 
         let op = body["op"]
             .as_str()
-            .ok_or_else(|| crate::Error::Bridge("missing 'op' field".into()))?;
+            .ok_or_else(|| crate::Error::BadRequest {
+                detail: "missing 'op' field".into(),
+            })?;
 
         let tenant_id = TenantId::new(body["tenant_id"].as_u64().unwrap_or(1) as u32);
 
@@ -147,7 +151,9 @@ impl Session {
             "point_get" => {
                 let document_id = body["document_id"]
                     .as_str()
-                    .ok_or_else(|| crate::Error::Bridge("missing 'document_id'".into()))?
+                    .ok_or_else(|| crate::Error::BadRequest {
+                        detail: "missing 'document_id'".into(),
+                    })?
                     .to_string();
                 PhysicalPlan::PointGet {
                     collection,
@@ -157,7 +163,9 @@ impl Session {
             "vector_search" => {
                 let query_vector: Vec<f32> = body["query_vector"]
                     .as_array()
-                    .ok_or_else(|| crate::Error::Bridge("missing 'query_vector'".into()))?
+                    .ok_or_else(|| crate::Error::BadRequest {
+                        detail: "missing 'query_vector'".into(),
+                    })?
                     .iter()
                     .filter_map(|v| v.as_f64().map(|f| f as f32))
                     .collect();
@@ -172,7 +180,9 @@ impl Session {
             "range_scan" => {
                 let field = body["field"]
                     .as_str()
-                    .ok_or_else(|| crate::Error::Bridge("missing 'field'".into()))?
+                    .ok_or_else(|| crate::Error::BadRequest {
+                        detail: "missing 'field'".into(),
+                    })?
                     .to_string();
                 let limit = body["limit"].as_u64().unwrap_or(100) as usize;
                 PhysicalPlan::RangeScan {
@@ -186,7 +196,9 @@ impl Session {
             "crdt_read" => {
                 let document_id = body["document_id"]
                     .as_str()
-                    .ok_or_else(|| crate::Error::Bridge("missing 'document_id'".into()))?
+                    .ok_or_else(|| crate::Error::BadRequest {
+                        detail: "missing 'document_id'".into(),
+                    })?
                     .to_string();
                 PhysicalPlan::CrdtRead {
                     collection,
@@ -196,11 +208,15 @@ impl Session {
             "crdt_apply" => {
                 let document_id = body["document_id"]
                     .as_str()
-                    .ok_or_else(|| crate::Error::Bridge("missing 'document_id'".into()))?
+                    .ok_or_else(|| crate::Error::BadRequest {
+                        detail: "missing 'document_id'".into(),
+                    })?
                     .to_string();
                 let delta_b64 = body["delta"]
                     .as_str()
-                    .ok_or_else(|| crate::Error::Bridge("missing 'delta'".into()))?;
+                    .ok_or_else(|| crate::Error::BadRequest {
+                        detail: "missing 'delta'".into(),
+                    })?;
                 // Decode base64 delta. For now accept raw bytes if not valid base64.
                 let delta = delta_b64.as_bytes().to_vec();
                 let peer_id = body["peer_id"].as_u64().unwrap_or(0);
@@ -212,7 +228,9 @@ impl Session {
                 }
             }
             _ => {
-                return Err(crate::Error::Bridge(format!("unknown op: {op}")));
+                return Err(crate::Error::BadRequest {
+                    detail: format!("unknown op: {op}"),
+                });
             }
         };
 
@@ -240,7 +258,9 @@ impl Session {
         let response = tokio::time::timeout(DEFAULT_DEADLINE, rx)
             .await
             .map_err(|_| crate::Error::DeadlineExceeded { request_id })?
-            .map_err(|_| crate::Error::Bridge("response channel closed".into()))?;
+            .map_err(|_| crate::Error::Dispatch {
+                detail: "response channel closed".into(),
+            })?;
 
         // Serialize response to JSON.
         let status_str = match response.status {

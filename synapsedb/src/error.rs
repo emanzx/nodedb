@@ -1,6 +1,6 @@
 use crate::types::{RequestId, TenantId, VShardId};
 
-/// Deterministic error classes per TDD Section 11.3.
+/// Deterministic error classes.
 ///
 /// Every error is actionable — clients can programmatically handle each variant.
 /// Cross-plane errors surface deterministic codes, never opaque strings.
@@ -52,12 +52,28 @@ pub enum Error {
     #[error("query fan-out exceeded: {shards_touched} shards > limit {limit}")]
     FanOutExceeded { shards_touched: u16, limit: u16 },
 
+    // --- Client input errors ---
+    #[error("bad request: {detail}")]
+    BadRequest { detail: String },
+
+    #[error("query plan error: {detail}")]
+    PlanError { detail: String },
+
     // --- Infrastructure errors ---
     #[error("WAL error: {0}")]
     Wal(#[from] synapsedb_wal::WalError),
 
-    #[error("bridge error: {0}")]
-    Bridge(String),
+    #[error("dispatch error: {detail}")]
+    Dispatch { detail: String },
+
+    #[error("storage error ({engine}): {detail}")]
+    Storage { engine: String, detail: String },
+
+    #[error("serialization error ({format}): {detail}")]
+    Serialization { format: String, detail: String },
+
+    #[error("segment corrupted: {detail}")]
+    SegmentCorrupted { detail: String },
 
     #[error("memory budget exhausted for engine {engine}")]
     MemoryExhausted { engine: String },
@@ -68,8 +84,8 @@ pub enum Error {
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
-    #[error("configuration error: {0}")]
-    Config(String),
+    #[error("configuration error: {detail}")]
+    Config { detail: String },
 }
 
 /// Result alias for SynapseDB operations.

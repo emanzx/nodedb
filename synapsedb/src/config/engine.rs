@@ -53,9 +53,9 @@ impl EngineConfig {
     pub fn validate(&self) -> crate::Result<()> {
         let total = self.total_fraction();
         if total > 1.0 {
-            return Err(crate::Error::Config(format!(
-                "engine budget fractions sum to {total:.2}, must be <= 1.0"
-            )));
+            return Err(crate::Error::Config {
+                detail: format!("engine budget fractions sum to {total:.2}, must be <= 1.0"),
+            });
         }
         if self.vector_budget_fraction < 0.0
             || self.sparse_budget_fraction < 0.0
@@ -63,9 +63,9 @@ impl EngineConfig {
             || self.timeseries_budget_fraction < 0.0
             || self.query_budget_fraction < 0.0
         {
-            return Err(crate::Error::Config(
-                "engine budget fractions must be non-negative".into(),
-            ));
+            return Err(crate::Error::Config {
+                detail: "engine budget fractions must be non-negative".into(),
+            });
         }
         Ok(())
     }

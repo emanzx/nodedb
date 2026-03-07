@@ -42,14 +42,12 @@ impl Default for ServerConfig {
 impl ServerConfig {
     /// Load configuration from a TOML file, falling back to defaults.
     pub fn from_file(path: &std::path::Path) -> crate::Result<Self> {
-        let content = std::fs::read_to_string(path).map_err(|e| {
-            crate::Error::Config(format!(
-                "failed to read config file {}: {e}",
-                path.display()
-            ))
+        let content = std::fs::read_to_string(path).map_err(|e| crate::Error::Config {
+            detail: format!("failed to read config file {}: {e}", path.display()),
         })?;
-        toml::from_str(&content)
-            .map_err(|e| crate::Error::Config(format!("invalid TOML config: {e}")))
+        toml::from_str(&content).map_err(|e| crate::Error::Config {
+            detail: format!("invalid TOML config: {e}"),
+        })
     }
 
     /// WAL directory within the data directory.

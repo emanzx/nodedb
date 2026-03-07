@@ -101,10 +101,9 @@ impl PlanConverter {
 
             LogicalPlan::SubqueryAlias(alias) => self.convert(&alias.input, tenant_id),
 
-            _ => Err(crate::Error::Bridge(format!(
-                "unsupported logical plan type: {}",
-                plan.display()
-            ))),
+            _ => Err(crate::Error::PlanError {
+                detail: format!("unsupported logical plan type: {}", plan.display()),
+            }),
         }
     }
 

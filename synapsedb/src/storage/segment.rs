@@ -12,7 +12,7 @@ const FORMAT_VERSION: u16 = 1;
 /// Footer size in bytes: magic(4) + version(2) + created_by(32) + checksum(4) + min_lsn(8) + max_lsn(8) = 58.
 const FOOTER_SIZE: usize = 58;
 
-/// Segment file footer per TDD Section 7.
+/// Segment file footer.
 ///
 /// All persistent files embed this footer for crash-safe validation.
 /// Footer is written at the end of the file; readers seek to `file_len - FOOTER_SIZE`.
@@ -62,7 +62,9 @@ impl SegmentFooter {
     /// Deserialize a footer from bytes.
     pub fn from_bytes(buf: &[u8; FOOTER_SIZE]) -> crate::Result<Self> {
         if buf[0..4] != SEGMENT_MAGIC {
-            return Err(crate::Error::Bridge("invalid segment magic".into()));
+            return Err(crate::Error::SegmentCorrupted {
+                detail: "invalid segment magic".into(),
+            });
         }
 
         let format_version = u16::from_le_bytes([buf[4], buf[5]]);
@@ -94,9 +96,9 @@ impl SegmentFooter {
         let mut file = std::fs::File::open(path)?;
         let file_len = file.metadata()?.len() as usize;
         if file_len < FOOTER_SIZE {
-            return Err(crate::Error::Bridge(
-                "file too small for segment footer".into(),
-            ));
+            return Err(crate::Error::SegmentCorrupted {
+                detail: "file too small for segment footer".into(),
+            });
         }
 
         use std::io::Seek;

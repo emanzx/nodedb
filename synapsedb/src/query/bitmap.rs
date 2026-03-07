@@ -30,8 +30,10 @@ pub fn serialize(bitmap: &RoaringBitmap) -> Vec<u8> {
 
 /// Deserialize a bitmap from bytes received via SPSC.
 pub fn deserialize(bytes: &[u8]) -> crate::Result<RoaringBitmap> {
-    RoaringBitmap::deserialize_from(bytes)
-        .map_err(|e| crate::Error::Bridge(format!("bitmap deserialize: {e}")))
+    RoaringBitmap::deserialize_from(bytes).map_err(|e| crate::Error::Serialization {
+        format: "roaring_bitmap".into(),
+        detail: format!("deserialize: {e}"),
+    })
 }
 
 #[cfg(test)]
