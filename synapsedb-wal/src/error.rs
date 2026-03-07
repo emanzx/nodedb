@@ -45,6 +45,10 @@ pub enum WalError {
         required: usize,
         actual: usize,
     },
+
+    /// A mutex was poisoned (another thread panicked while holding the lock).
+    #[error("WAL lock poisoned: {context}")]
+    LockPoisoned { context: &'static str },
 }
 
 pub type Result<T> = std::result::Result<T, WalError>;

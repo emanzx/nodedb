@@ -26,8 +26,13 @@ pub mod error;
 pub mod group_commit;
 pub mod reader;
 pub mod record;
+pub mod recovery;
+#[cfg(feature = "io-uring")]
+pub mod uring_writer;
 pub mod writer;
 
 pub use error::{Result, WalError};
+pub use group_commit::GroupCommitter;
 pub use record::{RecordHeader, RecordType, WalRecord};
+pub use recovery::{RecoveryInfo, recover};
 pub use writer::WalWriter;

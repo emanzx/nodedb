@@ -93,15 +93,19 @@ impl WalWriter {
 
         let buffer = AlignedBuf::new(config.write_buffer_size, config.alignment)?;
 
-        // If reopening an existing WAL, we'd scan for the last LSN here.
-        // For now, start fresh.
-        let file_offset = 0;
+        // Scan existing WAL for recovery if the file has data.
+        let (file_offset, next_lsn) = if path.exists() && std::fs::metadata(path)?.len() > 0 {
+            let info = crate::recovery::recover(path)?;
+            (info.end_offset, info.next_lsn())
+        } else {
+            (0, 1)
+        };
 
         Ok(Self {
             file,
             buffer,
             file_offset,
-            next_lsn: AtomicU64::new(1),
+            next_lsn: AtomicU64::new(next_lsn),
             sealed: false,
             config,
         })
@@ -283,6 +287,44 @@ mod tests {
             writer.append(RecordType::Put as u16, 1, 0, b"rejected"),
             Err(WalError::Sealed)
         ));
+    }
+
+    #[test]
+    fn reopen_continues_from_last_lsn() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("reopen.wal");
+
+        // First session: write 3 records.
+        {
+            let mut writer = WalWriter::open_without_direct_io(&path).unwrap();
+            writer.append(RecordType::Put as u16, 1, 0, b"one").unwrap();
+            writer.append(RecordType::Put as u16, 1, 0, b"two").unwrap();
+            writer
+                .append(RecordType::Put as u16, 1, 0, b"three")
+                .unwrap();
+            writer.sync().unwrap();
+        }
+
+        // Second session: reopen and continue writing.
+        {
+            let mut writer = WalWriter::open_without_direct_io(&path).unwrap();
+            assert_eq!(writer.next_lsn(), 4); // Continues from 4.
+            let lsn = writer
+                .append(RecordType::Put as u16, 1, 0, b"four")
+                .unwrap();
+            assert_eq!(lsn, 4);
+            writer.sync().unwrap();
+        }
+
+        // Verify all 4 records are readable.
+        let reader = crate::reader::WalReader::open(&path).unwrap();
+        let records: Vec<_> = reader
+            .records()
+            .collect::<crate::error::Result<_>>()
+            .unwrap();
+        assert_eq!(records.len(), 4);
+        assert_eq!(records[3].header.lsn, 4);
+        assert_eq!(records[3].payload, b"four");
     }
 
     #[test]
