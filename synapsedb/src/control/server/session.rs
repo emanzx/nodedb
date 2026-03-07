@@ -1,0 +1,357 @@
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, Instant};
+
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
+use tracing::{debug, instrument, warn};
+
+use crate::bridge::envelope::{PhysicalPlan, Priority, Request, Status};
+use crate::control::state::SharedState;
+use crate::types::{ReadConsistency, RequestId, TenantId, VShardId};
+
+/// Maximum frame size: 16 MiB.
+const MAX_FRAME_SIZE: u32 = 16 * 1024 * 1024;
+
+/// Default request deadline: 30 seconds.
+const DEFAULT_DEADLINE: Duration = Duration::from_secs(30);
+
+/// A client session on the Control Plane.
+///
+/// Each accepted TCP connection gets its own `Session`. The session handles
+/// protocol framing, request parsing, and dispatching via the shared state.
+/// This is `Send + Sync` — runs on the Tokio thread pool.
+///
+/// ## Wire Protocol (length-prefixed binary)
+///
+/// ```text
+/// Request frame:  [4 bytes: payload_len (big-endian u32)] [payload_len bytes: JSON body]
+/// Response frame: [4 bytes: payload_len (big-endian u32)] [payload_len bytes: JSON body]
+/// ```
+///
+/// Request JSON:
+/// ```json
+/// {
+///   "op": "point_get" | "vector_search" | "range_scan" | "crdt_read" | "crdt_apply",
+///   "tenant_id": 1,
+///   "collection": "users",
+///   "document_id": "doc-1",    // for point_get, crdt_read, crdt_apply
+///   "query_vector": [0.1, ...], // for vector_search
+///   "top_k": 10,                // for vector_search
+///   "field": "age",             // for range_scan
+///   "limit": 100,               // for range_scan
+///   "delta": "base64...",       // for crdt_apply
+///   "peer_id": 12345            // for crdt_apply
+/// }
+/// ```
+///
+/// Response JSON:
+/// ```json
+/// {
+///   "request_id": 1,
+///   "status": "ok" | "error",
+///   "payload": "base64...",
+///   "watermark_lsn": 42,
+///   "error_code": null | "deadline_exceeded" | ...
+/// }
+/// ```
+pub struct Session {
+    stream: TcpStream,
+    peer_addr: SocketAddr,
+    next_request_id: AtomicU64,
+    state: Arc<SharedState>,
+}
+
+impl Session {
+    pub fn new(stream: TcpStream, peer_addr: SocketAddr, state: Arc<SharedState>) -> Self {
+        Self {
+            stream,
+            peer_addr,
+            next_request_id: AtomicU64::new(1),
+            state,
+        }
+    }
+
+    /// Allocate a monotonically increasing request ID for this connection.
+    fn next_request_id(&self) -> RequestId {
+        RequestId::new(self.next_request_id.fetch_add(1, Ordering::Relaxed))
+    }
+
+    /// Run the session loop: read frames, parse, dispatch, respond.
+    #[instrument(skip(self), fields(peer = %self.peer_addr))]
+    pub async fn run(mut self) -> crate::Result<()> {
+        loop {
+            // Read length prefix (4 bytes, big-endian u32).
+            let mut len_buf = [0u8; 4];
+            match self.stream.read_exact(&mut len_buf).await {
+                Ok(_) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
+                    debug!("client disconnected");
+                    return Ok(());
+                }
+                Err(e) => return Err(e.into()),
+            }
+
+            let payload_len = u32::from_be_bytes(len_buf);
+            if payload_len > MAX_FRAME_SIZE {
+                warn!(payload_len, "frame too large, closing connection");
+                return Err(crate::Error::Bridge(format!(
+                    "frame size {payload_len} exceeds maximum {MAX_FRAME_SIZE}"
+                )));
+            }
+
+            // Read payload.
+            let mut payload = vec![0u8; payload_len as usize];
+            self.stream.read_exact(&mut payload).await?;
+
+            // Parse and dispatch.
+            let request_id = self.next_request_id();
+            match self.handle_frame(request_id, &payload).await {
+                Ok(response_bytes) => {
+                    // Write length-prefixed response.
+                    let resp_len = (response_bytes.len() as u32).to_be_bytes();
+                    self.stream.write_all(&resp_len).await?;
+                    self.stream.write_all(&response_bytes).await?;
+                }
+                Err(e) => {
+                    // Send error response.
+                    let error_json = format!(r#"{{"status":"error","error":"{e}"}}"#);
+                    let resp_len = (error_json.len() as u32).to_be_bytes();
+                    self.stream.write_all(&resp_len).await?;
+                    self.stream.write_all(error_json.as_bytes()).await?;
+                }
+            }
+        }
+    }
+
+    /// Parse a request frame and dispatch to the Data Plane.
+    async fn handle_frame(&self, request_id: RequestId, payload: &[u8]) -> crate::Result<Vec<u8>> {
+        // Parse the JSON request body.
+        let body: serde_json::Value = serde_json::from_slice(payload)
+            .map_err(|e| crate::Error::Bridge(format!("invalid JSON: {e}")))?;
+
+        let op = body["op"]
+            .as_str()
+            .ok_or_else(|| crate::Error::Bridge("missing 'op' field".into()))?;
+
+        let tenant_id = TenantId::new(body["tenant_id"].as_u64().unwrap_or(1) as u32);
+
+        let collection = body["collection"].as_str().unwrap_or("default").to_string();
+
+        // Determine vShard from collection + document_id for data locality.
+        let vshard_key = body["document_id"].as_str().unwrap_or(&collection);
+        let vshard_id = VShardId::from_key(vshard_key.as_bytes());
+
+        let plan = match op {
+            "point_get" => {
+                let document_id = body["document_id"]
+                    .as_str()
+                    .ok_or_else(|| crate::Error::Bridge("missing 'document_id'".into()))?
+                    .to_string();
+                PhysicalPlan::PointGet {
+                    collection,
+                    document_id,
+                }
+            }
+            "vector_search" => {
+                let query_vector: Vec<f32> = body["query_vector"]
+                    .as_array()
+                    .ok_or_else(|| crate::Error::Bridge("missing 'query_vector'".into()))?
+                    .iter()
+                    .filter_map(|v| v.as_f64().map(|f| f as f32))
+                    .collect();
+                let top_k = body["top_k"].as_u64().unwrap_or(10) as usize;
+                PhysicalPlan::VectorSearch {
+                    collection,
+                    query_vector: Arc::from(query_vector.into_boxed_slice()),
+                    top_k,
+                    filter_bitmap: None,
+                }
+            }
+            "range_scan" => {
+                let field = body["field"]
+                    .as_str()
+                    .ok_or_else(|| crate::Error::Bridge("missing 'field'".into()))?
+                    .to_string();
+                let limit = body["limit"].as_u64().unwrap_or(100) as usize;
+                PhysicalPlan::RangeScan {
+                    collection,
+                    field,
+                    lower: None,
+                    upper: None,
+                    limit,
+                }
+            }
+            "crdt_read" => {
+                let document_id = body["document_id"]
+                    .as_str()
+                    .ok_or_else(|| crate::Error::Bridge("missing 'document_id'".into()))?
+                    .to_string();
+                PhysicalPlan::CrdtRead {
+                    collection,
+                    document_id,
+                }
+            }
+            "crdt_apply" => {
+                let document_id = body["document_id"]
+                    .as_str()
+                    .ok_or_else(|| crate::Error::Bridge("missing 'document_id'".into()))?
+                    .to_string();
+                let delta_b64 = body["delta"]
+                    .as_str()
+                    .ok_or_else(|| crate::Error::Bridge("missing 'delta'".into()))?;
+                // Decode base64 delta. For now accept raw bytes if not valid base64.
+                let delta = delta_b64.as_bytes().to_vec();
+                let peer_id = body["peer_id"].as_u64().unwrap_or(0);
+                PhysicalPlan::CrdtApply {
+                    collection,
+                    document_id,
+                    delta,
+                    peer_id,
+                }
+            }
+            _ => {
+                return Err(crate::Error::Bridge(format!("unknown op: {op}")));
+            }
+        };
+
+        let request = Request {
+            request_id,
+            tenant_id,
+            vshard_id,
+            plan,
+            deadline: Instant::now() + DEFAULT_DEADLINE,
+            priority: Priority::Normal,
+            trace_id: 0,
+            consistency: ReadConsistency::Strong,
+        };
+
+        // Register for response routing before dispatching.
+        let rx = self.state.tracker.register(request_id);
+
+        // Dispatch to Data Plane via SPSC.
+        match self.state.dispatcher.lock() {
+            Ok(mut d) => d.dispatch(request)?,
+            Err(poisoned) => poisoned.into_inner().dispatch(request)?,
+        };
+
+        // Await response from Data Plane (routed back via the response poller).
+        let response = tokio::time::timeout(DEFAULT_DEADLINE, rx)
+            .await
+            .map_err(|_| crate::Error::DeadlineExceeded { request_id })?
+            .map_err(|_| crate::Error::Bridge("response channel closed".into()))?;
+
+        // Serialize response to JSON.
+        let status_str = match response.status {
+            Status::Ok => "ok",
+            Status::Partial => "partial",
+            Status::Error => "error",
+        };
+
+        let payload_b64 = if response.payload.is_empty() {
+            String::new()
+        } else {
+            // Return raw payload as lossy UTF-8 for now.
+            String::from_utf8_lossy(&response.payload).into_owned()
+        };
+
+        let error_code_str = response.error_code.as_ref().map(|ec| format!("{ec:?}"));
+
+        let resp_json = format!(
+            r#"{{"request_id":{},"status":"{}","payload":"{}","watermark_lsn":{},"error_code":{}}}"#,
+            response.request_id.as_u64(),
+            status_str,
+            payload_b64,
+            response.watermark_lsn.as_u64(),
+            error_code_str
+                .as_ref()
+                .map(|s| format!("\"{s}\""))
+                .unwrap_or_else(|| "null".to_string()),
+        );
+
+        Ok(resp_json.into_bytes())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::bridge::dispatch::Dispatcher;
+    use crate::data::executor::core_loop::CoreLoop;
+    use crate::wal::WalManager;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+
+    /// End-to-end test: client -> session -> dispatcher -> core_loop -> response -> client.
+    #[tokio::test]
+    async fn full_request_response_roundtrip() {
+        // Set up infrastructure.
+        let dir = tempfile::tempdir().unwrap();
+        let wal_path = dir.path().join("test.wal");
+        let wal = Arc::new(WalManager::open_for_testing(&wal_path).unwrap());
+
+        let (dispatcher, data_sides) = Dispatcher::new(1, 64);
+        let shared = SharedState::new(dispatcher, wal);
+
+        // Start a Data Plane core in a background thread.
+        let data_side = data_sides.into_iter().next().unwrap();
+        let core_handle = tokio::task::spawn_blocking(move || {
+            let mut core = CoreLoop::new(0, data_side.request_rx, data_side.response_tx);
+            // Run a few ticks to process any requests.
+            for _ in 0..100 {
+                core.tick();
+                std::thread::sleep(Duration::from_millis(1));
+            }
+        });
+
+        // Start response poller.
+        let shared_poller = Arc::clone(&shared);
+        let poller_handle = tokio::spawn(async move {
+            for _ in 0..100 {
+                shared_poller.poll_and_route_responses();
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            }
+        });
+
+        // Bind a test listener.
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+
+        // Spawn session handler.
+        let shared_session = Arc::clone(&shared);
+        let session_handle = tokio::spawn(async move {
+            let (stream, peer_addr) = listener.accept().await.unwrap();
+            let session = Session::new(stream, peer_addr, shared_session);
+            session.run().await
+        });
+
+        // Connect as a client and send a request.
+        let mut client = tokio::net::TcpStream::connect(addr).await.unwrap();
+
+        let request_json =
+            r#"{"op":"point_get","tenant_id":1,"collection":"users","document_id":"u1"}"#;
+        let len = (request_json.len() as u32).to_be_bytes();
+        client.write_all(&len).await.unwrap();
+        client.write_all(request_json.as_bytes()).await.unwrap();
+
+        // Read response.
+        let mut resp_len_buf = [0u8; 4];
+        client.read_exact(&mut resp_len_buf).await.unwrap();
+        let resp_len = u32::from_be_bytes(resp_len_buf) as usize;
+        let mut resp_buf = vec![0u8; resp_len];
+        client.read_exact(&mut resp_buf).await.unwrap();
+
+        let resp_str = String::from_utf8(resp_buf).unwrap();
+        assert!(
+            resp_str.contains(r#""status":"ok""#),
+            "response: {resp_str}"
+        );
+
+        // Clean up: drop client to close session.
+        drop(client);
+        let _ = session_handle.await;
+        let _ = poller_handle.await;
+        let _ = core_handle.await;
+    }
+}

@@ -1,5 +1,5 @@
 [workspace]
-members = ["synapsedb-bridge", "synapsedb-wal", "synapsedb-mem", "synapsedb-crdt"]
+members = ["synapsedb", "synapsedb-bridge", "synapsedb-wal", "synapsedb-mem", "synapsedb-crdt"]
 resolver = "2"
 
 [workspace.package]
@@ -45,6 +45,19 @@ loro = "1"
 # Query engine
 datafusion-common = "45"
 datafusion-execution = "45"
+
+# Config & serialization
+toml = "0.8"
+anyhow = "1"
+serde_json = "1"
+
+# Storage
+redb = "2"
+roaring = "0.10"
+
+# Ecosystem
+numr = "0.5"
+nexar = "0.1"
 
 # Benchmarking
 fluxbench = "0.1"
