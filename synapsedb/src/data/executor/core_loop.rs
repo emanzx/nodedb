@@ -11,6 +11,7 @@ use crate::bridge::dispatch::{BridgeRequest, BridgeResponse};
 use crate::bridge::envelope::{ErrorCode, PhysicalPlan, Response, Status};
 use crate::engine::crdt::tenant_state::TenantCrdtEngine;
 use crate::engine::sparse::btree::SparseEngine;
+use crate::engine::vector::hnsw::{HnswIndex, HnswParams};
 use crate::types::{Lsn, TenantId};
 
 use super::task::{ExecutionTask, TaskState};
@@ -45,6 +46,9 @@ pub struct CoreLoop {
 
     /// Per-tenant CRDT engines, lazily initialized on first access.
     crdt_engines: HashMap<TenantId, TenantCrdtEngine>,
+
+    /// Per-collection HNSW vector indexes, lazily initialized on first insert.
+    vector_indexes: HashMap<String, HnswIndex>,
 }
 
 impl CoreLoop {
@@ -69,6 +73,7 @@ impl CoreLoop {
             watermark: Lsn::ZERO,
             sparse,
             crdt_engines: HashMap::new(),
+            vector_indexes: HashMap::new(),
         })
     }
 
@@ -207,11 +212,33 @@ impl CoreLoop {
             }
 
             PhysicalPlan::VectorSearch {
-                collection, top_k, ..
+                collection,
+                query_vector,
+                top_k,
+                filter_bitmap,
             } => {
                 debug!(core = self.core_id, %collection, top_k, "vector search");
-                // Vector engine HNSW search — returns empty until HNSW graph is built.
-                self.response_ok(task)
+                let Some(index) = self.vector_indexes.get(collection) else {
+                    return self.response_error(task, ErrorCode::NotFound);
+                };
+                if index.is_empty() {
+                    return self.response_with_payload(task, b"[]".to_vec());
+                }
+                let ef = top_k.saturating_mul(4).max(64);
+                let results = match filter_bitmap {
+                    Some(bitmap_bytes) => {
+                        index.search_with_bitmap_bytes(query_vector, *top_k, ef, bitmap_bytes)
+                    }
+                    None => index.search(query_vector, *top_k, ef),
+                };
+                let payload = serde_json::to_vec(
+                    &results
+                        .iter()
+                        .map(|r| serde_json::json!({"id": r.id, "distance": r.distance}))
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap_or_default();
+                self.response_with_payload(task, payload)
             }
 
             PhysicalPlan::RangeScan {
@@ -277,6 +304,71 @@ impl CoreLoop {
                             },
                         )
                     }
+                }
+            }
+
+            PhysicalPlan::VectorInsert {
+                collection,
+                vector,
+                dim,
+            } => {
+                debug!(core = self.core_id, %collection, dim, "vector insert");
+                // Check dimension mismatch before borrowing mutably.
+                if let Some(existing) = self.vector_indexes.get(collection) {
+                    if existing.dim() != *dim {
+                        let existing_dim = existing.dim();
+                        return self.response_error(
+                            task,
+                            ErrorCode::RejectedConstraint {
+                                constraint: format!(
+                                    "dimension mismatch: index has {existing_dim}, got {dim}"
+                                ),
+                            },
+                        );
+                    }
+                }
+                let core_id = self.core_id;
+                let index = self
+                    .vector_indexes
+                    .entry(collection.clone())
+                    .or_insert_with(|| {
+                        debug!(core = core_id, dim, "creating HNSW index");
+                        HnswIndex::with_seed(*dim, HnswParams::default(), core_id as u64 + 1)
+                    });
+                index.insert(vector.clone());
+                self.response_ok(task)
+            }
+
+            PhysicalPlan::PointPut {
+                collection,
+                document_id,
+                value,
+            } => {
+                debug!(core = self.core_id, %collection, %document_id, "point put");
+                match self.sparse.put(collection, document_id, value) {
+                    Ok(()) => self.response_ok(task),
+                    Err(e) => self.response_error(
+                        task,
+                        ErrorCode::Internal {
+                            detail: e.to_string(),
+                        },
+                    ),
+                }
+            }
+
+            PhysicalPlan::PointDelete {
+                collection,
+                document_id,
+            } => {
+                debug!(core = self.core_id, %collection, %document_id, "point delete");
+                match self.sparse.delete(collection, document_id) {
+                    Ok(_) => self.response_ok(task),
+                    Err(e) => self.response_error(
+                        task,
+                        ErrorCode::Internal {
+                            detail: e.to_string(),
+                        },
+                    ),
                 }
             }
 
@@ -523,6 +615,152 @@ mod tests {
         core.tick();
         let resp = resp_rx.try_pop().unwrap();
         assert_eq!(resp.inner.status, Status::Error);
+        assert_eq!(resp.inner.error_code, Some(ErrorCode::NotFound));
+    }
+
+    #[test]
+    fn vector_insert_and_search() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        // Insert 10 vectors.
+        for i in 0..10u32 {
+            req_tx
+                .try_push(BridgeRequest {
+                    inner: Request {
+                        request_id: RequestId::new(100 + i as u64),
+                        tenant_id: TenantId::new(1),
+                        vshard_id: VShardId::new(0),
+                        plan: PhysicalPlan::VectorInsert {
+                            collection: "embeddings".into(),
+                            vector: vec![i as f32, 0.0, 0.0],
+                            dim: 3,
+                        },
+                        deadline: Instant::now() + Duration::from_secs(5),
+                        priority: Priority::Normal,
+                        trace_id: 0,
+                        consistency: ReadConsistency::Strong,
+                    },
+                })
+                .unwrap();
+        }
+
+        // Process all inserts.
+        let processed = core.tick();
+        assert_eq!(processed, 10);
+        for _ in 0..10 {
+            let resp = resp_rx.try_pop().unwrap();
+            assert_eq!(resp.inner.status, Status::Ok);
+        }
+
+        // Search for the nearest vector to [5.0, 0.0, 0.0].
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::VectorSearch {
+                    collection: "embeddings".into(),
+                    query_vector: Arc::from([5.0f32, 0.0, 0.0].as_slice()),
+                    top_k: 3,
+                    filter_bitmap: None,
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+
+        // Payload should be JSON with results.
+        let payload = String::from_utf8(resp.inner.payload.to_vec()).unwrap();
+        assert!(payload.contains("\"id\""), "payload: {payload}");
+        assert!(payload.contains("\"distance\""), "payload: {payload}");
+    }
+
+    #[test]
+    fn vector_search_no_index_returns_not_found() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::VectorSearch {
+                    collection: "nonexistent".into(),
+                    query_vector: Arc::from([1.0f32, 0.0, 0.0].as_slice()),
+                    top_k: 5,
+                    filter_bitmap: None,
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Error);
+        assert_eq!(resp.inner.error_code, Some(ErrorCode::NotFound));
+    }
+
+    #[test]
+    fn point_put_and_get() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        // Put via physical plan.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::PointPut {
+                    collection: "docs".into(),
+                    document_id: "d1".into(),
+                    value: b"hello world".to_vec(),
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+
+        // Get it back.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::PointGet {
+                    collection: "docs".into(),
+                    document_id: "d1".into(),
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+        assert_eq!(&*resp.inner.payload, b"hello world");
+    }
+
+    #[test]
+    fn point_delete_removes() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        core.sparse.put("docs", "d1", b"data").unwrap();
+
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::PointDelete {
+                    collection: "docs".into(),
+                    document_id: "d1".into(),
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+
+        // Should be gone.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::PointGet {
+                    collection: "docs".into(),
+                    document_id: "d1".into(),
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
         assert_eq!(resp.inner.error_code, Some(ErrorCode::NotFound));
     }
 }

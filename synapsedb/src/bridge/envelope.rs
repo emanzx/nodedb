@@ -105,6 +105,26 @@ pub enum PhysicalPlan {
         peer_id: u64,
     },
 
+    /// Insert a vector into the HNSW index (write path).
+    VectorInsert {
+        collection: String,
+        vector: Vec<f32>,
+        dim: usize,
+    },
+
+    /// Point write: insert/update a document in the sparse engine.
+    PointPut {
+        collection: String,
+        document_id: String,
+        value: Vec<u8>,
+    },
+
+    /// Point delete: remove a document from the sparse engine.
+    PointDelete {
+        collection: String,
+        document_id: String,
+    },
+
     /// WAL append (write path).
     WalAppend { payload: Vec<u8> },
 
