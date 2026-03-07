@@ -14,14 +14,51 @@ const INDEXES: TableDefinition<&str, &[u8]> = TableDefinition::new("indexes");
 
 /// Map a redb error into our crate error with context.
 fn redb_err<E: std::fmt::Display>(ctx: &str, e: E) -> crate::Error {
-    crate::Error::Bridge(format!("redb {ctx}: {e}"))
+    crate::Error::Storage {
+        engine: "sparse".into(),
+        detail: format!("{ctx}: {e}"),
+    }
+}
+
+// Thread-local reusable buffer for building composite keys without heap allocation.
+// Most composite keys are short (collection + doc_id < 256 bytes), so this avoids
+// a `format!()` heap allocation on every get/put/delete in the hot path.
+std::thread_local! {
+    static KEY_BUF: std::cell::RefCell<String> = std::cell::RefCell::new(String::with_capacity(256));
+}
+
+/// Build a composite key `"{a}:{b}"` using thread-local buffer, call `f` with the result.
+fn with_key2<R>(a: &str, b: &str, f: impl FnOnce(&str) -> R) -> R {
+    KEY_BUF.with(|buf| {
+        let mut buf = buf.borrow_mut();
+        buf.clear();
+        buf.push_str(a);
+        buf.push(':');
+        buf.push_str(b);
+        f(&buf)
+    })
+}
+
+/// Build a composite key `"{a}:{b}:{c}:{d}"` using thread-local buffer, call `f` with the result.
+fn with_key4<R>(a: &str, b: &str, c: &str, d: &str, f: impl FnOnce(&str) -> R) -> R {
+    KEY_BUF.with(|buf| {
+        let mut buf = buf.borrow_mut();
+        buf.clear();
+        buf.push_str(a);
+        buf.push(':');
+        buf.push_str(b);
+        buf.push(':');
+        buf.push_str(c);
+        buf.push(':');
+        buf.push_str(d);
+        f(&buf)
+    })
 }
 
 /// redb-backed B-Tree storage engine for sparse/metadata queries.
 ///
 /// Provides ACID point lookups, range scans, and secondary index support
-/// via redb's embedded B-Tree. This is the Sparse & Metadata engine
-/// per TDD Section 5.2.
+/// via redb's embedded B-Tree. This is the Sparse & Metadata engine.
 ///
 /// Thread-safety: redb `Database` is `Send + Sync` — safe for Control Plane.
 /// For Data Plane (single-core), each core gets its own `SparseEngine` instance
@@ -58,63 +95,63 @@ impl SparseEngine {
 
     /// Insert or update a document.
     pub fn put(&self, collection: &str, document_id: &str, value: &[u8]) -> crate::Result<()> {
-        let key = format!("{collection}:{document_id}");
+        with_key2(collection, document_id, |key| {
+            let write_txn = self
+                .db
+                .begin_write()
+                .map_err(|e| redb_err("write txn", e))?;
+            {
+                let mut table = write_txn
+                    .open_table(DOCUMENTS)
+                    .map_err(|e| redb_err("open table", e))?;
+                table
+                    .insert(key, value)
+                    .map_err(|e| redb_err("insert", e))?;
+            }
+            write_txn.commit().map_err(|e| redb_err("commit", e))?;
 
-        let write_txn = self
-            .db
-            .begin_write()
-            .map_err(|e| redb_err("write txn", e))?;
-        {
-            let mut table = write_txn
-                .open_table(DOCUMENTS)
-                .map_err(|e| redb_err("open table", e))?;
-            table
-                .insert(key.as_str(), value)
-                .map_err(|e| redb_err("insert", e))?;
-        }
-        write_txn.commit().map_err(|e| redb_err("commit", e))?;
-
-        debug!(collection, document_id, len = value.len(), "document put");
-        Ok(())
+            debug!(collection, document_id, len = value.len(), "document put");
+            Ok(())
+        })
     }
 
     /// Point lookup: retrieve a document by collection + document_id.
     pub fn get(&self, collection: &str, document_id: &str) -> crate::Result<Option<Vec<u8>>> {
-        let key = format!("{collection}:{document_id}");
+        with_key2(collection, document_id, |key| {
+            let read_txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
+            let table = read_txn
+                .open_table(DOCUMENTS)
+                .map_err(|e| redb_err("open table", e))?;
 
-        let read_txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
-        let table = read_txn
-            .open_table(DOCUMENTS)
-            .map_err(|e| redb_err("open table", e))?;
-
-        match table.get(key.as_str()) {
-            Ok(Some(value)) => Ok(Some(value.value().to_vec())),
-            Ok(None) => Ok(None),
-            Err(e) => Err(redb_err("get", e)),
-        }
+            match table.get(key) {
+                Ok(Some(value)) => Ok(Some(value.value().to_vec())),
+                Ok(None) => Ok(None),
+                Err(e) => Err(redb_err("get", e)),
+            }
+        })
     }
 
     /// Delete a document.
     pub fn delete(&self, collection: &str, document_id: &str) -> crate::Result<bool> {
-        let key = format!("{collection}:{document_id}");
+        with_key2(collection, document_id, |key| {
+            let write_txn = self
+                .db
+                .begin_write()
+                .map_err(|e| redb_err("write txn", e))?;
+            let removed = {
+                let mut table = write_txn
+                    .open_table(DOCUMENTS)
+                    .map_err(|e| redb_err("open table", e))?;
+                table
+                    .remove(key)
+                    .map_err(|e| redb_err("remove", e))?
+                    .is_some()
+            };
+            write_txn.commit().map_err(|e| redb_err("commit", e))?;
 
-        let write_txn = self
-            .db
-            .begin_write()
-            .map_err(|e| redb_err("write txn", e))?;
-        let removed = {
-            let mut table = write_txn
-                .open_table(DOCUMENTS)
-                .map_err(|e| redb_err("open table", e))?;
-            table
-                .remove(key.as_str())
-                .map_err(|e| redb_err("remove", e))?
-                .is_some()
-        };
-        write_txn.commit().map_err(|e| redb_err("commit", e))?;
-
-        debug!(collection, document_id, removed, "document delete");
-        Ok(removed)
+            debug!(collection, document_id, removed, "document delete");
+            Ok(removed)
+        })
     }
 
     /// Range scan: retrieve documents in a collection with keys in [lower, upper).
@@ -176,23 +213,23 @@ impl SparseEngine {
         value: &str,
         document_id: &str,
     ) -> crate::Result<()> {
-        let key = format!("{collection}:{field}:{value}:{document_id}");
+        with_key4(collection, field, value, document_id, |key| {
+            let write_txn = self
+                .db
+                .begin_write()
+                .map_err(|e| redb_err("write txn", e))?;
+            {
+                let mut table = write_txn
+                    .open_table(INDEXES)
+                    .map_err(|e| redb_err("open table", e))?;
+                table
+                    .insert(key, [].as_slice())
+                    .map_err(|e| redb_err("index insert", e))?;
+            }
+            write_txn.commit().map_err(|e| redb_err("commit", e))?;
 
-        let write_txn = self
-            .db
-            .begin_write()
-            .map_err(|e| redb_err("write txn", e))?;
-        {
-            let mut table = write_txn
-                .open_table(INDEXES)
-                .map_err(|e| redb_err("open table", e))?;
-            table
-                .insert(key.as_str(), [].as_slice())
-                .map_err(|e| redb_err("index insert", e))?;
-        }
-        write_txn.commit().map_err(|e| redb_err("commit", e))?;
-
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Get the underlying database handle (for advanced use / shared access).

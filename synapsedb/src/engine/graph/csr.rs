@@ -2,9 +2,13 @@ use std::collections::HashMap;
 
 use super::edge_store::{Direction, EdgeStore};
 
+/// Default cap on visited nodes during BFS traversals.
+/// Prevents supernode fan-out explosion (R-06) from consuming unbounded memory.
+const DEFAULT_MAX_VISITED: usize = 100_000;
+
 /// Compressed Sparse Row (CSR) in-memory adjacency index.
 ///
-/// Per TDD §4.4: Hot adjacency data cached as per-shard CSR structures in L0 RAM.
+/// Hot adjacency data cached as per-shard CSR structures in L0 RAM.
 /// CSR provides cache-friendly sequential access during multi-hop traversals.
 /// Rebuilt from redb EdgeStore on shard startup, maintained incrementally on writes.
 ///
@@ -43,7 +47,7 @@ impl CsrIndex {
 
     /// Rebuild the entire CSR index from an EdgeStore.
     ///
-    /// Called on shard startup per TDD §4.4.
+    /// Called on shard startup.
     pub fn rebuild_from(store: &EdgeStore) -> crate::Result<Self> {
         let mut csr = Self::new();
 
@@ -135,6 +139,7 @@ impl CsrIndex {
     /// BFS traversal over the CSR index. Returns all reachable node IDs within max_depth hops.
     ///
     /// This is the hot path for GRAPH_HOP. All data is in L0 RAM — no disk I/O.
+    /// Capped at `DEFAULT_MAX_VISITED` nodes to prevent supernode fan-out explosion (R-06).
     pub fn traverse_bfs(
         &self,
         start_nodes: &[&str],
@@ -156,20 +161,26 @@ impl CsrIndex {
         }
 
         while let Some((node_id, depth)) = queue.pop_front() {
-            if depth >= max_depth {
+            if depth >= max_depth || visited.len() >= DEFAULT_MAX_VISITED {
                 continue;
             }
 
             if matches!(direction, Direction::Out | Direction::Both) {
                 for (label, dst_id) in &self.out_adj[node_id as usize] {
-                    if label_filter.is_none_or(|f| f == label) && visited.insert(*dst_id) {
+                    if label_filter.is_none_or(|f| f == label)
+                        && visited.len() < DEFAULT_MAX_VISITED
+                        && visited.insert(*dst_id)
+                    {
                         queue.push_back((*dst_id, depth + 1));
                     }
                 }
             }
             if matches!(direction, Direction::In | Direction::Both) {
                 for (label, src_id) in &self.in_adj[node_id as usize] {
-                    if label_filter.is_none_or(|f| f == label) && visited.insert(*src_id) {
+                    if label_filter.is_none_or(|f| f == label)
+                        && visited.len() < DEFAULT_MAX_VISITED
+                        && visited.insert(*src_id)
+                    {
                         queue.push_back((*src_id, depth + 1));
                     }
                 }
@@ -209,6 +220,10 @@ impl CsrIndex {
         let mut bwd_frontier: Vec<u32> = vec![dst_id];
 
         for _depth in 0..max_depth {
+            if fwd_parent.len() + bwd_parent.len() >= DEFAULT_MAX_VISITED {
+                break;
+            }
+
             // Expand forward.
             let mut next_fwd = Vec::new();
             for &node in &fwd_frontier {
@@ -321,7 +336,7 @@ impl CsrIndex {
         }
 
         while let Some((node_id, depth)) = queue.pop_front() {
-            if depth >= max_depth {
+            if depth >= max_depth || visited.len() >= DEFAULT_MAX_VISITED {
                 continue;
             }
 
@@ -332,7 +347,7 @@ impl CsrIndex {
                         label.clone(),
                         self.id_to_node[*dst_id as usize].clone(),
                     ));
-                    if visited.insert(*dst_id) {
+                    if visited.len() < DEFAULT_MAX_VISITED && visited.insert(*dst_id) {
                         queue.push_back((*dst_id, depth + 1));
                     }
                 }

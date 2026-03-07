@@ -48,9 +48,9 @@ impl HnswIndex {
     /// All nodes are still used for graph navigation (standard filtered HNSW
     /// approach) — this prevents accuracy degradation for selective filters.
     ///
-    /// Per TDD Section 6.1: "During HNSW traversal, if a vector's ID bit is 0,
+    /// During HNSW traversal, if a vector's ID bit is 0,
     /// the distance math is computed for navigation but the node is excluded
-    /// from the result set."
+    /// from the result set.
     pub fn search_filtered(
         &self,
         query: &[f32],

@@ -17,7 +17,10 @@ const EDGES: TableDefinition<&str, &[u8]> = TableDefinition::new("edges");
 const REVERSE_EDGES: TableDefinition<&str, &[u8]> = TableDefinition::new("reverse_edges");
 
 fn redb_err<E: std::fmt::Display>(ctx: &str, e: E) -> crate::Error {
-    crate::Error::Bridge(format!("graph redb {ctx}: {e}"))
+    crate::Error::Storage {
+        engine: "graph".into(),
+        detail: format!("{ctx}: {e}"),
+    }
 }
 
 /// Composite edge key using \x00 separator.
@@ -53,7 +56,7 @@ pub struct Edge {
 
 /// redb-backed edge storage for the Knowledge Graph engine.
 ///
-/// Stores directed labeled edges as composite keys in redb B-Trees per TDD §4.4.
+/// Stores directed labeled edges as composite keys in redb B-Trees.
 /// Forward edges keyed by `(src, label, dst)` for outbound traversal.
 /// Reverse index keyed by `(dst, label, src)` for inbound traversal.
 ///
@@ -269,7 +272,7 @@ impl EdgeStore {
     /// Returns all node IDs reachable within `max_depth` hops via edges matching
     /// the optional label filter. Traversal direction is configurable.
     ///
-    /// Bounded depth prevents fan-out explosion per TDD §4.4.
+    /// Bounded depth prevents fan-out explosion.
     /// `max_depth` is capped at 10 to prevent unbounded memory growth.
     pub fn traverse_bfs(
         &self,
@@ -279,10 +282,14 @@ impl EdgeStore {
         max_depth: usize,
     ) -> crate::Result<Vec<String>> {
         const MAX_ALLOWED_DEPTH: usize = 10;
+        const MAX_VISITED: usize = 100_000;
+
         if max_depth > MAX_ALLOWED_DEPTH {
-            return Err(crate::Error::Bridge(format!(
-                "traverse_bfs: depth {max_depth} exceeds maximum {MAX_ALLOWED_DEPTH}"
-            )));
+            return Err(crate::Error::BadRequest {
+                detail: format!(
+                    "traverse_bfs: depth {max_depth} exceeds maximum {MAX_ALLOWED_DEPTH}"
+                ),
+            });
         }
 
         use std::collections::{HashSet, VecDeque};
@@ -296,13 +303,15 @@ impl EdgeStore {
         }
 
         while let Some((node, depth)) = queue.pop_front() {
-            if depth >= max_depth {
+            if depth >= max_depth || visited.len() >= MAX_VISITED {
                 continue;
             }
 
             let edges = self.neighbors(&node, label_filter, direction)?;
             for edge in edges {
-                // Move owned strings out of edge to avoid double-clone.
+                if visited.len() >= MAX_VISITED {
+                    break;
+                }
                 let neighbor = if edge.src_id == node {
                     edge.dst_id
                 } else {

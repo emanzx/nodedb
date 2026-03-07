@@ -1,6 +1,6 @@
 use super::super::distance::{DistanceMetric, distance};
 
-/// HNSW index parameters per TDD Section 4.2.
+/// HNSW index parameters.
 #[derive(Debug, Clone)]
 pub struct HnswParams {
     /// Max bidirectional connections per node at layers > 0.
@@ -50,7 +50,7 @@ pub(super) struct Node {
 ///
 /// Production implementation per Malkov & Yashunin (2018):
 /// - Multi-layer graph with exponential layer assignment
-/// - FP32 construction for structural integrity (TDD 4.2)
+/// - FP32 construction for structural integrity
 /// - Heuristic neighbor selection (Algorithm 4) for diverse connectivity
 /// - Beam search with configurable ef parameter
 /// - Roaring bitmap pre-filtering for HNSW traversal

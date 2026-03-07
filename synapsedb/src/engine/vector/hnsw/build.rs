@@ -11,7 +11,7 @@ impl HnswIndex {
     ///    neighbors, select via the diversity heuristic, and add bidirectional edges
     /// 4. Prune over-connected nodes to maintain the M/M0 invariant
     ///
-    /// Construction uses full-precision FP32 vectors (TDD Section 4.2).
+    /// Construction uses full-precision FP32 vectors.
     pub fn insert(&mut self, vector: Vec<f32>) {
         assert_eq!(
             vector.len(),
