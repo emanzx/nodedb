@@ -50,7 +50,7 @@ pub struct CoreLoop {
     crdt_engines: HashMap<TenantId, TenantCrdtEngine>,
 
     /// Per-collection HNSW vector indexes, lazily initialized on first insert.
-    vector_indexes: HashMap<String, HnswIndex>,
+    pub(super) vector_indexes: HashMap<String, HnswIndex>,
 
     /// redb-backed graph edge storage for this core.
     pub(super) edge_store: EdgeStore,
@@ -420,6 +420,7 @@ impl CoreLoop {
                 edge_label,
                 direction,
                 depth,
+                options: _,
             } => self.execute_graph_hop(task, start_nodes, edge_label, *direction, *depth),
 
             PhysicalPlan::GraphNeighbors {
@@ -433,13 +434,38 @@ impl CoreLoop {
                 dst,
                 edge_label,
                 max_depth,
+                options: _,
             } => self.execute_graph_path(task, src, dst, edge_label, *max_depth),
 
             PhysicalPlan::GraphSubgraph {
                 start_nodes,
                 edge_label,
                 depth,
+                options: _,
             } => self.execute_graph_subgraph(task, start_nodes, edge_label, *depth),
+
+            PhysicalPlan::GraphRagFusion {
+                collection,
+                query_vector,
+                vector_top_k,
+                edge_label,
+                direction,
+                expansion_depth,
+                final_top_k,
+                rrf_k,
+                options,
+            } => self.execute_graph_rag_fusion(
+                task,
+                collection,
+                query_vector,
+                *vector_top_k,
+                edge_label,
+                *direction,
+                *expansion_depth,
+                *final_top_k,
+                *rrf_k,
+                options.max_visited,
+            ),
 
             PhysicalPlan::SetCollectionPolicy {
                 collection,
@@ -890,6 +916,7 @@ mod tests {
                     edge_label: Some("NEXT".into()),
                     direction: Direction::Out,
                     depth: 2,
+                    options: Default::default(),
                 }),
             })
             .unwrap();
@@ -932,6 +959,7 @@ mod tests {
                     dst: "c".into(),
                     edge_label: Some("L".into()),
                     max_depth: 5,
+                    options: Default::default(),
                 }),
             })
             .unwrap();
@@ -949,6 +977,7 @@ mod tests {
                     start_nodes: vec!["a".into()],
                     edge_label: None,
                     depth: 2,
+                    options: Default::default(),
                 }),
             })
             .unwrap();
@@ -1039,5 +1068,81 @@ mod tests {
         core.tick();
         let resp = resp_rx.try_pop().unwrap();
         assert_eq!(resp.inner.error_code, Some(ErrorCode::NotFound));
+    }
+
+    #[test]
+    fn graph_rag_fusion_pipeline() {
+        let (mut core, mut req_tx, mut resp_rx) = make_core();
+
+        // Insert vectors: node 0..9 with vectors [i, 0, 0].
+        for i in 0..10u32 {
+            req_tx
+                .try_push(BridgeRequest {
+                    inner: Request {
+                        request_id: RequestId::new(100 + i as u64),
+                        tenant_id: TenantId::new(1),
+                        vshard_id: VShardId::new(0),
+                        plan: PhysicalPlan::VectorInsert {
+                            collection: "docs".into(),
+                            vector: vec![i as f32, 0.0, 0.0],
+                            dim: 3,
+                        },
+                        deadline: Instant::now() + Duration::from_secs(5),
+                        priority: Priority::Normal,
+                        trace_id: 0,
+                        consistency: ReadConsistency::Strong,
+                    },
+                })
+                .unwrap();
+        }
+        core.tick();
+        for _ in 0..10 {
+            resp_rx.try_pop().unwrap();
+        }
+
+        // Insert graph edges: "0" -> "1" -> "2" -> "3".
+        for (s, d) in &[("0", "1"), ("1", "2"), ("2", "3")] {
+            req_tx
+                .try_push(BridgeRequest {
+                    inner: make_request(PhysicalPlan::EdgePut {
+                        src_id: s.to_string(),
+                        label: "CITES".into(),
+                        dst_id: d.to_string(),
+                        properties: vec![],
+                    }),
+                })
+                .unwrap();
+        }
+        core.tick();
+        for _ in 0..3 {
+            resp_rx.try_pop().unwrap();
+        }
+
+        // GraphRAG fusion: vector search near [1, 0, 0], expand 2 hops via CITES.
+        req_tx
+            .try_push(BridgeRequest {
+                inner: make_request(PhysicalPlan::GraphRagFusion {
+                    collection: "docs".into(),
+                    query_vector: Arc::from([1.0f32, 0.0, 0.0].as_slice()),
+                    vector_top_k: 3,
+                    edge_label: Some("CITES".into()),
+                    direction: Direction::Out,
+                    expansion_depth: 2,
+                    final_top_k: 5,
+                    rrf_k: (60.0, 10.0),
+                    options: Default::default(),
+                }),
+            })
+            .unwrap();
+
+        core.tick();
+        let resp = resp_rx.try_pop().unwrap();
+        assert_eq!(resp.inner.status, Status::Ok);
+
+        let results: Vec<serde_json::Value> = serde_json::from_slice(&resp.inner.payload).unwrap();
+        // Should have results with rrf_score fields.
+        assert!(!results.is_empty());
+        assert!(results[0].get("rrf_score").is_some());
+        assert!(results[0].get("node_id").is_some());
     }
 }

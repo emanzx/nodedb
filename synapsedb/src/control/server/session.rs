@@ -227,6 +227,39 @@ impl Session {
                     peer_id,
                 }
             }
+            "graph_rag_fusion" => {
+                let query_vector: Vec<f32> = body["query_vector"]
+                    .as_array()
+                    .ok_or_else(|| crate::Error::BadRequest {
+                        detail: "missing 'query_vector'".into(),
+                    })?
+                    .iter()
+                    .filter_map(|v| v.as_f64().map(|f| f as f32))
+                    .collect();
+                let vector_top_k = body["vector_top_k"].as_u64().unwrap_or(20) as usize;
+                let edge_label = body["edge_label"].as_str().map(String::from);
+                let direction_str = body["direction"].as_str().unwrap_or("out");
+                let direction = match direction_str {
+                    "in" => crate::engine::graph::edge_store::Direction::In,
+                    "both" => crate::engine::graph::edge_store::Direction::Both,
+                    _ => crate::engine::graph::edge_store::Direction::Out,
+                };
+                let expansion_depth = body["expansion_depth"].as_u64().unwrap_or(2) as usize;
+                let final_top_k = body["final_top_k"].as_u64().unwrap_or(10) as usize;
+                let vector_k = body["vector_k"].as_f64().unwrap_or(60.0);
+                let graph_k = body["graph_k"].as_f64().unwrap_or(10.0);
+                PhysicalPlan::GraphRagFusion {
+                    collection,
+                    query_vector: Arc::from(query_vector.into_boxed_slice()),
+                    vector_top_k,
+                    edge_label,
+                    direction,
+                    expansion_depth,
+                    final_top_k,
+                    rrf_k: (vector_k, graph_k),
+                    options: Default::default(),
+                }
+            }
             "alter_collection_policy" => {
                 let policy = &body["policy"];
                 if policy.is_null() {

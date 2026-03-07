@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use crate::engine::graph::edge_store::Direction;
+use crate::engine::graph::traversal_options::GraphTraversalOptions;
 use crate::types::{Lsn, ReadConsistency, RequestId, TenantId, VShardId};
 
 /// Request envelope: Control Plane -> Data Plane.
@@ -147,6 +148,7 @@ pub enum PhysicalPlan {
         edge_label: Option<String>,
         direction: Direction,
         depth: usize,
+        options: GraphTraversalOptions,
     },
 
     /// Immediate 1-hop neighbors lookup.
@@ -162,6 +164,7 @@ pub enum PhysicalPlan {
         dst: String,
         edge_label: Option<String>,
         max_depth: usize,
+        options: GraphTraversalOptions,
     },
 
     /// Materialize a subgraph as edge tuples.
@@ -169,6 +172,32 @@ pub enum PhysicalPlan {
         start_nodes: Vec<String>,
         edge_label: Option<String>,
         depth: usize,
+        options: GraphTraversalOptions,
+    },
+
+    /// GraphRAG fusion: vector search → graph expansion → RRF ranking.
+    ///
+    /// TDD §5.4: Steps 1-3 execute entirely on the Data Plane within a single
+    /// SPSC request-response cycle when all nodes are shard-local.
+    GraphRagFusion {
+        /// Collection for vector search.
+        collection: String,
+        /// Query vector for semantic similarity.
+        query_vector: Arc<[f32]>,
+        /// Number of initial vector results.
+        vector_top_k: usize,
+        /// Edge label for graph expansion.
+        edge_label: Option<String>,
+        /// Graph expansion direction.
+        direction: Direction,
+        /// Graph expansion depth (hops).
+        expansion_depth: usize,
+        /// Final top-N after RRF fusion.
+        final_top_k: usize,
+        /// RRF k constants: (vector_k, graph_k).
+        rrf_k: (f64, f64),
+        /// Traversal options for the graph expansion phase.
+        options: GraphTraversalOptions,
     },
 
     /// WAL append (write path).
