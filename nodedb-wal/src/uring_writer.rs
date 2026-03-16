@@ -89,7 +89,7 @@ impl UringWriter {
             (0, 1)
         };
 
-        let ring = IoUring::new(config.ring_depth).map_err(|e| WalError::Io(e))?;
+        let ring = IoUring::new(config.ring_depth).map_err(WalError::Io)?;
 
         Ok(Self {
             file,
@@ -186,23 +186,19 @@ impl UringWriter {
         // with the CQE, after which self.buffer.clear() is called. Do NOT pipeline
         // submissions without ensuring the buffer outlives the SQE.
         unsafe {
-            self.ring.submission().push(&write_op).map_err(|_| {
-                WalError::Io(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "io_uring SQ full",
-                ))
-            })?;
+            self.ring
+                .submission()
+                .push(&write_op)
+                .map_err(|_| WalError::Io(std::io::Error::other("io_uring SQ full")))?;
         }
 
         self.ring.submit_and_wait(1).map_err(WalError::Io)?;
 
         // Check completion.
-        let cqe = self.ring.completion().next().ok_or_else(|| {
-            WalError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "io_uring: no CQE after write",
-            ))
-        })?;
+        let cqe =
+            self.ring.completion().next().ok_or_else(|| {
+                WalError::Io(std::io::Error::other("io_uring: no CQE after write"))
+            })?;
 
         if cqe.result() < 0 {
             return Err(WalError::Io(std::io::Error::from_raw_os_error(
@@ -221,22 +217,18 @@ impl UringWriter {
         let fsync_op = opcode::Fsync::new(fd).build().user_data(0x02);
 
         unsafe {
-            self.ring.submission().push(&fsync_op).map_err(|_| {
-                WalError::Io(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "io_uring SQ full",
-                ))
-            })?;
+            self.ring
+                .submission()
+                .push(&fsync_op)
+                .map_err(|_| WalError::Io(std::io::Error::other("io_uring SQ full")))?;
         }
 
         self.ring.submit_and_wait(1).map_err(WalError::Io)?;
 
-        let cqe = self.ring.completion().next().ok_or_else(|| {
-            WalError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "io_uring: no CQE after fsync",
-            ))
-        })?;
+        let cqe =
+            self.ring.completion().next().ok_or_else(|| {
+                WalError::Io(std::io::Error::other("io_uring: no CQE after fsync"))
+            })?;
 
         if cqe.result() < 0 {
             return Err(WalError::Io(std::io::Error::from_raw_os_error(
