@@ -164,6 +164,33 @@ impl MultiRaft {
         Ok(node.handle_request_vote(req))
     }
 
+    /// Route an InstallSnapshot RPC to the correct group.
+    pub fn handle_install_snapshot(
+        &mut self,
+        req: &nodedb_raft::InstallSnapshotRequest,
+    ) -> Result<nodedb_raft::InstallSnapshotResponse> {
+        let node = self
+            .groups
+            .get_mut(&req.group_id)
+            .ok_or(ClusterError::GroupNotFound {
+                group_id: req.group_id,
+            })?;
+        Ok(node.handle_install_snapshot(req))
+    }
+
+    /// Get the current term and snapshot metadata for a group (for building InstallSnapshot RPCs).
+    pub fn snapshot_metadata(&self, group_id: u64) -> Result<(u64, u64, u64)> {
+        let node = self
+            .groups
+            .get(&group_id)
+            .ok_or(ClusterError::GroupNotFound { group_id })?;
+        Ok((
+            node.current_term(),
+            node.log_snapshot_index(),
+            node.log_snapshot_term(),
+        ))
+    }
+
     /// Handle AppendEntries response for a specific group.
     pub fn handle_append_entries_response(
         &mut self,

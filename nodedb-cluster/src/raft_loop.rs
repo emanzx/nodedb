@@ -199,9 +199,56 @@ impl<A: CommitApplier, F: RequestForwarder> RaftLoop<A, F> {
                 }
             }
 
-            // Log snapshot needs (actual snapshot transfer is a later batch).
-            for peer in group_ready.snapshots_needed {
-                warn!(group_id, peer, "peer needs snapshot (not yet implemented)");
+            // Send InstallSnapshot RPCs to peers that are too far behind.
+            if !group_ready.snapshots_needed.is_empty() {
+                // Get snapshot metadata under lock.
+                let snapshot_meta = {
+                    let mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
+                    mr.snapshot_metadata(group_id).ok()
+                };
+
+                if let Some((term, snap_index, snap_term)) = snapshot_meta {
+                    for peer in group_ready.snapshots_needed {
+                        let transport = self.transport.clone();
+                        let mr = self.multi_raft.clone();
+                        let req = nodedb_raft::InstallSnapshotRequest {
+                            term,
+                            leader_id: self.node_id,
+                            last_included_index: snap_index,
+                            last_included_term: snap_term,
+                            offset: 0,
+                            data: vec![], // Metadata-only snapshot (state transfer is §5).
+                            done: true,
+                            group_id,
+                        };
+                        tokio::spawn(async move {
+                            match transport.install_snapshot(peer, req).await {
+                                Ok(resp) => {
+                                    if resp.term > term {
+                                        let mut mr = mr.lock().unwrap_or_else(|p| p.into_inner());
+                                        // Higher term — let the tick loop handle step-down.
+                                        let _ = mr.handle_append_entries_response(
+                                            group_id,
+                                            peer,
+                                            &nodedb_raft::AppendEntriesResponse {
+                                                term: resp.term,
+                                                success: false,
+                                                last_log_index: 0,
+                                            },
+                                        );
+                                    }
+                                    debug!(group_id, peer, "install_snapshot sent");
+                                }
+                                Err(e) => {
+                                    warn!(
+                                        group_id, peer, error = %e,
+                                        "install_snapshot RPC failed"
+                                    );
+                                }
+                            }
+                        });
+                    }
+                }
             }
         }
     }
@@ -223,11 +270,7 @@ impl<A: CommitApplier, F: RequestForwarder> RaftLoop<A, F> {
     /// Propose a configuration change to a Raft group.
     ///
     /// Returns `(group_id, log_index)` on success.
-    pub fn propose_conf_change(
-        &self,
-        group_id: u64,
-        change: &ConfChange,
-    ) -> Result<(u64, u64)> {
+    pub fn propose_conf_change(&self, group_id: u64, change: &ConfChange) -> Result<(u64, u64)> {
         let mut mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
         mr.propose_conf_change(group_id, change)
     }
@@ -249,9 +292,11 @@ impl<A: CommitApplier, F: RequestForwarder> RaftRpcHandler for RaftLoop<A, F> {
                 let resp = mr.handle_request_vote(&req)?;
                 Ok(RaftRpc::RequestVoteResponse(resp))
             }
-            RaftRpc::InstallSnapshotRequest(_req) => Err(ClusterError::Transport {
-                detail: "InstallSnapshot not yet implemented".into(),
-            }),
+            RaftRpc::InstallSnapshotRequest(req) => {
+                let mut mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
+                let resp = mr.handle_install_snapshot(&req)?;
+                Ok(RaftRpc::InstallSnapshotResponse(resp))
+            }
             // Health check.
             RaftRpc::Ping(req) => {
                 let topo_version = {
