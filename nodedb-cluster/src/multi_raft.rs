@@ -113,13 +113,16 @@ impl MultiRaft {
     }
 
     /// Propose a command to the Raft group that owns the given vShard.
-    pub fn propose(&mut self, vshard_id: u16, data: Vec<u8>) -> Result<u64> {
+    ///
+    /// Returns `(group_id, log_index)` on success.
+    pub fn propose(&mut self, vshard_id: u16, data: Vec<u8>) -> Result<(u64, u64)> {
         let group_id = self.routing.group_for_vshard(vshard_id)?;
         let node = self
             .groups
             .get_mut(&group_id)
             .ok_or(ClusterError::GroupNotFound { group_id })?;
-        Ok(node.propose(data)?)
+        let log_index = node.propose(data)?;
+        Ok((group_id, log_index))
     }
 
     /// Route an AppendEntries RPC to the correct group.
@@ -267,10 +270,10 @@ mod tests {
         }
 
         // vShard 0 maps to group 0, vShard 1 to group 1, etc.
-        let idx = mr.propose(0, b"cmd-shard-0".to_vec()).unwrap();
+        let (_gid, idx) = mr.propose(0, b"cmd-shard-0".to_vec()).unwrap();
         assert!(idx > 0);
 
-        let idx = mr.propose(256, b"cmd-shard-256".to_vec()).unwrap();
+        let (_gid, idx) = mr.propose(256, b"cmd-shard-256".to_vec()).unwrap();
         assert!(idx > 0);
     }
 

@@ -402,17 +402,20 @@ fn deserialize_payload(rpc_type: u8, payload: &[u8]) -> Result<RaftRpc> {
             Ok(RaftRpc::TopologyAck(msg))
         }
         RPC_FORWARD_REQ => {
-            let msg = rkyv::from_bytes::<ForwardRequest, rkyv::rancor::Error>(&aligned)
-                .map_err(|e| ClusterError::Codec {
-                    detail: format!("rkyv deserialize ForwardRequest: {e}"),
+            let msg =
+                rkyv::from_bytes::<ForwardRequest, rkyv::rancor::Error>(&aligned).map_err(|e| {
+                    ClusterError::Codec {
+                        detail: format!("rkyv deserialize ForwardRequest: {e}"),
+                    }
                 })?;
             Ok(RaftRpc::ForwardRequest(msg))
         }
         RPC_FORWARD_RESP => {
-            let msg = rkyv::from_bytes::<ForwardResponse, rkyv::rancor::Error>(&aligned)
-                .map_err(|e| ClusterError::Codec {
+            let msg = rkyv::from_bytes::<ForwardResponse, rkyv::rancor::Error>(&aligned).map_err(
+                |e| ClusterError::Codec {
                     detail: format!("rkyv deserialize ForwardResponse: {e}"),
-                })?;
+                },
+            )?;
             Ok(RaftRpc::ForwardResponse(msg))
         }
         _ => Err(ClusterError::Codec {

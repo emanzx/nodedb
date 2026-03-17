@@ -70,7 +70,6 @@ impl<A: CommitApplier> RaftLoop<A> {
             tick_interval: DEFAULT_TICK_INTERVAL,
         }
     }
-
 }
 
 impl<A: CommitApplier, F: RequestForwarder> RaftLoop<A, F> {
@@ -196,7 +195,9 @@ impl<A: CommitApplier, F: RequestForwarder> RaftLoop<A, F> {
     }
 
     /// Propose a command to the Raft group owning the given vShard.
-    pub fn propose(&self, vshard_id: u16, data: Vec<u8>) -> Result<u64> {
+    ///
+    /// Returns `(group_id, log_index)` on success.
+    pub fn propose(&self, vshard_id: u16, data: Vec<u8>) -> Result<(u64, u64)> {
         let mut mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
         mr.propose(vshard_id, data)
     }
@@ -319,7 +320,7 @@ mod tests {
         );
 
         // Propose a command.
-        let idx = raft_loop.propose(0, b"hello".to_vec()).unwrap();
+        let (_gid, idx) = raft_loop.propose(0, b"hello".to_vec()).unwrap();
         assert!(idx >= 2); // 1 = no-op, 2+ = our command
 
         // Wait for commit.
@@ -420,7 +421,7 @@ mod tests {
         );
 
         // Propose a command on node 1.
-        let idx = rl1.propose(0, b"distributed-cmd".to_vec()).unwrap();
+        let (_gid, idx) = rl1.propose(0, b"distributed-cmd".to_vec()).unwrap();
         assert!(idx >= 2);
 
         // Wait for replication.
