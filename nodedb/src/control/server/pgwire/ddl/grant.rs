@@ -5,7 +5,7 @@ use crate::control::security::audit::AuditEvent;
 use crate::control::security::identity::{AuthenticatedIdentity, Role};
 use crate::control::state::SharedState;
 
-use super::super::types::sqlstate_error;
+use super::super::types::{parse_role, require_admin, sqlstate_error};
 
 /// GRANT ROLE <role> TO <user>
 ///
@@ -30,17 +30,9 @@ pub fn handle_grant(
         ));
     }
 
-    if !identity.is_superuser && !identity.has_role(&Role::TenantAdmin) {
-        return Err(sqlstate_error(
-            "42501",
-            "permission denied: only superuser or tenant_admin can grant roles",
-        ));
-    }
+    require_admin(identity, "grant roles")?;
 
-    let role_name = parts[2];
-    let role: Role = role_name
-        .parse()
-        .unwrap_or(Role::Custom(role_name.to_string()));
+    let role = parse_role(parts[2]);
 
     // Prevent non-superusers from granting superuser.
     if matches!(role, Role::Superuser) && !identity.is_superuser {
@@ -93,17 +85,9 @@ pub fn handle_revoke(
         ));
     }
 
-    if !identity.is_superuser && !identity.has_role(&Role::TenantAdmin) {
-        return Err(sqlstate_error(
-            "42501",
-            "permission denied: only superuser or tenant_admin can revoke roles",
-        ));
-    }
+    require_admin(identity, "revoke roles")?;
 
-    let role_name = parts[2];
-    let role: Role = role_name
-        .parse()
-        .unwrap_or(Role::Custom(role_name.to_string()));
+    let role = parse_role(parts[2]);
 
     if !parts[3].eq_ignore_ascii_case("FROM") {
         return Err(sqlstate_error("42601", "expected FROM after role name"));

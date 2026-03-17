@@ -6,7 +6,7 @@ use crate::control::security::identity::{AuthenticatedIdentity, Role};
 use crate::control::state::SharedState;
 use crate::types::TenantId;
 
-use super::super::types::sqlstate_error;
+use super::super::types::{parse_role, require_admin, sqlstate_error};
 
 /// Parse a single-quoted string from split parts starting at `start`.
 /// Handles passwords like 'hello world' spanning multiple whitespace-split parts.
@@ -66,12 +66,7 @@ pub fn create_user(
     identity: &AuthenticatedIdentity,
     parts: &[&str],
 ) -> PgWireResult<Vec<Response>> {
-    if !identity.is_superuser && !identity.has_role(&Role::TenantAdmin) {
-        return Err(sqlstate_error(
-            "42501",
-            "permission denied: only superuser or tenant_admin can create users",
-        ));
-    }
+    require_admin(identity, "create users")?;
 
     if parts.len() < 6 {
         return Err(sqlstate_error(
@@ -97,7 +92,7 @@ pub fn create_user(
     while i < parts.len() {
         match parts[i].to_uppercase().as_str() {
             "ROLE" if i + 1 < parts.len() => {
-                role = parts[i + 1].parse().unwrap_or(Role::ReadWrite);
+                role = parse_role(parts[i + 1]);
                 i += 2;
             }
             "TENANT" if i + 1 < parts.len() => {
@@ -182,18 +177,13 @@ pub fn alter_user(
             if is_self && !identity.is_superuser {
                 return Err(sqlstate_error("42501", "cannot change your own role"));
             }
-            if !identity.is_superuser && !identity.has_role(&Role::TenantAdmin) {
-                return Err(sqlstate_error(
-                    "42501",
-                    "only superuser or tenant_admin can change roles",
-                ));
-            }
+            require_admin(identity, "change roles")?;
 
             if parts.len() < 6 {
                 return Err(sqlstate_error("42601", "expected role name after SET ROLE"));
             }
 
-            let role: Role = parts[5].parse().unwrap_or(Role::ReadWrite);
+            let role: Role = parse_role(parts[5]);
 
             state
                 .credentials
@@ -222,12 +212,7 @@ pub fn drop_user(
     identity: &AuthenticatedIdentity,
     parts: &[&str],
 ) -> PgWireResult<Vec<Response>> {
-    if !identity.is_superuser && !identity.has_role(&Role::TenantAdmin) {
-        return Err(sqlstate_error(
-            "42501",
-            "permission denied: only superuser or tenant_admin can drop users",
-        ));
-    }
+    require_admin(identity, "drop users")?;
 
     if parts.len() < 3 {
         return Err(sqlstate_error("42601", "syntax: DROP USER <name>"));

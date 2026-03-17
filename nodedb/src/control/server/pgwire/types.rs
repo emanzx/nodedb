@@ -1,9 +1,10 @@
 use pgwire::api::Type;
 use pgwire::api::results::FieldFormat;
 use pgwire::api::results::FieldInfo;
-use pgwire::error::{ErrorInfo, PgWireError};
+use pgwire::error::{ErrorInfo, PgWireError, PgWireResult};
 
 use crate::bridge::envelope::{ErrorCode, Status};
+use crate::control::security::identity::{AuthenticatedIdentity, Role};
 
 /// Create a pgwire ErrorResponse with a SQLSTATE code.
 pub fn sqlstate_error(code: &str, message: &str) -> PgWireError {
@@ -78,6 +79,29 @@ pub fn int8_field(name: &str) -> FieldInfo {
 /// Build a FieldInfo for a float8 column.
 pub fn float8_field(name: &str) -> FieldInfo {
     FieldInfo::new(name.to_owned(), None, None, Type::FLOAT8, FieldFormat::Text)
+}
+
+/// Require that the identity is superuser or tenant_admin.
+pub fn require_admin(identity: &AuthenticatedIdentity, action: &str) -> PgWireResult<()> {
+    if identity.is_superuser || identity.has_role(&Role::TenantAdmin) {
+        Ok(())
+    } else {
+        Err(sqlstate_error(
+            "42501",
+            &format!("permission denied: only superuser or tenant_admin can {action}"),
+        ))
+    }
+}
+
+/// Parse a role name string into a `Role`.
+///
+/// Known roles map to their enum variants; unknown names become `Role::Custom`.
+pub fn parse_role(name: &str) -> Role {
+    // Role::from_str is Infallible — unwrap is safe on Infallible.
+    match name.parse() {
+        Ok(role) => role,
+        Err(e) => match e {},
+    }
 }
 
 /// Map a Data Plane response status + error code to a SQLSTATE triple.
