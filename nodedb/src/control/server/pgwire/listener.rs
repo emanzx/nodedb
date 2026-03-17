@@ -49,7 +49,11 @@ impl PgListener {
     ) -> crate::Result<()> {
         let factory = Arc::new(NodeDbPgHandlerFactory::new(state, auth_mode));
 
-        let tls_label = if tls_acceptor.is_some() { "tls" } else { "plain" };
+        let tls_label = if tls_acceptor.is_some() {
+            "tls"
+        } else {
+            "plain"
+        };
         info!(addr = %self.addr, tls = tls_label, "accepting pgwire connections");
 
         loop {

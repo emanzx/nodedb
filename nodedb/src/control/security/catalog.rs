@@ -18,6 +18,15 @@ const API_KEYS: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.api
 /// Table: seq (u64 as big-endian bytes) → MessagePack-serialized audit entry.
 const AUDIT_LOG: TableDefinition<&[u8], &[u8]> = TableDefinition::new("_system.audit_log");
 
+/// Table: role_name → MessagePack-serialized custom role record.
+const ROLES: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.roles");
+
+/// Table: "target:role_or_user" → MessagePack-serialized permission grant.
+const PERMISSIONS: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.permissions");
+
+/// Table: "type:name" → owner username.
+const OWNERS: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.owners");
+
 /// Table: metadata key → value bytes (counters, config).
 const METADATA: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.metadata");
 
@@ -72,6 +81,40 @@ pub struct StoredAuditEntry {
     pub detail: String,
 }
 
+/// Serializable custom role for redb storage.
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct StoredRole {
+    pub name: String,
+    pub tenant_id: u32,
+    /// Parent role name for inheritance. Empty = no parent.
+    pub parent: String,
+    pub created_at: u64,
+}
+
+/// Serializable permission grant for redb storage.
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct StoredPermission {
+    /// What the grant applies to: "cluster", "tenant:1", "collection:1:users"
+    pub target: String,
+    /// Who receives the grant: role name or "user:username"
+    pub grantee: String,
+    /// Permission type: "read", "write", "create", "drop", "alter", "admin", "monitor"
+    pub permission: String,
+    pub granted_by: String,
+    pub granted_at: u64,
+}
+
+/// Serializable ownership record.
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct StoredOwner {
+    /// "collection", "index"
+    pub object_type: String,
+    /// Object name (e.g. collection name).
+    pub object_name: String,
+    pub tenant_id: u32,
+    pub owner_username: String,
+}
+
 /// Persistent system catalog backed by redb.
 pub struct SystemCatalog {
     db: Database,
@@ -95,6 +138,15 @@ impl SystemCatalog {
             let _ = write_txn
                 .open_table(API_KEYS)
                 .map_err(|e| catalog_err("init api_keys table", e))?;
+            let _ = write_txn
+                .open_table(ROLES)
+                .map_err(|e| catalog_err("init roles table", e))?;
+            let _ = write_txn
+                .open_table(PERMISSIONS)
+                .map_err(|e| catalog_err("init permissions table", e))?;
+            let _ = write_txn
+                .open_table(OWNERS)
+                .map_err(|e| catalog_err("init owners table", e))?;
             let _ = write_txn
                 .open_table(AUDIT_LOG)
                 .map_err(|e| catalog_err("init audit_log table", e))?;
@@ -286,6 +338,176 @@ impl SystemCatalog {
         write_txn.commit().map_err(|e| catalog_err("commit", e))?;
 
         Ok(())
+    }
+
+    // ── Role operations ──────────────────────────────────────────────
+
+    pub fn put_role(&self, role: &StoredRole) -> crate::Result<()> {
+        let bytes = rmp_serde::to_vec(role).map_err(|e| catalog_err("serialize role", e))?;
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(ROLES)
+                .map_err(|e| catalog_err("open roles", e))?;
+            table
+                .insert(role.name.as_str(), bytes.as_slice())
+                .map_err(|e| catalog_err("insert role", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn delete_role(&self, name: &str) -> crate::Result<()> {
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(ROLES)
+                .map_err(|e| catalog_err("open roles", e))?;
+            table
+                .remove(name)
+                .map_err(|e| catalog_err("remove role", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn load_all_roles(&self) -> crate::Result<Vec<StoredRole>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(ROLES)
+            .map_err(|e| catalog_err("open roles", e))?;
+        let mut roles = Vec::new();
+        for entry in table
+            .range::<&str>(..)
+            .map_err(|e| catalog_err("range roles", e))?
+        {
+            let (_, value) = entry.map_err(|e| catalog_err("read role", e))?;
+            roles.push(
+                rmp_serde::from_slice(value.value()).map_err(|e| catalog_err("deser role", e))?,
+            );
+        }
+        Ok(roles)
+    }
+
+    // ── Permission operations ───────────────────────────────────────
+
+    /// Key format: "{target}:{grantee}:{permission}"
+    fn permission_key(target: &str, grantee: &str, permission: &str) -> String {
+        format!("{target}:{grantee}:{permission}")
+    }
+
+    pub fn put_permission(&self, perm: &StoredPermission) -> crate::Result<()> {
+        let key = Self::permission_key(&perm.target, &perm.grantee, &perm.permission);
+        let bytes = rmp_serde::to_vec(perm).map_err(|e| catalog_err("serialize perm", e))?;
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(PERMISSIONS)
+                .map_err(|e| catalog_err("open perms", e))?;
+            table
+                .insert(key.as_str(), bytes.as_slice())
+                .map_err(|e| catalog_err("insert perm", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn delete_permission(
+        &self,
+        target: &str,
+        grantee: &str,
+        permission: &str,
+    ) -> crate::Result<()> {
+        let key = Self::permission_key(target, grantee, permission);
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(PERMISSIONS)
+                .map_err(|e| catalog_err("open perms", e))?;
+            table
+                .remove(key.as_str())
+                .map_err(|e| catalog_err("remove perm", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn load_all_permissions(&self) -> crate::Result<Vec<StoredPermission>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(PERMISSIONS)
+            .map_err(|e| catalog_err("open perms", e))?;
+        let mut perms = Vec::new();
+        for entry in table
+            .range::<&str>(..)
+            .map_err(|e| catalog_err("range perms", e))?
+        {
+            let (_, value) = entry.map_err(|e| catalog_err("read perm", e))?;
+            perms.push(
+                rmp_serde::from_slice(value.value()).map_err(|e| catalog_err("deser perm", e))?,
+            );
+        }
+        Ok(perms)
+    }
+
+    // ── Ownership operations ────────────────────────────────────────
+
+    /// Key format: "{object_type}:{tenant_id}:{object_name}"
+    fn owner_key(object_type: &str, tenant_id: u32, object_name: &str) -> String {
+        format!("{object_type}:{tenant_id}:{object_name}")
+    }
+
+    pub fn put_owner(&self, owner: &StoredOwner) -> crate::Result<()> {
+        let key = Self::owner_key(&owner.object_type, owner.tenant_id, &owner.object_name);
+        let bytes = rmp_serde::to_vec(owner).map_err(|e| catalog_err("serialize owner", e))?;
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(OWNERS)
+                .map_err(|e| catalog_err("open owners", e))?;
+            table
+                .insert(key.as_str(), bytes.as_slice())
+                .map_err(|e| catalog_err("insert owner", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn load_all_owners(&self) -> crate::Result<Vec<StoredOwner>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(OWNERS)
+            .map_err(|e| catalog_err("open owners", e))?;
+        let mut owners = Vec::new();
+        for entry in table
+            .range::<&str>(..)
+            .map_err(|e| catalog_err("range owners", e))?
+        {
+            let (_, value) = entry.map_err(|e| catalog_err("read owner", e))?;
+            owners.push(
+                rmp_serde::from_slice(value.value()).map_err(|e| catalog_err("deser owner", e))?,
+            );
+        }
+        Ok(owners)
     }
 
     // ── Audit log operations ────────────────────────────────────────

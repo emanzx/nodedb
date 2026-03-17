@@ -4,4 +4,6 @@ pub mod catalog;
 pub mod credential;
 pub mod identity;
 pub mod mtls;
+pub mod permission;
+pub mod role;
 pub mod tenant;

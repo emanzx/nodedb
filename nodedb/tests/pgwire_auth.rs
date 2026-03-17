@@ -424,7 +424,10 @@ fn audit_sequence_survives_restart() {
 
         let catalog = state.credentials.catalog().as_ref().unwrap();
         let count = catalog.audit_entry_count().unwrap();
-        assert_eq!(count, 3, "expected 3 total persisted audit entries across restarts");
+        assert_eq!(
+            count, 3,
+            "expected 3 total persisted audit entries across restarts"
+        );
 
         let max_seq = catalog.load_audit_max_seq().unwrap();
         assert!(max_seq >= 3, "sequence should be >= 3, got {max_seq}");

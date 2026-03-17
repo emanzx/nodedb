@@ -7,6 +7,8 @@ use crate::control::request_tracker::RequestTracker;
 use crate::control::security::apikey::ApiKeyStore;
 use crate::control::security::audit::AuditLog;
 use crate::control::security::credential::CredentialStore;
+use crate::control::security::permission::PermissionStore;
+use crate::control::security::role::RoleStore;
 use crate::control::security::tenant::{QuotaCheck, TenantIsolation, TenantQuota};
 use crate::types::TenantId;
 use crate::wal::WalManager;
@@ -36,6 +38,12 @@ pub struct SharedState {
     /// API key store.
     pub api_keys: ApiKeyStore,
 
+    /// Custom role store (inheritance, CRUD).
+    pub roles: RoleStore,
+
+    /// Collection-level permission grants + ownership.
+    pub permissions: PermissionStore,
+
     /// Per-tenant quota enforcement.
     pub tenants: Mutex<TenantIsolation>,
 }
@@ -50,6 +58,8 @@ impl SharedState {
             credentials: Arc::new(CredentialStore::new()),
             audit: Mutex::new(AuditLog::new(10_000)),
             api_keys: ApiKeyStore::new(),
+            roles: RoleStore::new(),
+            permissions: PermissionStore::new(),
             tenants: Mutex::new(TenantIsolation::new(TenantQuota::default())),
         })
     }
@@ -68,9 +78,13 @@ impl SharedState {
         );
 
         let api_keys = ApiKeyStore::new();
+        let roles = RoleStore::new();
+        let permissions = PermissionStore::new();
         let mut audit_start_seq = 1u64;
         if let Some(catalog) = credentials.catalog() {
             api_keys.load_from(catalog)?;
+            roles.load_from(catalog)?;
+            permissions.load_from(catalog)?;
             let max_seq = catalog.load_audit_max_seq()?;
             if max_seq > 0 {
                 audit_start_seq = max_seq + 1;
@@ -87,6 +101,8 @@ impl SharedState {
             credentials: Arc::new(credentials),
             audit: Mutex::new(audit_log),
             api_keys,
+            roles,
+            permissions,
             tenants: Mutex::new(TenantIsolation::new(TenantQuota::default())),
         }))
     }

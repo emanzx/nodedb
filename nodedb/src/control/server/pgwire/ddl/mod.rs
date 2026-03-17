@@ -1,6 +1,7 @@
 pub mod apikey;
 pub mod grant;
 pub mod inspect;
+pub mod role;
 pub mod router;
 pub mod tenant;
 pub mod user;

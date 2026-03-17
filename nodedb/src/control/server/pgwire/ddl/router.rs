@@ -43,6 +43,14 @@ pub fn dispatch(
         return Some(super::grant::handle_revoke(state, identity, &parts));
     }
 
+    // Role management.
+    if upper.starts_with("CREATE ROLE ") {
+        return Some(super::role::create_role(state, identity, &parts));
+    }
+    if upper.starts_with("DROP ROLE ") {
+        return Some(super::role::drop_role(state, identity, &parts));
+    }
+
     // API keys.
     if upper.starts_with("CREATE API KEY ") {
         return Some(super::apikey::create_api_key(state, identity, &parts));
