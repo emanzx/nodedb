@@ -6,7 +6,7 @@
 
 use std::path::Path;
 
-use redb::{Database, TableDefinition};
+use redb::{Database, ReadableTableMetadata, TableDefinition};
 use tracing::info;
 
 /// Table: username (string) → MessagePack-serialized user record.
@@ -14,6 +14,9 @@ const USERS: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.users"
 
 /// Table: key_id (string) → MessagePack-serialized API key record.
 const API_KEYS: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.api_keys");
+
+/// Table: seq (u64 as big-endian bytes) → MessagePack-serialized audit entry.
+const AUDIT_LOG: TableDefinition<&[u8], &[u8]> = TableDefinition::new("_system.audit_log");
 
 /// Table: metadata key → value bytes (counters, config).
 const METADATA: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.metadata");
@@ -58,6 +61,17 @@ pub struct StoredApiKey {
     pub created_at: u64,
 }
 
+/// Serializable audit entry for redb storage.
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct StoredAuditEntry {
+    pub seq: u64,
+    pub timestamp_us: u64,
+    pub event: String,
+    pub tenant_id: Option<u32>,
+    pub source: String,
+    pub detail: String,
+}
+
 /// Persistent system catalog backed by redb.
 pub struct SystemCatalog {
     db: Database,
@@ -81,6 +95,9 @@ impl SystemCatalog {
             let _ = write_txn
                 .open_table(API_KEYS)
                 .map_err(|e| catalog_err("init api_keys table", e))?;
+            let _ = write_txn
+                .open_table(AUDIT_LOG)
+                .map_err(|e| catalog_err("init audit_log table", e))?;
             let _ = write_txn
                 .open_table(METADATA)
                 .map_err(|e| catalog_err("init metadata table", e))?;
@@ -269,6 +286,81 @@ impl SystemCatalog {
         write_txn.commit().map_err(|e| catalog_err("commit", e))?;
 
         Ok(())
+    }
+
+    // ── Audit log operations ────────────────────────────────────────
+
+    /// Append a batch of audit entries. Used by the periodic flush.
+    pub fn append_audit_entries(&self, entries: &[StoredAuditEntry]) -> crate::Result<()> {
+        if entries.is_empty() {
+            return Ok(());
+        }
+
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(AUDIT_LOG)
+                .map_err(|e| catalog_err("open audit_log", e))?;
+            for entry in entries {
+                let key = entry.seq.to_be_bytes();
+                let value =
+                    rmp_serde::to_vec(entry).map_err(|e| catalog_err("serialize audit", e))?;
+                table
+                    .insert(key.as_slice(), value.as_slice())
+                    .map_err(|e| catalog_err("insert audit", e))?;
+            }
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))?;
+
+        Ok(())
+    }
+
+    /// Load the highest sequence number from the audit log.
+    /// Used on startup to resume the sequence counter.
+    pub fn load_audit_max_seq(&self) -> crate::Result<u64> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(AUDIT_LOG)
+            .map_err(|e| catalog_err("open audit_log", e))?;
+
+        // Scan all keys to find the maximum sequence number.
+        // Audit log keys are u64 big-endian, so the last entry in
+        // iteration order is the highest.
+        let mut max_seq = 0u64;
+        let range = table
+            .range::<&[u8]>(..)
+            .map_err(|e| catalog_err("range audit", e))?;
+        for entry in range {
+            let (key, _) = entry.map_err(|e| catalog_err("read audit key", e))?;
+            let key_bytes: &[u8] = key.value();
+            if key_bytes.len() == 8 {
+                let mut arr = [0u8; 8];
+                arr.copy_from_slice(key_bytes);
+                let seq = u64::from_be_bytes(arr);
+                if seq > max_seq {
+                    max_seq = seq;
+                }
+            }
+        }
+        Ok(max_seq)
+    }
+
+    /// Count total audit entries (for diagnostics).
+    pub fn audit_entry_count(&self) -> crate::Result<u64> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(AUDIT_LOG)
+            .map_err(|e| catalog_err("open audit_log", e))?;
+        table.len().map_err(|e| catalog_err("count audit", e))
     }
 }
 

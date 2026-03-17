@@ -90,6 +90,11 @@ impl AuditLog {
         }
     }
 
+    /// Set the next sequence number (used on startup to resume from catalog).
+    pub fn set_next_seq(&mut self, seq: u64) {
+        self.next_seq = seq;
+    }
+
     /// Record an audit event.
     pub fn record(
         &mut self,

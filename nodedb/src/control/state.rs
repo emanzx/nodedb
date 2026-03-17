@@ -68,16 +68,24 @@ impl SharedState {
         );
 
         let api_keys = ApiKeyStore::new();
+        let mut audit_start_seq = 1u64;
         if let Some(catalog) = credentials.catalog() {
             api_keys.load_from(catalog)?;
+            let max_seq = catalog.load_audit_max_seq()?;
+            if max_seq > 0 {
+                audit_start_seq = max_seq + 1;
+            }
         }
+
+        let mut audit_log = AuditLog::new(10_000);
+        audit_log.set_next_seq(audit_start_seq);
 
         Ok(Arc::new(Self {
             dispatcher: Mutex::new(dispatcher),
             tracker: RequestTracker::new(),
             wal,
             credentials: Arc::new(credentials),
-            audit: Mutex::new(AuditLog::new(10_000)),
+            audit: Mutex::new(audit_log),
             api_keys,
             tenants: Mutex::new(TenantIsolation::new(TenantQuota::default())),
         }))
@@ -150,6 +158,48 @@ impl SharedState {
                 poisoned
                     .into_inner()
                     .record(event, tenant_id, source, detail);
+            }
+        }
+    }
+
+    /// Flush in-memory audit entries to the persistent catalog.
+    /// Called periodically (e.g. every 10 seconds) by a background task.
+    pub fn flush_audit_log(&self) {
+        let entries = match self.audit.lock() {
+            Ok(mut log) => log.drain_for_persistence(),
+            Err(poisoned) => {
+                warn!("audit log mutex poisoned during flush, recovering");
+                poisoned.into_inner().drain_for_persistence()
+            }
+        };
+
+        if entries.is_empty() {
+            return;
+        }
+
+        if let Some(catalog) = self.credentials.catalog() {
+            let stored: Vec<crate::control::security::catalog::StoredAuditEntry> = entries
+                .iter()
+                .map(|e| crate::control::security::catalog::StoredAuditEntry {
+                    seq: e.seq,
+                    timestamp_us: e.timestamp_us,
+                    event: format!("{:?}", e.event),
+                    tenant_id: e.tenant_id.map(|t| t.as_u32()),
+                    source: e.source.clone(),
+                    detail: e.detail.clone(),
+                })
+                .collect();
+
+            if let Err(e) = catalog.append_audit_entries(&stored) {
+                warn!(error = %e, count = stored.len(), "failed to persist audit entries");
+                // Re-insert entries so they're not lost.
+                if let Ok(mut log) = self.audit.lock() {
+                    for entry in entries {
+                        log.record(entry.event, entry.tenant_id, &entry.source, &entry.detail);
+                    }
+                }
+            } else {
+                tracing::debug!(count = stored.len(), "flushed audit entries to catalog");
             }
         }
     }

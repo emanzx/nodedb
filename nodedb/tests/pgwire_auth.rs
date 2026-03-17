@@ -360,6 +360,77 @@ fn audit_records_grant_revoke() {
     assert!(events.iter().any(|e| e.detail.contains("revoked")));
 }
 
+// ── Audit persistence ───────────────────────────────────────────────
+
+#[test]
+fn audit_flush_persists_to_catalog() {
+    let dir = tempfile::tempdir().unwrap();
+    let wal_path = dir.path().join("test.wal");
+    let wal = Arc::new(nodedb::wal::WalManager::open_for_testing(&wal_path).unwrap());
+    let catalog_path = dir.path().join("system.redb");
+
+    let auth_config = nodedb::config::auth::AuthConfig::default();
+    let (dispatcher, _sides) = Dispatcher::new(1, 64);
+    let state = SharedState::open(dispatcher, wal, &catalog_path, &auth_config).unwrap();
+
+    // Record some audit events.
+    state.audit_record(AuditEvent::AuthSuccess, None, "test", "user logged in");
+    state.audit_record(
+        AuditEvent::PrivilegeChange,
+        Some(TenantId::new(1)),
+        "test",
+        "granted role",
+    );
+
+    // Flush to catalog.
+    state.flush_audit_log();
+
+    // Verify entries persisted.
+    let catalog = state.credentials.catalog().as_ref().unwrap();
+    let count = catalog.audit_entry_count().unwrap();
+    assert_eq!(count, 2, "expected 2 persisted audit entries");
+
+    // Verify sequence counter.
+    let max_seq = catalog.load_audit_max_seq().unwrap();
+    assert!(max_seq >= 2);
+}
+
+#[test]
+fn audit_sequence_survives_restart() {
+    let dir = tempfile::tempdir().unwrap();
+    let wal_path = dir.path().join("test.wal");
+    let catalog_path = dir.path().join("system.redb");
+    let auth_config = nodedb::config::auth::AuthConfig::default();
+
+    // First run: record and flush.
+    {
+        let wal = Arc::new(nodedb::wal::WalManager::open_for_testing(&wal_path).unwrap());
+        let (dispatcher, _sides) = Dispatcher::new(1, 64);
+        let state = SharedState::open(dispatcher, wal, &catalog_path, &auth_config).unwrap();
+
+        state.audit_record(AuditEvent::AuthSuccess, None, "src", "event1");
+        state.audit_record(AuditEvent::AuthSuccess, None, "src", "event2");
+        state.flush_audit_log();
+    }
+
+    // Second run: sequence should continue from where it left off.
+    {
+        let wal = Arc::new(nodedb::wal::WalManager::open_for_testing(&wal_path).unwrap());
+        let (dispatcher, _sides) = Dispatcher::new(1, 64);
+        let state = SharedState::open(dispatcher, wal, &catalog_path, &auth_config).unwrap();
+
+        state.audit_record(AuditEvent::AdminAction, None, "src", "event3");
+        state.flush_audit_log();
+
+        let catalog = state.credentials.catalog().as_ref().unwrap();
+        let count = catalog.audit_entry_count().unwrap();
+        assert_eq!(count, 3, "expected 3 total persisted audit entries across restarts");
+
+        let max_seq = catalog.load_audit_max_seq().unwrap();
+        assert!(max_seq >= 3, "sequence should be >= 3, got {max_seq}");
+    }
+}
+
 // ── Connection-level test (only one, uses TCP) ──────────────────────
 
 #[tokio::test]
@@ -379,6 +450,7 @@ async fn pgwire_ddl_roundtrip() {
             .run(
                 shared_pg,
                 nodedb::config::auth::AuthMode::Trust,
+                None,
                 shutdown_rx,
             )
             .await
