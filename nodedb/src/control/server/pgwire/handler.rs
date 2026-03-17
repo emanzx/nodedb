@@ -24,7 +24,7 @@ use crate::control::security::identity::{
     AuthMethod, AuthenticatedIdentity, Role, required_permission, role_grants_permission,
 };
 use crate::control::state::SharedState;
-use crate::types::{ReadConsistency, RequestId, TenantId};
+use crate::types::{Lsn, ReadConsistency, RequestId, TenantId};
 
 use super::types::{error_to_sqlstate, response_status_to_sqlstate, text_field};
 
@@ -166,7 +166,87 @@ impl NodeDbPgHandler {
     }
 
     /// Dispatch a single physical task and wait for the response.
+    ///
+    /// In cluster mode, write operations are proposed to Raft first and only
+    /// executed on the Data Plane after quorum commit. Reads bypass Raft.
     async fn dispatch_task(
+        &self,
+        task: PhysicalTask,
+    ) -> crate::Result<crate::bridge::envelope::Response> {
+        // In cluster mode, propose writes through Raft.
+        if let (Some(proposer), Some(tracker)) =
+            (&self.state.raft_proposer, &self.state.propose_tracker)
+        {
+            if let Some(entry) = crate::control::wal_replication::to_replicated_entry(
+                task.tenant_id,
+                task.vshard_id,
+                &task.plan,
+            ) {
+                return self
+                    .dispatch_replicated_write(entry, proposer, tracker)
+                    .await;
+            }
+        }
+
+        // Single-node mode or read operation — dispatch directly to Data Plane.
+        self.dispatch_local(task).await
+    }
+
+    /// Dispatch a write through Raft: propose → await commit → return result.
+    async fn dispatch_replicated_write(
+        &self,
+        entry: crate::control::wal_replication::ReplicatedEntry,
+        proposer: &Arc<crate::control::wal_replication::RaftProposer>,
+        tracker: &Arc<crate::control::wal_replication::ProposeTracker>,
+    ) -> crate::Result<crate::bridge::envelope::Response> {
+        let data = entry.to_bytes();
+        let vshard_id = entry.vshard_id;
+
+        let request_id = self.next_request_id();
+
+        // Propose to Raft.
+        let (group_id, log_index) =
+            proposer(vshard_id, data).map_err(|e| crate::Error::Dispatch {
+                detail: format!("raft propose failed: {e}"),
+            })?;
+
+        // Register a waiter for the commit.
+        let rx = tracker.register(group_id, log_index);
+
+        // Wait for Raft commit + Data Plane execution.
+        let result = tokio::time::timeout(DEFAULT_DEADLINE, rx)
+            .await
+            .map_err(|_| crate::Error::Dispatch {
+                detail: format!("raft commit timeout for group {group_id} index {log_index}"),
+            })?
+            .map_err(|_| crate::Error::Dispatch {
+                detail: "propose waiter channel closed".into(),
+            })?;
+
+        match result {
+            Ok(payload) => Ok(crate::bridge::envelope::Response {
+                request_id,
+                status: crate::bridge::envelope::Status::Ok,
+                attempt: 1,
+                partial: false,
+                payload: payload.into(),
+                watermark_lsn: Lsn::new(log_index),
+                error_code: None,
+            }),
+            Err(err_msg) => Ok(crate::bridge::envelope::Response {
+                request_id,
+                status: crate::bridge::envelope::Status::Error,
+                attempt: 1,
+                partial: false,
+                payload: Arc::from(err_msg.as_bytes()),
+                watermark_lsn: Lsn::new(0),
+                error_code: Some(crate::bridge::envelope::ErrorCode::Internal { detail: err_msg }),
+            }),
+        }
+    }
+
+    /// Dispatch a task directly to the local Data Plane (single-node or reads).
+    async fn dispatch_local(
         &self,
         task: PhysicalTask,
     ) -> crate::Result<crate::bridge::envelope::Response> {

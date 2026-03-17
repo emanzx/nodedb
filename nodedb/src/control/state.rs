@@ -58,6 +58,13 @@ pub struct SharedState {
 
     /// This node's ID (0 in single-node mode).
     pub node_id: u64,
+
+    /// Propose tracker for distributed writes (None in single-node mode).
+    pub propose_tracker: Option<Arc<crate::control::wal_replication::ProposeTracker>>,
+
+    /// Raft propose function — wraps RaftLoop::propose (None in single-node mode).
+    /// Signature: (vshard_id, data) → Result<(group_id, log_index)>
+    pub raft_proposer: Option<Arc<crate::control::wal_replication::RaftProposer>>,
 }
 
 impl SharedState {
@@ -77,6 +84,8 @@ impl SharedState {
             cluster_routing: None,
             cluster_transport: None,
             node_id: 0,
+            propose_tracker: None,
+            raft_proposer: None,
         })
     }
 
@@ -124,6 +133,8 @@ impl SharedState {
             cluster_routing: None,
             cluster_transport: None,
             node_id: 0,
+            propose_tracker: None,
+            raft_proposer: None,
         }))
     }
 
