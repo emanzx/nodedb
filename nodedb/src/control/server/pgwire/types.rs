@@ -1,8 +1,18 @@
 use pgwire::api::Type;
 use pgwire::api::results::FieldFormat;
 use pgwire::api::results::FieldInfo;
+use pgwire::error::{ErrorInfo, PgWireError};
 
 use crate::bridge::envelope::{ErrorCode, Status};
+
+/// Create a pgwire ErrorResponse with a SQLSTATE code.
+pub fn sqlstate_error(code: &str, message: &str) -> PgWireError {
+    PgWireError::UserError(Box::new(ErrorInfo::new(
+        "ERROR".to_owned(),
+        code.to_owned(),
+        message.to_owned(),
+    )))
+}
 
 /// Map a NodeDB `Error` to a PostgreSQL SQLSTATE code + message.
 pub fn error_to_sqlstate(err: &crate::Error) -> (&'static str, &'static str, String) {
