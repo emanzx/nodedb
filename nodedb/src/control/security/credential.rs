@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
+use std::time::Instant;
 
 use tracing::info;
 
@@ -8,6 +9,15 @@ use crate::types::TenantId;
 
 use super::catalog::{StoredUser, SystemCatalog};
 use super::identity::{AuthMethod, AuthenticatedIdentity, Role};
+
+/// Tracks failed login attempts for lockout enforcement.
+#[derive(Debug, Clone)]
+struct LoginAttemptTracker {
+    /// Number of consecutive failed attempts.
+    failed_count: u32,
+    /// When the lockout expires (if locked out).
+    locked_until: Option<Instant>,
+}
 
 /// A stored user record (in-memory cache).
 #[derive(Debug, Clone)]
@@ -71,6 +81,12 @@ pub struct CredentialStore {
     users: RwLock<HashMap<String, UserRecord>>,
     next_user_id: RwLock<u64>,
     catalog: Option<SystemCatalog>,
+    /// Failed login tracking (in-memory only — clears on restart).
+    login_attempts: RwLock<HashMap<String, LoginAttemptTracker>>,
+    /// Max failed logins before lockout (0 = disabled).
+    max_failed_logins: u32,
+    /// Lockout duration.
+    lockout_duration: std::time::Duration,
 }
 
 impl Default for CredentialStore {
@@ -104,6 +120,9 @@ impl CredentialStore {
             users: RwLock::new(HashMap::new()),
             next_user_id: RwLock::new(1),
             catalog: None,
+            login_attempts: RwLock::new(HashMap::new()),
+            max_failed_logins: 0, // Disabled in tests.
+            lockout_duration: std::time::Duration::from_secs(300),
         }
     }
 
@@ -133,7 +152,101 @@ impl CredentialStore {
             users: RwLock::new(users),
             next_user_id: RwLock::new(next_id),
             catalog: Some(catalog),
+            login_attempts: RwLock::new(HashMap::new()),
+            max_failed_logins: 0,
+            lockout_duration: std::time::Duration::from_secs(300),
         })
+    }
+
+    /// Configure lockout policy. Called after construction with values from AuthConfig.
+    pub fn set_lockout_policy(&mut self, max_failed: u32, lockout_secs: u64) {
+        self.max_failed_logins = max_failed;
+        self.lockout_duration = std::time::Duration::from_secs(lockout_secs);
+    }
+
+    /// Check if a user is currently locked out.
+    /// Returns Ok(()) if not locked out, Err if locked out.
+    pub fn check_lockout(&self, username: &str) -> crate::Result<()> {
+        if self.max_failed_logins == 0 {
+            return Ok(()); // Lockout disabled.
+        }
+
+        let attempts = match read_lock(&self.login_attempts) {
+            Ok(a) => a,
+            Err(_) => {
+                tracing::error!(
+                    "login_attempts lock poisoned in check_lockout, allowing access as fallback"
+                );
+                return Ok(());
+            }
+        };
+
+        if let Some(tracker) = attempts.get(username) {
+            if let Some(locked_until) = tracker.locked_until {
+                if Instant::now() < locked_until {
+                    return Err(crate::Error::RejectedAuthz {
+                        tenant_id: TenantId::new(0),
+                        resource: format!(
+                            "user '{username}' is locked out ({} failed attempts)",
+                            tracker.failed_count
+                        ),
+                    });
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Record a failed login attempt. May trigger lockout.
+    pub fn record_login_failure(&self, username: &str) {
+        if self.max_failed_logins == 0 {
+            return;
+        }
+
+        let mut attempts = match write_lock(&self.login_attempts) {
+            Ok(a) => a,
+            Err(_) => {
+                tracing::error!("login_attempts lock poisoned in record_login_failure");
+                return;
+            }
+        };
+
+        let tracker = attempts
+            .entry(username.to_string())
+            .or_insert(LoginAttemptTracker {
+                failed_count: 0,
+                locked_until: None,
+            });
+
+        tracker.failed_count += 1;
+
+        if tracker.failed_count >= self.max_failed_logins {
+            tracker.locked_until = Some(Instant::now() + self.lockout_duration);
+            tracing::warn!(
+                username,
+                failed_count = tracker.failed_count,
+                lockout_secs = self.lockout_duration.as_secs(),
+                "user locked out due to failed login attempts"
+            );
+        }
+    }
+
+    /// Reset failed login counter on successful authentication.
+    pub fn record_login_success(&self, username: &str) {
+        if self.max_failed_logins == 0 {
+            return;
+        }
+
+        let mut attempts = match write_lock(&self.login_attempts) {
+            Ok(a) => a,
+            Err(_) => {
+                tracing::error!("login_attempts lock poisoned in record_login_success");
+                return;
+            }
+        };
+
+        attempts.remove(username);
     }
 
     /// Persist a user record to the catalog (if persistent).
@@ -533,6 +646,50 @@ mod tests {
             assert!(store.verify_password("dave", "new_pass"));
             assert!(!store.verify_password("dave", "old_pass"));
         }
+    }
+
+    #[test]
+    fn lockout_after_max_failures() {
+        let mut store = CredentialStore::new();
+        store.set_lockout_policy(3, 300);
+        store.bootstrap_superuser("admin", "secret").unwrap();
+
+        // First 2 failures — not locked out yet.
+        store.record_login_failure("admin");
+        store.record_login_failure("admin");
+        assert!(store.check_lockout("admin").is_ok());
+
+        // Third failure — locked out.
+        store.record_login_failure("admin");
+        assert!(store.check_lockout("admin").is_err());
+    }
+
+    #[test]
+    fn lockout_resets_on_success() {
+        let mut store = CredentialStore::new();
+        store.set_lockout_policy(3, 300);
+        store.bootstrap_superuser("admin", "secret").unwrap();
+
+        store.record_login_failure("admin");
+        store.record_login_failure("admin");
+
+        // Successful login resets counter.
+        store.record_login_success("admin");
+
+        // Next failure is first again, not third.
+        store.record_login_failure("admin");
+        assert!(store.check_lockout("admin").is_ok());
+    }
+
+    #[test]
+    fn lockout_disabled_when_zero() {
+        let store = CredentialStore::new(); // max_failed_logins = 0
+        store.bootstrap_superuser("admin", "secret").unwrap();
+
+        for _ in 0..100 {
+            store.record_login_failure("admin");
+        }
+        assert!(store.check_lockout("admin").is_ok());
     }
 
     #[test]

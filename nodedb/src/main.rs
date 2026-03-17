@@ -75,7 +75,12 @@ async fn main() -> anyhow::Result<()> {
     info!(num_cores, "data plane cores running (eventfd-driven)");
 
     // Create shared state with persistent system catalog.
-    let shared = SharedState::open(dispatcher, Arc::clone(&wal), &config.catalog_path())?;
+    let shared = SharedState::open(
+        dispatcher,
+        Arc::clone(&wal),
+        &config.catalog_path(),
+        &config.auth,
+    )?;
 
     // Bootstrap credentials.
     let auth_mode = config.auth.mode.clone();

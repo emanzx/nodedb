@@ -54,8 +54,13 @@ impl SharedState {
         dispatcher: Dispatcher,
         wal: Arc<WalManager>,
         catalog_path: &std::path::Path,
+        auth_config: &crate::config::auth::AuthConfig,
     ) -> crate::Result<Arc<Self>> {
-        let credentials = CredentialStore::open(catalog_path)?;
+        let mut credentials = CredentialStore::open(catalog_path)?;
+        credentials.set_lockout_policy(
+            auth_config.max_failed_logins,
+            auth_config.lockout_duration_secs,
+        );
         Ok(Arc::new(Self {
             dispatcher: Mutex::new(dispatcher),
             tracker: RequestTracker::new(),

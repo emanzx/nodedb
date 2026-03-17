@@ -39,9 +39,23 @@ impl AuthSource for NodeDbAuthSource {
         let username = login.user().unwrap_or("unknown");
         let source = login.host();
 
+        // Check lockout before returning credentials.
+        if self.credentials.check_lockout(username).is_err() {
+            self.state.audit_record(
+                AuditEvent::AuthFailure,
+                None,
+                source,
+                &format!("user '{username}' is locked out"),
+            );
+            return Err(PgWireError::InvalidPassword(format!(
+                "{username} (account locked)"
+            )));
+        }
+
         match self.credentials.get_scram_credentials(username) {
             Some((salt, salted_password)) => Ok(Password::new(Some(salt), salted_password)),
             None => {
+                self.credentials.record_login_failure(username);
                 self.state.audit_record(
                     AuditEvent::AuthFailure,
                     None,
@@ -163,28 +177,46 @@ impl StartupHandler for TrustOrScramStartup {
                     pgwire::api::PgWireConnectionState::AuthenticationInProgress
                 );
 
-                sasl.on_startup(client, message).await?;
+                let result = sasl.on_startup(client, message).await;
 
-                if was_in_auth
-                    && matches!(
-                        client.state(),
-                        pgwire::api::PgWireConnectionState::ReadyForQuery
-                    )
-                {
-                    let username = client
-                        .metadata()
-                        .get("user")
-                        .cloned()
-                        .unwrap_or_else(|| "unknown".to_string());
-                    let source = client.socket_addr().to_string();
-                    state.audit_record(
-                        AuditEvent::AuthSuccess,
-                        None,
-                        &source,
-                        &format!("SCRAM-SHA-256 auth: {username}"),
-                    );
+                let username = client
+                    .metadata()
+                    .get("user")
+                    .cloned()
+                    .unwrap_or_else(|| "unknown".to_string());
+                let source = client.socket_addr().to_string();
+
+                match &result {
+                    Ok(())
+                        if was_in_auth
+                            && matches!(
+                                client.state(),
+                                pgwire::api::PgWireConnectionState::ReadyForQuery
+                            ) =>
+                    {
+                        // SCRAM succeeded — reset lockout counter.
+                        state.credentials.record_login_success(&username);
+                        state.audit_record(
+                            AuditEvent::AuthSuccess,
+                            None,
+                            &source,
+                            &format!("SCRAM-SHA-256 auth: {username}"),
+                        );
+                    }
+                    Err(_) if was_in_auth => {
+                        // SCRAM failed — increment lockout counter.
+                        state.credentials.record_login_failure(&username);
+                        state.audit_record(
+                            AuditEvent::AuthFailure,
+                            None,
+                            &source,
+                            &format!("SCRAM-SHA-256 auth failed: {username}"),
+                        );
+                    }
+                    _ => {}
                 }
-                Ok(())
+
+                result
             }
         }
     }
