@@ -1,0 +1,239 @@
+//! API key, role, permission, and ownership operations for the system catalog.
+
+use super::types::{
+    API_KEYS, OWNERS, PERMISSIONS, ROLES, StoredApiKey, StoredOwner, StoredPermission, StoredRole,
+    SystemCatalog, catalog_err, owner_key,
+};
+
+impl SystemCatalog {
+    // ── API Key operations ──────────────────────────────────────────
+
+    /// Write an API key record.
+    pub fn put_api_key(&self, key: &StoredApiKey) -> crate::Result<()> {
+        let bytes = rmp_serde::to_vec(key).map_err(|e| catalog_err("serialize api key", e))?;
+
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(API_KEYS)
+                .map_err(|e| catalog_err("open api_keys", e))?;
+            table
+                .insert(key.key_id.as_str(), bytes.as_slice())
+                .map_err(|e| catalog_err("insert api key", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))?;
+
+        Ok(())
+    }
+
+    /// Load all API keys.
+    pub fn load_all_api_keys(&self) -> crate::Result<Vec<StoredApiKey>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(API_KEYS)
+            .map_err(|e| catalog_err("open api_keys", e))?;
+
+        let mut keys = Vec::new();
+        let range = table
+            .range::<&str>(..)
+            .map_err(|e| catalog_err("range api_keys", e))?;
+        for entry in range {
+            let (_, value) = entry.map_err(|e| catalog_err("read entry", e))?;
+            let key: StoredApiKey = rmp_serde::from_slice(value.value())
+                .map_err(|e| catalog_err("deserialize api key", e))?;
+            keys.push(key);
+        }
+
+        Ok(keys)
+    }
+
+    /// Delete an API key by key_id.
+    pub fn delete_api_key(&self, key_id: &str) -> crate::Result<()> {
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(API_KEYS)
+                .map_err(|e| catalog_err("open api_keys", e))?;
+            table
+                .remove(key_id)
+                .map_err(|e| catalog_err("remove api key", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))?;
+
+        Ok(())
+    }
+
+    // ── Role operations ──────────────────────────────────────────────
+
+    pub fn put_role(&self, role: &StoredRole) -> crate::Result<()> {
+        let bytes = rmp_serde::to_vec(role).map_err(|e| catalog_err("serialize role", e))?;
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(ROLES)
+                .map_err(|e| catalog_err("open roles", e))?;
+            table
+                .insert(role.name.as_str(), bytes.as_slice())
+                .map_err(|e| catalog_err("insert role", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn delete_role(&self, name: &str) -> crate::Result<()> {
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(ROLES)
+                .map_err(|e| catalog_err("open roles", e))?;
+            table
+                .remove(name)
+                .map_err(|e| catalog_err("remove role", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn load_all_roles(&self) -> crate::Result<Vec<StoredRole>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(ROLES)
+            .map_err(|e| catalog_err("open roles", e))?;
+        let mut roles = Vec::new();
+        for entry in table
+            .range::<&str>(..)
+            .map_err(|e| catalog_err("range roles", e))?
+        {
+            let (_, value) = entry.map_err(|e| catalog_err("read role", e))?;
+            roles.push(
+                rmp_serde::from_slice(value.value()).map_err(|e| catalog_err("deser role", e))?,
+            );
+        }
+        Ok(roles)
+    }
+
+    // ── Permission operations ───────────────────────────────────────
+
+    /// Key format: "{target}:{grantee}:{permission}"
+    fn permission_key(target: &str, grantee: &str, permission: &str) -> String {
+        format!("{target}:{grantee}:{permission}")
+    }
+
+    pub fn put_permission(&self, perm: &StoredPermission) -> crate::Result<()> {
+        let key = Self::permission_key(&perm.target, &perm.grantee, &perm.permission);
+        let bytes = rmp_serde::to_vec(perm).map_err(|e| catalog_err("serialize perm", e))?;
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(PERMISSIONS)
+                .map_err(|e| catalog_err("open perms", e))?;
+            table
+                .insert(key.as_str(), bytes.as_slice())
+                .map_err(|e| catalog_err("insert perm", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn delete_permission(
+        &self,
+        target: &str,
+        grantee: &str,
+        permission: &str,
+    ) -> crate::Result<()> {
+        let key = Self::permission_key(target, grantee, permission);
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(PERMISSIONS)
+                .map_err(|e| catalog_err("open perms", e))?;
+            table
+                .remove(key.as_str())
+                .map_err(|e| catalog_err("remove perm", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn load_all_permissions(&self) -> crate::Result<Vec<StoredPermission>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(PERMISSIONS)
+            .map_err(|e| catalog_err("open perms", e))?;
+        let mut perms = Vec::new();
+        for entry in table
+            .range::<&str>(..)
+            .map_err(|e| catalog_err("range perms", e))?
+        {
+            let (_, value) = entry.map_err(|e| catalog_err("read perm", e))?;
+            perms.push(
+                rmp_serde::from_slice(value.value()).map_err(|e| catalog_err("deser perm", e))?,
+            );
+        }
+        Ok(perms)
+    }
+
+    // ── Ownership operations ────────────────────────────────────────
+
+    pub fn put_owner(&self, owner: &StoredOwner) -> crate::Result<()> {
+        let key = owner_key(&owner.object_type, owner.tenant_id, &owner.object_name);
+        let bytes = rmp_serde::to_vec(owner).map_err(|e| catalog_err("serialize owner", e))?;
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| catalog_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(OWNERS)
+                .map_err(|e| catalog_err("open owners", e))?;
+            table
+                .insert(key.as_str(), bytes.as_slice())
+                .map_err(|e| catalog_err("insert owner", e))?;
+        }
+        write_txn.commit().map_err(|e| catalog_err("commit", e))
+    }
+
+    pub fn load_all_owners(&self) -> crate::Result<Vec<StoredOwner>> {
+        let read_txn = self
+            .db
+            .begin_read()
+            .map_err(|e| catalog_err("read txn", e))?;
+        let table = read_txn
+            .open_table(OWNERS)
+            .map_err(|e| catalog_err("open owners", e))?;
+        let mut owners = Vec::new();
+        for entry in table
+            .range::<&str>(..)
+            .map_err(|e| catalog_err("range owners", e))?
+        {
+            let (_, value) = entry.map_err(|e| catalog_err("read owner", e))?;
+            owners.push(
+                rmp_serde::from_slice(value.value()).map_err(|e| catalog_err("deser owner", e))?,
+            );
+        }
+        Ok(owners)
+    }
+}

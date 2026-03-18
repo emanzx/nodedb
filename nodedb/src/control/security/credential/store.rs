@@ -1,79 +1,18 @@
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
-use std::time::Instant;
-
 use tracing::info;
 
 use crate::types::TenantId;
 
-use super::catalog::{StoredUser, SystemCatalog};
-use super::identity::{AuthMethod, AuthenticatedIdentity, Role};
-
-/// Tracks failed login attempts for lockout enforcement.
-#[derive(Debug, Clone)]
-struct LoginAttemptTracker {
-    /// Number of consecutive failed attempts.
-    failed_count: u32,
-    /// When the lockout expires (if locked out).
-    locked_until: Option<Instant>,
-}
-
-/// A stored user record (in-memory cache).
-#[derive(Debug, Clone)]
-pub struct UserRecord {
-    pub user_id: u64,
-    pub username: String,
-    pub tenant_id: TenantId,
-    /// Argon2id password hash (PHC string format).
-    pub password_hash: String,
-    /// Salt used for SCRAM-SHA-256 (16 bytes).
-    pub scram_salt: Vec<u8>,
-    /// SCRAM-SHA-256 salted password (for pgwire auth).
-    pub scram_salted_password: Vec<u8>,
-    pub roles: Vec<Role>,
-    pub is_superuser: bool,
-    pub is_active: bool,
-    /// True if this is a service account (no password, API key auth only).
-    pub is_service_account: bool,
-}
-
-impl UserRecord {
-    fn to_stored(&self) -> StoredUser {
-        StoredUser {
-            user_id: self.user_id,
-            username: self.username.clone(),
-            tenant_id: self.tenant_id.as_u32(),
-            password_hash: self.password_hash.clone(),
-            scram_salt: self.scram_salt.clone(),
-            scram_salted_password: self.scram_salted_password.clone(),
-            roles: self.roles.iter().map(|r| r.to_string()).collect(),
-            is_superuser: self.is_superuser,
-            is_active: self.is_active,
-            is_service_account: self.is_service_account,
-        }
-    }
-
-    fn from_stored(s: StoredUser) -> Self {
-        let roles: Vec<Role> = s
-            .roles
-            .iter()
-            .map(|r| r.parse().unwrap_or(Role::ReadOnly))
-            .collect();
-        Self {
-            user_id: s.user_id,
-            username: s.username,
-            tenant_id: TenantId::new(s.tenant_id),
-            password_hash: s.password_hash,
-            scram_salt: s.scram_salt,
-            scram_salted_password: s.scram_salted_password,
-            is_superuser: s.is_superuser,
-            is_active: s.is_active,
-            is_service_account: s.is_service_account,
-            roles,
-        }
-    }
-}
+use super::super::catalog::SystemCatalog;
+use super::super::identity::{AuthMethod, AuthenticatedIdentity, Role};
+use super::hash::{
+    compute_scram_salted_password, generate_scram_salt, hash_password_argon2, now_secs,
+    verify_argon2,
+};
+use super::lockout::LoginAttemptTracker;
+use super::record::UserRecord;
 
 /// Credential store with in-memory cache and redb persistence.
 ///
@@ -82,15 +21,17 @@ impl UserRecord {
 ///
 /// Lives on the Control Plane (Send + Sync).
 pub struct CredentialStore {
-    users: RwLock<HashMap<String, UserRecord>>,
-    next_user_id: RwLock<u64>,
-    catalog: Option<SystemCatalog>,
+    pub(super) users: RwLock<HashMap<String, UserRecord>>,
+    pub(super) next_user_id: RwLock<u64>,
+    pub(super) catalog: Option<SystemCatalog>,
     /// Failed login tracking (in-memory only — clears on restart).
-    login_attempts: RwLock<HashMap<String, LoginAttemptTracker>>,
+    pub(super) login_attempts: RwLock<HashMap<String, LoginAttemptTracker>>,
     /// Max failed logins before lockout (0 = disabled).
-    max_failed_logins: u32,
+    pub(super) max_failed_logins: u32,
     /// Lockout duration.
-    lockout_duration: std::time::Duration,
+    pub(super) lockout_duration: std::time::Duration,
+    /// Password expiry in seconds (0 = no expiry).
+    pub(super) password_expiry_secs: u64,
 }
 
 impl Default for CredentialStore {
@@ -99,7 +40,7 @@ impl Default for CredentialStore {
     }
 }
 
-fn read_lock<T>(lock: &RwLock<T>) -> crate::Result<std::sync::RwLockReadGuard<'_, T>> {
+pub(super) fn read_lock<T>(lock: &RwLock<T>) -> crate::Result<std::sync::RwLockReadGuard<'_, T>> {
     lock.read().map_err(|e| {
         tracing::error!("credential store read lock poisoned: {e}");
         crate::Error::Internal {
@@ -108,7 +49,7 @@ fn read_lock<T>(lock: &RwLock<T>) -> crate::Result<std::sync::RwLockReadGuard<'_
     })
 }
 
-fn write_lock<T>(lock: &RwLock<T>) -> crate::Result<std::sync::RwLockWriteGuard<'_, T>> {
+pub(super) fn write_lock<T>(lock: &RwLock<T>) -> crate::Result<std::sync::RwLockWriteGuard<'_, T>> {
     lock.write().map_err(|e| {
         tracing::error!("credential store write lock poisoned: {e}");
         crate::Error::Internal {
@@ -127,6 +68,7 @@ impl CredentialStore {
             login_attempts: RwLock::new(HashMap::new()),
             max_failed_logins: 0, // Disabled in tests.
             lockout_duration: std::time::Duration::from_secs(300),
+            password_expiry_secs: 0,
         }
     }
 
@@ -159,102 +101,17 @@ impl CredentialStore {
             login_attempts: RwLock::new(HashMap::new()),
             max_failed_logins: 0,
             lockout_duration: std::time::Duration::from_secs(300),
+            password_expiry_secs: 0,
         })
     }
 
-    /// Configure lockout policy. Called after construction with values from AuthConfig.
-    pub fn set_lockout_policy(&mut self, max_failed: u32, lockout_secs: u64) {
-        self.max_failed_logins = max_failed;
-        self.lockout_duration = std::time::Duration::from_secs(lockout_secs);
-    }
-
-    /// Check if a user is currently locked out.
-    /// Returns Ok(()) if not locked out, Err if locked out.
-    pub fn check_lockout(&self, username: &str) -> crate::Result<()> {
-        if self.max_failed_logins == 0 {
-            return Ok(()); // Lockout disabled.
-        }
-
-        let attempts = match read_lock(&self.login_attempts) {
-            Ok(a) => a,
-            Err(_) => {
-                tracing::error!(
-                    "login_attempts lock poisoned in check_lockout, allowing access as fallback"
-                );
-                return Ok(());
-            }
-        };
-
-        if let Some(tracker) = attempts.get(username) {
-            if let Some(locked_until) = tracker.locked_until {
-                if Instant::now() < locked_until {
-                    return Err(crate::Error::RejectedAuthz {
-                        tenant_id: TenantId::new(0),
-                        resource: format!(
-                            "user '{username}' is locked out ({} failed attempts)",
-                            tracker.failed_count
-                        ),
-                    });
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Record a failed login attempt. May trigger lockout.
-    pub fn record_login_failure(&self, username: &str) {
-        if self.max_failed_logins == 0 {
-            return;
-        }
-
-        let mut attempts = match write_lock(&self.login_attempts) {
-            Ok(a) => a,
-            Err(_) => {
-                tracing::error!("login_attempts lock poisoned in record_login_failure");
-                return;
-            }
-        };
-
-        let tracker = attempts
-            .entry(username.to_string())
-            .or_insert(LoginAttemptTracker {
-                failed_count: 0,
-                locked_until: None,
-            });
-
-        tracker.failed_count += 1;
-
-        if tracker.failed_count >= self.max_failed_logins {
-            tracker.locked_until = Some(Instant::now() + self.lockout_duration);
-            tracing::warn!(
-                username,
-                failed_count = tracker.failed_count,
-                lockout_secs = self.lockout_duration.as_secs(),
-                "user locked out due to failed login attempts"
-            );
-        }
-    }
-
-    /// Reset failed login counter on successful authentication.
-    pub fn record_login_success(&self, username: &str) {
-        if self.max_failed_logins == 0 {
-            return;
-        }
-
-        let mut attempts = match write_lock(&self.login_attempts) {
-            Ok(a) => a,
-            Err(_) => {
-                tracing::error!("login_attempts lock poisoned in record_login_success");
-                return;
-            }
-        };
-
-        attempts.remove(username);
-    }
+    // Lockout methods (set_lockout_policy, check_lockout, record_login_failure,
+    // record_login_success) are in lockout.rs
 
     /// Persist a user record to the catalog (if persistent).
-    fn persist_user(&self, record: &UserRecord) -> crate::Result<()> {
+    /// Automatically updates `updated_at` timestamp.
+    fn persist_user(&self, record: &mut UserRecord) -> crate::Result<()> {
+        record.updated_at = now_secs();
         if let Some(ref catalog) = self.catalog {
             catalog.put_user(&record.to_stored())?;
         }
@@ -267,6 +124,15 @@ impl CredentialStore {
             catalog.save_next_user_id(id)?;
         }
         Ok(())
+    }
+
+    /// Compute password expiry timestamp from current config.
+    fn compute_expiry(&self) -> u64 {
+        if self.password_expiry_secs > 0 {
+            now_secs() + self.password_expiry_secs
+        } else {
+            0
+        }
     }
 
     fn alloc_user_id(&self) -> crate::Result<u64> {
@@ -299,7 +165,7 @@ impl CredentialStore {
             self.persist_user(existing)?;
         } else {
             let user_id = self.alloc_user_id()?;
-            let record = UserRecord {
+            let mut record = UserRecord {
                 user_id,
                 username: username.to_string(),
                 tenant_id: TenantId::new(0),
@@ -310,8 +176,11 @@ impl CredentialStore {
                 is_superuser: true,
                 is_active: true,
                 is_service_account: false,
+                created_at: now_secs(),
+                updated_at: now_secs(),
+                password_expires_at: self.compute_expiry(),
             };
-            self.persist_user(&record)?;
+            self.persist_user(&mut record)?;
             users.insert(username.to_string(), record);
         }
 
@@ -339,7 +208,7 @@ impl CredentialStore {
         let user_id = self.alloc_user_id()?;
 
         let is_superuser = roles.contains(&Role::Superuser);
-        let record = UserRecord {
+        let mut record = UserRecord {
             user_id,
             username: username.to_string(),
             tenant_id,
@@ -350,9 +219,12 @@ impl CredentialStore {
             is_superuser,
             is_active: true,
             is_service_account: false,
+            created_at: now_secs(),
+            updated_at: now_secs(),
+            password_expires_at: 0,
         };
 
-        self.persist_user(&record)?;
+        self.persist_user(&mut record)?;
         users.insert(username.to_string(), record);
         Ok(user_id)
     }
@@ -374,7 +246,7 @@ impl CredentialStore {
 
         let user_id = self.alloc_user_id()?;
         let is_superuser = roles.contains(&Role::Superuser);
-        let record = UserRecord {
+        let mut record = UserRecord {
             user_id,
             username: name.to_string(),
             tenant_id,
@@ -385,9 +257,12 @@ impl CredentialStore {
             is_superuser,
             is_active: true,
             is_service_account: true,
+            created_at: now_secs(),
+            updated_at: now_secs(),
+            password_expires_at: 0,
         };
 
-        self.persist_user(&record)?;
+        self.persist_user(&mut record)?;
         users.insert(name.to_string(), record);
         Ok(user_id)
     }
@@ -399,12 +274,20 @@ impl CredentialStore {
     }
 
     /// Get the SCRAM salt and salted password for pgwire SCRAM auth.
-    /// Returns None for service accounts (they can't login via pgwire).
+    /// Returns None for service accounts (can't login via pgwire) or expired passwords.
     pub fn get_scram_credentials(&self, username: &str) -> Option<(Vec<u8>, Vec<u8>)> {
         let users = read_lock(&self.users).ok()?;
         users
             .get(username)
             .filter(|u| u.is_active && !u.is_service_account)
+            .filter(|u| {
+                // Check password expiry.
+                if u.password_expires_at > 0 && now_secs() >= u.password_expires_at {
+                    tracing::warn!(username = u.username, "password expired, login denied");
+                    return false;
+                }
+                true
+            })
             .map(|u| (u.scram_salt.clone(), u.scram_salted_password.clone()))
     }
 
@@ -467,6 +350,7 @@ impl CredentialStore {
         record.scram_salted_password = compute_scram_salted_password(password, &salt);
         record.scram_salt = salt;
         record.password_hash = hash_password_argon2(password)?;
+        record.password_expires_at = self.compute_expiry();
         self.persist_user(record)?;
         Ok(())
     }
@@ -550,45 +434,6 @@ impl CredentialStore {
     pub fn catalog(&self) -> &Option<SystemCatalog> {
         &self.catalog
     }
-}
-
-// ── Password hashing ───────────────────────────────────────────────
-
-use argon2::Argon2;
-use argon2::password_hash::{
-    PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng,
-};
-
-fn generate_scram_salt() -> Vec<u8> {
-    use argon2::password_hash::rand_core::RngCore;
-    let mut salt = vec![0u8; 16];
-    OsRng.fill_bytes(&mut salt);
-    salt
-}
-
-fn compute_scram_salted_password(password: &str, salt: &[u8]) -> Vec<u8> {
-    pgwire::api::auth::sasl::scram::gen_salted_password(password, salt, 4096)
-}
-
-fn hash_password_argon2(password: &str) -> crate::Result<String> {
-    let salt = SaltString::generate(&mut OsRng);
-    let argon2 = Argon2::default();
-    let hash = argon2
-        .hash_password(password.as_bytes(), &salt)
-        .map_err(|e| crate::Error::Internal {
-            detail: format!("argon2 hashing failed: {e}"),
-        })?;
-    Ok(hash.to_string())
-}
-
-fn verify_argon2(stored_hash: &str, password: &str) -> bool {
-    let parsed = match PasswordHash::new(stored_hash) {
-        Ok(h) => h,
-        Err(_) => return false,
-    };
-    Argon2::default()
-        .verify_password(password.as_bytes(), &parsed)
-        .is_ok()
 }
 
 #[cfg(test)]
@@ -695,49 +540,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn lockout_after_max_failures() {
-        let mut store = CredentialStore::new();
-        store.set_lockout_policy(3, 300);
-        store.bootstrap_superuser("admin", "secret").unwrap();
-
-        // First 2 failures — not locked out yet.
-        store.record_login_failure("admin");
-        store.record_login_failure("admin");
-        assert!(store.check_lockout("admin").is_ok());
-
-        // Third failure — locked out.
-        store.record_login_failure("admin");
-        assert!(store.check_lockout("admin").is_err());
-    }
-
-    #[test]
-    fn lockout_resets_on_success() {
-        let mut store = CredentialStore::new();
-        store.set_lockout_policy(3, 300);
-        store.bootstrap_superuser("admin", "secret").unwrap();
-
-        store.record_login_failure("admin");
-        store.record_login_failure("admin");
-
-        // Successful login resets counter.
-        store.record_login_success("admin");
-
-        // Next failure is first again, not third.
-        store.record_login_failure("admin");
-        assert!(store.check_lockout("admin").is_ok());
-    }
-
-    #[test]
-    fn lockout_disabled_when_zero() {
-        let store = CredentialStore::new(); // max_failed_logins = 0
-        store.bootstrap_superuser("admin", "secret").unwrap();
-
-        for _ in 0..100 {
-            store.record_login_failure("admin");
-        }
-        assert!(store.check_lockout("admin").is_ok());
-    }
+    // Lockout tests are in lockout.rs
 
     #[test]
     fn user_id_counter_persists() {
