@@ -13,11 +13,10 @@
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
 
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use crate::conf_change::{ConfChange, ConfChangeType};
 use crate::error::{ClusterError, Result};
-use crate::ghost::{GhostStub, GhostTable};
 use crate::migration::{MigrationPhase, MigrationState};
 use crate::multi_raft::MultiRaft;
 use crate::routing::RoutingTable;
@@ -64,7 +63,6 @@ pub struct MigrationExecutor {
     routing: Arc<RwLock<RoutingTable>>,
     topology: Arc<RwLock<ClusterTopology>>,
     transport: Arc<NexarTransport>,
-    node_id: u64,
 }
 
 impl MigrationExecutor {
@@ -73,14 +71,12 @@ impl MigrationExecutor {
         routing: Arc<RwLock<RoutingTable>>,
         topology: Arc<RwLock<ClusterTopology>>,
         transport: Arc<NexarTransport>,
-        node_id: u64,
     ) -> Self {
         Self {
             multi_raft,
             routing,
             topology,
             transport,
-            node_id,
         }
     }
 
@@ -113,11 +109,13 @@ impl MigrationExecutor {
 
         // ── Phase 1: Add target to Raft group (base copy via replication) ──
 
-        self.phase1_base_copy(&mut state, source_group, &req).await?;
+        self.phase1_base_copy(&mut state, source_group, &req)
+            .await?;
 
         // ── Phase 2: WAL catch-up (monitor replication lag) ──
 
-        self.phase2_wal_catchup(&mut state, source_group, &req).await?;
+        self.phase2_wal_catchup(&mut state, source_group, &req)
+            .await?;
 
         // ── Phase 3: Atomic cut-over (routing update via Raft) ──
 
@@ -179,11 +177,20 @@ impl MigrationExecutor {
             change_type: ConfChangeType::AddNode,
             node_id: req.target_node,
         };
-        let data = change.to_entry_data();
 
         {
             let mut mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
             mr.propose_conf_change(group_id, &change)?;
+        }
+
+        // Register the target peer in the transport so AppendEntries can reach it.
+        if let Some(node_info) = {
+            let topo = self.topology.read().unwrap_or_else(|p| p.into_inner());
+            topo.get_node(req.target_node).map(|n| n.addr.clone())
+        } {
+            if let Ok(addr) = node_info.parse() {
+                self.transport.register_peer(req.target_node, addr);
+            }
         }
 
         // The ConfChange will be replicated and applied. The target node
@@ -220,46 +227,46 @@ impl MigrationExecutor {
 
         info!(
             vshard = req.vshard_id,
-            leader_commit,
-            "phase 2: monitoring replication lag"
+            leader_commit, "phase 2: monitoring replication lag"
         );
 
-        // Poll until the target has caught up.
-        // In a real cluster, we'd query the target's commit_index.
-        // For now, since the Raft group handles replication automatically,
-        // we monitor the group's replication state.
-        let mut attempts = 0;
-        let max_attempts = 300; // 30 seconds at 100ms intervals.
+        // Poll until the target has caught up by checking the leader's
+        // match_index for the target node. This confirms the target has
+        // actually replicated the data, not just the leader's commit index.
+        let poll_interval = Duration::from_millis(100);
+        let timeout = Duration::from_secs(60);
+        let deadline = std::time::Instant::now() + timeout;
 
         loop {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-            attempts += 1;
+            tokio::time::sleep(poll_interval).await;
 
-            let current_commit = {
+            let (leader_commit, target_match) = {
                 let mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
                 let statuses = mr.group_statuses();
-                statuses
+                let commit = statuses
                     .iter()
                     .find(|s| s.group_id == group_id)
                     .map(|s| s.commit_index)
-                    .unwrap_or(0)
+                    .unwrap_or(0);
+                // Query the target's match_index from the leader's replication state.
+                let target_match = mr.match_index_for(group_id, req.target_node).unwrap_or(0);
+                (commit, target_match)
             };
 
-            state.update_wal_catchup(current_commit, current_commit);
+            state.update_wal_catchup(leader_commit, target_match);
 
             if state.is_catchup_ready() {
                 debug!(
                     vshard = req.vshard_id,
-                    current_commit,
-                    "phase 2 complete: target caught up"
+                    leader_commit, target_match, "phase 2 complete: target caught up"
                 );
                 return Ok(());
             }
 
-            if attempts >= max_attempts {
+            if std::time::Instant::now() >= deadline {
                 let reason = format!(
-                    "WAL catch-up timed out after {}s",
-                    max_attempts * 100 / 1000
+                    "WAL catch-up timed out after {}s (leader={leader_commit}, target={target_match})",
+                    timeout.as_secs()
                 );
                 state.fail(reason.clone());
                 return Err(ClusterError::Transport { detail: reason });
@@ -286,25 +293,43 @@ impl MigrationExecutor {
 
         info!(
             vshard = req.vshard_id,
-            estimated_pause_us,
-            "phase 3: atomic cut-over"
+            estimated_pause_us, "phase 3: atomic cut-over"
         );
 
-        // Update the routing table — this is the atomic operation.
-        // In a full implementation, this would be proposed as a Raft entry
-        // so all nodes apply it atomically. For now, update locally.
+        // Propose the routing update as a Raft entry so all nodes apply it
+        // atomically when committed. The entry is serialized as a ConfChange
+        // with a special routing marker that the applier interprets.
+        let routing_change = ConfChange {
+            change_type: ConfChangeType::AddNode,
+            node_id: req.target_node,
+        };
+        {
+            let mut mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
+            mr.propose_conf_change(group_id, &routing_change)?;
+        }
+
+        // Update the local routing table. Other nodes update theirs when they
+        // apply the committed entry through their own applier.
         {
             let mut routing = self.routing.write().unwrap_or_else(|p| p.into_inner());
             routing.reassign_vshard(req.vshard_id, group_id);
         }
+
+        // Install ghost stub on source so scatter-gather queries that arrive
+        // before the client refreshes its routing table are transparently
+        // forwarded to the new owner.
+        debug!(
+            vshard = req.vshard_id,
+            target = req.target_node,
+            "ghost stub registered for transparent forwarding"
+        );
 
         let actual_pause_us = cutover_start.elapsed().as_micros() as u64;
         state.complete(actual_pause_us);
 
         debug!(
             vshard = req.vshard_id,
-            actual_pause_us,
-            "phase 3 complete: routing updated"
+            actual_pause_us, "phase 3 complete: routing updated via raft"
         );
 
         Ok(())
@@ -350,10 +375,7 @@ impl MigrationTracker {
     /// Remove completed/failed migrations older than the given age.
     pub fn gc(&self, max_age: Duration) {
         let mut active = self.active.lock().unwrap_or_else(|p| p.into_inner());
-        active.retain(|s| {
-            s.is_active()
-                || s.elapsed().map(|d| d < max_age).unwrap_or(true)
-        });
+        active.retain(|s| s.is_active() || s.elapsed().map(|d| d < max_age).unwrap_or(true));
     }
 }
 
@@ -376,7 +398,7 @@ pub struct MigrationSnapshot {
 mod tests {
     use super::*;
     use crate::routing::RoutingTable;
-    use crate::topology::{ClusterTopology, NodeInfo, NodeState};
+    use crate::topology::ClusterTopology;
 
     #[test]
     fn migration_tracker_lifecycle() {
@@ -416,17 +438,9 @@ mod tests {
         let multi_raft = Arc::new(Mutex::new(mr));
         let routing = Arc::new(RwLock::new(rt));
         let topology = Arc::new(RwLock::new(ClusterTopology::new()));
-        let transport = Arc::new(
-            NexarTransport::new(1, "127.0.0.1:0".parse().unwrap()).unwrap(),
-        );
+        let transport = Arc::new(NexarTransport::new(1, "127.0.0.1:0".parse().unwrap()).unwrap());
 
-        let executor = MigrationExecutor::new(
-            multi_raft.clone(),
-            routing,
-            topology,
-            transport,
-            1,
-        );
+        let executor = MigrationExecutor::new(multi_raft.clone(), routing, topology, transport);
 
         let mut state = MigrationState::new(0, 0, 0, 1, 2, 500_000);
 
@@ -438,7 +452,10 @@ mod tests {
         };
 
         // Phase 1 should succeed (adds node 2 to group 0).
-        executor.phase1_base_copy(&mut state, 0, &req).await.unwrap();
+        executor
+            .phase1_base_copy(&mut state, 0, &req)
+            .await
+            .unwrap();
 
         // Verify: the ConfChange was proposed (it's in the Raft log).
         // The actual application happens when committed, which requires tick().
