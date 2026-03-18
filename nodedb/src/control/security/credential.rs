@@ -34,6 +34,8 @@ pub struct UserRecord {
     pub roles: Vec<Role>,
     pub is_superuser: bool,
     pub is_active: bool,
+    /// True if this is a service account (no password, API key auth only).
+    pub is_service_account: bool,
 }
 
 impl UserRecord {
@@ -48,6 +50,7 @@ impl UserRecord {
             roles: self.roles.iter().map(|r| r.to_string()).collect(),
             is_superuser: self.is_superuser,
             is_active: self.is_active,
+            is_service_account: self.is_service_account,
         }
     }
 
@@ -66,6 +69,7 @@ impl UserRecord {
             scram_salted_password: s.scram_salted_password,
             is_superuser: s.is_superuser,
             is_active: s.is_active,
+            is_service_account: s.is_service_account,
             roles,
         }
     }
@@ -305,6 +309,7 @@ impl CredentialStore {
                 roles: vec![Role::Superuser],
                 is_superuser: true,
                 is_active: true,
+                is_service_account: false,
             };
             self.persist_user(&record)?;
             users.insert(username.to_string(), record);
@@ -344,10 +349,46 @@ impl CredentialStore {
             roles,
             is_superuser,
             is_active: true,
+            is_service_account: false,
         };
 
         self.persist_user(&record)?;
         users.insert(username.to_string(), record);
+        Ok(user_id)
+    }
+
+    /// Create a service account. No password — can only authenticate via API keys.
+    /// Returns the user_id.
+    pub fn create_service_account(
+        &self,
+        name: &str,
+        tenant_id: TenantId,
+        roles: Vec<Role>,
+    ) -> crate::Result<u64> {
+        let mut users = write_lock(&self.users)?;
+        if users.contains_key(name) {
+            return Err(crate::Error::BadRequest {
+                detail: format!("user or service account '{name}' already exists"),
+            });
+        }
+
+        let user_id = self.alloc_user_id()?;
+        let is_superuser = roles.contains(&Role::Superuser);
+        let record = UserRecord {
+            user_id,
+            username: name.to_string(),
+            tenant_id,
+            password_hash: String::new(), // No password.
+            scram_salt: Vec::new(),
+            scram_salted_password: Vec::new(),
+            roles,
+            is_superuser,
+            is_active: true,
+            is_service_account: true,
+        };
+
+        self.persist_user(&record)?;
+        users.insert(name.to_string(), record);
         Ok(user_id)
     }
 
@@ -358,11 +399,12 @@ impl CredentialStore {
     }
 
     /// Get the SCRAM salt and salted password for pgwire SCRAM auth.
+    /// Returns None for service accounts (they can't login via pgwire).
     pub fn get_scram_credentials(&self, username: &str) -> Option<(Vec<u8>, Vec<u8>)> {
         let users = read_lock(&self.users).ok()?;
         users
             .get(username)
-            .filter(|u| u.is_active)
+            .filter(|u| u.is_active && !u.is_service_account)
             .map(|u| (u.scram_salt.clone(), u.scram_salted_password.clone()))
     }
 

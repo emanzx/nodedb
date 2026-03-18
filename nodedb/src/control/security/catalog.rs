@@ -49,6 +49,9 @@ pub struct StoredUser {
     pub roles: Vec<String>,
     pub is_superuser: bool,
     pub is_active: bool,
+    /// True if this is a service account (no password, API key auth only).
+    #[serde(default)]
+    pub is_service_account: bool,
 }
 
 /// Serializable API key record for redb storage.
@@ -68,6 +71,10 @@ pub struct StoredApiKey {
     pub is_revoked: bool,
     /// Unix timestamp (seconds) when the key was created.
     pub created_at: u64,
+    /// Permission scope restriction. Empty = inherit all user permissions.
+    /// Format: ["read:collection_name", "write:collection_name", ...]
+    #[serde(default)]
+    pub scope: Vec<String>,
 }
 
 /// Serializable audit entry for redb storage.
@@ -79,6 +86,9 @@ pub struct StoredAuditEntry {
     pub tenant_id: Option<u32>,
     pub source: String,
     pub detail: String,
+    /// SHA-256 hash of the previous entry (hex). Empty for first entry.
+    #[serde(default)]
+    pub prev_hash: String,
 }
 
 /// Serializable custom role for redb storage.
@@ -606,6 +616,7 @@ mod tests {
             roles: vec!["readwrite".into()],
             is_superuser: false,
             is_active: true,
+            is_service_account: false,
         };
 
         catalog.put_user(&user).unwrap();
@@ -631,6 +642,7 @@ mod tests {
             roles: vec![],
             is_superuser: false,
             is_active: true,
+            is_service_account: false,
         };
 
         catalog.put_user(&user).unwrap();
@@ -674,6 +686,7 @@ mod tests {
                     roles: vec!["readonly".into(), "monitor".into()],
                     is_superuser: false,
                     is_active: true,
+                    is_service_account: false,
                 })
                 .unwrap();
         }

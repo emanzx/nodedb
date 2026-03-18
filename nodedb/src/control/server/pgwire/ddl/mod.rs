@@ -4,6 +4,7 @@ pub mod grant;
 pub mod inspect;
 pub mod role;
 pub mod router;
+pub mod service_account;
 pub mod tenant;
 pub mod user;
 

@@ -27,6 +27,18 @@ pub fn dispatch(
         return Some(super::user::drop_user(state, identity, &parts));
     }
 
+    // Service accounts.
+    if upper.starts_with("CREATE SERVICE ACCOUNT ") {
+        return Some(super::service_account::create_service_account(
+            state, identity, &parts,
+        ));
+    }
+    if upper.starts_with("DROP SERVICE ACCOUNT ") {
+        return Some(super::service_account::drop_service_account(
+            state, identity, &parts,
+        ));
+    }
+
     // Tenant management.
     if upper.starts_with("CREATE TENANT ") {
         return Some(super::tenant::create_tenant(state, identity, &parts));
