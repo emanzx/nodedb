@@ -153,6 +153,36 @@ impl HnswIndex {
         self.nodes.get(id as usize).map(|n| n.vector.as_slice())
     }
 
+    /// Access the index parameters.
+    pub fn params(&self) -> &HnswParams {
+        &self.params
+    }
+
+    /// Current entry point node ID.
+    pub fn entry_point(&self) -> Option<u32> {
+        self.entry_point
+    }
+
+    /// Highest layer in the graph.
+    pub fn max_layer(&self) -> usize {
+        self.max_layer
+    }
+
+    /// Current RNG state (for snapshot reproducibility).
+    pub fn rng_state(&self) -> u64 {
+        self.rng.0
+    }
+
+    /// Export all vectors for snapshot transfer.
+    pub fn export_vectors(&self) -> Vec<Vec<f32>> {
+        self.nodes.iter().map(|n| n.vector.clone()).collect()
+    }
+
+    /// Export all neighbor lists for snapshot transfer.
+    pub fn export_neighbors(&self) -> Vec<Vec<Vec<u32>>> {
+        self.nodes.iter().map(|n| n.neighbors.clone()).collect()
+    }
+
     /// Assign a random layer for a new node using the exponential distribution.
     /// layer = floor(-ln(uniform()) * m_L) where m_L = 1 / ln(M).
     pub(super) fn random_layer(&mut self) -> usize {

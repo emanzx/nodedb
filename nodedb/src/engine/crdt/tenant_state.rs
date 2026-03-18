@@ -32,6 +32,16 @@ impl TenantCrdtEngine {
         }
     }
 
+    /// Get the peer ID for this CRDT engine.
+    pub fn peer_id(&self) -> u64 {
+        self.state.peer_id()
+    }
+
+    /// Export the full CRDT state as binary bytes (for snapshot transfer).
+    pub fn export_snapshot_bytes(&self) -> Vec<u8> {
+        self.state.export_snapshot()
+    }
+
     /// Read a document's CRDT state, returning the raw snapshot bytes.
     pub fn read_snapshot(&self, collection: &str, row_id: &str) -> Option<Vec<u8>> {
         if self.state.row_exists(collection, row_id) {

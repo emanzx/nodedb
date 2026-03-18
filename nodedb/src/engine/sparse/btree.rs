@@ -236,6 +236,80 @@ impl SparseEngine {
     pub fn db(&self) -> &Arc<Database> {
         &self.db
     }
+
+    /// Export all documents as key-value pairs (for snapshot transfer).
+    pub fn export_documents(&self) -> crate::Result<Vec<(String, Vec<u8>)>> {
+        let txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
+        let table = txn
+            .open_table(DOCUMENTS)
+            .map_err(|e| redb_err("open docs", e))?;
+        let mut pairs = Vec::new();
+        let iter = table
+            .range::<&str>(..)
+            .map_err(|e| redb_err("iter docs", e))?;
+        for entry in iter {
+            let entry = entry.map_err(|e| redb_err("read doc entry", e))?;
+            pairs.push((entry.0.value().to_string(), entry.1.value().to_vec()));
+        }
+        Ok(pairs)
+    }
+
+    /// Export all index entries as key-value pairs (for snapshot transfer).
+    pub fn export_indexes(&self) -> crate::Result<Vec<(String, Vec<u8>)>> {
+        let txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
+        let table = txn
+            .open_table(INDEXES)
+            .map_err(|e| redb_err("open indexes", e))?;
+        let mut pairs = Vec::new();
+        let iter = table
+            .range::<&str>(..)
+            .map_err(|e| redb_err("iter indexes", e))?;
+        for entry in iter {
+            let entry = entry.map_err(|e| redb_err("read index entry", e))?;
+            pairs.push((entry.0.value().to_string(), entry.1.value().to_vec()));
+        }
+        Ok(pairs)
+    }
+
+    /// Import documents from a snapshot (overwrites existing data).
+    pub fn import_documents(&self, pairs: &[(String, Vec<u8>)]) -> crate::Result<()> {
+        let txn = self
+            .db
+            .begin_write()
+            .map_err(|e| redb_err("write txn", e))?;
+        {
+            let mut table = txn
+                .open_table(DOCUMENTS)
+                .map_err(|e| redb_err("open docs", e))?;
+            for (key, value) in pairs {
+                table
+                    .insert(key.as_str(), value.as_slice())
+                    .map_err(|e| redb_err("insert doc", e))?;
+            }
+        }
+        txn.commit().map_err(|e| redb_err("commit", e))?;
+        Ok(())
+    }
+
+    /// Import index entries from a snapshot.
+    pub fn import_indexes(&self, pairs: &[(String, Vec<u8>)]) -> crate::Result<()> {
+        let txn = self
+            .db
+            .begin_write()
+            .map_err(|e| redb_err("write txn", e))?;
+        {
+            let mut table = txn
+                .open_table(INDEXES)
+                .map_err(|e| redb_err("open indexes", e))?;
+            for (key, value) in pairs {
+                table
+                    .insert(key.as_str(), value.as_slice())
+                    .map_err(|e| redb_err("insert idx", e))?;
+            }
+        }
+        txn.commit().map_err(|e| redb_err("commit", e))?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
