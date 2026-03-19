@@ -77,8 +77,8 @@ pub struct WalWriter {
     /// Configuration.
     config: WalWriterConfig,
 
-    /// Optional encryption key for payload encryption.
-    encryption_key: Option<crate::crypto::WalEncryptionKey>,
+    /// Optional key ring for payload encryption (supports key rotation).
+    encryption_ring: Option<crate::crypto::KeyRing>,
 }
 
 impl WalWriter {
@@ -111,14 +111,24 @@ impl WalWriter {
             next_lsn: AtomicU64::new(next_lsn),
             sealed: false,
             config,
-            encryption_key: None,
+            encryption_ring: None,
         })
     }
 
     /// Set the encryption key. When set, all subsequent records will have
     /// their payloads encrypted with AES-256-GCM.
     pub fn set_encryption_key(&mut self, key: crate::crypto::WalEncryptionKey) {
-        self.encryption_key = Some(key);
+        self.encryption_ring = Some(crate::crypto::KeyRing::new(key));
+    }
+
+    /// Set the key ring directly (for key rotation with dual-key reads).
+    pub fn set_encryption_ring(&mut self, ring: crate::crypto::KeyRing) {
+        self.encryption_ring = Some(ring);
+    }
+
+    /// Access the key ring (for decryption during replay).
+    pub fn encryption_ring(&self) -> Option<&crate::crypto::KeyRing> {
+        self.encryption_ring.as_ref()
     }
 
     /// Open a WAL writer with O_DIRECT disabled (for testing on tmpfs, etc.).
@@ -154,7 +164,7 @@ impl WalWriter {
             tenant_id,
             vshard_id,
             payload.to_vec(),
-            self.encryption_key.as_ref(),
+            self.encryption_ring.as_ref().map(|r| r.current()),
         )?;
 
         let header_bytes = record.header.to_bytes();

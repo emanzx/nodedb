@@ -266,6 +266,28 @@ impl WalRecord {
         key.decrypt(self.header.lsn, &header_bytes, &self.payload)
     }
 
+    /// Decrypt the payload using a key ring (supports dual-key rotation).
+    ///
+    /// Tries the current key first, then falls back to the previous key.
+    /// Returns the plaintext payload. If not encrypted, returns the payload as-is.
+    pub fn decrypt_payload_ring(&self, ring: Option<&crate::crypto::KeyRing>) -> Result<Vec<u8>> {
+        if !self.is_encrypted() {
+            return Ok(self.payload.clone());
+        }
+
+        let ring = ring.ok_or_else(|| WalError::EncryptionError {
+            detail: "record is encrypted but no decryption key ring provided".into(),
+        })?;
+
+        let mut aad_header = self.header;
+        aad_header.record_type &= !ENCRYPTED_FLAG;
+        aad_header.payload_len = 0;
+        aad_header.crc32c = 0;
+        let header_bytes = aad_header.to_bytes();
+
+        ring.decrypt(self.header.lsn, &header_bytes, &self.payload)
+    }
+
     /// Whether this record's payload is encrypted.
     pub fn is_encrypted(&self) -> bool {
         self.header.record_type & ENCRYPTED_FLAG != 0
