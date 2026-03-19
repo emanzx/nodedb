@@ -74,6 +74,9 @@ pub enum PhysicalPlan {
         collection: String,
         query_vector: Arc<[f32]>,
         top_k: usize,
+        /// Optional search beam width override. If 0, uses default `4 * top_k`.
+        /// Higher values improve recall at the cost of latency.
+        ef_search: usize,
         /// Pre-computed bitmap of eligible document IDs (from filter evaluation).
         filter_bitmap: Option<Arc<[u8]>>,
     },
@@ -127,6 +130,15 @@ pub enum PhysicalPlan {
     /// Soft-delete a vector by internal node ID.
     VectorDelete { collection: String, vector_id: u32 },
 
+    /// Set HNSW index parameters for a collection. Must be called before
+    /// the first insert — parameters cannot be changed after index creation.
+    SetVectorParams {
+        collection: String,
+        m: usize,
+        ef_construction: usize,
+        metric: String,
+    },
+
     /// Batch insert documents into the sparse engine in a single redb transaction.
     DocumentBatchInsert {
         collection: String,
@@ -174,6 +186,8 @@ pub enum PhysicalPlan {
         /// `[{"field": "age", "op": "gt", "value": 25}, {"field": "city", "op": "eq", "value": "NYC"}]`
         /// Empty = no filter (return all documents up to limit).
         filters: Vec<u8>,
+        /// If true, deduplicate result rows by content (SELECT DISTINCT).
+        distinct: bool,
     },
 
     /// Hash join: inner join two collections on matching fields.
@@ -202,8 +216,12 @@ pub enum PhysicalPlan {
         group_by: Vec<String>,
         /// Aggregate operations: `[("count", "*"), ("sum", "price"), ("avg", "age")]`
         aggregates: Vec<(String, String)>,
-        /// Filter predicates (same format as DocumentScan).
+        /// Filter predicates (same format as DocumentScan) — applied pre-aggregation.
         filters: Vec<u8>,
+        /// HAVING predicates — applied post-aggregation on computed results.
+        /// Format: `[{"field": "count_all", "op": "gt", "value": 10}]`
+        /// Field names use the aggregate result column names (e.g., `count_all`, `sum_price`).
+        having: Vec<u8>,
         /// Maximum groups to return.
         limit: usize,
     },
