@@ -165,6 +165,9 @@ pub fn dispatch(
             "audit log cannot be manually truncated. Entries are pruned automatically by the retention policy (audit_retention_days in config).",
         )));
     }
+    if upper.starts_with("EXPORT AUDIT") {
+        return Some(super::inspect::export_audit_log(state, identity, &parts));
+    }
     if upper.starts_with("SHOW AUDIT LOG") || upper.starts_with("SHOW AUDIT_LOG") {
         return Some(super::inspect::show_audit_log(state, identity, &parts));
     }
