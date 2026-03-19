@@ -1,10 +1,15 @@
-//! Native protocol authentication handshake.
+//! Authentication helpers shared across protocol handlers.
 //!
-//! The first frame on a native protocol connection MUST be an auth request.
-//! Supported auth methods:
+//! **Native protocol** (JSON frames): the first frame MUST be an auth request.
+//! Supported methods:
 //! - `{"op": "auth", "method": "api_key", "token": "ndb_..."}` — API key
 //! - `{"op": "auth", "method": "password", "username": "...", "password": "..."}` — cleartext
 //! - `{"op": "auth", "method": "trust"}` — trust mode (only if configured)
+//!
+//! **mTLS certificate auth**: resolved during TLS handshake before the first
+//! frame. The certificate's Common Name (CN) is mapped to a username via
+//! [`resolve_certificate_identity()`]. This is called from the connection
+//! listener, not from the JSON `authenticate()` dispatcher.
 //!
 //! On success, returns `{"status": "ok", "username": "...", "tenant_id": ...}`.
 //! On failure, returns `{"status": "error", "error": "..."}` and closes connection.
@@ -14,6 +19,42 @@ use crate::control::security::audit::AuditEvent;
 use crate::control::security::identity::{AuthMethod, AuthenticatedIdentity, Role};
 use crate::control::state::SharedState;
 use crate::types::TenantId;
+
+/// Resolve an identity from a TLS client certificate CN.
+///
+/// Maps the certificate Common Name to a username in the credential store.
+/// Used when `auth.mode = "certificate"` and client presents a TLS cert.
+pub fn resolve_certificate_identity(
+    state: &SharedState,
+    cn: &str,
+    peer_addr: &str,
+) -> crate::Result<AuthenticatedIdentity> {
+    // Map cert CN to username (direct mapping: CN = username).
+    let identity = state
+        .credentials
+        .to_identity(cn, AuthMethod::Certificate)
+        .ok_or_else(|| {
+            state.audit_record(
+                AuditEvent::AuthFailure,
+                None,
+                peer_addr,
+                &format!("mTLS auth failed: no user for cert CN '{cn}'"),
+            );
+            crate::Error::RejectedAuthz {
+                tenant_id: TenantId::new(0),
+                resource: format!("no user mapped to certificate CN '{cn}'"),
+            }
+        })?;
+
+    state.audit_record(
+        AuditEvent::AuthSuccess,
+        Some(identity.tenant_id),
+        peer_addr,
+        &format!("mTLS cert auth: {cn}"),
+    );
+
+    Ok(identity)
+}
 
 /// Verify an API key token and build an authenticated identity.
 ///
