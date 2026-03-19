@@ -24,12 +24,13 @@ impl QueryContext {
 
         let session = SessionContext::new_with_config(config);
 
-        // Register all NodeDB JSON UDFs.
-        use super::udf::{DocArrayContains, DocExists, DocGet};
+        // Register all NodeDB UDFs.
+        use super::udf::{DocArrayContains, DocExists, DocGet, VectorDistance};
         use datafusion::logical_expr::ScalarUDF;
         session.register_udf(ScalarUDF::new_from_impl(DocGet::new()));
         session.register_udf(ScalarUDF::new_from_impl(DocExists::new()));
         session.register_udf(ScalarUDF::new_from_impl(DocArrayContains::new()));
+        session.register_udf(ScalarUDF::new_from_impl(VectorDistance::new()));
 
         Self {
             session,

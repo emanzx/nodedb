@@ -9,6 +9,7 @@ use super::extract::{
     collect_eq_ids, expr_to_json_value, expr_to_scan_filters, expr_to_string, expr_to_usize,
     extract_update_assignments,
 };
+use super::search::{extract_table_name, try_extract_vector_search};
 
 /// Converts DataFusion logical plans into NodeDB physical tasks.
 ///
@@ -18,6 +19,7 @@ use super::extract::{
 /// can execute.
 ///
 /// Lives on the Control Plane (Send + Sync).
+#[derive(Default)]
 pub struct PlanConverter;
 
 impl PlanConverter {
@@ -165,6 +167,26 @@ impl PlanConverter {
             LogicalPlan::SubqueryAlias(alias) => self.convert(&alias.input, tenant_id),
 
             LogicalPlan::Sort(sort) => {
+                // Check for vector_distance() function in sort expression.
+                // Pattern: ORDER BY vector_distance(embedding, ARRAY[...]) LIMIT k
+                {
+                    if let Some((collection, query_vector, top_k)) =
+                        try_extract_vector_search(&sort.expr, &sort.input, sort.fetch)?
+                    {
+                        let vshard = VShardId::from_collection(&collection);
+                        return Ok(vec![PhysicalTask {
+                            tenant_id,
+                            vshard_id: vshard,
+                            plan: PhysicalPlan::VectorSearch {
+                                collection,
+                                query_vector: std::sync::Arc::from(query_vector.as_slice()),
+                                top_k,
+                                filter_bitmap: None,
+                            },
+                        }]);
+                    }
+                }
+
                 let mut tasks = self.convert(&sort.input, tenant_id)?;
 
                 // Extract sort field and direction from the first sort expression.
@@ -196,6 +218,67 @@ impl PlanConverter {
                 }
 
                 Ok(tasks)
+            }
+
+            LogicalPlan::Aggregate(agg) => {
+                // Extract collection from input (TableScan).
+                let collection =
+                    extract_table_name(&agg.input).ok_or_else(|| crate::Error::PlanError {
+                        detail: "GROUP BY requires a table scan input".into(),
+                    })?;
+                let vshard = VShardId::from_collection(&collection);
+
+                // Extract GROUP BY field (first group expression).
+                let group_by = agg
+                    .group_expr
+                    .first()
+                    .and_then(|e| {
+                        if let Expr::Column(col) = e {
+                            Some(col.name.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_default();
+
+                // Extract aggregate functions.
+                let mut aggregates = Vec::new();
+                for expr in &agg.aggr_expr {
+                    if let Expr::AggregateFunction(func) = expr {
+                        let op = func.func.name().to_lowercase();
+                        let field = func
+                            .args
+                            .first()
+                            .map(|a| match a {
+                                Expr::Column(col) => col.name.clone(),
+                                Expr::Literal(_) => "*".into(),
+                                Expr::Wildcard { .. } => "*".into(),
+                                _ => format!("{a}"),
+                            })
+                            .unwrap_or_else(|| "*".into());
+                        aggregates.push((op, field));
+                    }
+                }
+
+                // Extract filters from input if it's a Filter plan.
+                let filter_bytes = if let LogicalPlan::Filter(filter) = agg.input.as_ref() {
+                    let filters = expr_to_scan_filters(&filter.predicate);
+                    serde_json::to_vec(&filters).unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
+
+                Ok(vec![PhysicalTask {
+                    tenant_id,
+                    vshard_id: vshard,
+                    plan: PhysicalPlan::Aggregate {
+                        collection,
+                        group_by,
+                        aggregates,
+                        filters: filter_bytes,
+                        limit: 10000,
+                    },
+                }])
             }
 
             LogicalPlan::Dml(dml) => self.convert_dml(dml, tenant_id),
@@ -415,13 +498,6 @@ impl PlanConverter {
         Ok(None)
     }
 }
-
-impl Default for PlanConverter {
-    fn default() -> Self {
-        Self
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
