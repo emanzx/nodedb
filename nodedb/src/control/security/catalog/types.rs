@@ -32,6 +32,10 @@ pub(super) const PERMISSIONS: TableDefinition<&str, &[u8]> =
 /// Table: "{object_type}:{tenant_id}:{object_name}" -> owner username.
 pub(super) const OWNERS: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.owners");
 
+/// Table: "{tenant_id}:{name}" -> MessagePack-serialized collection metadata.
+pub(super) const COLLECTIONS: TableDefinition<&str, &[u8]> =
+    TableDefinition::new("_system.collections");
+
 /// Table: metadata key -> value bytes (counters, config).
 pub(super) const METADATA: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.metadata");
 
@@ -154,6 +158,20 @@ pub struct StoredOwner {
 }
 
 /// Persistent system catalog backed by redb.
+/// Serializable collection metadata for redb storage.
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct StoredCollection {
+    pub tenant_id: u32,
+    pub name: String,
+    pub owner: String,
+    pub created_at: u64,
+    /// Optional field type declarations. Empty = schemaless.
+    /// Format: [("field_name", "type_name"), ...]
+    #[serde(default)]
+    pub fields: Vec<(String, String)>,
+    pub is_active: bool,
+}
+
 pub struct SystemCatalog {
     pub(super) db: Database,
 }
@@ -191,6 +209,9 @@ impl SystemCatalog {
             let _ = write_txn
                 .open_table(AUDIT_LOG)
                 .map_err(|e| catalog_err("init audit_log table", e))?;
+            let _ = write_txn
+                .open_table(COLLECTIONS)
+                .map_err(|e| catalog_err("init collections table", e))?;
             let _ = write_txn
                 .open_table(METADATA)
                 .map_err(|e| catalog_err("init metadata table", e))?;
