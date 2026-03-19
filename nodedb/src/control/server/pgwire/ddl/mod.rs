@@ -1,5 +1,6 @@
 pub mod apikey;
 pub mod backup;
+pub mod bulk;
 pub mod cluster;
 pub mod collection;
 pub mod crdt_ops;

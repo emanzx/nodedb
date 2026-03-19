@@ -189,5 +189,10 @@ pub fn dispatch(
         return Some(super::crdt_ops::crdt_apply(state, identity, sql));
     }
 
+    // COPY FROM file.
+    if upper.starts_with("COPY ") && upper.contains(" FROM ") {
+        return Some(super::bulk::copy_from(state, identity, &parts));
+    }
+
     None
 }
