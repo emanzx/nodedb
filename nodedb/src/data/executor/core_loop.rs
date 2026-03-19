@@ -99,6 +99,119 @@ impl CoreLoop {
         self.core_id
     }
 
+    /// Replay WAL vector records to rebuild in-memory HNSW indexes after crash.
+    ///
+    /// Called once during startup, after `open()` but before the event loop.
+    /// Processes `VectorPut` and `VectorDelete` records, ignoring records
+    /// for other vShards (each core only replays records routed to it).
+    ///
+    /// Records are replayed in LSN order (WAL guarantees this). For batch
+    /// inserts, the payload contains multiple vectors in a single record.
+    pub fn replay_vector_wal(&mut self, records: &[nodedb_wal::WalRecord], num_cores: usize) {
+        use crate::engine::vector::hnsw::{HnswIndex, HnswParams};
+        use nodedb_wal::record::RecordType;
+
+        let mut inserted = 0usize;
+        let mut deleted = 0usize;
+        let mut skipped = 0usize;
+
+        for record in records {
+            let logical_type = record.logical_record_type();
+
+            // Only process vector records.
+            let is_vector_put = RecordType::from_raw(logical_type) == Some(RecordType::VectorPut);
+            let is_vector_delete =
+                RecordType::from_raw(logical_type) == Some(RecordType::VectorDelete);
+            if !is_vector_put && !is_vector_delete {
+                continue;
+            }
+
+            // Route check: only replay records assigned to this core.
+            // vShard → core mapping is round-robin (same as Dispatcher).
+            let vshard_id = record.header.vshard_id as usize;
+            let target_core = if num_cores > 0 {
+                vshard_id % num_cores
+            } else {
+                0
+            };
+            if target_core != self.core_id {
+                skipped += 1;
+                continue;
+            }
+
+            let tenant_id = record.header.tenant_id;
+
+            if is_vector_put {
+                // Payload is MessagePack: (collection, vector, dim) or (collection, vectors, dim)
+                // Try single vector first, then batch.
+                if let Ok((collection, vector, dim)) =
+                    rmp_serde::from_slice::<(String, Vec<f32>, usize)>(&record.payload)
+                {
+                    if vector.len() != dim {
+                        tracing::warn!(
+                            core = self.core_id,
+                            %collection,
+                            expected = dim,
+                            actual = vector.len(),
+                            "skipping WAL vector record: dimension mismatch"
+                        );
+                        continue;
+                    }
+                    let index_key = CoreLoop::vector_index_key(tenant_id, &collection);
+                    let index = self.vector_indexes.entry(index_key).or_insert_with(|| {
+                        HnswIndex::with_seed(dim, HnswParams::default(), self.core_id as u64 + 1)
+                    });
+                    if index.dim() != dim {
+                        tracing::warn!(
+                            core = self.core_id,
+                            %collection,
+                            index_dim = index.dim(),
+                            record_dim = dim,
+                            "skipping WAL vector record: index dimension mismatch"
+                        );
+                        continue;
+                    }
+                    index.insert(vector);
+                    inserted += 1;
+                } else if let Ok((collection, vectors, dim)) =
+                    rmp_serde::from_slice::<(String, Vec<Vec<f32>>, usize)>(&record.payload)
+                {
+                    let index_key = CoreLoop::vector_index_key(tenant_id, &collection);
+                    let index = self.vector_indexes.entry(index_key).or_insert_with(|| {
+                        HnswIndex::with_seed(dim, HnswParams::default(), self.core_id as u64 + 1)
+                    });
+                    for vector in vectors {
+                        index.insert(vector);
+                    }
+                    inserted += 1;
+                }
+                // If neither format matches, skip silently (forward compat).
+            } else if is_vector_delete {
+                // Payload is MessagePack: (collection, vector_id)
+                if let Ok((collection, vector_id)) =
+                    rmp_serde::from_slice::<(String, u32)>(&record.payload)
+                {
+                    let index_key = CoreLoop::vector_index_key(tenant_id, &collection);
+                    if let Some(index) = self.vector_indexes.get_mut(&index_key) {
+                        index.delete(vector_id);
+                        deleted += 1;
+                    }
+                }
+            }
+        }
+
+        if inserted > 0 || deleted > 0 {
+            tracing::info!(
+                core = self.core_id,
+                inserted,
+                deleted,
+                skipped,
+                indexes = self.vector_indexes.len(),
+                "WAL vector replay complete"
+            );
+        }
+    }
+
     /// Pause writes to a vShard (during Phase 3 migration cutover).
     ///
     /// While paused, write operations (PointPut, CrdtApply, etc.) for this

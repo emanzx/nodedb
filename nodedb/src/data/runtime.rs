@@ -109,11 +109,16 @@ impl CoreHealthWatchdog {
 ///
 /// Returns the `JoinHandle` and the `EventFdNotifier` that the Control Plane
 /// uses to wake this core after pushing a request into the SPSC queue.
+///
+/// If `wal_records` is non-empty, the core replays vector WAL records
+/// during startup (before entering the event loop) to rebuild HNSW indexes.
 pub fn spawn_core(
     core_id: usize,
     request_rx: Consumer<BridgeRequest>,
     response_tx: Producer<BridgeResponse>,
     data_dir: &Path,
+    wal_records: Arc<[nodedb_wal::WalRecord]>,
+    num_cores: usize,
 ) -> std::io::Result<(JoinHandle<()>, EventFdNotifier)> {
     let data_dir = data_dir.to_path_buf();
 
@@ -133,6 +138,11 @@ pub fn spawn_core(
             // 2. Open engines.
             let mut core = CoreLoop::open(core_id, request_rx, response_tx, &data_dir)
                 .expect("failed to open CoreLoop engines");
+
+            // 3. Replay WAL vector records to rebuild HNSW indexes.
+            if !wal_records.is_empty() {
+                core.replay_vector_wal(&wal_records, num_cores);
+            }
 
             info!(core_id, "data plane core started (eventfd-driven)");
 

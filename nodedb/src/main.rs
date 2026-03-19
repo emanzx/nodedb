@@ -90,12 +90,26 @@ async fn main() -> anyhow::Result<()> {
     };
     info!(next_lsn = %wal.next_lsn(), "WAL ready");
 
+    // Replay WAL records for crash recovery (shared across all cores).
+    let wal_records: Arc<[nodedb_wal::WalRecord]> = match wal.replay() {
+        Ok(records) => {
+            if !records.is_empty() {
+                info!(records = records.len(), "WAL records loaded for replay");
+            }
+            Arc::from(records.into_boxed_slice())
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "WAL replay failed, starting with empty state");
+            Arc::from(Vec::new().into_boxed_slice())
+        }
+    };
+
     // Create SPSC bridge: Dispatcher (Control Plane) + CoreChannelDataSide (Data Plane).
     let num_cores = config.data_plane_cores;
     let (mut dispatcher, data_sides) = Dispatcher::new(num_cores, 1024);
 
     // Start Data Plane cores on dedicated OS threads (thread-per-core).
-    // Each core gets: jemalloc arena pinning + eventfd-driven wake.
+    // Each core gets: jemalloc arena pinning + eventfd-driven wake + WAL replay.
     let mut core_handles = Vec::with_capacity(num_cores);
     let mut notifiers = Vec::with_capacity(num_cores);
     for (core_id, data_side) in data_sides.into_iter().enumerate() {
@@ -104,6 +118,8 @@ async fn main() -> anyhow::Result<()> {
             data_side.request_rx,
             data_side.response_tx,
             &config.data_dir,
+            Arc::clone(&wal_records),
+            num_cores,
         )?;
         core_handles.push(handle);
         notifiers.push((core_id, notifier));
