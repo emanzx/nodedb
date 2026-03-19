@@ -101,6 +101,83 @@ impl WalEncryptionKey {
     }
 }
 
+/// Key ring supporting dual-key reads for seamless key rotation.
+///
+/// During rotation: new writes use the current key, reads try current
+/// then fall back to previous. Once all old data is re-encrypted,
+/// the previous key is removed.
+#[derive(Clone)]
+pub struct KeyRing {
+    current: WalEncryptionKey,
+    previous: Option<WalEncryptionKey>,
+}
+
+impl KeyRing {
+    /// Create a key ring with only the current key.
+    pub fn new(current: WalEncryptionKey) -> Self {
+        Self {
+            current,
+            previous: None,
+        }
+    }
+
+    /// Create a key ring with current + previous key (for rotation).
+    pub fn with_previous(current: WalEncryptionKey, previous: WalEncryptionKey) -> Self {
+        Self {
+            current,
+            previous: Some(previous),
+        }
+    }
+
+    /// Encrypt using the current key.
+    pub fn encrypt(
+        &self,
+        lsn: u64,
+        header_bytes: &[u8; HEADER_SIZE],
+        plaintext: &[u8],
+    ) -> Result<Vec<u8>> {
+        self.current.encrypt(lsn, header_bytes, plaintext)
+    }
+
+    /// Decrypt: try current key first, then previous (if set).
+    ///
+    /// This enables seamless key rotation — old data encrypted with the
+    /// previous key can still be read while new data uses the current key.
+    pub fn decrypt(
+        &self,
+        lsn: u64,
+        header_bytes: &[u8; HEADER_SIZE],
+        ciphertext: &[u8],
+    ) -> Result<Vec<u8>> {
+        match self.current.decrypt(lsn, header_bytes, ciphertext) {
+            Ok(plaintext) => Ok(plaintext),
+            Err(_) if self.previous.is_some() => {
+                // Current key failed — try previous key.
+                self.previous
+                    .as_ref()
+                    .unwrap()
+                    .decrypt(lsn, header_bytes, ciphertext)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Get the current key (for encryption operations).
+    pub fn current(&self) -> &WalEncryptionKey {
+        &self.current
+    }
+
+    /// Whether a previous key is present (rotation in progress).
+    pub fn has_previous(&self) -> bool {
+        self.previous.is_some()
+    }
+
+    /// Remove the previous key (rotation complete).
+    pub fn clear_previous(&mut self) {
+        self.previous = None;
+    }
+}
+
 /// AES-256-GCM auth tag size in bytes.
 pub const AUTH_TAG_SIZE: usize = 16;
 
