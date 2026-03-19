@@ -66,11 +66,92 @@ impl ScanFilter {
                     false
                 }
             }
+            "like" => {
+                if let (Some(s), Some(pattern)) = (field_val.as_str(), self.value.as_str()) {
+                    sql_like_match(s, pattern, false)
+                } else {
+                    false
+                }
+            }
+            "not_like" => {
+                if let (Some(s), Some(pattern)) = (field_val.as_str(), self.value.as_str()) {
+                    !sql_like_match(s, pattern, false)
+                } else {
+                    false
+                }
+            }
+            "ilike" => {
+                if let (Some(s), Some(pattern)) = (field_val.as_str(), self.value.as_str()) {
+                    sql_like_match(s, pattern, true)
+                } else {
+                    false
+                }
+            }
+            "not_ilike" => {
+                if let (Some(s), Some(pattern)) = (field_val.as_str(), self.value.as_str()) {
+                    !sql_like_match(s, pattern, true)
+                } else {
+                    false
+                }
+            }
             "is_null" => field_val.is_null(),
             "is_not_null" => !field_val.is_null(),
             _ => false,
         }
     }
+}
+
+/// SQL LIKE pattern matching.
+///
+/// Supports the standard SQL wildcards:
+/// - `%` matches zero or more characters
+/// - `_` matches exactly one character
+///
+/// No escape character support yet (future: `LIKE 'a\%b' ESCAPE '\'`).
+///
+/// When `case_insensitive` is true, both the input and pattern are lowercased
+/// before matching (ILIKE behavior).
+fn sql_like_match(input: &str, pattern: &str, case_insensitive: bool) -> bool {
+    let (input, pattern) = if case_insensitive {
+        (input.to_lowercase(), pattern.to_lowercase())
+    } else {
+        (input.to_string(), pattern.to_string())
+    };
+
+    let input = input.as_bytes();
+    let pattern = pattern.as_bytes();
+
+    // DP-free two-pointer matching (same algorithm as `fnmatch` but for SQL LIKE).
+    // Tracks the last `%` position for backtracking.
+    let (mut i, mut j) = (0usize, 0usize);
+    let (mut star_j, mut star_i) = (usize::MAX, 0usize);
+
+    while i < input.len() {
+        if j < pattern.len() && (pattern[j] == b'_' || pattern[j] == input[i]) {
+            // Exact match or single-char wildcard.
+            i += 1;
+            j += 1;
+        } else if j < pattern.len() && pattern[j] == b'%' {
+            // Multi-char wildcard: remember position for backtracking.
+            star_j = j;
+            star_i = i;
+            j += 1;
+        } else if star_j != usize::MAX {
+            // Backtrack: advance the input position matched by the last `%`.
+            star_i += 1;
+            i = star_i;
+            j = star_j + 1;
+        } else {
+            return false;
+        }
+    }
+
+    // Consume trailing `%` wildcards in the pattern.
+    while j < pattern.len() && pattern[j] == b'%' {
+        j += 1;
+    }
+
+    j == pattern.len()
 }
 
 /// Compare two optional JSON values for sorting.

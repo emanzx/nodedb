@@ -6,6 +6,7 @@
 
 use datafusion::logical_expr::{LogicalPlan, Operator};
 use datafusion::prelude::*;
+use tracing::warn;
 
 /// Convert a DataFusion expression to scan filter predicates.
 ///
@@ -31,9 +32,11 @@ pub(super) fn expr_to_scan_filters(expr: &Expr) -> Vec<serde_json::Value> {
             let right_filters = expr_to_scan_filters(&binary.right);
 
             // If either side produced no filters (unsupported expression),
-            // we can't safely evaluate the OR — return empty to avoid
-            // silently dropping predicates (which would return too many rows).
+            // we can't safely evaluate the OR — both sides must be evaluable
+            // or we risk returning rows that should be excluded. Fall back to
+            // full scan (no filter) rather than partial evaluation.
             if left_filters.is_empty() || right_filters.is_empty() {
+                warn!("OR predicate has unsupported branch; falling back to unfiltered scan");
                 return Vec::new();
             }
 
@@ -70,6 +73,27 @@ pub(super) fn expr_to_scan_filters(expr: &Expr) -> Vec<serde_json::Value> {
                 "op": op_str,
                 "value": value,
             })]
+        }
+        Expr::Like(like) => {
+            // LIKE / ILIKE: extract field name and pattern.
+            // DataFusion represents LIKE as: Like { negated, expr, pattern, escape_char, case_insensitive }
+            if let Expr::Column(col) = &*like.expr {
+                let pattern = expr_to_json_value(&like.pattern);
+                let op = if like.case_insensitive {
+                    if like.negated { "not_ilike" } else { "ilike" }
+                } else if like.negated {
+                    "not_like"
+                } else {
+                    "like"
+                };
+                vec![serde_json::json!({
+                    "field": col.name,
+                    "op": op,
+                    "value": pattern,
+                })]
+            } else {
+                Vec::new()
+            }
         }
         Expr::IsNull(inner) => {
             if let Expr::Column(col) = inner.as_ref() {
