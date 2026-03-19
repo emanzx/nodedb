@@ -101,9 +101,27 @@ pub fn backup_tenant(
         (0, 0)
     };
 
-    // Serialize and write to file.
-    let bytes = rmp_serde::to_vec(&backup)
+    // Serialize backup.
+    let plaintext = rmp_serde::to_vec(&backup)
         .map_err(|e| sqlstate_error("XX000", &format!("backup serialization failed: {e}")))?;
+
+    // Encrypt if WAL encryption is configured (reuses same key).
+    let bytes = if let Some(key) = state.wal.encryption_key() {
+        // Use LSN 0 as nonce for backups (distinct from WAL records which use real LSNs).
+        // AAD = "backup" to bind ciphertext to backup context.
+        let mut aad = [0u8; nodedb_wal::record::HEADER_SIZE];
+        aad[..6].copy_from_slice(b"BACKUP");
+        let encrypted = key
+            .encrypt(0, &aad, &plaintext)
+            .map_err(|e| sqlstate_error("XX000", &format!("backup encryption failed: {e}")))?;
+        // Prepend magic bytes to identify encrypted backup.
+        let mut output = Vec::with_capacity(4 + encrypted.len());
+        output.extend_from_slice(b"NENC"); // NodeDB ENCrypted
+        output.extend_from_slice(&encrypted);
+        output
+    } else {
+        plaintext
+    };
 
     std::fs::write(&path, &bytes).map_err(|e| {
         sqlstate_error("XX000", &format!("failed to write backup to '{path}': {e}"))

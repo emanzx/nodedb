@@ -21,6 +21,8 @@ use crate::types::{Lsn, TenantId, VShardId};
 pub struct WalManager {
     writer: Mutex<WalWriter>,
     wal_path: PathBuf,
+    /// Encryption key (if configured). Kept separately for backup/restore access.
+    encryption_key: Option<nodedb_wal::crypto::WalEncryptionKey>,
 }
 
 impl WalManager {
@@ -32,13 +34,19 @@ impl WalManager {
     ) -> crate::Result<Self> {
         let key =
             nodedb_wal::crypto::WalEncryptionKey::from_file(key_path).map_err(crate::Error::Wal)?;
-        let mgr = Self::open(path, use_direct_io)?;
+        let mut mgr = Self::open(path, use_direct_io)?;
         {
             let mut writer = mgr.writer.lock().unwrap();
-            writer.set_encryption_key(key);
+            writer.set_encryption_key(key.clone());
         }
+        mgr.encryption_key = Some(key);
         info!(key_path = %key_path.display(), "WAL encryption enabled");
         Ok(mgr)
+    }
+
+    /// Get the encryption key (if configured). Used for backup encryption.
+    pub fn encryption_key(&self) -> Option<&nodedb_wal::crypto::WalEncryptionKey> {
+        self.encryption_key.as_ref()
     }
 
     /// Open or create a WAL at the given path.
@@ -64,6 +72,7 @@ impl WalManager {
         Ok(Self {
             writer: Mutex::new(writer),
             wal_path: path.to_path_buf(),
+            encryption_key: None,
         })
     }
 
