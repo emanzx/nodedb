@@ -5,25 +5,14 @@
 
 use tracing::{debug, warn};
 
-use nodedb_crdt::constraint::ConstraintSet;
-
 use crate::bridge::envelope::{ErrorCode, PhysicalPlan, Response};
-use crate::engine::crdt::tenant_state::TenantCrdtEngine;
 use crate::engine::vector::hnsw::{HnswIndex, HnswParams};
-use crate::types::TenantId;
 
 use super::core_loop::CoreLoop;
+use super::scan_filter::{ScanFilter, compare_json_values};
 use super::task::ExecutionTask;
 
 impl CoreLoop {
-    /// Get or create a CRDT engine for the given tenant.
-    pub(super) fn get_crdt_engine(&mut self, tenant_id: TenantId) -> &mut TenantCrdtEngine {
-        self.crdt_engines.entry(tenant_id).or_insert_with(|| {
-            debug!(core = self.core_id, %tenant_id, "creating CRDT engine for tenant");
-            TenantCrdtEngine::new(tenant_id, self.core_id as u64, ConstraintSet::new())
-        })
-    }
-
     /// Execute a physical plan. Dispatches to the appropriate engine.
     pub(super) fn execute(&mut self, task: &ExecutionTask) -> Response {
         let tid = task.request.tenant_id.as_u32();
@@ -215,6 +204,183 @@ impl CoreLoop {
                 debug!(core = self.core_id, %collection, %document_id, "point delete");
                 match self.sparse.delete(tid, collection, document_id) {
                     Ok(_) => self.response_ok(task),
+                    Err(e) => self.response_error(
+                        task,
+                        ErrorCode::Internal {
+                            detail: e.to_string(),
+                        },
+                    ),
+                }
+            }
+
+            PhysicalPlan::PointUpdate {
+                collection,
+                document_id,
+                updates,
+            } => {
+                debug!(core = self.core_id, %collection, %document_id, fields = updates.len(), "point update");
+                // Read-modify-write: get current doc, merge updates, put back.
+                match self.sparse.get(tid, collection, document_id) {
+                    Ok(Some(current_bytes)) => {
+                        // Parse current document as JSON.
+                        let mut doc: serde_json::Value =
+                            match serde_json::from_slice(&current_bytes) {
+                                Ok(v) => v,
+                                Err(e) => {
+                                    return self.response_error(
+                                        task,
+                                        ErrorCode::Internal {
+                                            detail: format!(
+                                                "failed to parse document for update: {e}"
+                                            ),
+                                        },
+                                    );
+                                }
+                            };
+
+                        // Apply field updates.
+                        if let Some(obj) = doc.as_object_mut() {
+                            for (field, value_bytes) in updates {
+                                let val: serde_json::Value =
+                                    match serde_json::from_slice(value_bytes) {
+                                        Ok(v) => v,
+                                        Err(_) => serde_json::Value::String(
+                                            String::from_utf8_lossy(value_bytes).into_owned(),
+                                        ),
+                                    };
+                                obj.insert(field.clone(), val);
+                            }
+                        }
+
+                        // Write back.
+                        match serde_json::to_vec(&doc) {
+                            Ok(updated_bytes) => {
+                                match self
+                                    .sparse
+                                    .put(tid, collection, document_id, &updated_bytes)
+                                {
+                                    Ok(()) => self.response_ok(task),
+                                    Err(e) => self.response_error(
+                                        task,
+                                        ErrorCode::Internal {
+                                            detail: e.to_string(),
+                                        },
+                                    ),
+                                }
+                            }
+                            Err(e) => self.response_error(
+                                task,
+                                ErrorCode::Internal {
+                                    detail: format!("failed to serialize updated document: {e}"),
+                                },
+                            ),
+                        }
+                    }
+                    Ok(None) => self.response_error(task, ErrorCode::NotFound),
+                    Err(e) => self.response_error(
+                        task,
+                        ErrorCode::Internal {
+                            detail: e.to_string(),
+                        },
+                    ),
+                }
+            }
+
+            PhysicalPlan::DocumentScan {
+                collection,
+                limit,
+                offset,
+                sort_field,
+                sort_asc,
+                filters,
+            } => {
+                debug!(
+                    core = self.core_id,
+                    %collection,
+                    limit,
+                    offset,
+                    sort = %sort_field,
+                    "document scan"
+                );
+
+                // Fetch extra documents to account for filtering + offset.
+                let fetch_limit = (*limit + *offset).saturating_mul(2).max(1000);
+                match self.sparse.scan_documents(tid, collection, fetch_limit) {
+                    Ok(docs) => {
+                        // Parse filters if present.
+                        let filter_predicates: Vec<ScanFilter> = if filters.is_empty() {
+                            Vec::new()
+                        } else {
+                            match serde_json::from_slice(filters) {
+                                Ok(f) => f,
+                                Err(e) => {
+                                    warn!(core = self.core_id, error = %e, "failed to parse scan filters");
+                                    return self.response_error(
+                                        task,
+                                        ErrorCode::Internal {
+                                            detail: format!("malformed scan filters: {e}"),
+                                        },
+                                    );
+                                }
+                            }
+                        };
+
+                        // Apply filters.
+                        let filtered: Vec<_> = if filter_predicates.is_empty() {
+                            docs
+                        } else {
+                            docs.into_iter()
+                                .filter(|(_, value)| {
+                                    let doc: serde_json::Value = match serde_json::from_slice(value)
+                                    {
+                                        Ok(v) => v,
+                                        Err(_) => return false,
+                                    };
+                                    filter_predicates.iter().all(|f| f.matches(&doc))
+                                })
+                                .collect()
+                        };
+
+                        // Sort if requested.
+                        let mut sorted = filtered;
+                        if !sort_field.is_empty() {
+                            sorted.sort_by(|(_, a_bytes), (_, b_bytes)| {
+                                let a_doc: serde_json::Value = serde_json::from_slice(a_bytes)
+                                    .unwrap_or(serde_json::Value::Null);
+                                let b_doc: serde_json::Value = serde_json::from_slice(b_bytes)
+                                    .unwrap_or(serde_json::Value::Null);
+                                let a_val = a_doc.get(sort_field.as_str());
+                                let b_val = b_doc.get(sort_field.as_str());
+                                let cmp = compare_json_values(a_val, b_val);
+                                if *sort_asc { cmp } else { cmp.reverse() }
+                            });
+                        }
+
+                        // Apply offset + limit.
+                        let result: Vec<_> = sorted
+                            .into_iter()
+                            .skip(*offset)
+                            .take(*limit)
+                            .map(|(doc_id, value)| {
+                                let data: serde_json::Value = serde_json::from_slice(&value)
+                                    .unwrap_or_else(|e| {
+                                        tracing::warn!(error = %e, "corrupted document bytes");
+                                        serde_json::Value::Null
+                                    });
+                                serde_json::json!({"id": doc_id, "data": data})
+                            })
+                            .collect();
+
+                        match serde_json::to_vec(&result) {
+                            Ok(payload) => self.response_with_payload(task, payload),
+                            Err(e) => self.response_error(
+                                task,
+                                ErrorCode::Internal {
+                                    detail: e.to_string(),
+                                },
+                            ),
+                        }
+                    }
                     Err(e) => self.response_error(
                         task,
                         ErrorCode::Internal {

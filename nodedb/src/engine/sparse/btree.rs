@@ -264,6 +264,45 @@ impl SparseEngine {
         })
     }
 
+    /// Scan documents in a collection (reads DOCUMENTS table, not INDEXES).
+    ///
+    /// Returns `(document_id, document_bytes)` pairs for all documents in the
+    /// collection, up to `limit`. Use for full table scans and post-scan filtering.
+    pub fn scan_documents(
+        &self,
+        tenant_id: u32,
+        collection: &str,
+        limit: usize,
+    ) -> crate::Result<Vec<(String, Vec<u8>)>> {
+        let prefix = format!("{tenant_id}:{collection}:");
+        let end = format!("{tenant_id}:{collection}:\u{ffff}");
+
+        let read_txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
+        let table = read_txn
+            .open_table(DOCUMENTS)
+            .map_err(|e| redb_err("open table", e))?;
+
+        let range = table
+            .range(prefix.as_str()..end.as_str())
+            .map_err(|e| redb_err("doc range", e))?;
+
+        let mut results = Vec::with_capacity(limit.min(256));
+        for entry in range {
+            if results.len() >= limit {
+                break;
+            }
+            let entry = entry.map_err(|e| redb_err("doc entry", e))?;
+            let key = entry.0.value().to_string();
+            // Extract document_id from key format "{tenant}:{collection}:{doc_id}"
+            let doc_id = key.strip_prefix(&prefix).unwrap_or(&key).to_string();
+            let value = entry.1.value().to_vec();
+            results.push((doc_id, value));
+        }
+
+        debug!(collection, count = results.len(), "document scan");
+        Ok(results)
+    }
+
     /// Get the underlying database handle (for advanced use / shared access).
     pub fn db(&self) -> &Arc<Database> {
         &self.db

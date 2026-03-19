@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tracing::warn;
 
 use nodedb_bridge::buffer::{Consumer, Producer};
+use nodedb_crdt::constraint::ConstraintSet;
 
 use crate::bridge::dispatch::{BridgeRequest, BridgeResponse};
 use crate::bridge::envelope::{ErrorCode, Response, Status};
@@ -308,7 +309,15 @@ impl CoreLoop {
         format!("{tenant_id}:{collection}")
     }
 
-    // execute() and get_crdt_engine() live in execute.rs
+    /// Get or create a CRDT engine for the given tenant.
+    pub(super) fn get_crdt_engine(&mut self, tenant_id: TenantId) -> &mut TenantCrdtEngine {
+        self.crdt_engines.entry(tenant_id).or_insert_with(|| {
+            tracing::debug!(core = self.core_id, %tenant_id, "creating CRDT engine for tenant");
+            TenantCrdtEngine::new(tenant_id, self.core_id as u64, ConstraintSet::new())
+        })
+    }
+
+    // execute() lives in execute.rs
 
     pub fn pending_count(&self) -> usize {
         self.task_queue.len()
