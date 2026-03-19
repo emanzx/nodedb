@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::net::TcpListener;
+use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 use tracing::{info, warn};
 
@@ -13,6 +14,11 @@ use crate::control::state::SharedState;
 ///
 /// Listens for incoming client connections and spawns a `Session` task for each.
 /// This runs on the Tokio runtime (Send + Sync).
+///
+/// A shared `Semaphore` limits concurrent connections across all listeners.
+/// If no permit is available, the accepted TCP socket is immediately dropped
+/// (RST), preventing connection floods from exhausting memory before
+/// per-tenant quotas kick in.
 ///
 /// On shutdown: stops accepting, waits up to 30s for active sessions to drain,
 /// then aborts remaining connections.
@@ -48,6 +54,7 @@ impl Listener {
         state: Arc<SharedState>,
         auth_mode: crate::config::auth::AuthMode,
         tls_acceptor: Option<tokio_rustls::TlsAcceptor>,
+        conn_semaphore: Arc<Semaphore>,
         mut shutdown: tokio::sync::watch::Receiver<bool>,
     ) -> crate::Result<()> {
         let tls_label = if tls_acceptor.is_some() {
@@ -55,7 +62,12 @@ impl Listener {
         } else {
             "plain"
         };
-        info!(addr = %self.addr, tls = tls_label, "accepting native connections");
+        info!(
+            addr = %self.addr,
+            tls = tls_label,
+            max_permits = conn_semaphore.available_permits(),
+            "accepting native connections"
+        );
 
         let mut connections = JoinSet::new();
 
@@ -64,6 +76,22 @@ impl Listener {
                 result = self.tcp.accept() => {
                     match result {
                         Ok((stream, peer_addr)) => {
+                            // Acquire connection permit. try_acquire is non-blocking:
+                            // if no permits are available, drop the socket immediately
+                            // (TCP RST) rather than queueing.
+                            let permit = match conn_semaphore.clone().try_acquire_owned() {
+                                Ok(permit) => permit,
+                                Err(_) => {
+                                    warn!(
+                                        %peer_addr,
+                                        active = conn_semaphore.available_permits(),
+                                        "connection rejected: max_connections limit reached"
+                                    );
+                                    // `stream` is dropped here → TCP RST to client.
+                                    continue;
+                                }
+                            };
+
                             info!(%peer_addr, "new native connection");
                             let state_clone = Arc::clone(&state);
                             let mode = auth_mode.clone();
@@ -81,6 +109,9 @@ impl Listener {
                                             warn!(%peer_addr, error = %e, "native TLS handshake failed");
                                         }
                                     }
+                                    // Permit is held for the session's lifetime and
+                                    // released on drop when this future completes.
+                                    drop(permit);
                                     peer_addr
                                 });
                             } else {
@@ -89,6 +120,7 @@ impl Listener {
                                     if let Err(e) = session.run().await {
                                         warn!(%peer_addr, error = %e, "session terminated with error");
                                     }
+                                    drop(permit);
                                     peer_addr
                                 });
                             }

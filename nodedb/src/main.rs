@@ -184,6 +184,10 @@ async fn main() -> anyhow::Result<()> {
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
 
+    // Create shared connection semaphore — enforced across all listeners.
+    let conn_semaphore = Arc::new(tokio::sync::Semaphore::new(config.max_connections));
+    info!(max_connections = config.max_connections, "connection limit configured");
+
     // Bind both listeners before starting accept loops.
     let listener = nodedb::control::server::listener::Listener::bind(config.listen).await?;
     let pg_listener =
@@ -209,9 +213,10 @@ async fn main() -> anyhow::Result<()> {
     // Run pgwire listener in a separate task.
     let shared_pg = Arc::clone(&shared);
     let shutdown_rx_pg = shutdown_rx.clone();
+    let conn_sem_pg = Arc::clone(&conn_semaphore);
     tokio::spawn(async move {
         if let Err(e) = pg_listener
-            .run(shared_pg, auth_mode, tls_acceptor, shutdown_rx_pg)
+            .run(shared_pg, auth_mode, tls_acceptor, conn_sem_pg, shutdown_rx_pg)
             .await
         {
             tracing::error!(error = %e, "pgwire listener failed");
@@ -253,7 +258,7 @@ async fn main() -> anyhow::Result<()> {
     // Run native listener on main task.
     let native_auth_mode = config.auth.mode.clone();
     listener
-        .run(shared, native_auth_mode, native_tls, shutdown_rx)
+        .run(shared, native_auth_mode, native_tls, conn_semaphore, shutdown_rx)
         .await?;
 
     Ok(())

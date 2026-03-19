@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::net::TcpListener;
+use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 use tracing::{info, warn};
 
@@ -52,6 +53,7 @@ impl PgListener {
         state: Arc<SharedState>,
         auth_mode: AuthMode,
         tls_acceptor: Option<pgwire::tokio::TlsAcceptor>,
+        conn_semaphore: Arc<Semaphore>,
         mut shutdown: tokio::sync::watch::Receiver<bool>,
     ) -> crate::Result<()> {
         let factory = Arc::new(NodeDbPgHandlerFactory::new(state, auth_mode));
@@ -61,7 +63,12 @@ impl PgListener {
         } else {
             "plain"
         };
-        info!(addr = %self.addr, tls = tls_label, "accepting pgwire connections");
+        info!(
+            addr = %self.addr,
+            tls = tls_label,
+            max_permits = conn_semaphore.available_permits(),
+            "accepting pgwire connections"
+        );
 
         let mut connections = JoinSet::new();
 
@@ -70,6 +77,17 @@ impl PgListener {
                 result = self.tcp.accept() => {
                     match result {
                         Ok((stream, peer_addr)) => {
+                            let permit = match conn_semaphore.clone().try_acquire_owned() {
+                                Ok(permit) => permit,
+                                Err(_) => {
+                                    warn!(
+                                        %peer_addr,
+                                        "pgwire connection rejected: max_connections limit reached"
+                                    );
+                                    continue;
+                                }
+                            };
+
                             info!(%peer_addr, "new pgwire connection");
                             let factory = Arc::clone(&factory);
                             let tls = tls_acceptor.clone();
@@ -77,6 +95,7 @@ impl PgListener {
                                 if let Err(e) = process_socket(stream, tls, factory).await {
                                     warn!(%peer_addr, error = %e, "pgwire session error");
                                 }
+                                drop(permit);
                                 peer_addr
                             });
                         }

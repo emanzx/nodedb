@@ -27,6 +27,14 @@ pub struct ServerConfig {
     /// Global memory ceiling in bytes. The memory governor enforces this.
     pub memory_limit: usize,
 
+    /// Maximum concurrent client connections across all listeners.
+    /// Enforced at accept time via a shared semaphore — no permit means
+    /// immediate TCP RST. Prevents connection floods from exhausting memory
+    /// before per-tenant quotas kick in (those are checked post-authentication).
+    /// 0 = unlimited (not recommended for production).
+    #[serde(default = "default_max_connections")]
+    pub max_connections: usize,
+
     /// Per-engine budget configuration.
     pub engines: super::EngineConfig,
 
@@ -45,6 +53,10 @@ pub struct ServerConfig {
     /// Log output format: "text" (default, human-readable) or "json" (structured).
     #[serde(default = "default_log_format")]
     pub log_format: String,
+}
+
+fn default_max_connections() -> usize {
+    4096
 }
 
 fn default_log_format() -> String {
@@ -80,6 +92,7 @@ impl Default for ServerConfig {
             http_listen: SocketAddr::from(([127, 0, 0, 1], 8080)),
             data_dir: default_data_dir(),
             data_plane_cores: cores,
+            max_connections: default_max_connections(),
             memory_limit: 1024 * 1024 * 1024, // 1 GiB default
             engines: EngineConfig::default(),
             auth: super::AuthConfig::default(),

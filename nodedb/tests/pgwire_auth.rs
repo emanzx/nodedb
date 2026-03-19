@@ -454,6 +454,7 @@ async fn pgwire_ddl_roundtrip() {
                 shared_pg,
                 nodedb::config::auth::AuthMode::Trust,
                 None,
+                Arc::new(tokio::sync::Semaphore::new(128)),
                 shutdown_rx,
             )
             .await
