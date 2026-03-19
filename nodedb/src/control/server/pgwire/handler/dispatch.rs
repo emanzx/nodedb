@@ -96,10 +96,19 @@ impl NodeDbPgHandler {
     }
 
     /// Dispatch a task directly to the local Data Plane (single-node or reads).
+    ///
+    /// For write operations, the WAL is appended **before** dispatching to the
+    /// Data Plane. This ensures durability: if the process crashes after WAL
+    /// append but before Data Plane execution, the write is replayed on recovery.
+    /// Reads bypass the WAL entirely.
     async fn dispatch_local(
         &self,
         task: PhysicalTask,
     ) -> crate::Result<crate::bridge::envelope::Response> {
+        // Append writes to WAL for durability (single-node mode).
+        // In cluster mode, Raft handles durability — this path is reads-only.
+        self.wal_append_if_write(task.tenant_id, task.vshard_id, &task.plan)?;
+
         let request_id = self.next_request_id();
         let request = Request {
             request_id,
@@ -125,6 +134,137 @@ impl NodeDbPgHandler {
             .map_err(|_| crate::Error::Dispatch {
                 detail: "response channel closed".into(),
             })
+    }
+
+    /// Append a write operation to the WAL for single-node durability.
+    ///
+    /// Serializes the write as MessagePack and appends to the appropriate
+    /// WAL record type. Read operations are no-ops (return Ok immediately).
+    fn wal_append_if_write(
+        &self,
+        tenant_id: TenantId,
+        vshard_id: crate::types::VShardId,
+        plan: &crate::bridge::envelope::PhysicalPlan,
+    ) -> crate::Result<()> {
+        use crate::bridge::envelope::PhysicalPlan;
+
+        // Only write operations need WAL durability. Reads return immediately.
+        match plan {
+            PhysicalPlan::PointPut {
+                collection,
+                document_id,
+                value,
+            } => {
+                let entry = rmp_serde::to_vec(&(collection, document_id, value)).map_err(|e| {
+                    crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal point put: {e}"),
+                    }
+                })?;
+                self.state.wal.append_put(tenant_id, vshard_id, &entry)?;
+                return Ok(());
+            }
+            PhysicalPlan::PointDelete {
+                collection,
+                document_id,
+            } => {
+                let entry = rmp_serde::to_vec(&(collection, document_id)).map_err(|e| {
+                    crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal point delete: {e}"),
+                    }
+                })?;
+                self.state.wal.append_delete(tenant_id, vshard_id, &entry)?;
+                return Ok(());
+            }
+            PhysicalPlan::VectorInsert {
+                collection,
+                vector,
+                dim,
+            } => {
+                let entry = rmp_serde::to_vec(&(collection, vector, dim)).map_err(|e| {
+                    crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal vector insert: {e}"),
+                    }
+                })?;
+                self.state
+                    .wal
+                    .append_vector_put(tenant_id, vshard_id, &entry)?;
+                return Ok(());
+            }
+            PhysicalPlan::VectorBatchInsert {
+                collection,
+                vectors,
+                dim,
+            } => {
+                // Batch: single WAL record for the entire batch (group commit).
+                let entry = rmp_serde::to_vec(&(collection, vectors, dim)).map_err(|e| {
+                    crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal vector batch insert: {e}"),
+                    }
+                })?;
+                self.state
+                    .wal
+                    .append_vector_put(tenant_id, vshard_id, &entry)?;
+                return Ok(());
+            }
+            PhysicalPlan::VectorDelete {
+                collection,
+                vector_id,
+            } => {
+                let entry = rmp_serde::to_vec(&(collection, vector_id)).map_err(|e| {
+                    crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal vector delete: {e}"),
+                    }
+                })?;
+                self.state
+                    .wal
+                    .append_vector_delete(tenant_id, vshard_id, &entry)?;
+                return Ok(());
+            }
+            PhysicalPlan::CrdtApply { delta, .. } => {
+                self.state
+                    .wal
+                    .append_crdt_delta(tenant_id, vshard_id, delta)?;
+                return Ok(());
+            }
+            PhysicalPlan::EdgePut {
+                src_id,
+                label,
+                dst_id,
+                properties,
+            } => {
+                let entry =
+                    rmp_serde::to_vec(&(src_id, label, dst_id, properties)).map_err(|e| {
+                        crate::Error::Serialization {
+                            format: "msgpack".into(),
+                            detail: format!("wal edge put: {e}"),
+                        }
+                    })?;
+                self.state.wal.append_put(tenant_id, vshard_id, &entry)?;
+                return Ok(());
+            }
+            PhysicalPlan::EdgeDelete {
+                src_id,
+                label,
+                dst_id,
+            } => {
+                let entry = rmp_serde::to_vec(&(src_id, label, dst_id)).map_err(|e| {
+                    crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal edge delete: {e}"),
+                    }
+                })?;
+                self.state.wal.append_delete(tenant_id, vshard_id, &entry)?;
+                return Ok(());
+            }
+            // Read operations, DDL, and control commands: no WAL needed.
+            _ => {}
+        }
+        Ok(())
     }
 
     /// Plan and dispatch SQL after quota and DDL checks have passed.

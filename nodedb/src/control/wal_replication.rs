@@ -56,6 +56,15 @@ pub enum ReplicatedWrite {
         vector: Vec<f32>,
         dim: usize,
     },
+    VectorBatchInsert {
+        collection: String,
+        vectors: Vec<Vec<f32>>,
+        dim: usize,
+    },
+    VectorDelete {
+        collection: String,
+        vector_id: u32,
+    },
     CrdtApply {
         collection: String,
         document_id: String,
@@ -138,6 +147,22 @@ pub fn to_replicated_entry(
             vector: vector.clone(),
             dim: *dim,
         },
+        PhysicalPlan::VectorBatchInsert {
+            collection,
+            vectors,
+            dim,
+        } => ReplicatedWrite::VectorBatchInsert {
+            collection: collection.clone(),
+            vectors: vectors.clone(),
+            dim: *dim,
+        },
+        PhysicalPlan::VectorDelete {
+            collection,
+            vector_id,
+        } => ReplicatedWrite::VectorDelete {
+            collection: collection.clone(),
+            vector_id: *vector_id,
+        },
         PhysicalPlan::CrdtApply {
             collection,
             document_id,
@@ -216,6 +241,22 @@ fn to_physical_plan(write: &ReplicatedWrite) -> PhysicalPlan {
             collection: collection.clone(),
             vector: vector.clone(),
             dim: *dim,
+        },
+        ReplicatedWrite::VectorBatchInsert {
+            collection,
+            vectors,
+            dim,
+        } => PhysicalPlan::VectorBatchInsert {
+            collection: collection.clone(),
+            vectors: vectors.clone(),
+            dim: *dim,
+        },
+        ReplicatedWrite::VectorDelete {
+            collection,
+            vector_id,
+        } => PhysicalPlan::VectorDelete {
+            collection: collection.clone(),
+            vector_id: *vector_id,
         },
         ReplicatedWrite::CrdtApply {
             collection,
