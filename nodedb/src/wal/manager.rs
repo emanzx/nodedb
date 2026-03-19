@@ -176,6 +176,48 @@ impl WalManager {
         Ok(Lsn::new(lsn))
     }
 
+    /// Append a Vector insert record. Returns the assigned LSN.
+    ///
+    /// Payload format: `[collection_len: 4B LE][collection: N bytes][dim: 4B LE][vector: dim*4 bytes f32 LE]`
+    pub fn append_vector_put(
+        &self,
+        tenant_id: TenantId,
+        vshard_id: VShardId,
+        payload: &[u8],
+    ) -> crate::Result<Lsn> {
+        let mut writer = self.writer.lock().unwrap();
+        let lsn = writer
+            .append(
+                RecordType::VectorPut as u16,
+                tenant_id.as_u32(),
+                vshard_id.as_u16(),
+                payload,
+            )
+            .map_err(crate::Error::Wal)?;
+        Ok(Lsn::new(lsn))
+    }
+
+    /// Append a Vector delete record. Returns the assigned LSN.
+    ///
+    /// Payload format: `[collection_len: 4B LE][collection: N bytes][vector_id: 4B LE]`
+    pub fn append_vector_delete(
+        &self,
+        tenant_id: TenantId,
+        vshard_id: VShardId,
+        payload: &[u8],
+    ) -> crate::Result<Lsn> {
+        let mut writer = self.writer.lock().unwrap();
+        let lsn = writer
+            .append(
+                RecordType::VectorDelete as u16,
+                tenant_id.as_u32(),
+                vshard_id.as_u16(),
+                payload,
+            )
+            .map_err(crate::Error::Wal)?;
+        Ok(Lsn::new(lsn))
+    }
+
     /// Append a CRDT delta record. Returns the assigned LSN.
     pub fn append_crdt_delta(
         &self,

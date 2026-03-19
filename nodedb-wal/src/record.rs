@@ -132,6 +132,9 @@ pub enum RecordType {
     /// Vector engine: insert/update embedding.
     VectorPut = 10 | 0x8000,
 
+    /// Vector engine: soft-delete a vector by internal ID.
+    VectorDelete = 11 | 0x8000,
+
     /// CRDT engine: delta application.
     CrdtDelta = 20 | 0x8000,
 
@@ -158,6 +161,7 @@ impl RecordType {
             x if x == 1 | 0x8000 => Some(Self::Put),
             x if x == 2 | 0x8000 => Some(Self::Delete),
             x if x == 10 | 0x8000 => Some(Self::VectorPut),
+            x if x == 11 | 0x8000 => Some(Self::VectorDelete),
             x if x == 20 | 0x8000 => Some(Self::CrdtDelta),
             30 => Some(Self::TimeseriesBatch),
             31 => Some(Self::LogBatch),
