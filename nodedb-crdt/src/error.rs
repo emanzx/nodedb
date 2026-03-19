@@ -26,6 +26,14 @@ pub enum CrdtError {
     /// The collection does not exist.
     #[error("unknown collection: {0}")]
     UnknownCollection(String),
+
+    /// Auth context has expired — agent must re-authenticate before syncing.
+    #[error("auth expired: user {user_id} must re-authenticate (expired at {expired_at})")]
+    AuthExpired { user_id: u64, expired_at: u64 },
+
+    /// Delta signature verification failed.
+    #[error("delta signature invalid for user {user_id}: {detail}")]
+    InvalidSignature { user_id: u64, detail: String },
 }
 
 pub type Result<T> = std::result::Result<T, CrdtError>;

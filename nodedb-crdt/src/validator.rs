@@ -11,6 +11,7 @@ use crate::dead_letter::{CompensationHint, DeadLetterQueue};
 use crate::deferred::DeferredQueue;
 use crate::error::{CrdtError, Result};
 use crate::policy::{ConflictPolicy, PolicyRegistry, PolicyResolution, ResolvedAction};
+use crate::signing::DeltaSigner;
 use crate::state::CrdtState;
 
 use loro::LoroValue;
@@ -62,6 +63,9 @@ pub struct Validator {
     deferred: DeferredQueue,
     /// Monotonic suffix counter: (collection, field) -> next suffix number
     suffix_counter: HashMap<(String, String), u64>,
+    /// Optional delta signature verifier. When set, signed deltas are
+    /// verified before constraint validation.
+    delta_verifier: Option<DeltaSigner>,
 }
 
 impl Validator {
@@ -83,6 +87,7 @@ impl Validator {
             policies,
             deferred: DeferredQueue::new(deferred_capacity),
             suffix_counter: HashMap::new(),
+            delta_verifier: None,
         }
     }
 
@@ -122,6 +127,28 @@ impl Validator {
         change: &ProposedChange,
         delta_bytes: Vec<u8>,
     ) -> Result<()> {
+        // Check auth expiry: agents that accumulated deltas offline must
+        // re-authenticate before syncing.
+        if auth.auth_expires_at > 0 {
+            let now_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64;
+            if now_ms > auth.auth_expires_at {
+                return Err(CrdtError::AuthExpired {
+                    user_id: auth.user_id,
+                    expired_at: auth.auth_expires_at,
+                });
+            }
+        }
+
+        // Verify delta signature if present (non-zero).
+        if auth.delta_signature != [0u8; 32] {
+            if let Some(ref verifier) = self.delta_verifier {
+                verifier.verify(auth.user_id, &delta_bytes, &auth.delta_signature)?;
+            }
+        }
+
         let hlc_timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
@@ -395,6 +422,22 @@ impl Validator {
     /// Mutable access to the deferred queue.
     pub fn deferred_mut(&mut self) -> &mut DeferredQueue {
         &mut self.deferred
+    }
+
+    /// Set the delta signature verifier. When set, deltas with non-zero
+    /// signatures in their CrdtAuthContext will be verified before validation.
+    pub fn set_delta_verifier(&mut self, verifier: DeltaSigner) {
+        self.delta_verifier = Some(verifier);
+    }
+
+    /// Access the delta verifier.
+    pub fn delta_verifier(&self) -> Option<&DeltaSigner> {
+        self.delta_verifier.as_ref()
+    }
+
+    /// Mutable access to the delta verifier.
+    pub fn delta_verifier_mut(&mut self) -> Option<&mut DeltaSigner> {
+        self.delta_verifier.as_mut()
     }
 
     fn check_constraint(

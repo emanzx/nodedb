@@ -29,6 +29,14 @@ pub struct CrdtAuthContext {
     pub user_id: u64,
     /// Tenant this operation belongs to.
     pub tenant_id: u32,
+    /// Unix timestamp (milliseconds) when this auth session expires.
+    /// 0 = no expiry (trust mode / legacy).
+    /// Agents accumulating deltas offline must re-authenticate before
+    /// syncing if their auth context has expired.
+    pub auth_expires_at: u64,
+    /// HMAC signature over delta bytes (optional delta signing).
+    /// Empty = unsigned. When set, the validator verifies this before accepting.
+    pub delta_signature: [u8; 32],
 }
 
 pub mod constraint;
@@ -37,6 +45,7 @@ pub mod deferred;
 pub mod error;
 pub mod policy;
 pub mod pre_validate;
+pub mod signing;
 pub mod state;
 pub mod validator;
 
@@ -47,5 +56,6 @@ pub use error::{CrdtError, Result};
 pub use policy::{
     CollectionPolicy, ConflictPolicy, PolicyRegistry, PolicyResolution, ResolvedAction,
 };
+pub use signing::DeltaSigner;
 pub use state::CrdtState;
 pub use validator::{ValidationOutcome, Validator};
