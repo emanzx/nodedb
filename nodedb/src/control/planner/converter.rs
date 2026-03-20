@@ -38,7 +38,34 @@ impl PlanConverter {
         tenant_id: TenantId,
     ) -> crate::Result<Vec<PhysicalTask>> {
         match plan {
-            LogicalPlan::Projection(proj) => self.convert(&proj.input, tenant_id),
+            LogicalPlan::Projection(proj) => {
+                let mut tasks = self.convert(&proj.input, tenant_id)?;
+
+                // Extract projected column names and propagate to DocumentScan.
+                let columns: Vec<String> = proj
+                    .expr
+                    .iter()
+                    .filter_map(|e| {
+                        if let Expr::Column(col) = e {
+                            Some(col.name.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                // Only set projection if we extracted at least one column
+                // (aggregates, function calls, etc. don't reduce to columns).
+                if !columns.is_empty() {
+                    for task in &mut tasks {
+                        if let PhysicalPlan::DocumentScan { projection, .. } = &mut task.plan {
+                            *projection = columns.clone();
+                        }
+                    }
+                }
+
+                Ok(tasks)
+            }
 
             LogicalPlan::Filter(filter) => {
                 // Check if the filter predicate can be converted to a point get
@@ -85,6 +112,7 @@ impl PlanConverter {
                             sort_keys: Vec::new(),
                             filters: filter_bytes,
                             distinct: false,
+                            projection: Vec::new(),
                         },
                     }]);
                 }
@@ -160,6 +188,7 @@ impl PlanConverter {
                         sort_keys: Vec::new(),
                         filters: filter_bytes,
                         distinct: false,
+                        projection: Vec::new(),
                     },
                 }])
             }

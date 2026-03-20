@@ -66,6 +66,7 @@ impl CoreLoop {
         sort_keys: &[(String, bool)],
         filters: &[u8],
         distinct: bool,
+        projection: &[String],
     ) -> Response {
         debug!(
             core = self.core_id,
@@ -147,7 +148,23 @@ impl CoreLoop {
                     .map(|(doc_id, value)| {
                         let data = super::super::doc_format::decode_document(&value)
                             .unwrap_or(serde_json::Value::Null);
-                        serde_json::json!({"id": doc_id, "data": data})
+
+                        // Apply column projection: return only requested fields.
+                        let projected = if projection.is_empty() {
+                            data
+                        } else if let serde_json::Value::Object(obj) = &data {
+                            let mut out = serde_json::Map::with_capacity(projection.len());
+                            for col in projection {
+                                if let Some(val) = obj.get(col) {
+                                    out.insert(col.clone(), val.clone());
+                                }
+                            }
+                            serde_json::Value::Object(out)
+                        } else {
+                            data
+                        };
+
+                        serde_json::json!({"id": doc_id, "data": projected})
                     })
                     .collect();
 

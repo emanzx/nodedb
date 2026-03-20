@@ -188,6 +188,9 @@ pub enum PhysicalPlan {
         filters: Vec<u8>,
         /// If true, deduplicate result rows by content (SELECT DISTINCT).
         distinct: bool,
+        /// Column projection: only return these fields from each document.
+        /// Empty = return all fields (SELECT *).
+        projection: Vec<String>,
     },
 
     /// Hash join: inner join two collections on matching fields.

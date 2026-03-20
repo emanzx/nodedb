@@ -81,8 +81,9 @@ impl CoreLoop {
                 sort_keys,
                 filters,
                 distinct,
+                projection,
             } => self.execute_document_scan(
-                task, tid, collection, *limit, *offset, sort_keys, filters, *distinct,
+                task, tid, collection, *limit, *offset, sort_keys, filters, *distinct, projection,
             ),
 
             PhysicalPlan::DocumentBatchInsert {
