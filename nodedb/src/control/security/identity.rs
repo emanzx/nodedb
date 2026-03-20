@@ -185,6 +185,9 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
         // Control operations.
         PhysicalPlan::Cancel { .. } => Permission::Admin,
 
+        // Nested loop join: read-only join operation.
+        PhysicalPlan::NestedLoopJoin { .. } => Permission::Read,
+
         // Transaction batch: requires write (contains writes).
         PhysicalPlan::TransactionBatch { .. } => Permission::Write,
     }

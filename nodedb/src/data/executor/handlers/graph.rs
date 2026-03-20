@@ -18,6 +18,29 @@ impl CoreLoop {
         properties: &[u8],
     ) -> Response {
         debug!(core = self.core_id, %src_id, %label, %dst_id, "edge put");
+
+        // Referential integrity: reject edges to nodes that were explicitly
+        // deleted (present in the deleted_nodes set). Nodes are added to
+        // deleted_nodes by PointDelete cascade. Edges between nodes that
+        // simply don't exist yet are allowed — EdgePut implicitly creates
+        // graph nodes in the CSR.
+        if self.deleted_nodes.contains(src_id) {
+            return self.response_error(
+                task,
+                ErrorCode::RejectedDanglingEdge {
+                    missing_node: src_id.to_string(),
+                },
+            );
+        }
+        if self.deleted_nodes.contains(dst_id) {
+            return self.response_error(
+                task,
+                ErrorCode::RejectedDanglingEdge {
+                    missing_node: dst_id.to_string(),
+                },
+            );
+        }
+
         match self.edge_store.put_edge(src_id, label, dst_id, properties) {
             Ok(()) => {
                 self.csr.add_edge(src_id, label, dst_id);

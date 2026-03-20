@@ -210,6 +210,7 @@ impl CoreLoop {
                 document_id: _,
                 delta,
                 peer_id: _,
+                mutation_id: _,
             } => self.execute_crdt_apply(task, delta),
 
             PhysicalPlan::SetCollectionPolicy {
@@ -251,6 +252,22 @@ impl CoreLoop {
             PhysicalPlan::Cancel { target_request_id } => {
                 self.execute_cancel(task, *target_request_id)
             }
+
+            PhysicalPlan::NestedLoopJoin {
+                left_collection,
+                right_collection,
+                condition,
+                join_type,
+                limit,
+            } => self.execute_nested_loop_join(
+                task,
+                tid,
+                left_collection,
+                right_collection,
+                condition,
+                join_type,
+                *limit,
+            ),
 
             PhysicalPlan::TransactionBatch { plans } => {
                 self.execute_transaction_batch(task, tid, plans)

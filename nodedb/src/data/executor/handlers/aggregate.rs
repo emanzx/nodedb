@@ -22,6 +22,40 @@ impl CoreLoop {
     ) -> Response {
         debug!(core = self.core_id, %collection, group_fields = group_by.len(), aggs = aggregates.len(), "aggregate");
 
+        // Fast path: index-backed COUNT/GROUP BY.
+        // When GROUP BY has a single field, no filters, no HAVING, and the
+        // only aggregate is COUNT(*), scan the INDEXES table directly.
+        // No document table access — O(index_entries) instead of O(documents).
+        if group_by.len() == 1
+            && filters.is_empty()
+            && having.is_empty()
+            && aggregates.len() == 1
+            && aggregates[0].0 == "count"
+        {
+            let field = &group_by[0];
+            if let Ok(groups) = self.sparse.scan_index_groups(tid, collection, field) {
+                if !groups.is_empty() {
+                    let mut results: Vec<serde_json::Value> = groups
+                        .into_iter()
+                        .take(limit)
+                        .map(|(value, count)| {
+                            let mut row = serde_json::Map::new();
+                            row.insert(field.clone(), serde_json::Value::String(value));
+                            row.insert("count_all".into(), serde_json::json!(count));
+                            serde_json::Value::Object(row)
+                        })
+                        .collect();
+                    results.truncate(limit);
+                    return match super::super::response_codec::encode(&results) {
+                        Ok(payload) => self.response_with_payload(task, payload),
+                        Err(e) => self.response_error(task, ErrorCode::Internal { detail: e }),
+                    };
+                }
+                // Empty index — fall through to full scan (documents may exist
+                // without index entries if no secondary indexes are declared).
+            }
+        }
+
         // Aggregates must scan all matching documents for correct results.
         // Cap at 10M to prevent OOM on unbounded collections.
         const AGGREGATE_SCAN_CAP: usize = 10_000_000;

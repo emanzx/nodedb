@@ -37,6 +37,10 @@ pub(super) fn extract_collection(plan: &PhysicalPlan) -> Option<&str> {
             left_collection: collection,
             ..
         }
+        | PhysicalPlan::NestedLoopJoin {
+            left_collection: collection,
+            ..
+        }
         | PhysicalPlan::GraphRagFusion { collection, .. }
         | PhysicalPlan::SetCollectionPolicy { collection, .. }
         | PhysicalPlan::SetVectorParams { collection, .. }

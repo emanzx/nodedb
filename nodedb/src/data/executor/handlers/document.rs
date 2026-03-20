@@ -90,38 +90,43 @@ impl CoreLoop {
         );
 
         let fetch_limit = (limit + offset).saturating_mul(2).max(1000);
-        match self.sparse.scan_documents(tid, collection, fetch_limit) {
-            Ok(docs) => {
-                let filter_predicates: Vec<ScanFilter> = if filters.is_empty() {
-                    Vec::new()
-                } else {
-                    match rmp_serde::from_slice(filters) {
-                        Ok(f) => f,
-                        Err(e) => {
-                            warn!(core = self.core_id, error = %e, "failed to parse scan filters");
-                            return self.response_error(
-                                task,
-                                ErrorCode::Internal {
-                                    detail: format!("malformed scan filters: {e}"),
-                                },
-                            );
-                        }
-                    }
-                };
 
-                let filtered: Vec<_> = if filter_predicates.is_empty() {
-                    docs
-                } else {
-                    docs.into_iter()
-                        .filter(|(_, value)| {
-                            let Some(doc) = super::super::doc_format::decode_document(value) else {
-                                return false;
-                            };
-                            filter_predicates.iter().all(|f| f.matches(&doc))
-                        })
-                        .collect()
-                };
+        // Parse filter predicates upfront.
+        let filter_predicates: Vec<ScanFilter> = if filters.is_empty() {
+            Vec::new()
+        } else {
+            match rmp_serde::from_slice(filters) {
+                Ok(f) => f,
+                Err(e) => {
+                    warn!(core = self.core_id, error = %e, "failed to parse scan filters");
+                    return self.response_error(
+                        task,
+                        ErrorCode::Internal {
+                            detail: format!("malformed scan filters: {e}"),
+                        },
+                    );
+                }
+            }
+        };
 
+        // When filters are present, push predicate evaluation into the
+        // storage scan. Non-matching documents are never allocated —
+        // only decoded for predicate evaluation, then dropped. This
+        // avoids O(N) allocation for large collections with selective filters.
+        let scan_result = if filter_predicates.is_empty() {
+            self.sparse.scan_documents(tid, collection, fetch_limit)
+        } else {
+            self.sparse
+                .scan_documents_filtered(tid, collection, fetch_limit, &|value: &[u8]| {
+                    let Some(doc) = super::super::doc_format::decode_document(value) else {
+                        return false;
+                    };
+                    filter_predicates.iter().all(|f| f.matches(&doc))
+                })
+        };
+
+        match scan_result {
+            Ok(filtered) => {
                 let sorted = if sort_keys.is_empty() {
                     filtered
                 } else if filtered.len() <= SORT_RUN_SIZE {

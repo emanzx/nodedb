@@ -62,10 +62,34 @@ pub(super) fn convert_join(join: &Join, tenant_id: TenantId) -> crate::Result<Ve
         on_keys.push((left_col, right_col));
     }
 
+    // If no equi-join keys (cross join, theta join) or if the ON clause
+    // has non-column expressions that couldn't be parsed as equi-keys,
+    // fall back to nested loop join.
     if on_keys.is_empty() {
-        return Err(crate::Error::PlanError {
-            detail: "JOIN requires at least one ON condition".into(),
-        });
+        let vshard = VShardId::from_collection(&left_collection);
+
+        // Serialize any filter expression as join condition for NLJ.
+        let condition = if let Some(filter) = &join.filter {
+            let filters = super::extract::expr_to_scan_filters(filter);
+            rmp_serde::to_vec_named(&filters).map_err(|e| crate::Error::Serialization {
+                format: "msgpack".into(),
+                detail: format!("join condition serialization: {e}"),
+            })?
+        } else {
+            Vec::new()
+        };
+
+        return Ok(vec![PhysicalTask {
+            tenant_id,
+            vshard_id: vshard,
+            plan: PhysicalPlan::NestedLoopJoin {
+                left_collection,
+                right_collection,
+                condition,
+                join_type: join_type_str.to_string(),
+                limit: 1000,
+            },
+        }]);
     }
 
     // Route to the left collection's vShard.

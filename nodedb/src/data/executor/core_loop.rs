@@ -71,6 +71,16 @@ pub struct CoreLoop {
 
     /// vShards that are paused for write operations (during Phase 3 migration cutover).
     pub(in crate::data::executor) paused_vshards: std::collections::HashSet<crate::types::VShardId>,
+
+    /// Nodes that have been explicitly deleted via PointDelete cascade.
+    /// Used for edge referential integrity — EdgePut to a deleted node is rejected
+    /// with `RejectedDanglingEdge`. Cleared periodically or on compaction.
+    pub(in crate::data::executor) deleted_nodes: std::collections::HashSet<String>,
+
+    /// Idempotency key deduplication map: maps processed idempotency keys to
+    /// whether they succeeded (true) or failed (false). Bounded to prevent
+    /// unbounded memory growth — oldest entries evicted when capacity exceeded.
+    pub(in crate::data::executor) idempotency_cache: HashMap<u64, bool>,
 }
 
 impl CoreLoop {
@@ -109,6 +119,8 @@ impl CoreLoop {
             inverted,
             data_dir: data_dir.to_path_buf(),
             paused_vshards: std::collections::HashSet::new(),
+            deleted_nodes: std::collections::HashSet::new(),
+            idempotency_cache: HashMap::new(),
         })
     }
 
@@ -148,6 +160,26 @@ impl CoreLoop {
             return false;
         };
 
+        // Idempotency key deduplication: if this request carries a key
+        // that was already processed, return a cached Ok/Error without
+        // re-executing. Prevents duplicate writes from retries.
+        if let Some(key) = task.request.idempotency_key {
+            if let Some(&succeeded) = self.idempotency_cache.get(&key) {
+                let response = if succeeded {
+                    self.response_ok(&task)
+                } else {
+                    self.response_error(&task, ErrorCode::DuplicateWrite)
+                };
+                if let Err(e) = self
+                    .response_tx
+                    .try_push(BridgeResponse { inner: response })
+                {
+                    warn!(core = self.core_id, error = %e, "failed to send idempotent response");
+                }
+                return true;
+            }
+        }
+
         let response = if task.is_expired() {
             task.state = TaskState::Failed;
             Response {
@@ -165,6 +197,24 @@ impl CoreLoop {
             task.state = TaskState::Completed;
             resp
         };
+
+        // Record idempotency key result for future dedup.
+        if let Some(key) = task.request.idempotency_key {
+            let succeeded = response.status == Status::Ok;
+            // Evict oldest entries if cache grows too large (16K entries).
+            if self.idempotency_cache.len() >= 16_384 {
+                if let Some(&first_key) = self.idempotency_cache.keys().next() {
+                    self.idempotency_cache.remove(&first_key);
+                }
+            }
+            self.idempotency_cache.insert(key, succeeded);
+        }
+
+        // Cap deleted_nodes to prevent unbounded memory growth.
+        // Old entries are safe to evict — cascade delete already cleaned edges.
+        if self.deleted_nodes.len() > 100_000 {
+            self.deleted_nodes.clear();
+        }
 
         if let Err(e) = self
             .response_tx
@@ -397,6 +447,7 @@ mod tests {
             priority: Priority::Normal,
             trace_id: 0,
             consistency: ReadConsistency::Strong,
+            idempotency_key: None,
         }
     }
 

@@ -70,6 +70,16 @@ pub fn error_code_to_sqlstate(code: &ErrorCode) -> (&'static str, &'static str, 
         ErrorCode::ConflictRetry => ("ERROR", "40001", "write conflict, retry".into()),
         ErrorCode::FanOutExceeded => ("ERROR", "54001", "fan-out limit exceeded".into()),
         ErrorCode::ResourcesExhausted => ("ERROR", "53200", "resources exhausted".into()),
+        ErrorCode::RejectedDanglingEdge { missing_node } => (
+            "ERROR",
+            "23503",
+            format!("edge rejected: node \"{missing_node}\" does not exist"),
+        ),
+        ErrorCode::DuplicateWrite => (
+            "ERROR",
+            "23505",
+            "duplicate write detected via idempotency key".into(),
+        ),
         ErrorCode::Internal { detail } => ("ERROR", "XX000", detail.clone()),
     }
 }

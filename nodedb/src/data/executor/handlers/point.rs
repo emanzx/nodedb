@@ -112,6 +112,9 @@ impl CoreLoop {
                     tracing::trace!(core = self.core_id, %document_id, edges_removed, "EDGE_CASCADE_DELETE");
                 }
 
+                // Record deletion for edge referential integrity.
+                self.deleted_nodes.insert(document_id.to_string());
+
                 self.response_ok(task)
             }
             Err(e) => self.response_error(
