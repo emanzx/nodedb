@@ -99,6 +99,20 @@ impl ScanFilter {
                     false
                 }
             }
+            "in" => {
+                if let Some(arr) = self.value.as_array() {
+                    arr.iter().any(|v| field_val == v)
+                } else {
+                    false
+                }
+            }
+            "not_in" => {
+                if let Some(arr) = self.value.as_array() {
+                    !arr.iter().any(|v| field_val == v)
+                } else {
+                    true
+                }
+            }
             "is_null" => field_val.is_null(),
             "is_not_null" => !field_val.is_null(),
             _ => false,

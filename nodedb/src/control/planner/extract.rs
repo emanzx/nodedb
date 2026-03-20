@@ -4,6 +4,7 @@
 //! DataFusion `Expr` trees into NodeDB scan filters, update assignments,
 //! and scalar values.
 
+use datafusion::logical_expr::expr::InList;
 use datafusion::logical_expr::{BinaryExpr, LogicalPlan, Operator};
 use datafusion::prelude::*;
 use tracing::warn;
@@ -115,6 +116,88 @@ pub(super) fn expr_to_scan_filters(expr: &Expr) -> Vec<ScanFilter> {
                 Vec::new()
             }
         }
+
+        // BETWEEN: `field BETWEEN low AND high` → gte + lte pair.
+        // NOT BETWEEN → lt OR gt (negated).
+        Expr::Between(between) => {
+            if let Expr::Column(col) = &*between.expr {
+                let low = expr_to_json_value(&between.low);
+                let high = expr_to_json_value(&between.high);
+                if between.negated {
+                    // NOT BETWEEN: field < low OR field > high
+                    vec![ScanFilter {
+                        op: "or".into(),
+                        clauses: vec![
+                            vec![ScanFilter {
+                                field: col.name.clone(),
+                                op: "lt".into(),
+                                value: low,
+                                clauses: Vec::new(),
+                            }],
+                            vec![ScanFilter {
+                                field: col.name.clone(),
+                                op: "gt".into(),
+                                value: high,
+                                clauses: Vec::new(),
+                            }],
+                        ],
+                        ..Default::default()
+                    }]
+                } else {
+                    // BETWEEN: field >= low AND field <= high
+                    vec![
+                        ScanFilter {
+                            field: col.name.clone(),
+                            op: "gte".into(),
+                            value: low,
+                            clauses: Vec::new(),
+                        },
+                        ScanFilter {
+                            field: col.name.clone(),
+                            op: "lte".into(),
+                            value: high,
+                            clauses: Vec::new(),
+                        },
+                    ]
+                }
+            } else {
+                Vec::new()
+            }
+        }
+
+        // IN list: `field IN (v1, v2, v3)` → "in" op with array value.
+        Expr::InList(InList {
+            expr,
+            list,
+            negated,
+        }) => {
+            if let Expr::Column(col) = expr.as_ref() {
+                let values: Vec<serde_json::Value> = list.iter().map(expr_to_json_value).collect();
+                vec![ScanFilter {
+                    field: col.name.clone(),
+                    op: if *negated { "not_in" } else { "in" }.into(),
+                    value: serde_json::Value::Array(values),
+                    clauses: Vec::new(),
+                }]
+            } else {
+                Vec::new()
+            }
+        }
+
+        // ScalarFunction in WHERE: detect text_match(field, 'query') marker UDF.
+        Expr::ScalarFunction(func) if func.name() == "text_match" => {
+            if func.args.len() >= 2 {
+                vec![ScanFilter {
+                    field: "__text_match".into(),
+                    op: "text_match".into(),
+                    value: expr_to_json_value(&func.args[1]),
+                    clauses: Vec::new(),
+                }]
+            } else {
+                Vec::new()
+            }
+        }
+
         _ => Vec::new(),
     }
 }
