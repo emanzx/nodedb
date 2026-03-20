@@ -2,14 +2,17 @@ pub mod bootstrap;
 pub mod catalog;
 pub mod circuit_breaker;
 pub mod conf_change;
+pub mod cross_shard_txn;
 pub mod error;
 pub mod forward;
 pub mod ghost;
 pub mod ghost_sweeper;
 pub mod health;
+pub mod metadata_group;
 pub mod migration;
 pub mod migration_executor;
 pub mod multi_raft;
+pub mod quic_transport;
 pub mod raft_loop;
 pub mod raft_storage;
 pub mod rebalance;
@@ -38,3 +41,9 @@ pub use rpc_codec::RaftRpc;
 pub use topology::{ClusterTopology, NodeInfo, NodeState};
 pub use transport::{NexarTransport, RaftRpcHandler};
 pub use wire::VShardEnvelope;
+
+pub use cross_shard_txn::{
+    CrossShardTransaction, ForwardEntry, GsiForwardEntry, TransactionCoordinator,
+};
+pub use metadata_group::{METADATA_GROUP_ID, MetadataCache, MetadataEntry};
+pub use quic_transport::{QuicTransport, QuicTransportConfig};

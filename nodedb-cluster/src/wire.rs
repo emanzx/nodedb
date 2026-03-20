@@ -48,6 +48,14 @@ pub enum VShardMessageType {
     GhostVerifyRequest = 12,
     /// Anti-entropy sweep response.
     GhostVerifyResponse = 13,
+    /// Migration base-copy segment data.
+    MigrationBaseCopy = 20,
+    /// Cross-shard transaction forward.
+    CrossShardForward = 21,
+    /// GSI forward entry.
+    GsiForward = 22,
+    /// Edge validation request.
+    EdgeValidation = 23,
 }
 
 /// Current wire protocol version.
@@ -113,6 +121,10 @@ impl VShardEnvelope {
             11 => VShardMessageType::GhostDelete,
             12 => VShardMessageType::GhostVerifyRequest,
             13 => VShardMessageType::GhostVerifyResponse,
+            20 => VShardMessageType::MigrationBaseCopy,
+            21 => VShardMessageType::CrossShardForward,
+            22 => VShardMessageType::GsiForward,
+            23 => VShardMessageType::EdgeValidation,
             _ => return None,
         };
 
