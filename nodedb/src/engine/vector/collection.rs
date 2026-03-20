@@ -11,11 +11,10 @@
 //! is replaced with a fresh empty one. Queries probe all segments and
 //! merge results by distance.
 
-use serde::{Deserialize, Serialize};
-
-use super::distance::DistanceMetric;
+use super::distance::{DistanceMetric, distance};
 use super::flat::FlatIndex;
 use super::hnsw::{HnswIndex, HnswParams, SearchResult};
+use super::quantize::sq8::Sq8Codec;
 
 /// Threshold for sealing the growing segment.
 /// 64K vectors × 768 dims × 4 bytes = ~192 MiB per segment.
@@ -38,21 +37,26 @@ pub struct BuildComplete {
 }
 
 /// A sealed segment whose HNSW index is being built in background.
-struct BuildingSegment {
+pub(super) struct BuildingSegment {
     /// Flat index for brute-force search while HNSW is building.
-    flat: FlatIndex,
+    pub(super) flat: FlatIndex,
     /// Base ID offset: vectors have global IDs [base_id .. base_id + count).
-    base_id: u32,
+    pub(super) base_id: u32,
     /// Unique segment identifier (for matching with BuildComplete).
-    segment_id: u32,
+    pub(super) segment_id: u32,
 }
 
 /// A sealed segment with a completed HNSW index.
-struct SealedSegment {
+pub(super) struct SealedSegment {
     /// Built HNSW index (immutable after construction).
-    index: HnswIndex,
+    pub(super) index: HnswIndex,
     /// Base ID offset.
-    base_id: u32,
+    pub(super) base_id: u32,
+    /// Optional SQ8 quantized vectors for accelerated traversal.
+    /// Contiguous layout: `[v0_q0, v0_q1, ..., v1_q0, ...]` (dim bytes per vector).
+    /// When present, search uses asymmetric SQ8 distance for candidate
+    /// selection (4x fewer cache misses), then reranks top-K×3 with FP32.
+    pub(super) sq8: Option<(Sq8Codec, Vec<u8>)>,
 }
 
 /// Manages all vector segments for a single collection (one index key).
@@ -60,21 +64,21 @@ struct SealedSegment {
 /// This type is `!Send` — owned by a single Data Plane core.
 pub struct VectorCollection {
     /// Active growing segment (append-only, brute-force search).
-    growing: FlatIndex,
+    pub(super) growing: FlatIndex,
     /// Base ID for the growing segment's vectors.
-    growing_base_id: u32,
+    pub(super) growing_base_id: u32,
     /// Sealed segments with completed HNSW indexes.
-    sealed: Vec<SealedSegment>,
+    pub(super) sealed: Vec<SealedSegment>,
     /// Segments being built in background (brute-force searchable).
-    building: Vec<BuildingSegment>,
+    pub(super) building: Vec<BuildingSegment>,
     /// HNSW params for this collection.
-    params: HnswParams,
+    pub(super) params: HnswParams,
     /// Global vector ID counter (monotonic across all segments).
-    next_id: u32,
+    pub(super) next_id: u32,
     /// Next segment ID (monotonic).
-    next_segment_id: u32,
+    pub(super) next_segment_id: u32,
     /// Dimensionality.
-    dim: usize,
+    pub(super) dim: usize,
 }
 
 impl VectorCollection {
@@ -160,9 +164,54 @@ impl VectorCollection {
             all.push(r);
         }
 
-        // Search sealed segments (HNSW).
+        // Search sealed segments.
         for seg in &self.sealed {
-            let results = seg.index.search(query, top_k, ef);
+            let results = if let Some((codec, sq8_data)) = &seg.sq8 {
+                // Quantized two-phase search:
+                // Phase 1: SQ8 asymmetric distance for candidate selection (4x faster).
+                let rerank_k = top_k.saturating_mul(3).max(20);
+                let mut candidates: Vec<(u32, f32)> = Vec::with_capacity(seg.index.len());
+                let dim = seg.index.dim();
+                for i in 0..seg.index.len() {
+                    if seg.index.is_deleted(i as u32) {
+                        continue;
+                    }
+                    let sq8_vec = &sq8_data[i * dim..(i + 1) * dim];
+                    let d = match self.params.metric {
+                        DistanceMetric::L2 => codec.asymmetric_l2(query, sq8_vec),
+                        DistanceMetric::Cosine => codec.asymmetric_cosine(query, sq8_vec),
+                        DistanceMetric::InnerProduct => codec.asymmetric_ip(query, sq8_vec),
+                    };
+                    candidates.push((i as u32, d));
+                }
+                if candidates.len() > rerank_k {
+                    candidates.select_nth_unstable_by(rerank_k, |a, b| {
+                        a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal)
+                    });
+                    candidates.truncate(rerank_k);
+                }
+
+                // Phase 2: Rerank with exact FP32 distance.
+                let mut reranked: Vec<SearchResult> = candidates
+                    .iter()
+                    .filter_map(|&(id, _)| {
+                        seg.index.get_vector(id).map(|v| SearchResult {
+                            id,
+                            distance: distance(query, v, self.params.metric),
+                        })
+                    })
+                    .collect();
+                reranked.sort_by(|a, b| {
+                    a.distance
+                        .partial_cmp(&b.distance)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+                reranked.truncate(top_k);
+                reranked
+            } else {
+                // No quantization — standard HNSW search.
+                seg.index.search(query, top_k, ef)
+            };
             for mut r in results {
                 r.id += seg.base_id;
                 all.push(r);
@@ -284,14 +333,61 @@ impl VectorCollection {
     /// Finds the matching building segment, replaces it with a sealed segment
     /// containing the built HNSW index. The flat index is dropped (memory freed).
     pub fn complete_build(&mut self, segment_id: u32, index: HnswIndex) {
-        if let Some(pos) = self.building.iter().position(|b| b.segment_id == segment_id) {
+        if let Some(pos) = self
+            .building
+            .iter()
+            .position(|b| b.segment_id == segment_id)
+        {
             let building = self.building.remove(pos);
+            // Quantize the sealed segment's vectors for accelerated search.
+            let sq8 = Self::build_sq8_for_index(&index);
             self.sealed.push(SealedSegment {
                 index,
                 base_id: building.base_id,
+                sq8,
             });
             // building.flat is dropped here, freeing its memory.
         }
+    }
+
+    /// Build SQ8 quantized data for an HNSW index.
+    ///
+    /// Calibrates min/max from all live vectors, then quantizes each vector
+    /// to INT8. Returns `None` if the index is too small to benefit from
+    /// quantization (<1000 vectors).
+    pub(super) fn build_sq8_for_index(index: &HnswIndex) -> Option<(Sq8Codec, Vec<u8>)> {
+        if index.live_count() < 1000 {
+            return None; // Not worth quantizing small indexes.
+        }
+        let dim = index.dim();
+        let n = index.len();
+
+        // Collect vector references for calibration.
+        let mut refs: Vec<&[f32]> = Vec::with_capacity(n);
+        for i in 0..n {
+            if !index.is_deleted(i as u32) {
+                if let Some(v) = index.get_vector(i as u32) {
+                    refs.push(v);
+                }
+            }
+        }
+        if refs.is_empty() {
+            return None;
+        }
+
+        let codec = Sq8Codec::calibrate(&refs, dim);
+
+        // Quantize all vectors (including deleted — preserves ID alignment).
+        let mut data = Vec::with_capacity(dim * n);
+        for i in 0..n {
+            if let Some(v) = index.get_vector(i as u32) {
+                data.extend(codec.quantize(v));
+            } else {
+                data.extend(vec![0u8; dim]);
+            }
+        }
+
+        Some((codec, data))
     }
 
     /// Compact sealed segments: merge all into one, rebuild HNSW.
@@ -341,145 +437,11 @@ impl VectorCollection {
     pub fn params(&self) -> &HnswParams {
         &self.params
     }
-
-    /// Serialize all segments for checkpointing.
-    ///
-    /// Lock-free: sealed segments are immutable (no concurrent writes).
-    /// Growing segment is small (<=64K vectors). Building segments are
-    /// serialized as raw vectors (will trigger rebuild on reload).
-    pub fn checkpoint_to_bytes(&self) -> Vec<u8> {
-        let snapshot = CollectionSnapshot {
-            dim: self.dim,
-            params_m: self.params.m,
-            params_m0: self.params.m0,
-            params_ef_construction: self.params.ef_construction,
-            params_metric: self.params.metric as u8,
-            next_id: self.next_id,
-            growing_base_id: self.growing_base_id,
-            // Growing: serialize as raw vectors.
-            growing_vectors: (0..self.growing.len() as u32)
-                .filter_map(|i| self.growing.get_vector(i).map(|v| v.to_vec()))
-                .collect(),
-            growing_deleted: (0..self.growing.len() as u32)
-                .map(|i| self.growing.get_vector(i).is_none())
-                .collect(),
-            // Sealed: serialize each HNSW.
-            sealed_segments: self
-                .sealed
-                .iter()
-                .map(|s| SealedSnapshot {
-                    base_id: s.base_id,
-                    hnsw_bytes: s.index.checkpoint_to_bytes(),
-                })
-                .collect(),
-            // Building: serialize as raw vectors (will rebuild on reload).
-            building_segments: self
-                .building
-                .iter()
-                .map(|b| BuildingSnapshot {
-                    base_id: b.base_id,
-                    vectors: (0..b.flat.len() as u32)
-                        .filter_map(|i| b.flat.get_vector(i).map(|v| v.to_vec()))
-                        .collect(),
-                })
-                .collect(),
-        };
-        rmp_serde::to_vec_named(&snapshot).unwrap_or_default()
-    }
-
-    /// Restore a collection from checkpoint bytes.
-    pub fn from_checkpoint(bytes: &[u8]) -> Option<Self> {
-        let snap: CollectionSnapshot = rmp_serde::from_slice(bytes).ok()?;
-        let metric = match snap.params_metric {
-            0 => DistanceMetric::L2,
-            1 => DistanceMetric::Cosine,
-            2 => DistanceMetric::InnerProduct,
-            _ => DistanceMetric::Cosine,
-        };
-        let params = HnswParams {
-            m: snap.params_m,
-            m0: snap.params_m0,
-            ef_construction: snap.params_ef_construction,
-            metric,
-        };
-
-        // Restore growing segment.
-        let mut growing = FlatIndex::new(snap.dim, metric);
-        for v in &snap.growing_vectors {
-            growing.insert(v.clone());
-        }
-
-        // Restore sealed segments.
-        let mut sealed = Vec::with_capacity(snap.sealed_segments.len());
-        for ss in &snap.sealed_segments {
-            if let Some(index) = HnswIndex::from_checkpoint(&ss.hnsw_bytes) {
-                sealed.push(SealedSegment {
-                    index,
-                    base_id: ss.base_id,
-                });
-            }
-        }
-
-        // Building segments become sealed with fresh HNSW builds.
-        // Since we can't dispatch to a background thread during checkpoint load,
-        // we build them inline (they're typically small post-crash).
-        for bs in &snap.building_segments {
-            let mut index = HnswIndex::new(snap.dim, params.clone());
-            for v in &bs.vectors {
-                index.insert(v.clone());
-            }
-            sealed.push(SealedSegment {
-                index,
-                base_id: bs.base_id,
-            });
-        }
-
-        let next_segment_id = (sealed.len() + 1) as u32;
-
-        Some(Self {
-            growing,
-            growing_base_id: snap.growing_base_id,
-            sealed,
-            building: Vec::new(),
-            params,
-            next_id: snap.next_id,
-            next_segment_id,
-            dim: snap.dim,
-        })
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-struct CollectionSnapshot {
-    dim: usize,
-    params_m: usize,
-    params_m0: usize,
-    params_ef_construction: usize,
-    params_metric: u8,
-    next_id: u32,
-    growing_base_id: u32,
-    growing_vectors: Vec<Vec<f32>>,
-    growing_deleted: Vec<bool>,
-    sealed_segments: Vec<SealedSnapshot>,
-    building_segments: Vec<BuildingSnapshot>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct SealedSnapshot {
-    base_id: u32,
-    hnsw_bytes: Vec<u8>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct BuildingSnapshot {
-    base_id: u32,
-    vectors: Vec<Vec<f32>>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::vector::distance::DistanceMetric;
 
     fn make_collection() -> VectorCollection {
         VectorCollection::new(
