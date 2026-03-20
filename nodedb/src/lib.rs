@@ -8,6 +8,7 @@ pub mod memory;
 pub mod query;
 pub mod storage;
 pub mod types;
+pub mod version;
 pub mod wal;
 
 pub use config::{EngineConfig, ServerConfig};

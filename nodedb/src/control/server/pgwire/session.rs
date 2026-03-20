@@ -52,6 +52,11 @@ impl PgSession {
         parameters.insert("integer_datetimes".into(), "on".into());
         parameters.insert("search_path".into(), "public".into());
         parameters.insert("transaction_isolation".into(), "read committed".into());
+        // Version info (PostgreSQL compatibility — tools like psql check this).
+        parameters.insert(
+            "server_version".into(),
+            format!("NodeDB {}", crate::version::VERSION),
+        );
         // NodeDB-specific defaults.
         parameters.insert("nodedb.consistency".into(), "strong".into());
         Self {
