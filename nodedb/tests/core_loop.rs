@@ -6,6 +6,10 @@ mod helpers;
 mod test_document;
 #[path = "executor_tests/test_graph.rs"]
 mod test_graph;
+#[path = "executor_tests/test_graph_bounds.rs"]
+mod test_graph_bounds;
+#[path = "executor_tests/test_phase_gates.rs"]
+mod test_phase_gates;
 #[path = "executor_tests/test_transaction.rs"]
 mod test_transaction;
 #[path = "executor_tests/test_vector.rs"]
