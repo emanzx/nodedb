@@ -14,6 +14,8 @@ use crate::bridge::scan_filter::ScanFilter;
 use crate::control::planner::physical::PhysicalTask;
 use crate::types::{TenantId, VShardId};
 
+pub(super) use super::expr_convert::{expr_to_json_value, expr_to_string, expr_to_usize};
+
 /// Convert a DataFusion expression to scan filter predicates.
 ///
 /// Returns `ScanFilter` structs directly (not JSON values). These are
@@ -202,21 +204,6 @@ pub(super) fn expr_to_scan_filters(expr: &Expr) -> Vec<ScanFilter> {
     }
 }
 
-/// Extract a usize from an Expr (for OFFSET values).
-pub(super) fn expr_to_usize(expr: &Expr) -> crate::Result<usize> {
-    match expr {
-        Expr::Literal(lit) => {
-            let s = lit.to_string();
-            s.parse::<usize>().map_err(|_| crate::Error::PlanError {
-                detail: format!("expected integer for OFFSET, got: {s}"),
-            })
-        }
-        _ => Err(crate::Error::PlanError {
-            detail: format!("expected literal for OFFSET, got: {expr}"),
-        }),
-    }
-}
-
 /// Extract SET field assignments from an UPDATE DML input plan.
 ///
 /// DataFusion represents UPDATE SET as a projection with assignment expressions.
@@ -278,47 +265,6 @@ pub(super) fn collect_eq_ids(expr: &Expr, ids: &mut Vec<String>) {
             collect_eq_ids(&binary.right, ids);
         }
         _ => {}
-    }
-}
-
-/// Convert an expression to a string value (for document IDs).
-pub(super) fn expr_to_string(expr: &Expr) -> String {
-    match expr {
-        Expr::Literal(lit) => {
-            let s = lit.to_string();
-            s.trim_matches('\'').trim_matches('"').to_string()
-        }
-        _ => format!("{expr}"),
-    }
-}
-
-/// Convert an expression to a JSON value (for document fields).
-pub(super) fn expr_to_json_value(expr: &Expr) -> serde_json::Value {
-    match expr {
-        Expr::Literal(lit) => {
-            let s = lit.to_string();
-            // Try parsing as number first.
-            if let Ok(n) = s.parse::<i64>() {
-                return serde_json::Value::Number(n.into());
-            }
-            if let Ok(n) = s.parse::<f64>() {
-                if let Some(num) = serde_json::Number::from_f64(n) {
-                    return serde_json::Value::Number(num);
-                }
-            }
-            if s == "true" {
-                return serde_json::Value::Bool(true);
-            }
-            if s == "false" {
-                return serde_json::Value::Bool(false);
-            }
-            if s == "NULL" || s == "null" {
-                return serde_json::Value::Null;
-            }
-            // String value — strip quotes.
-            serde_json::Value::String(s.trim_matches('\'').trim_matches('"').to_string())
-        }
-        _ => serde_json::Value::String(format!("{expr}")),
     }
 }
 
@@ -485,23 +431,22 @@ pub(super) fn try_range_scan_from_predicate(
                     ..
                 },
             ) = (&left_scan.plan, &right_scan.plan)
+                && f1 == f2
             {
-                if f1 == f2 {
-                    // Merge bounds: take whichever side provides lower/upper.
-                    let merged_lower = l1.clone().or_else(|| l2.clone());
-                    let merged_upper = u1.clone().or_else(|| u2.clone());
-                    return Some(PhysicalTask {
-                        tenant_id,
-                        vshard_id: vshard,
-                        plan: PhysicalPlan::RangeScan {
-                            collection: collection.to_string(),
-                            field: f1.clone(),
-                            lower: merged_lower,
-                            upper: merged_upper,
-                            limit: 1000,
-                        },
-                    });
-                }
+                // Merge bounds: take whichever side provides lower/upper.
+                let merged_lower = l1.clone().or_else(|| l2.clone());
+                let merged_upper = u1.clone().or_else(|| u2.clone());
+                return Some(PhysicalTask {
+                    tenant_id,
+                    vshard_id: vshard,
+                    plan: PhysicalPlan::RangeScan {
+                        collection: collection.to_string(),
+                        field: f1.clone(),
+                        lower: merged_lower,
+                        upper: merged_upper,
+                        limit: 1000,
+                    },
+                });
             }
             None
         }

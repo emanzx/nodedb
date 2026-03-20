@@ -40,6 +40,7 @@ pub struct CrdtAuthContext {
 }
 
 pub mod constraint;
+pub mod constraint_checks;
 pub mod dead_letter;
 pub mod deferred;
 pub mod error;
