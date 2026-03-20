@@ -119,27 +119,7 @@ impl LanguageAnalyzer {
 impl TextAnalyzer for LanguageAnalyzer {
     fn analyze(&self, text: &str) -> Vec<String> {
         let stemmer = Stemmer::create(self.algorithm);
-        let normalized: String = text
-            .nfd()
-            .filter(|c| !c.is_ascii() || !unicode_normalization::char::is_combining_mark(*c))
-            .flat_map(char::to_lowercase)
-            .collect();
-
-        let mut tokens = Vec::new();
-        for word in normalized.split(|c: char| !c.is_alphanumeric() && c != '-' && c != '_') {
-            let trimmed = word.trim_matches(|c: char| c == '-' || c == '_');
-            if trimmed.is_empty() || trimmed.len() <= 1 {
-                continue;
-            }
-            if is_stop_word(trimmed) {
-                continue;
-            }
-            let stemmed = stemmer.stem(trimmed);
-            if !stemmed.is_empty() {
-                tokens.push(stemmed.into_owned());
-            }
-        }
-        tokens
+        tokenize_with_stemmer(text, &stemmer)
     }
 
     fn name(&self) -> &str {
@@ -147,21 +127,92 @@ impl TextAnalyzer for LanguageAnalyzer {
     }
 }
 
-/// Registry of named text analyzers per collection.
+/// Synonym map: expands query terms with their synonyms at query time.
+///
+/// Each entry maps a term to a set of synonym terms. When a query term
+/// matches a synonym key, all synonym values are added to the query.
+/// Applied after tokenization/stemming, so synonyms should be in
+/// stemmed form (e.g., "db" → ["databas"], not "database").
+///
+/// Example:
+/// ```ignore
+/// let mut synonyms = SynonymMap::new();
+/// synonyms.add("db", &["databas", "rdbms"]);
+/// synonyms.add("ml", &["machin", "learn"]);
+/// ```
+pub struct SynonymMap {
+    /// term → [synonym_terms]. All keys and values are lowercased.
+    entries: HashMap<String, Vec<String>>,
+}
+
+impl SynonymMap {
+    pub fn new() -> Self {
+        Self {
+            entries: HashMap::new(),
+        }
+    }
+
+    /// Add a synonym mapping. Both `term` and `synonyms` are lowercased.
+    pub fn add(&mut self, term: &str, synonyms: &[&str]) {
+        let key = term.to_lowercase();
+        let vals: Vec<String> = synonyms.iter().map(|s| s.to_lowercase()).collect();
+        self.entries.insert(key, vals);
+    }
+
+    /// Expand a list of tokens with their synonyms.
+    ///
+    /// Returns a new token list containing the originals plus any
+    /// synonym expansions. Duplicates are preserved (BM25 handles
+    /// term frequency naturally).
+    pub fn expand(&self, tokens: &[String]) -> Vec<String> {
+        let mut expanded = Vec::with_capacity(tokens.len() * 2);
+        for token in tokens {
+            expanded.push(token.clone());
+            if let Some(synonyms) = self.entries.get(token.as_str()) {
+                expanded.extend(synonyms.iter().cloned());
+            }
+        }
+        expanded
+    }
+
+    /// Number of synonym entries.
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// Whether the map is empty.
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+}
+
+impl Default for SynonymMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Registry of named text analyzers and synonym maps per collection.
 ///
 /// Collections can configure their analyzer via:
 /// `ALTER COLLECTION articles SET text_analyzer = 'german'`
+///
+/// Synonyms are configured via:
+/// `ALTER COLLECTION articles ADD SYNONYM 'DB' => 'database'`
 ///
 /// If no analyzer is set, the standard English analyzer is used.
 pub struct AnalyzerRegistry {
     /// Per-collection analyzer override: collection → analyzer instance.
     overrides: HashMap<String, Box<dyn TextAnalyzer>>,
+    /// Per-collection synonym maps: collection → SynonymMap.
+    synonyms: HashMap<String, SynonymMap>,
 }
 
 impl AnalyzerRegistry {
     pub fn new() -> Self {
         Self {
             overrides: HashMap::new(),
+            synonyms: HashMap::new(),
         }
     }
 
@@ -183,8 +234,37 @@ impl AnalyzerRegistry {
         true
     }
 
-    /// Get the analyzer for a collection (falls back to standard).
+    /// Add a synonym for a collection. Both term and synonyms are lowercased.
+    pub fn add_synonym(&mut self, collection: &str, term: &str, synonyms: &[&str]) {
+        self.synonyms
+            .entry(collection.to_string())
+            .or_default()
+            .add(term, synonyms);
+    }
+
+    /// Get the synonym map for a collection (if any).
+    pub fn get_synonyms(&self, collection: &str) -> Option<&SynonymMap> {
+        self.synonyms.get(collection)
+    }
+
+    /// Analyze text for a collection, applying synonym expansion at query time.
+    ///
+    /// For indexing, call `analyze_for_index()` (no synonym expansion).
+    /// For querying, call `analyze()` (with synonym expansion).
     pub fn analyze(&self, collection: &str, text: &str) -> Vec<String> {
+        let tokens = match self.overrides.get(collection) {
+            Some(analyzer) => analyzer.analyze(text),
+            None => analyze(text),
+        };
+        // Apply synonym expansion.
+        match self.synonyms.get(collection) {
+            Some(syn_map) if !syn_map.is_empty() => syn_map.expand(&tokens),
+            _ => tokens,
+        }
+    }
+
+    /// Analyze text for indexing (no synonym expansion).
+    pub fn analyze_for_index(&self, collection: &str, text: &str) -> Vec<String> {
         match self.overrides.get(collection) {
             Some(analyzer) => analyzer.analyze(text),
             None => analyze(text),
@@ -204,14 +284,21 @@ impl Default for AnalyzerRegistry {
 /// stop words → stem. Used for both indexing and querying.
 pub fn analyze(text: &str) -> Vec<String> {
     let stemmer = Stemmer::create(Algorithm::English);
-    let mut tokens = Vec::new();
+    tokenize_with_stemmer(text, &stemmer)
+}
 
+/// Shared tokenization pipeline used by both the standard `analyze()` function
+/// and `LanguageAnalyzer`. Normalizes Unicode (NFD + strip combining marks +
+/// lowercase), splits on word boundaries, removes stop words, and stems.
+fn tokenize_with_stemmer(text: &str, stemmer: &Stemmer) -> Vec<String> {
     // Stage 1-2: NFD normalize, strip combining marks, lowercase.
     let normalized: String = text
         .nfd()
         .filter(|c| !c.is_ascii() || !unicode_normalization::char::is_combining_mark(*c))
         .flat_map(char::to_lowercase)
         .collect();
+
+    let mut tokens = Vec::new();
 
     // Stage 3: Split on non-alphanumeric boundaries.
     // Keep hyphens and underscores within words (e.g., "e-mail" stays together).
@@ -231,7 +318,7 @@ pub fn analyze(text: &str) -> Vec<String> {
             continue;
         }
 
-        // Stage 6: Snowball English stemming.
+        // Stage 6: Snowball stemming.
         let stemmed = stemmer.stem(trimmed);
         if !stemmed.is_empty() {
             tokens.push(stemmed.into_owned());
@@ -310,5 +397,53 @@ mod tests {
     fn empty_and_single_char_filtered() {
         let tokens = analyze("I a x  ");
         assert!(tokens.is_empty());
+    }
+
+    #[test]
+    fn synonym_expansion() {
+        let mut syn = SynonymMap::new();
+        syn.add("db", &["databas", "rdbms"]);
+        let tokens = vec!["db".to_string(), "query".to_string()];
+        let expanded = syn.expand(&tokens);
+        assert_eq!(expanded.len(), 4); // db, databas, rdbms, query
+        assert!(expanded.contains(&"databas".to_string()));
+        assert!(expanded.contains(&"rdbms".to_string()));
+    }
+
+    #[test]
+    fn analyzer_registry_with_synonyms() {
+        let mut registry = AnalyzerRegistry::new();
+        registry.add_synonym("docs", "db", &["databas"]);
+
+        // Query-time analysis includes synonym expansion.
+        let tokens = registry.analyze("docs", "db query");
+        assert!(tokens.contains(&"databas".to_string()));
+
+        // Index-time analysis does NOT expand synonyms.
+        let index_tokens = registry.analyze_for_index("docs", "db query");
+        assert!(!index_tokens.contains(&"databas".to_string()));
+    }
+
+    #[test]
+    fn simple_analyzer() {
+        let analyzer = SimpleAnalyzer;
+        let tokens = analyzer.analyze("Hello World foo");
+        assert_eq!(tokens, vec!["hello", "world", "foo"]);
+    }
+
+    #[test]
+    fn keyword_analyzer() {
+        let analyzer = KeywordAnalyzer;
+        let tokens = analyzer.analyze("Active Status");
+        assert_eq!(tokens, vec!["active status"]);
+    }
+
+    #[test]
+    fn language_analyzer_german() {
+        let analyzer = LanguageAnalyzer::new("german").unwrap();
+        let tokens = analyzer.analyze("Die Datenbanken sind schnell");
+        // German stemming should apply.
+        assert!(!tokens.is_empty());
+        assert!(tokens.iter().all(|t| t == &t.to_lowercase()));
     }
 }
