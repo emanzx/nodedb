@@ -49,7 +49,8 @@ pub(super) fn extract_collection(plan: &PhysicalPlan) -> Option<&str> {
         | PhysicalPlan::GraphPath { .. }
         | PhysicalPlan::GraphSubgraph { .. }
         | PhysicalPlan::WalAppend { .. }
-        | PhysicalPlan::Cancel { .. } => None,
+        | PhysicalPlan::Cancel { .. }
+        | PhysicalPlan::TransactionBatch { .. } => None,
     }
 }
 

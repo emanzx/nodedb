@@ -419,6 +419,16 @@ pub enum PhysicalPlan {
 
     /// Cancellation signal. Data Plane MUST stop the target request at next safe point.
     Cancel { target_request_id: RequestId },
+
+    /// Atomic transaction batch: execute all sub-plans atomically.
+    ///
+    /// On the Data Plane, all sub-plans execute within a single logical
+    /// transaction. If any sub-plan fails, all previous sub-plans are
+    /// rolled back (sparse engine operations via redb, CRDT deltas via
+    /// scratch buffer discard). A single `RecordType::Transaction` WAL
+    /// record covers the entire batch (written by Control Plane before
+    /// dispatch).
+    TransactionBatch { plans: Vec<PhysicalPlan> },
 }
 
 /// Request priority. Higher priority requests are scheduled first on the Data Plane.

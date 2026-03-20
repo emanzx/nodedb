@@ -184,6 +184,9 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
 
         // Control operations.
         PhysicalPlan::Cancel { .. } => Permission::Admin,
+
+        // Transaction batch: requires write (contains writes).
+        PhysicalPlan::TransactionBatch { .. } => Permission::Write,
     }
 }
 
