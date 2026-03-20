@@ -62,9 +62,8 @@ impl RequestTracker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bridge::envelope::Status;
+    use crate::bridge::envelope::{Payload, Status};
     use crate::types::Lsn;
-    use std::sync::Arc;
 
     fn make_response(id: u64) -> Response {
         Response {
@@ -72,7 +71,7 @@ mod tests {
             status: Status::Ok,
             attempt: 1,
             partial: false,
-            payload: Arc::from([].as_slice()),
+            payload: Payload::empty(),
             watermark_lsn: Lsn::ZERO,
             error_code: None,
         }

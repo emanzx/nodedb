@@ -1,7 +1,83 @@
+use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Instant;
 
 use crate::engine::graph::edge_store::Direction;
+
+/// Response payload: heap-allocated bytes behind an `Arc<[u8]>`.
+///
+/// The `Deref<Target=[u8]>` impl provides transparent byte access.
+/// Slab-backed zero-copy transport is defined in `super::slab` and will be
+/// wired in once the Data Plane slab pool is integrated.
+#[derive(Debug, Clone)]
+pub enum Payload {
+    /// Heap-allocated payload.
+    Heap(Arc<[u8]>),
+}
+
+impl Payload {
+    /// Create a heap-backed payload from a Vec.
+    pub fn from_vec(v: Vec<u8>) -> Self {
+        Self::Heap(Arc::from(v.into_boxed_slice()))
+    }
+
+    /// Create an empty payload.
+    pub fn empty() -> Self {
+        Self::Heap(Arc::from([].as_slice()))
+    }
+
+    /// Create from Arc<[u8]> (backward compat).
+    pub fn from_arc(a: Arc<[u8]>) -> Self {
+        Self::Heap(a)
+    }
+
+    /// Get the payload bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            Self::Heap(a) => a,
+        }
+    }
+
+    /// Whether this payload is empty.
+    pub fn is_empty(&self) -> bool {
+        self.as_bytes().is_empty()
+    }
+
+    /// Length in bytes.
+    pub fn len(&self) -> usize {
+        self.as_bytes().len()
+    }
+
+    /// Convert to Vec<u8>.
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
+}
+
+impl Deref for Payload {
+    type Target = [u8];
+    fn deref(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
+impl AsRef<[u8]> for Payload {
+    fn as_ref(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
+impl From<Vec<u8>> for Payload {
+    fn from(v: Vec<u8>) -> Self {
+        Self::from_vec(v)
+    }
+}
+
+impl From<Arc<[u8]>> for Payload {
+    fn from(a: Arc<[u8]>) -> Self {
+        Self::Heap(a)
+    }
+}
 use crate::engine::graph::traversal_options::GraphTraversalOptions;
 use crate::types::{Lsn, ReadConsistency, RequestId, TenantId, VShardId};
 
@@ -53,7 +129,7 @@ pub struct Response {
     pub partial: bool,
 
     /// Payload bytes produced by this response chunk.
-    pub payload: Arc<[u8]>,
+    pub payload: Payload,
 
     /// Watermark LSN at the time of read (for snapshot consistency tracking).
     pub watermark_lsn: Lsn,
@@ -430,7 +506,7 @@ mod tests {
             status: Status::Ok,
             attempt: 1,
             partial: false,
-            payload: Arc::from(b"result".as_slice()),
+            payload: Payload::from_arc(Arc::from(b"result".as_slice())),
             watermark_lsn: Lsn::new(42),
             error_code: None,
         };
@@ -446,7 +522,7 @@ mod tests {
             status: Status::Error,
             attempt: 1,
             partial: false,
-            payload: Arc::from([].as_slice()),
+            payload: Payload::empty(),
             watermark_lsn: Lsn::ZERO,
             error_code: Some(ErrorCode::DeadlineExceeded),
         };

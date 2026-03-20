@@ -26,7 +26,7 @@ use std::time::Instant;
 use tracing::{error, info, warn};
 
 use crate::bridge::dispatch::{BridgeRequest, BridgeResponse};
-use crate::bridge::envelope::{ErrorCode, Response, Status};
+use crate::bridge::envelope::{ErrorCode, Payload, Response, Status};
 use crate::data::eventfd::{EventFd, EventFdNotifier};
 use crate::data::executor::core_loop::CoreLoop;
 
@@ -242,7 +242,7 @@ fn drain_and_reject(core: &mut CoreLoop, core_id: usize) {
             status: Status::Error,
             attempt: 1,
             partial: false,
-            payload: Arc::from([].as_slice()),
+            payload: Payload::empty(),
             watermark_lsn: core.watermark,
             error_code: Some(ErrorCode::Internal {
                 detail: format!("core-{core_id} is degraded after repeated panics"),

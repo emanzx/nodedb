@@ -3,7 +3,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use crate::bridge::envelope::{Priority, Request, Response};
+use crate::bridge::envelope::{Payload, Priority, Request, Response};
 use crate::control::planner::physical::PhysicalTask;
 use crate::types::{Lsn, ReadConsistency};
 
@@ -78,7 +78,7 @@ impl NodeDbPgHandler {
                 status: crate::bridge::envelope::Status::Error,
                 attempt: 1,
                 partial: false,
-                payload: Arc::from(err_msg.as_bytes()),
+                payload: Payload::from_arc(Arc::from(err_msg.as_bytes())),
                 watermark_lsn: Lsn::new(0),
                 error_code: Some(crate::bridge::envelope::ErrorCode::Internal { detail: err_msg }),
             }),

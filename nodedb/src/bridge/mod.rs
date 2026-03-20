@@ -1,6 +1,7 @@
 pub mod dispatch;
 pub mod envelope;
 pub mod scan_filter;
+pub mod slab;
 
 pub use dispatch::Dispatcher;
 pub use envelope::{Request, Response, Status};

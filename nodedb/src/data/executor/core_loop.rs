@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::path::Path;
+#[cfg(test)]
 use std::sync::Arc;
 
 use tracing::warn;
@@ -8,7 +9,7 @@ use nodedb_bridge::buffer::{Consumer, Producer};
 use nodedb_crdt::constraint::ConstraintSet;
 
 use crate::bridge::dispatch::{BridgeRequest, BridgeResponse};
-use crate::bridge::envelope::{ErrorCode, Response, Status};
+use crate::bridge::envelope::{ErrorCode, Payload, Response, Status};
 use crate::engine::crdt::tenant_state::TenantCrdtEngine;
 use crate::engine::graph::csr::CsrIndex;
 use crate::engine::graph::edge_store::EdgeStore;
@@ -156,7 +157,7 @@ impl CoreLoop {
                 status: Status::Error,
                 attempt: 1,
                 partial: false,
-                payload: Arc::from([].as_slice()),
+                payload: Payload::empty(),
                 watermark_lsn: self.watermark,
                 error_code: Some(ErrorCode::DeadlineExceeded),
             }
@@ -199,7 +200,7 @@ impl CoreLoop {
             status: Status::Ok,
             attempt: 1,
             partial: false,
-            payload: Arc::from([].as_slice()),
+            payload: Payload::empty(),
             watermark_lsn: self.watermark,
             error_code: None,
         }
@@ -215,7 +216,7 @@ impl CoreLoop {
             status: Status::Ok,
             attempt: 1,
             partial: false,
-            payload: Arc::from(payload.into_boxed_slice()),
+            payload: Payload::from_vec(payload),
             watermark_lsn: self.watermark,
             error_code: None,
         }
@@ -231,7 +232,7 @@ impl CoreLoop {
             status: Status::Error,
             attempt: 1,
             partial: false,
-            payload: Arc::from([].as_slice()),
+            payload: Payload::empty(),
             watermark_lsn: self.watermark,
             error_code: Some(error_code),
         }

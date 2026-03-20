@@ -224,7 +224,7 @@ mod tests {
                     status: Status::Ok,
                     attempt: 1,
                     partial: false,
-                    payload: std::sync::Arc::from(b"result".as_slice()),
+                    payload: Payload::from_arc(std::sync::Arc::from(b"result".as_slice())),
                     watermark_lsn: Lsn::new(42),
                     error_code: None,
                 },
