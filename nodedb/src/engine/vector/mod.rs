@@ -8,3 +8,4 @@ pub mod flat;
 pub mod hnsw;
 pub mod mmap_segment;
 pub mod quantize;
+pub mod simd;

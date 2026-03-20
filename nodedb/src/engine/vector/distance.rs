@@ -63,12 +63,16 @@ pub fn neg_inner_product(a: &[f32], b: &[f32]) -> f32 {
 }
 
 /// Compute distance using the specified metric.
+///
+/// Dispatches to the best available SIMD kernel (AVX-512 > AVX2+FMA > NEON > scalar).
+/// The kernel is selected once at startup via `SimdRuntime::detect()`.
 #[inline]
 pub fn distance(a: &[f32], b: &[f32], metric: DistanceMetric) -> f32 {
+    let rt = super::simd::runtime();
     match metric {
-        DistanceMetric::L2 => l2_squared(a, b),
-        DistanceMetric::Cosine => cosine_distance(a, b),
-        DistanceMetric::InnerProduct => neg_inner_product(a, b),
+        DistanceMetric::L2 => (rt.l2_squared)(a, b),
+        DistanceMetric::Cosine => (rt.cosine_distance)(a, b),
+        DistanceMetric::InnerProduct => (rt.neg_inner_product)(a, b),
     }
 }
 
