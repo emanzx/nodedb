@@ -8,15 +8,16 @@ use redb::{Database, ReadableTable, TableDefinition};
 /// Separator \x00 ensures lexicographic ordering groups all edges from the same
 /// source together, then by label, then by destination — enabling efficient
 /// prefix scans for outbound traversals.
-const EDGES: TableDefinition<&str, &[u8]> = TableDefinition::new("edges");
+pub(super) const EDGES: TableDefinition<&str, &[u8]> = TableDefinition::new("edges");
 
 /// Reverse edge index: `"dst_id\x00edge_label\x00src_id"` → empty.
 ///
 /// Enables efficient inbound traversals (`GRAPH_NEIGHBORS(node, label, IN)`).
 /// Maintained synchronously with the forward edge table.
-const REVERSE_EDGES: TableDefinition<&str, &[u8]> = TableDefinition::new("reverse_edges");
+pub(super) const REVERSE_EDGES: TableDefinition<&str, &[u8]> =
+    TableDefinition::new("reverse_edges");
 
-fn redb_err<E: std::fmt::Display>(ctx: &str, e: E) -> crate::Error {
+pub(super) fn redb_err<E: std::fmt::Display>(ctx: &str, e: E) -> crate::Error {
     crate::Error::Storage {
         engine: "graph".into(),
         detail: format!("{ctx}: {e}"),
@@ -24,12 +25,12 @@ fn redb_err<E: std::fmt::Display>(ctx: &str, e: E) -> crate::Error {
 }
 
 /// Composite edge key using \x00 separator.
-fn edge_key(src: &str, label: &str, dst: &str) -> String {
+pub(super) fn edge_key(src: &str, label: &str, dst: &str) -> String {
     format!("{src}\x00{label}\x00{dst}")
 }
 
 /// Parse a composite edge key back into (src, label, dst).
-fn parse_edge_key(key: &str) -> Option<(&str, &str, &str)> {
+pub(super) fn parse_edge_key(key: &str) -> Option<(&str, &str, &str)> {
     let mut parts = key.splitn(3, '\x00');
     let src = parts.next()?;
     let label = parts.next()?;
@@ -62,7 +63,7 @@ pub struct Edge {
 ///
 /// Each Data Plane core owns its own `EdgeStore` instance — no cross-core sharing.
 pub struct EdgeStore {
-    db: Arc<Database>,
+    pub(super) db: Arc<Database>,
 }
 
 impl EdgeStore {
@@ -155,6 +156,68 @@ impl EdgeStore {
         Ok(existed)
     }
 
+    /// Delete ALL edges where the given node is source or destination.
+    ///
+    /// Used during document deletion cascade. Scans both forward and
+    /// reverse edge tables for entries containing the node.
+    pub fn delete_edges_for_node(&self, node: &str) -> crate::Result<()> {
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| redb_err("begin_write", e))?;
+        {
+            let mut edges = write_txn
+                .open_table(EDGES)
+                .map_err(|e| redb_err("open edges", e))?;
+            let mut rev = write_txn
+                .open_table(REVERSE_EDGES)
+                .map_err(|e| redb_err("open reverse", e))?;
+
+            // Remove outgoing edges: keys starting with "node\x00".
+            let out_prefix = format!("{node}\x00");
+            let out_end = format!("{node}\x01");
+            let out_keys: Vec<String> = edges
+                .range(out_prefix.as_str()..out_end.as_str())
+                .map_err(|e| redb_err("out range", e))?
+                .filter_map(|r| r.ok().map(|(k, _)| k.value().to_string()))
+                .collect();
+            for key in &out_keys {
+                edges
+                    .remove(key.as_str())
+                    .map_err(|e| redb_err("remove out edge", e))?;
+                // Build reverse key: "dst\x00label\x00src"
+                let parts: Vec<&str> = key.splitn(3, '\x00').collect();
+                if parts.len() == 3 {
+                    let rev_key = format!("{}\x00{}\x00{}", parts[2], parts[1], parts[0]);
+                    let _ = rev.remove(rev_key.as_str());
+                }
+            }
+
+            // Remove incoming edges: keys starting with "node\x00" in reverse table.
+            let in_prefix = format!("{node}\x00");
+            let in_end = format!("{node}\x01");
+            let in_keys: Vec<String> = rev
+                .range(in_prefix.as_str()..in_end.as_str())
+                .map_err(|e| redb_err("in range", e))?
+                .filter_map(|r| r.ok().map(|(k, _)| k.value().to_string()))
+                .collect();
+            for key in &in_keys {
+                rev.remove(key.as_str())
+                    .map_err(|e| redb_err("remove in edge", e))?;
+                // Build forward key: "src\x00label\x00dst"
+                let parts: Vec<&str> = key.splitn(3, '\x00').collect();
+                if parts.len() == 3 {
+                    let fwd_key = format!("{}\x00{}\x00{}", parts[2], parts[1], parts[0]);
+                    let _ = edges.remove(fwd_key.as_str());
+                }
+            }
+        }
+        write_txn
+            .commit()
+            .map_err(|e| redb_err("commit edge cascade", e))?;
+        Ok(())
+    }
+
     /// Get a single edge's properties. Returns None if the edge doesn't exist.
     pub fn get_edge(&self, src: &str, label: &str, dst: &str) -> crate::Result<Option<Vec<u8>>> {
         let key = edge_key(src, label, dst);
@@ -172,199 +235,12 @@ impl EdgeStore {
         }
     }
 
-    /// Get all outbound neighbors of a node, optionally filtered by edge label.
-    ///
-    /// Returns edges sorted by (label, dst_id) due to the composite key ordering.
-    pub fn neighbors_out(&self, src: &str, label_filter: Option<&str>) -> crate::Result<Vec<Edge>> {
-        let prefix = match label_filter {
-            Some(label) => format!("{src}\x00{label}\x00"),
-            None => format!("{src}\x00"),
-        };
-
-        self.scan_edges_with_prefix(&prefix, |fwd_src, fwd_label, fwd_dst| {
-            Edge {
-                src_id: fwd_src.to_string(),
-                label: fwd_label.to_string(),
-                dst_id: fwd_dst.to_string(),
-                properties: Vec::new(), // overwritten by scan_edges_with_prefix
-            }
-        })
-    }
-
-    /// Get all inbound neighbors of a node, optionally filtered by edge label.
-    pub fn neighbors_in(&self, dst: &str, label_filter: Option<&str>) -> crate::Result<Vec<Edge>> {
-        let prefix = match label_filter {
-            Some(label) => format!("{dst}\x00{label}\x00"),
-            None => format!("{dst}\x00"),
-        };
-
-        // Reverse index keys are (dst, label, src), so we scan reverse table
-        // and reconstruct edges with src/dst swapped.
-        let read_txn = self
-            .db
-            .begin_read()
-            .map_err(|e| redb_err("begin_read", e))?;
-        let table = read_txn
-            .open_table(REVERSE_EDGES)
-            .map_err(|e| redb_err("open reverse", e))?;
-
-        let mut edges = Vec::new();
-        let range = table
-            .range(prefix.as_str()..)
-            .map_err(|e| redb_err("range", e))?;
-
-        for entry in range {
-            let (key, _) = entry.map_err(|e| redb_err("iter", e))?;
-            let key_str = key.value();
-            if !key_str.starts_with(&prefix) {
-                break;
-            }
-            if let Some((_rev_dst, rev_label, rev_src)) = parse_edge_key(key_str) {
-                edges.push(Edge {
-                    src_id: rev_src.to_string(),
-                    label: rev_label.to_string(),
-                    dst_id: dst.to_string(),
-                    properties: Vec::new(),
-                });
-            }
-        }
-
-        // Optionally load properties from forward table.
-        if !edges.is_empty() {
-            let fwd_table = read_txn
-                .open_table(EDGES)
-                .map_err(|e| redb_err("open edges", e))?;
-            for edge in &mut edges {
-                let fwd_key = edge_key(&edge.src_id, &edge.label, &edge.dst_id);
-                if let Some(val) = fwd_table
-                    .get(fwd_key.as_str())
-                    .map_err(|e| redb_err("get props", e))?
-                {
-                    edge.properties = val.value().to_vec();
-                }
-            }
-        }
-
-        Ok(edges)
-    }
-
-    /// Get all neighbors (both directions), optionally filtered by edge label.
-    pub fn neighbors(
-        &self,
-        node: &str,
-        label_filter: Option<&str>,
-        direction: Direction,
-    ) -> crate::Result<Vec<Edge>> {
-        match direction {
-            Direction::Out => self.neighbors_out(node, label_filter),
-            Direction::In => self.neighbors_in(node, label_filter),
-            Direction::Both => {
-                let mut out = self.neighbors_out(node, label_filter)?;
-                let inbound = self.neighbors_in(node, label_filter)?;
-                out.extend(inbound);
-                Ok(out)
-            }
-        }
-    }
-
-    /// Multi-hop BFS traversal from start nodes.
-    ///
-    /// Returns all node IDs reachable within `max_depth` hops via edges matching
-    /// the optional label filter. Traversal direction is configurable.
-    ///
-    /// Bounded depth prevents fan-out explosion.
-    /// `max_depth` is capped at 10 to prevent unbounded memory growth.
-    pub fn traverse_bfs(
-        &self,
-        start_nodes: &[&str],
-        label_filter: Option<&str>,
-        direction: Direction,
-        max_depth: usize,
-    ) -> crate::Result<Vec<String>> {
-        const MAX_ALLOWED_DEPTH: usize = 10;
-        const MAX_VISITED: usize = 100_000;
-
-        if max_depth > MAX_ALLOWED_DEPTH {
-            return Err(crate::Error::BadRequest {
-                detail: format!(
-                    "traverse_bfs: depth {max_depth} exceeds maximum {MAX_ALLOWED_DEPTH}"
-                ),
-            });
-        }
-
-        use std::collections::{HashSet, VecDeque};
-
-        let mut visited: HashSet<String> = HashSet::new();
-        let mut queue: VecDeque<(String, usize)> = VecDeque::new();
-
-        for &node in start_nodes {
-            visited.insert(node.to_string());
-            queue.push_back((node.to_string(), 0));
-        }
-
-        while let Some((node, depth)) = queue.pop_front() {
-            if depth >= max_depth || visited.len() >= MAX_VISITED {
-                continue;
-            }
-
-            let edges = self.neighbors(&node, label_filter, direction)?;
-            for edge in edges {
-                if visited.len() >= MAX_VISITED {
-                    break;
-                }
-                let neighbor = if edge.src_id == node {
-                    edge.dst_id
-                } else {
-                    edge.src_id
-                };
-                if !visited.contains(&neighbor) {
-                    visited.insert(neighbor.clone());
-                    queue.push_back((neighbor, depth + 1));
-                }
-            }
-        }
-
-        Ok(visited.into_iter().collect())
-    }
-
-    /// Scan all forward edges in the store. Used for CSR rebuild on startup.
-    pub fn scan_all_edges(&self) -> crate::Result<Vec<Edge>> {
-        let read_txn = self
-            .db
-            .begin_read()
-            .map_err(|e| redb_err("begin_read", e))?;
-        let table = read_txn
-            .open_table(EDGES)
-            .map_err(|e| redb_err("open edges", e))?;
-
-        let mut edges = Vec::new();
-        let range = table.iter().map_err(|e| redb_err("iter", e))?;
-        for entry in range {
-            let (key, val) = entry.map_err(|e| redb_err("iter", e))?;
-            if let Some((src, label, dst)) = parse_edge_key(key.value()) {
-                edges.push(Edge {
-                    src_id: src.to_string(),
-                    label: label.to_string(),
-                    dst_id: dst.to_string(),
-                    properties: val.value().to_vec(),
-                });
-            }
-        }
-        Ok(edges)
-    }
-
-    /// Count edges from a source node, optionally filtered by label.
-    pub fn out_degree(&self, src: &str, label_filter: Option<&str>) -> crate::Result<usize> {
-        Ok(self.neighbors_out(src, label_filter)?.len())
-    }
-
-    /// Count edges to a destination node, optionally filtered by label.
-    pub fn in_degree(&self, dst: &str, label_filter: Option<&str>) -> crate::Result<usize> {
-        Ok(self.neighbors_in(dst, label_filter)?.len())
-    }
-
     /// Scan forward edges with a key prefix, parsing composite keys.
-    fn scan_edges_with_prefix<F>(&self, prefix: &str, mut make_edge: F) -> crate::Result<Vec<Edge>>
+    pub(super) fn scan_edges_with_prefix<F>(
+        &self,
+        prefix: &str,
+        mut make_edge: F,
+    ) -> crate::Result<Vec<Edge>>
     where
         F: FnMut(&str, &str, &str) -> Edge,
     {
@@ -393,74 +269,6 @@ impl EdgeStore {
         }
 
         Ok(edges)
-    }
-
-    /// Export all forward edges as key-value pairs (for snapshot transfer).
-    pub fn export_edges(&self) -> crate::Result<Vec<(String, Vec<u8>)>> {
-        let txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
-        let table = txn
-            .open_table(EDGES)
-            .map_err(|e| redb_err("open edges", e))?;
-        let mut pairs = Vec::new();
-        for entry in table
-            .range::<&str>(..)
-            .map_err(|e| redb_err("iter edges", e))?
-        {
-            let entry = entry.map_err(|e| redb_err("read edge", e))?;
-            pairs.push((entry.0.value().to_string(), entry.1.value().to_vec()));
-        }
-        Ok(pairs)
-    }
-
-    /// Export all reverse edges as key-value pairs (for snapshot transfer).
-    pub fn export_reverse_edges(&self) -> crate::Result<Vec<(String, Vec<u8>)>> {
-        let txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
-        let table = txn
-            .open_table(REVERSE_EDGES)
-            .map_err(|e| redb_err("open rev edges", e))?;
-        let mut pairs = Vec::new();
-        for entry in table
-            .range::<&str>(..)
-            .map_err(|e| redb_err("iter rev edges", e))?
-        {
-            let entry = entry.map_err(|e| redb_err("read rev edge", e))?;
-            pairs.push((entry.0.value().to_string(), entry.1.value().to_vec()));
-        }
-        Ok(pairs)
-    }
-
-    /// Import edges from a snapshot (bulk insert).
-    pub fn import_edges(
-        &self,
-        edges: &[(String, Vec<u8>)],
-        reverse: &[(String, Vec<u8>)],
-    ) -> crate::Result<()> {
-        let txn = self
-            .db
-            .begin_write()
-            .map_err(|e| redb_err("write txn", e))?;
-        {
-            let mut table = txn
-                .open_table(EDGES)
-                .map_err(|e| redb_err("open edges", e))?;
-            for (key, value) in edges {
-                table
-                    .insert(key.as_str(), value.as_slice())
-                    .map_err(|e| redb_err("insert edge", e))?;
-            }
-        }
-        {
-            let mut table = txn
-                .open_table(REVERSE_EDGES)
-                .map_err(|e| redb_err("open rev edges", e))?;
-            for (key, value) in reverse {
-                table
-                    .insert(key.as_str(), value.as_slice())
-                    .map_err(|e| redb_err("insert rev edge", e))?;
-            }
-        }
-        txn.commit().map_err(|e| redb_err("commit", e))?;
-        Ok(())
     }
 }
 

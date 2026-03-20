@@ -105,6 +105,46 @@ impl CsrIndex {
         }
     }
 
+    /// Remove ALL edges touching a node (both outgoing and incoming).
+    ///
+    /// Used during document deletion cascade. Returns the number of
+    /// edges removed.
+    pub fn remove_node_edges(&mut self, node: &str) -> usize {
+        let Some(&node_id) = self.node_to_id.get(node) else {
+            return 0;
+        };
+        let idx = node_id as usize;
+        let mut removed = 0;
+
+        // Remove outgoing edges and their reverse (incoming) references.
+        if idx < self.out_adj.len() {
+            let out_edges: Vec<(String, u32)> = self.out_adj[idx].clone();
+            for (label, dst_id) in &out_edges {
+                let dst_idx = *dst_id as usize;
+                if dst_idx < self.in_adj.len() {
+                    self.in_adj[dst_idx].retain(|(l, s)| !(l == label && *s == node_id));
+                }
+                removed += 1;
+            }
+            self.out_adj[idx].clear();
+        }
+
+        // Remove incoming edges and their reverse (outgoing) references.
+        if idx < self.in_adj.len() {
+            let in_edges: Vec<(String, u32)> = self.in_adj[idx].clone();
+            for (label, src_id) in &in_edges {
+                let src_idx = *src_id as usize;
+                if src_idx < self.out_adj.len() {
+                    self.out_adj[src_idx].retain(|(l, d)| !(l == label && *d == node_id));
+                }
+                removed += 1;
+            }
+            self.in_adj[idx].clear();
+        }
+
+        removed
+    }
+
     /// Get immediate neighbors (1-hop) with optional label filter.
     pub fn neighbors(
         &self,
