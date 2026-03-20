@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use redb::{Database, TableDefinition};
+use redb::{Database, ReadableTable, TableDefinition};
 use tracing::{debug, info};
 
 /// Table definition for the primary document store.
@@ -228,6 +228,58 @@ impl SparseEngine {
             debug!(collection, document_id, removed, "document delete");
             Ok(removed)
         })
+    }
+
+    /// Delete all secondary index entries for a document.
+    ///
+    /// Scans the INDEXES table for entries ending with `:{document_id}` and
+    /// removes them. Called during document deletion cascade.
+    pub fn delete_indexes_for_document(
+        &self,
+        tenant_id: u32,
+        collection: &str,
+        document_id: &str,
+    ) -> crate::Result<()> {
+        let prefix = format!("{tenant_id}:{collection}:");
+        let end = format!("{tenant_id}:{collection}:\u{ffff}");
+        let suffix = format!(":{document_id}");
+
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| redb_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(INDEXES)
+                .map_err(|e| redb_err("open indexes", e))?;
+
+            // Collect matching keys first (can't mutate during iteration).
+            let keys_to_remove: Vec<String> = table
+                .range(prefix.as_str()..end.as_str())
+                .map_err(|e| redb_err("index range", e))?
+                .filter_map(|r| {
+                    r.ok().and_then(|(k, _)| {
+                        let key = k.value().to_string();
+                        if key.ends_with(&suffix) {
+                            Some(key)
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .collect();
+
+            for key in &keys_to_remove {
+                table
+                    .remove(key.as_str())
+                    .map_err(|e| redb_err("remove index", e))?;
+            }
+        }
+        write_txn
+            .commit()
+            .map_err(|e| redb_err("commit index cascade", e))?;
+
+        Ok(())
     }
 
     /// Range scan: retrieve documents in a collection with keys in [lower, upper).

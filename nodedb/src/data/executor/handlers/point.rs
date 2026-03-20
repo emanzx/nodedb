@@ -87,9 +87,31 @@ impl CoreLoop {
         debug!(core = self.core_id, %collection, %document_id, "point delete");
         match self.sparse.delete(tid, collection, document_id) {
             Ok(_) => {
+                // Cascade 1: Remove from full-text inverted index.
                 if let Err(e) = self.inverted.remove_document(collection, document_id) {
                     warn!(core = self.core_id, %collection, %document_id, error = %e, "inverted index removal failed");
                 }
+
+                // Cascade 2: Remove secondary index entries for this document.
+                // Secondary indexes use key format "{tenant}:{collection}:{field}:{value}:{doc_id}".
+                // We scan and delete all entries ending with this doc_id.
+                if let Err(e) =
+                    self.sparse
+                        .delete_indexes_for_document(tid, collection, document_id)
+                {
+                    warn!(core = self.core_id, %collection, %document_id, error = %e, "secondary index cascade failed");
+                }
+
+                // Cascade 3: Remove graph edges where this document is src or dst.
+                let edges_removed = self.csr.remove_node_edges(document_id);
+                if edges_removed > 0 {
+                    // Also remove from persistent edge store.
+                    if let Err(e) = self.edge_store.delete_edges_for_node(document_id) {
+                        warn!(core = self.core_id, %document_id, error = %e, "edge cascade failed");
+                    }
+                    tracing::trace!(core = self.core_id, %document_id, edges_removed, "EDGE_CASCADE_DELETE");
+                }
+
                 self.response_ok(task)
             }
             Err(e) => self.response_error(
