@@ -1,4 +1,4 @@
-//! HashJoin execution handler.
+//! HashJoin and NestedLoopJoin execution handlers.
 
 use tracing::debug;
 
@@ -6,6 +6,41 @@ use crate::bridge::envelope::{ErrorCode, Response};
 
 use crate::data::executor::core_loop::CoreLoop;
 use crate::data::executor::task::ExecutionTask;
+
+/// Merge a left and optional right document into a single JSON object,
+/// prefixing each key with its source collection name.
+fn merge_join_docs(
+    left_doc: &serde_json::Value,
+    right_doc: Option<&serde_json::Value>,
+    left_collection: &str,
+    right_collection: &str,
+) -> serde_json::Value {
+    let mut merged = serde_json::Map::new();
+    if let Some(obj) = left_doc.as_object() {
+        for (k, v) in obj {
+            merged.insert(format!("{left_collection}.{k}"), v.clone());
+        }
+    }
+    if let Some(right) = right_doc {
+        if let Some(obj) = right.as_object() {
+            for (k, v) in obj {
+                merged.insert(format!("{right_collection}.{k}"), v.clone());
+            }
+        }
+    }
+    serde_json::Value::Object(merged)
+}
+
+/// Merge only the right document (left is NULL for right-outer unmatched rows).
+fn merge_right_only(right_doc: &serde_json::Value, right_collection: &str) -> serde_json::Value {
+    let mut merged = serde_json::Map::new();
+    if let Some(obj) = right_doc.as_object() {
+        for (k, v) in obj {
+            merged.insert(format!("{right_collection}.{k}"), v.clone());
+        }
+    }
+    serde_json::Value::Object(merged)
+}
 
 impl CoreLoop {
     #[allow(clippy::too_many_arguments)]
@@ -88,27 +123,6 @@ impl CoreLoop {
             right_index.entry(key_val).or_default().push(doc);
         }
 
-        let merge_docs = |left_doc: &serde_json::Value,
-                          right_doc: Option<&serde_json::Value>,
-                          left_coll: &str,
-                          right_coll: &str|
-         -> serde_json::Value {
-            let mut merged = serde_json::Map::new();
-            if let Some(obj) = left_doc.as_object() {
-                for (k, v) in obj {
-                    merged.insert(format!("{left_coll}.{k}"), v.clone());
-                }
-            }
-            if let Some(right) = right_doc {
-                if let Some(obj) = right.as_object() {
-                    for (k, v) in obj {
-                        merged.insert(format!("{right_coll}.{k}"), v.clone());
-                    }
-                }
-            }
-            serde_json::Value::Object(merged)
-        };
-
         let is_left = join_type == "left" || join_type == "full";
         let is_right = join_type == "right" || join_type == "full";
 
@@ -130,7 +144,7 @@ impl CoreLoop {
                     if results.len() >= limit {
                         break;
                     }
-                    results.push(merge_docs(
+                    results.push(merge_join_docs(
                         &left_doc,
                         Some(right_doc),
                         left_collection,
@@ -138,7 +152,7 @@ impl CoreLoop {
                     ));
                 }
             } else if is_left {
-                results.push(merge_docs(
+                results.push(merge_join_docs(
                     &left_doc,
                     None,
                     left_collection,
@@ -159,13 +173,7 @@ impl CoreLoop {
                     if results.len() >= limit {
                         break;
                     }
-                    let mut merged = serde_json::Map::new();
-                    if let Some(obj) = right_doc.as_object() {
-                        for (k, v) in obj {
-                            merged.insert(format!("{right_collection}.{k}"), v.clone());
-                        }
-                    }
-                    results.push(serde_json::Value::Object(merged));
+                    results.push(merge_right_only(right_doc, right_collection));
                 }
             }
         }
@@ -246,25 +254,6 @@ impl CoreLoop {
             }
         };
 
-        let merge_docs = |left_doc: &serde_json::Value,
-                          right_doc: Option<&serde_json::Value>|
-         -> serde_json::Value {
-            let mut merged = serde_json::Map::new();
-            if let Some(obj) = left_doc.as_object() {
-                for (k, v) in obj {
-                    merged.insert(format!("{left_collection}.{k}"), v.clone());
-                }
-            }
-            if let Some(right) = right_doc {
-                if let Some(obj) = right.as_object() {
-                    for (k, v) in obj {
-                        merged.insert(format!("{right_collection}.{k}"), v.clone());
-                    }
-                }
-            }
-            serde_json::Value::Object(merged)
-        };
-
         let is_left = join_type == "left" || join_type == "full";
         let is_right = join_type == "right" || join_type == "full";
 
@@ -295,20 +284,35 @@ impl CoreLoop {
                 let passes = if predicates.is_empty() {
                     true // Cross join.
                 } else {
-                    let merged = merge_docs(&left_doc, Some(right_doc));
+                    let merged = merge_join_docs(
+                        &left_doc,
+                        Some(right_doc),
+                        left_collection,
+                        right_collection,
+                    );
                     predicates.iter().all(|p| p.matches(&merged))
                 };
 
                 if passes {
                     left_matched = true;
                     right_matched[ri] = true;
-                    results.push(merge_docs(&left_doc, Some(right_doc)));
+                    results.push(merge_join_docs(
+                        &left_doc,
+                        Some(right_doc),
+                        left_collection,
+                        right_collection,
+                    ));
                 }
             }
 
             // LEFT/FULL: emit unmatched left rows.
             if !left_matched && is_left {
-                results.push(merge_docs(&left_doc, None));
+                results.push(merge_join_docs(
+                    &left_doc,
+                    None,
+                    left_collection,
+                    right_collection,
+                ));
             }
         }
 
@@ -319,13 +323,7 @@ impl CoreLoop {
                     break;
                 }
                 if !right_matched[ri] {
-                    let mut merged = serde_json::Map::new();
-                    if let Some(obj) = right_doc.as_object() {
-                        for (k, v) in obj {
-                            merged.insert(format!("{right_collection}.{k}"), v.clone());
-                        }
-                    }
-                    results.push(serde_json::Value::Object(merged));
+                    results.push(merge_right_only(right_doc, right_collection));
                 }
             }
         }
