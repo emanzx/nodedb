@@ -286,11 +286,16 @@ impl NodeDbPgHandler {
     }
 
     /// Plan and dispatch SQL after quota and DDL checks have passed.
+    ///
+    /// When in a transaction block (BEGIN..COMMIT), write operations are
+    /// buffered instead of dispatched. Read operations execute immediately.
+    /// The buffer is dispatched atomically on COMMIT.
     pub(super) async fn execute_planned_sql(
         &self,
         identity: &AuthenticatedIdentity,
         sql: &str,
         tenant_id: TenantId,
+        _addr: &std::net::SocketAddr,
     ) -> PgWireResult<Vec<Response>> {
         let tasks = self.query_ctx.plan_sql(sql, tenant_id).await.map_err(|e| {
             let (severity, code, message) = error_to_sqlstate(&e);

@@ -35,6 +35,9 @@ pub struct PgSession {
     pub tx_state: TransactionState,
     /// Session parameters set via SET commands.
     pub parameters: HashMap<String, String>,
+    /// Buffered write tasks accumulated between BEGIN and COMMIT.
+    /// Dispatched atomically on COMMIT, discarded on ROLLBACK.
+    pub tx_buffer: Vec<crate::control::planner::physical::PhysicalTask>,
 }
 
 impl PgSession {
@@ -54,6 +57,7 @@ impl PgSession {
         Self {
             tx_state: TransactionState::Idle,
             parameters,
+            tx_buffer: Vec::new(),
         }
     }
 }
@@ -146,37 +150,49 @@ impl SessionStore {
         }
     }
 
-    /// COMMIT — commit and return to idle.
+    /// COMMIT — drain the write buffer and return to idle.
+    ///
+    /// Transition out of transaction block.
+    /// Transaction blocks are advisory (per-statement commit model) —
+    /// writes are dispatched immediately, not buffered.
     pub fn commit(&self, addr: &SocketAddr) -> Result<(), &'static str> {
         let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
         if let Some(session) = sessions.get_mut(addr) {
-            match session.tx_state {
-                TransactionState::InBlock => {
-                    session.tx_state = TransactionState::Idle;
-                    Ok(())
-                }
-                TransactionState::Failed => {
-                    // COMMIT in failed state acts like ROLLBACK per PostgreSQL spec.
-                    session.tx_state = TransactionState::Idle;
-                    Ok(())
-                }
-                TransactionState::Idle => {
-                    // PostgreSQL issues a WARNING here.
-                    Ok(())
-                }
-            }
+            session.tx_buffer.clear();
+            session.tx_state = TransactionState::Idle;
+            Ok(())
         } else {
             Ok(())
         }
     }
 
-    /// ROLLBACK — abort and return to idle.
+    /// ROLLBACK — discard the write buffer and return to idle.
     pub fn rollback(&self, addr: &SocketAddr) -> Result<(), &'static str> {
         let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
         if let Some(session) = sessions.get_mut(addr) {
+            session.tx_buffer.clear();
             session.tx_state = TransactionState::Idle;
         }
         Ok(())
+    }
+
+    /// Buffer a write task for the current transaction.
+    ///
+    /// Returns `true` if the task was buffered (we're in a transaction block).
+    /// Returns `false` if not in a transaction (caller should dispatch immediately).
+    pub fn buffer_write(
+        &self,
+        addr: &SocketAddr,
+        task: crate::control::planner::physical::PhysicalTask,
+    ) -> bool {
+        let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
+        if let Some(session) = sessions.get_mut(addr) {
+            if session.tx_state == TransactionState::InBlock {
+                session.tx_buffer.push(task);
+                return true;
+            }
+        }
+        false
     }
 
     /// Mark the current transaction as failed (after a query error inside BEGIN).

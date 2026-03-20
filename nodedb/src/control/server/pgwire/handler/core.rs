@@ -548,7 +548,7 @@ impl NodeDbPgHandler {
 
         self.state.tenant_request_start(tenant_id);
         let result = self
-            .execute_planned_sql(identity, sql_trimmed, tenant_id)
+            .execute_planned_sql(identity, sql_trimmed, tenant_id, addr)
             .await;
         self.state.tenant_request_end(tenant_id);
 
