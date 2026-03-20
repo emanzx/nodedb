@@ -8,7 +8,12 @@ use std::net::SocketAddr;
 pub enum NodeState {
     /// Node is connecting, receiving initial topology.
     Joining,
-    /// Node is fully operational, hosting Raft groups.
+    /// Node is catching up as a non-voting learner.
+    /// Receives Raft log entries but doesn't vote in elections.
+    /// Promoted to Active (voting member) after state catch-up
+    /// and checksum validation.
+    Learner,
+    /// Node is fully operational, hosting Raft groups as voting member.
     Active,
     /// Node is being decommissioned, migrating data off.
     Draining,
@@ -23,6 +28,7 @@ impl NodeState {
             Self::Active => 1,
             Self::Draining => 2,
             Self::Decommissioned => 3,
+            Self::Learner => 4,
         }
     }
 
@@ -32,8 +38,19 @@ impl NodeState {
             1 => Some(Self::Active),
             2 => Some(Self::Draining),
             3 => Some(Self::Decommissioned),
+            4 => Some(Self::Learner),
             _ => None,
         }
+    }
+
+    /// Whether this node can vote in Raft elections.
+    pub fn is_voter(self) -> bool {
+        matches!(self, Self::Active)
+    }
+
+    /// Whether this node receives Raft log entries (learner + active).
+    pub fn receives_log(self) -> bool {
+        matches!(self, Self::Learner | Self::Active)
     }
 }
 
@@ -139,6 +156,45 @@ impl ClusterTopology {
 
     pub fn contains(&self, node_id: u64) -> bool {
         self.nodes.contains_key(&node_id)
+    }
+
+    /// Add a new node as a non-voting learner.
+    ///
+    /// The node receives Raft log entries and catches up with the cluster
+    /// state, but doesn't participate in elections. Once caught up and
+    /// validated, call `promote_to_voter()`.
+    pub fn join_as_learner(&mut self, info: NodeInfo) -> bool {
+        if self.nodes.contains_key(&info.node_id) {
+            return false; // Already exists.
+        }
+        let mut learner = info;
+        learner.state = NodeState::Learner;
+        self.nodes.insert(learner.node_id, learner);
+        self.version += 1;
+        true
+    }
+
+    /// Promote a learner node to a full voting member.
+    ///
+    /// Only valid for nodes in `Learner` state. After promotion, the node
+    /// participates in Raft elections and counts toward quorum.
+    pub fn promote_to_voter(&mut self, node_id: u64) -> bool {
+        if let Some(info) = self.nodes.get_mut(&node_id)
+            && info.state == NodeState::Learner
+        {
+            info.state = NodeState::Active;
+            self.version += 1;
+            return true;
+        }
+        false
+    }
+
+    /// All learner nodes (catching up, not yet voting).
+    pub fn learner_nodes(&self) -> Vec<&NodeInfo> {
+        self.nodes
+            .values()
+            .filter(|n| n.state == NodeState::Learner)
+            .collect()
     }
 }
 

@@ -16,6 +16,7 @@ pub(super) fn node_state_str(state: nodedb_cluster::NodeState) -> &'static str {
         nodedb_cluster::NodeState::Joining => "joining",
         nodedb_cluster::NodeState::Active => "active",
         nodedb_cluster::NodeState::Draining => "draining",
+        nodedb_cluster::NodeState::Learner => "learner",
         nodedb_cluster::NodeState::Decommissioned => "decommissioned",
     }
 }
