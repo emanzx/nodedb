@@ -346,6 +346,8 @@ impl CoreLoop {
                     },
                 )
             }
+
+            PhysicalPlan::Checkpoint => self.execute_checkpoint(task),
         }
     }
 }

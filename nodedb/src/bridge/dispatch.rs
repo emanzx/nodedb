@@ -134,6 +134,36 @@ impl Dispatcher {
         Ok(())
     }
 
+    /// Dispatch a request directly to a specific core by index.
+    ///
+    /// Bypasses vShard routing. Used by the checkpoint manager to send
+    /// checkpoint requests to every core regardless of vShard assignment.
+    pub fn dispatch_to_core(
+        &mut self,
+        core_id: usize,
+        request: envelope::Request,
+    ) -> crate::Result<()> {
+        if core_id >= self.cores.len() {
+            return Err(crate::Error::Dispatch {
+                detail: format!("core {core_id} out of range (have {})", self.cores.len()),
+            });
+        }
+
+        let channel = &mut self.cores[core_id];
+        channel
+            .request_tx
+            .try_push(BridgeRequest { inner: request })
+            .map_err(|e| crate::Error::Dispatch {
+                detail: format!("core {core_id}: {e}"),
+            })?;
+
+        if let Some(ref notifier) = channel.wake_notifier {
+            notifier.notify();
+        }
+
+        Ok(())
+    }
+
     /// Poll responses from all Data Plane cores.
     ///
     /// Returns responses that have been produced since the last poll.

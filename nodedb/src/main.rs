@@ -79,14 +79,17 @@ async fn main() -> anyhow::Result<()> {
     let _governor = nodedb::memory::init_governor(config.memory_limit, &byte_budgets)?;
 
     // Open WAL (with optional encryption at rest).
-    let wal = if let Some(ref enc) = config.encryption {
-        Arc::new(WalManager::open_encrypted(
-            &config.wal_dir(),
-            false,
-            &enc.key_path,
-        )?)
-    } else {
-        Arc::new(WalManager::open(&config.wal_dir(), false)?)
+    let wal_segment_target = config.checkpoint.wal_segment_target_bytes();
+    let wal = {
+        let mut mgr =
+            WalManager::open_with_segment_size(&config.wal_dir(), false, wal_segment_target)?;
+        if let Some(ref enc) = config.encryption {
+            let key = nodedb_wal::crypto::WalEncryptionKey::from_file(&enc.key_path)
+                .map_err(nodedb::Error::Wal)?;
+            mgr.set_encryption_ring(nodedb_wal::crypto::KeyRing::new(key));
+            info!(key_path = %enc.key_path.display(), "WAL encryption enabled");
+        }
+        Arc::new(mgr)
     };
     info!(next_lsn = %wal.next_lsn(), "WAL ready");
 
@@ -199,6 +202,16 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+
+    // Checkpoint manager: periodic engine flush + WAL truncation.
+    let shared_ckpt = Arc::clone(&shared);
+    let shutdown_rx_ckpt = shutdown_rx.clone();
+    nodedb::control::checkpoint_manager::spawn_checkpoint_task(
+        shared_ckpt,
+        num_cores,
+        config.checkpoint.to_manager_config(),
+        shutdown_rx_ckpt,
+    );
 
     // Create shared connection semaphore — enforced across all listeners.
     let conn_semaphore = Arc::new(tokio::sync::Semaphore::new(config.max_connections));

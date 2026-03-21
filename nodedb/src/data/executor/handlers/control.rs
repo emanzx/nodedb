@@ -1,7 +1,7 @@
 //! Control operation handlers: WalAppend, Cancel, SetCollectionPolicy,
-//! RangeScan, CrdtRead, CrdtApply.
+//! RangeScan, CrdtRead, CrdtApply, Checkpoint.
 
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
 use crate::bridge::envelope::{ErrorCode, Response};
 use crate::types::RequestId;
@@ -142,6 +142,91 @@ impl CoreLoop {
                 )
             }
         }
+    }
+
+    /// Execute a coordinated checkpoint: flush all engine state to disk
+    /// and return this core's checkpoint LSN.
+    ///
+    /// 1. Checkpoint vector indexes (HNSW segments → disk files).
+    /// 2. Export CRDT snapshots (Loro docs → disk files).
+    /// 3. redb sparse engine is already ACID — no action needed.
+    /// 4. CSR is rebuilt from redb edge store on startup — no action needed.
+    /// 5. Return the core's watermark LSN as the checkpoint point.
+    pub(in crate::data::executor) fn execute_checkpoint(
+        &mut self,
+        task: &ExecutionTask,
+    ) -> Response {
+        let checkpoint_lsn = self.watermark.as_u64();
+
+        // 1. Flush vector indexes to disk.
+        let vectors_checkpointed = self.checkpoint_vector_indexes();
+
+        // 2. Flush CRDT snapshots to disk.
+        let crdts_checkpointed = self.checkpoint_crdt_engines();
+
+        // 3. Compact CSR write buffers into dense arrays for clean state.
+        self.csr.compact();
+
+        info!(
+            core = self.core_id,
+            checkpoint_lsn, vectors_checkpointed, crdts_checkpointed, "core checkpoint complete"
+        );
+
+        // Return the checkpoint LSN as the response payload.
+        let payload = checkpoint_lsn.to_le_bytes().to_vec();
+        self.response_with_payload(task, payload)
+    }
+
+    /// Checkpoint all CRDT tenant engines to disk.
+    ///
+    /// Each tenant's Loro state is exported as a snapshot and written to
+    /// `{data_dir}/crdt-ckpt/tenant-{id}.ckpt` with atomic temp+rename.
+    fn checkpoint_crdt_engines(&self) -> usize {
+        if self.crdt_engines.is_empty() {
+            return 0;
+        }
+
+        let ckpt_dir = self.data_dir.join("crdt-ckpt");
+        if std::fs::create_dir_all(&ckpt_dir).is_err() {
+            warn!(core = self.core_id, "failed to create CRDT checkpoint dir");
+            return 0;
+        }
+
+        let mut checkpointed = 0;
+        for (tenant_id, engine) in &self.crdt_engines {
+            match engine.export_snapshot_bytes() {
+                Ok(snapshot) => {
+                    if snapshot.is_empty() {
+                        continue;
+                    }
+                    let ckpt_path = ckpt_dir.join(format!("tenant-{tenant_id}.ckpt"));
+                    let tmp_path = ckpt_dir.join(format!("tenant-{tenant_id}.ckpt.tmp"));
+                    if std::fs::write(&tmp_path, &snapshot).is_ok()
+                        && std::fs::rename(&tmp_path, &ckpt_path).is_ok()
+                    {
+                        checkpointed += 1;
+                    }
+                }
+                Err(e) => {
+                    warn!(
+                        core = self.core_id,
+                        tenant = tenant_id.as_u32(),
+                        error = %e,
+                        "CRDT checkpoint export failed"
+                    );
+                }
+            }
+        }
+
+        if checkpointed > 0 {
+            info!(
+                core = self.core_id,
+                checkpointed,
+                total = self.crdt_engines.len(),
+                "CRDT engines checkpointed"
+            );
+        }
+        checkpointed
     }
 
     pub(in crate::data::executor) fn execute_crdt_apply(

@@ -386,4 +386,17 @@ pub enum PhysicalPlan {
     /// record covers the entire batch (written by Control Plane before
     /// dispatch).
     TransactionBatch { plans: Vec<PhysicalPlan> },
+
+    /// Checkpoint request: flush all engine state to disk and report the
+    /// core's checkpoint LSN.
+    ///
+    /// The Data Plane core:
+    /// 1. Checkpoints all vector indexes to disk (atomic rename).
+    /// 2. Exports CRDT snapshots to disk.
+    /// 3. redb is already ACID-durable (no action needed).
+    /// 4. Returns the core's current watermark LSN as the checkpoint LSN.
+    ///
+    /// The Control Plane collects checkpoint LSNs from all cores, takes
+    /// the minimum, writes a WAL checkpoint marker, and truncates the WAL.
+    Checkpoint,
 }

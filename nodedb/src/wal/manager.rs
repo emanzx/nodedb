@@ -106,12 +106,31 @@ impl WalManager {
         self.encryption_ring.as_ref()
     }
 
+    /// Set the encryption key ring. All subsequent records will be encrypted.
+    pub fn set_encryption_ring(&mut self, ring: nodedb_wal::crypto::KeyRing) {
+        let mut wal = self.wal.lock().unwrap_or_else(|p| p.into_inner());
+        wal.set_encryption_ring(ring.clone());
+        self.encryption_ring = Some(ring);
+    }
+
     /// Open or create a segmented WAL at the given path.
     ///
     /// The `path` argument is treated as the WAL directory for the segmented format.
     /// If a legacy single-file WAL exists at this path, it is automatically migrated
     /// to the segmented format (one-time, transparent).
+    ///
+    /// `segment_target_size` controls the WAL segment rollover threshold in bytes.
+    /// Pass `0` to use the default (64 MiB).
     pub fn open(path: &Path, use_direct_io: bool) -> crate::Result<Self> {
+        Self::open_with_segment_size(path, use_direct_io, 0)
+    }
+
+    /// Open with explicit segment target size (bytes). 0 = default (64 MiB).
+    pub fn open_with_segment_size(
+        path: &Path,
+        use_direct_io: bool,
+        segment_target_size: u64,
+    ) -> crate::Result<Self> {
         // Determine the WAL directory.
         // If `path` is a file (legacy WAL), migrate it to a directory.
         // If `path` is a directory or doesn't exist, use it directly.
@@ -120,16 +139,21 @@ impl WalManager {
             // Use path's parent + "wal_segments" as the new directory,
             // or just append "_segments" to the legacy path.
             let dir = path.with_extension("d");
-            nodedb_wal::segment::migrate_legacy_wal(path, &dir)
-                .map_err(crate::Error::Wal)?;
+            nodedb_wal::segment::migrate_legacy_wal(path, &dir).map_err(crate::Error::Wal)?;
             dir
         } else {
             path.to_path_buf()
         };
 
+        let effective_target = if segment_target_size > 0 {
+            segment_target_size
+        } else {
+            nodedb_wal::segment::DEFAULT_SEGMENT_TARGET_SIZE
+        };
+
         let config = SegmentedWalConfig {
             wal_dir: wal_dir.clone(),
-            segment_target_size: nodedb_wal::segment::DEFAULT_SEGMENT_TARGET_SIZE,
+            segment_target_size: effective_target,
             writer_config: WalWriterConfig {
                 use_direct_io,
                 ..Default::default()
@@ -367,8 +391,8 @@ impl WalManager {
     ///
     /// Returns records in LSN order across all segments. Used during crash recovery.
     pub fn replay(&self) -> crate::Result<Vec<WalRecord>> {
-        let records = nodedb_wal::segmented::replay_all_segments(&self.wal_dir)
-            .map_err(crate::Error::Wal)?;
+        let records =
+            nodedb_wal::segmented::replay_all_segments(&self.wal_dir).map_err(crate::Error::Wal)?;
         info!(records = records.len(), "WAL replay complete");
         Ok(records)
     }
@@ -475,8 +499,7 @@ mod tests {
         // Write enough records to span multiple segments (impossible with default 64 MiB,
         // so just test that truncation works without error on a single segment).
         for i in 0..10u32 {
-            wal.append_put(t, v, format!("val-{i}").as_bytes())
-                .unwrap();
+            wal.append_put(t, v, format!("val-{i}").as_bytes()).unwrap();
         }
         wal.sync().unwrap();
 

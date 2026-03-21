@@ -53,6 +53,85 @@ pub struct ServerConfig {
     /// Log output format: "text" (default, human-readable) or "json" (structured).
     #[serde(default = "default_log_format")]
     pub log_format: String,
+
+    /// Checkpoint and WAL management settings.
+    #[serde(default)]
+    pub checkpoint: CheckpointSettings,
+}
+
+/// Checkpoint and WAL segment management configuration.
+///
+/// Controls how often engine state is flushed to disk and how the WAL
+/// is segmented and truncated. All intervals are in seconds.
+///
+/// Example TOML:
+/// ```toml
+/// [checkpoint]
+/// interval_secs = 300
+/// core_timeout_secs = 30
+/// wal_segment_target_mb = 64
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckpointSettings {
+    /// How often the checkpoint manager runs (seconds). Each cycle:
+    /// dispatches `Checkpoint` to all cores, collects watermark LSNs,
+    /// writes a WAL checkpoint marker, and truncates old WAL segments.
+    /// Default: 300 (5 minutes).
+    #[serde(default = "default_checkpoint_interval")]
+    pub interval_secs: u64,
+
+    /// Maximum time to wait for each Data Plane core to complete its
+    /// checkpoint flush (seconds). Cores that don't respond in time are
+    /// skipped — the global checkpoint LSN uses only responding cores.
+    /// Default: 30.
+    #[serde(default = "default_core_timeout")]
+    pub core_timeout_secs: u64,
+
+    /// Target WAL segment file size in MiB. When the active segment
+    /// exceeds this, the writer rolls to a new segment. Old segments
+    /// are deleted after checkpoint confirmation.
+    /// This is a soft limit — the current record is always completed
+    /// before rolling.
+    /// Default: 64 MiB.
+    #[serde(default = "default_wal_segment_target_mb")]
+    pub wal_segment_target_mb: u64,
+}
+
+impl Default for CheckpointSettings {
+    fn default() -> Self {
+        Self {
+            interval_secs: default_checkpoint_interval(),
+            core_timeout_secs: default_core_timeout(),
+            wal_segment_target_mb: default_wal_segment_target_mb(),
+        }
+    }
+}
+
+impl CheckpointSettings {
+    /// Convert to the checkpoint manager config used by the Control Plane.
+    pub fn to_manager_config(&self) -> crate::control::checkpoint_manager::CheckpointManagerConfig {
+        crate::control::checkpoint_manager::CheckpointManagerConfig {
+            interval: std::time::Duration::from_secs(self.interval_secs),
+            core_timeout: std::time::Duration::from_secs(self.core_timeout_secs),
+        }
+    }
+
+    /// WAL segment target size in bytes.
+    pub fn wal_segment_target_bytes(&self) -> u64 {
+        self.wal_segment_target_mb * 1024 * 1024
+    }
+}
+
+fn default_checkpoint_interval() -> u64 {
+    300
+}
+
+fn default_core_timeout() -> u64 {
+    30
+}
+
+fn default_wal_segment_target_mb() -> u64 {
+    64
 }
 
 fn default_max_connections() -> usize {
@@ -99,6 +178,7 @@ impl Default for ServerConfig {
             tls: None,
             encryption: None,
             log_format: "text".into(),
+            checkpoint: CheckpointSettings::default(),
         }
     }
 }
