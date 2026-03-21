@@ -56,13 +56,13 @@ pub(super) fn expr_to_scan_filters(expr: &Expr) -> Vec<ScanFilter> {
             };
 
             let (field, value) = match (&*binary.left, &*binary.right) {
-                (Expr::Column(col), Expr::Literal(lit)) => (
+                (Expr::Column(col), Expr::Literal(lit, meta)) => (
                     col.name.clone(),
-                    expr_to_json_value(&Expr::Literal(lit.clone())),
+                    expr_to_json_value(&Expr::Literal(lit.clone(), meta.clone())),
                 ),
-                (Expr::Literal(lit), Expr::Column(col)) => (
+                (Expr::Literal(lit, meta), Expr::Column(col)) => (
                     col.name.clone(),
-                    expr_to_json_value(&Expr::Literal(lit.clone())),
+                    expr_to_json_value(&Expr::Literal(lit.clone(), meta.clone())),
                 ),
                 _ => return Vec::new(),
             };
@@ -248,8 +248,8 @@ pub(super) fn collect_eq_ids(expr: &Expr, ids: &mut Vec<String>) {
     match expr {
         Expr::BinaryExpr(binary) if binary.op == Operator::Eq => {
             let (col_name, value) = match (&*binary.left, &*binary.right) {
-                (Expr::Column(col), Expr::Literal(lit)) => (col.name.as_str(), lit.to_string()),
-                (Expr::Literal(lit), Expr::Column(col)) => (col.name.as_str(), lit.to_string()),
+                (Expr::Column(col), Expr::Literal(lit, _)) => (col.name.as_str(), lit.to_string()),
+                (Expr::Literal(lit, _), Expr::Column(col)) => (col.name.as_str(), lit.to_string()),
                 _ => return,
             };
             if col_name == "id" || col_name == "document_id" {
@@ -459,8 +459,8 @@ pub(super) fn try_range_scan_from_predicate(
 /// where one side is a Column and the other is a Literal.
 pub(super) fn extract_col_literal(binary: &BinaryExpr) -> Option<(String, String)> {
     match (&*binary.left, &*binary.right) {
-        (Expr::Column(col), Expr::Literal(lit)) => Some((col.name.clone(), lit.to_string())),
-        (Expr::Literal(lit), Expr::Column(col)) => Some((col.name.clone(), lit.to_string())),
+        (Expr::Column(col), Expr::Literal(lit, _)) => Some((col.name.clone(), lit.to_string())),
+        (Expr::Literal(lit, _), Expr::Column(col)) => Some((col.name.clone(), lit.to_string())),
         _ => None,
     }
 }

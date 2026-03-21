@@ -59,6 +59,11 @@ base64 = { workspace = true }
 getrandom = { workspace = true }
 aes-gcm = { workspace = true }
 
+# Cold storage
+parquet = { workspace = true }
+object_store = { workspace = true }
+bytes = { workspace = true }
+
 # TLS
 tokio-rustls = { workspace = true }
 rustls-pemfile = { workspace = true }

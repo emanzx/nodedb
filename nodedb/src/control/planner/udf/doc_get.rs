@@ -18,7 +18,7 @@ use super::nav::{expand_to_array, navigate_json, navigate_rmpv, rmpv_to_string};
 /// path does not exist or the blob is not valid MessagePack.
 ///
 /// Also accepts JSON-encoded UTF-8 strings for backward compatibility.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct DocGet {
     signature: Signature,
 }
@@ -62,9 +62,13 @@ impl ScalarUDFImpl for DocGet {
         Ok(DataType::Utf8)
     }
 
-    fn invoke_batch(&self, args: &[ColumnarValue], num_rows: usize) -> DfResult<ColumnarValue> {
-        let docs = expand_to_array(&args[0], num_rows)?;
-        let paths = expand_to_array(&args[1], num_rows)?;
+    fn invoke_with_args(
+        &self,
+        args: datafusion::logical_expr::ScalarFunctionArgs,
+    ) -> DfResult<ColumnarValue> {
+        let num_rows = args.number_rows;
+        let docs = expand_to_array(&args.args[0], num_rows)?;
+        let paths = expand_to_array(&args.args[1], num_rows)?;
 
         let paths = paths
             .as_any()
@@ -170,6 +174,9 @@ mod tests {
 
     #[test]
     fn udf_batch_binary() {
+        use datafusion::arrow::datatypes::{DataType, Field};
+        use datafusion::logical_expr::ScalarFunctionArgs;
+
         let udf = DocGet::new();
         let doc1 = to_msgpack(&serde_json::json!({"a": 1}));
         let doc2 = to_msgpack(&serde_json::json!({"a": 2}));
@@ -183,7 +190,14 @@ mod tests {
         let paths =
             ColumnarValue::Scalar(datafusion::common::ScalarValue::Utf8(Some("$.a".into())));
 
-        let result = udf.invoke_batch(&[docs, paths], 3).unwrap();
+        let args = ScalarFunctionArgs {
+            args: vec![docs, paths],
+            arg_fields: vec![],
+            number_rows: 3,
+            return_field: Arc::new(Field::new("", DataType::Utf8, false)),
+            config_options: Arc::new(datafusion::config::ConfigOptions::new()),
+        };
+        let result = udf.invoke_with_args(args).unwrap();
         match result {
             ColumnarValue::Array(arr) => {
                 let arr = arr.as_any().downcast_ref::<StringArray>().unwrap();
@@ -197,6 +211,9 @@ mod tests {
 
     #[test]
     fn udf_batch_json_compat() {
+        use datafusion::arrow::datatypes::{DataType, Field};
+        use datafusion::logical_expr::ScalarFunctionArgs;
+
         let udf = DocGet::new();
         let docs = ColumnarValue::Array(Arc::new(StringArray::from(vec![
             r#"{"a": 1}"#,
@@ -205,7 +222,14 @@ mod tests {
         let paths =
             ColumnarValue::Scalar(datafusion::common::ScalarValue::Utf8(Some("$.a".into())));
 
-        let result = udf.invoke_batch(&[docs, paths], 2).unwrap();
+        let args = ScalarFunctionArgs {
+            args: vec![docs, paths],
+            arg_fields: vec![],
+            number_rows: 2,
+            return_field: Arc::new(Field::new("", DataType::Utf8, false)),
+            config_options: Arc::new(datafusion::config::ConfigOptions::new()),
+        };
+        let result = udf.invoke_with_args(args).unwrap();
         match result {
             ColumnarValue::Array(arr) => {
                 let arr = arr.as_any().downcast_ref::<StringArray>().unwrap();

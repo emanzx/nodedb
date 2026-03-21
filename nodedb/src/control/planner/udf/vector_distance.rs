@@ -15,7 +15,7 @@ use datafusion::logical_expr::{
     ColumnarValue, ScalarUDFImpl, Signature, TypeSignature, Volatility,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct VectorDistance {
     signature: Signature,
 }
@@ -58,11 +58,14 @@ impl ScalarUDFImpl for VectorDistance {
         Ok(DataType::Float64)
     }
 
-    fn invoke_batch(&self, _args: &[ColumnarValue], num_rows: usize) -> DfResult<ColumnarValue> {
+    fn invoke_with_args(
+        &self,
+        args: datafusion::logical_expr::ScalarFunctionArgs,
+    ) -> DfResult<ColumnarValue> {
         // This function should never execute on the Control Plane.
         // If it does, it means the PlanConverter didn't rewrite the plan.
         // Return zeros as a safe fallback.
-        let array = Float64Array::from(vec![0.0f64; num_rows]);
+        let array = Float64Array::from(vec![0.0f64; args.number_rows]);
         Ok(ColumnarValue::Array(std::sync::Arc::new(array)))
     }
 }

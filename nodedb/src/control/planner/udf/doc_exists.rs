@@ -16,7 +16,7 @@ use super::nav::{expand_to_array, navigate_json, navigate_rmpv};
 /// Returns false if the path does not exist, the value is Nil, or the blob is invalid.
 ///
 /// Also accepts JSON UTF-8 strings for backward compatibility.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct DocExists {
     signature: Signature,
 }
@@ -58,9 +58,13 @@ impl ScalarUDFImpl for DocExists {
         Ok(DataType::Boolean)
     }
 
-    fn invoke_batch(&self, args: &[ColumnarValue], num_rows: usize) -> DfResult<ColumnarValue> {
-        let docs = expand_to_array(&args[0], num_rows)?;
-        let paths = expand_to_array(&args[1], num_rows)?;
+    fn invoke_with_args(
+        &self,
+        args: datafusion::logical_expr::ScalarFunctionArgs,
+    ) -> DfResult<ColumnarValue> {
+        let num_rows = args.number_rows;
+        let docs = expand_to_array(&args.args[0], num_rows)?;
+        let paths = expand_to_array(&args.args[1], num_rows)?;
 
         let paths = paths
             .as_any()
@@ -158,6 +162,9 @@ mod tests {
 
     #[test]
     fn udf_batch_binary() {
+        use datafusion::arrow::datatypes::{DataType, Field};
+        use datafusion::logical_expr::ScalarFunctionArgs;
+
         let udf = DocExists::new();
         let doc1 = to_msgpack(&serde_json::json!({"a": 1}));
         let doc2 = to_msgpack(&serde_json::json!({"b": 2}));
@@ -169,7 +176,14 @@ mod tests {
         let paths =
             ColumnarValue::Scalar(datafusion::common::ScalarValue::Utf8(Some("$.a".into())));
 
-        let result = udf.invoke_batch(&[docs, paths], 2).unwrap();
+        let args = ScalarFunctionArgs {
+            args: vec![docs, paths],
+            arg_fields: vec![],
+            number_rows: 2,
+            return_field: Arc::new(Field::new("", DataType::Boolean, false)),
+            config_options: Arc::new(datafusion::config::ConfigOptions::new()),
+        };
+        let result = udf.invoke_with_args(args).unwrap();
         match result {
             ColumnarValue::Array(arr) => {
                 let arr = arr.as_any().downcast_ref::<BooleanArray>().unwrap();

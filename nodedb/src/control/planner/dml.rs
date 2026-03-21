@@ -118,8 +118,12 @@ impl PlanConverter {
                 && binary.op == Operator::Eq
             {
                 let (col_name, value) = match (&*binary.left, &*binary.right) {
-                    (Expr::Column(col), Expr::Literal(lit)) => (col.name.as_str(), lit.to_string()),
-                    (Expr::Literal(lit), Expr::Column(col)) => (col.name.as_str(), lit.to_string()),
+                    (Expr::Column(col), Expr::Literal(lit, _)) => {
+                        (col.name.as_str(), lit.to_string())
+                    }
+                    (Expr::Literal(lit, _), Expr::Column(col)) => {
+                        (col.name.as_str(), lit.to_string())
+                    }
                     _ => continue,
                 };
 

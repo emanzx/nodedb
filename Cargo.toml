@@ -51,6 +51,11 @@ hmac = "0.12"
 base64 = "0.22"
 getrandom = { version = "0.3", features = ["std"] }
 
+# Cold storage
+parquet = "57"
+object_store = { version = "0.13", features = ["aws"] }
+bytes = "1"
+
 # io_uring
 io-uring = "0.7"
 
@@ -58,11 +63,11 @@ io-uring = "0.7"
 loro = "1"
 
 # Query engine
-datafusion = "45"
-datafusion-common = "45"
-datafusion-execution = "45"
-datafusion-expr = "45"
-datafusion-physical-plan = "45"
+datafusion = "52"
+datafusion-common = "52"
+datafusion-execution = "52"
+datafusion-expr = "52"
+datafusion-physical-plan = "52"
 
 # Config & serialization
 toml = "0.8"

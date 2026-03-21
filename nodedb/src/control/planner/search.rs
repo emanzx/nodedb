@@ -64,7 +64,7 @@ pub(super) fn try_extract_vector_search(
 /// Extract a float array from an Expr (for vector_distance query vector).
 pub(super) fn extract_float_array(expr: &Expr) -> crate::Result<Vec<f32>> {
     match expr {
-        Expr::Literal(lit) => {
+        Expr::Literal(lit, _) => {
             let s = lit.to_string();
             // Try to parse as comma-separated floats: [0.1, 0.2, 0.3]
             let trimmed = s.trim_matches(|c| c == '[' || c == ']');
@@ -78,7 +78,7 @@ pub(super) fn extract_float_array(expr: &Expr) -> crate::Result<Vec<f32>> {
             // DataFusion represents ARRAY[1,2,3] as make_array(1,2,3).
             let mut values = Vec::with_capacity(func.args.len());
             for arg in &func.args {
-                if let Expr::Literal(lit) = arg {
+                if let Expr::Literal(lit, _) = arg {
                     let s = lit.to_string();
                     if let Ok(f) = s.parse::<f32>() {
                         values.push(f);
@@ -141,7 +141,7 @@ pub(super) fn try_extract_hybrid_search(
     if let Expr::ScalarFunction(bm) = &rrf_func.args[1]
         && bm.name() == "bm25_score"
         && bm.args.len() >= 2
-        && let Expr::Literal(lit) = &bm.args[1]
+        && let Expr::Literal(lit, _) = &bm.args[1]
     {
         query_text = lit.to_string().trim_matches('\'').to_string();
     }
@@ -163,7 +163,7 @@ pub(super) fn try_extract_hybrid_search(
         .args
         .get(2)
         .and_then(|e| match e {
-            Expr::Literal(lit) => lit.to_string().parse::<f64>().ok(),
+            Expr::Literal(lit, _) => lit.to_string().parse::<f64>().ok(),
             _ => None,
         })
         .unwrap_or(60.0);
@@ -171,7 +171,7 @@ pub(super) fn try_extract_hybrid_search(
         .args
         .get(3)
         .and_then(|e| match e {
-            Expr::Literal(lit) => lit.to_string().parse::<f64>().ok(),
+            Expr::Literal(lit, _) => lit.to_string().parse::<f64>().ok(),
             _ => None,
         })
         .unwrap_or(60.0);
@@ -200,7 +200,7 @@ pub(super) fn try_extract_text_match_predicate(
                 return None;
             }
             let query_text = match &func.args[1] {
-                Expr::Literal(lit) => lit
+                Expr::Literal(lit, _) => lit
                     .to_string()
                     .trim_matches('\'')
                     .trim_matches('"')
@@ -234,7 +234,8 @@ pub(super) fn try_extract_text_search(
     if func.name() != "bm25_score" || func.args.len() != 2 {
         return None;
     }
-    let (Expr::Literal(_field_lit), Expr::Literal(query_lit)) = (&func.args[0], &func.args[1])
+    let (Expr::Literal(_field_lit, _), Expr::Literal(query_lit, _)) =
+        (&func.args[0], &func.args[1])
     else {
         return None;
     };

@@ -9,7 +9,7 @@ use datafusion::prelude::*;
 /// Extract a usize from an Expr (for OFFSET values).
 pub(super) fn expr_to_usize(expr: &Expr) -> crate::Result<usize> {
     match expr {
-        Expr::Literal(lit) => {
+        Expr::Literal(lit, _) => {
             let s = lit.to_string();
             s.parse::<usize>().map_err(|_| crate::Error::PlanError {
                 detail: format!("expected integer for OFFSET, got: {s}"),
@@ -24,7 +24,7 @@ pub(super) fn expr_to_usize(expr: &Expr) -> crate::Result<usize> {
 /// Convert an expression to a string value (for document IDs).
 pub(super) fn expr_to_string(expr: &Expr) -> String {
     match expr {
-        Expr::Literal(lit) => {
+        Expr::Literal(lit, _) => {
             let s = lit.to_string();
             s.trim_matches('\'').trim_matches('"').to_string()
         }
@@ -35,7 +35,7 @@ pub(super) fn expr_to_string(expr: &Expr) -> String {
 /// Convert an expression to a JSON value (for document fields).
 pub(super) fn expr_to_json_value(expr: &Expr) -> serde_json::Value {
     match expr {
-        Expr::Literal(lit) => {
+        Expr::Literal(lit, _) => {
             let s = lit.to_string();
             // Try parsing as number first.
             if let Ok(n) = s.parse::<i64>() {

@@ -24,7 +24,7 @@ use datafusion::arrow::datatypes::DataType;
 use datafusion::common::Result as DfResult;
 use datafusion::logical_expr::{ColumnarValue, ScalarUDFImpl, Signature, Volatility};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Bm25Score {
     signature: Signature,
 }
@@ -92,6 +92,7 @@ mod tests {
 
     #[test]
     fn invoke_returns_zeros() {
+        use datafusion::arrow::datatypes::Field;
         use datafusion::logical_expr::ScalarFunctionArgs;
 
         let udf = Bm25Score::new();
@@ -101,8 +102,10 @@ mod tests {
             ColumnarValue::Array(Arc::new(StringArray::from(vec!["test", "test"])) as ArrayRef);
         let args = ScalarFunctionArgs {
             args: vec![field, query],
+            arg_fields: vec![],
             number_rows: 2,
-            return_type: &DataType::Float64,
+            return_field: Arc::new(Field::new("", DataType::Float64, false)),
+            config_options: Arc::new(datafusion::config::ConfigOptions::new()),
         };
         let result = udf.invoke_with_args(args).unwrap();
         match result {

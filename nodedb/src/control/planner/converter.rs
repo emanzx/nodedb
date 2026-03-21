@@ -394,13 +394,17 @@ impl PlanConverter {
                     if let Expr::AggregateFunction(func) = expr {
                         let op = func.func.name().to_lowercase();
                         let field = func
+                            .params
                             .args
                             .first()
-                            .map(|a| match a {
-                                Expr::Column(col) => col.name.clone(),
-                                Expr::Literal(_) => "*".into(),
-                                Expr::Wildcard { .. } => "*".into(),
-                                _ => format!("{a}"),
+                            .map(|a| {
+                                #[allow(deprecated)]
+                                match a {
+                                    Expr::Column(col) => col.name.clone(),
+                                    Expr::Literal(..) => "*".into(),
+                                    Expr::Wildcard { .. } => "*".into(),
+                                    _ => format!("{a}"),
+                                }
                             })
                             .unwrap_or_else(|| "*".into());
                         aggregates.push((op, field));

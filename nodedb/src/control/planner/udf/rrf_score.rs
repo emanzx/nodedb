@@ -25,7 +25,7 @@ use datafusion::logical_expr::{
 
 const RRF_K: f64 = 60.0;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct RrfScore {
     signature: Signature,
 }
@@ -75,9 +75,14 @@ impl ScalarUDFImpl for RrfScore {
         Ok(DataType::Float64)
     }
 
-    fn invoke_batch(&self, args: &[ColumnarValue], _num_rows: usize) -> DfResult<ColumnarValue> {
+    fn invoke_with_args(
+        &self,
+        args: datafusion::logical_expr::ScalarFunctionArgs,
+    ) -> DfResult<ColumnarValue> {
+        let num_rows = args.number_rows;
         // Convert all args to arrays.
         let arrays: Vec<ArrayRef> = args
+            .args
             .iter()
             .map(|a| match a {
                 ColumnarValue::Array(arr) => Ok(Arc::clone(arr)),
@@ -88,7 +93,7 @@ impl ScalarUDFImpl for RrfScore {
         if arrays.is_empty() {
             return Ok(ColumnarValue::Array(Arc::new(Float64Array::from(vec![
                 0.0f64;
-                _num_rows
+                num_rows
             ]))));
         }
 
