@@ -9,9 +9,15 @@ use std::time::Instant;
 
 use tracing::{debug, info, warn};
 
+use crate::control::security::audit::AuditLog;
+use crate::control::security::identity::AuthenticatedIdentity;
 use crate::control::security::jwt::JwtValidator;
+use crate::control::security::rls::RlsPolicyStore;
 use crate::types::TenantId;
 
+use super::dlq::{DeviceMetadata, DlqEnqueueParams, SyncDlq, ViolationType};
+use super::rate_limit::{RateLimitConfig, SyncRateLimiter};
+use super::security::{SyncRejectionReason, enforce_rls_on_delta, log_silent_rejection};
 use super::wire::*;
 
 /// State of a single sync session (one WebSocket connection).
@@ -22,6 +28,8 @@ pub struct SyncSession {
     pub tenant_id: Option<TenantId>,
     /// Authenticated username.
     pub username: Option<String>,
+    /// Full authenticated identity (set after handshake).
+    pub identity: Option<AuthenticatedIdentity>,
     /// Whether the handshake completed successfully.
     pub authenticated: bool,
     /// Client's vector clock per collection.
@@ -34,27 +42,41 @@ pub struct SyncSession {
     pub mutations_processed: u64,
     /// Mutations rejected in this session.
     pub mutations_rejected: u64,
+    /// Mutations silently dropped (security rejections).
+    pub mutations_silent_dropped: u64,
     /// Last activity timestamp.
     pub last_activity: Instant,
     /// Session creation time.
     pub created_at: Instant,
+    /// Per-session rate limiter.
+    pub rate_limiter: SyncRateLimiter,
+    /// Device metadata from handshake (for DLQ entries).
+    pub device_metadata: DeviceMetadata,
 }
 
 impl SyncSession {
     pub fn new(session_id: String) -> Self {
+        Self::with_rate_limit(session_id, &RateLimitConfig::default())
+    }
+
+    pub fn with_rate_limit(session_id: String, rate_config: &RateLimitConfig) -> Self {
         let now = Instant::now();
         Self {
             session_id,
             tenant_id: None,
             username: None,
+            identity: None,
             authenticated: false,
             client_clock: HashMap::new(),
             server_clock: HashMap::new(),
             subscribed_shapes: Vec::new(),
             mutations_processed: 0,
             mutations_rejected: 0,
+            mutations_silent_dropped: 0,
             last_activity: now,
             created_at: now,
+            rate_limiter: SyncRateLimiter::new(rate_config),
+            device_metadata: DeviceMetadata::default(),
         }
     }
 
@@ -74,10 +96,16 @@ impl SyncSession {
             Ok(identity) => {
                 self.tenant_id = Some(identity.tenant_id);
                 self.username = Some(identity.username.clone());
+                self.identity = Some(identity.clone());
                 self.authenticated = true;
                 self.client_clock = msg.vector_clock.clone();
                 self.subscribed_shapes = msg.subscribed_shapes.clone();
                 self.server_clock = current_server_clock.clone();
+                self.device_metadata = DeviceMetadata {
+                    client_version: msg.client_version.clone(),
+                    remote_addr: String::new(), // Filled by listener.
+                    peer_id: 0,                 // Set on first delta push.
+                };
 
                 info!(
                     session = %self.session_id,
@@ -113,10 +141,20 @@ impl SyncSession {
         }
     }
 
-    /// Process a delta push: validate and prepare for WAL commit.
+    /// Process a delta push: validate, enforce security, and prepare for WAL commit.
     ///
-    /// Returns either a DeltaAck or DeltaReject frame.
-    pub fn handle_delta_push(&mut self, msg: &DeltaPushMsg) -> SyncFrame {
+    /// Returns `Some(SyncFrame)` with either DeltaAck or DeltaReject.
+    /// Returns `None` when the mutation is silently dropped (security rejection).
+    ///
+    /// The `rls_store`, `audit_log`, and `dlq` parameters are optional:
+    /// when `None`, the corresponding security check is skipped.
+    pub fn handle_delta_push(
+        &mut self,
+        msg: &DeltaPushMsg,
+        rls_store: Option<&RlsPolicyStore>,
+        audit_log: Option<&mut AuditLog>,
+        dlq: Option<&mut SyncDlq>,
+    ) -> Option<SyncFrame> {
         self.last_activity = Instant::now();
 
         if !self.authenticated {
@@ -126,7 +164,10 @@ impl SyncSession {
                 reason: "not authenticated".into(),
                 compensation: Some(CompensationHint::PermissionDenied),
             };
-            return SyncFrame::encode_or_empty(SyncMessageType::DeltaReject, &reject);
+            return Some(SyncFrame::encode_or_empty(
+                SyncMessageType::DeltaReject,
+                &reject,
+            ));
         }
 
         if msg.delta.is_empty() {
@@ -136,11 +177,99 @@ impl SyncSession {
                 reason: "empty delta".into(),
                 compensation: None,
             };
-            return SyncFrame::encode_or_empty(SyncMessageType::DeltaReject, &reject);
+            return Some(SyncFrame::encode_or_empty(
+                SyncMessageType::DeltaReject,
+                &reject,
+            ));
+        }
+
+        // Update device metadata peer_id on first delta.
+        if self.device_metadata.peer_id == 0 {
+            self.device_metadata.peer_id = msg.peer_id;
+        }
+
+        let identity = match &self.identity {
+            Some(id) => id.clone(),
+            None => {
+                // Should not happen if authenticated, but guard.
+                self.mutations_rejected += 1;
+                let reject = DeltaRejectMsg {
+                    mutation_id: msg.mutation_id,
+                    reason: "identity not established".into(),
+                    compensation: Some(CompensationHint::PermissionDenied),
+                };
+                return Some(SyncFrame::encode_or_empty(
+                    SyncMessageType::DeltaReject,
+                    &reject,
+                ));
+            }
+        };
+
+        // --- Rate limiting ---
+        if let Err(retry_after_ms) = self.rate_limiter.try_acquire() {
+            let reason = SyncRejectionReason::RateLimited { retry_after_ms };
+
+            // Silent rejection: no frame sent to client.
+            if let Some(audit) = audit_log {
+                log_silent_rejection(audit, &self.session_id, &identity, msg, &reason);
+            }
+            if let Some(q) = dlq {
+                q.enqueue(DlqEnqueueParams {
+                    session_id: self.session_id.clone(),
+                    tenant_id: identity.tenant_id.as_u32(),
+                    username: identity.username.clone(),
+                    collection: msg.collection.clone(),
+                    document_id: msg.document_id.clone(),
+                    mutation_id: msg.mutation_id,
+                    peer_id: msg.peer_id,
+                    delta: msg.delta.clone(),
+                    violation_type: ViolationType::RateLimited,
+                    compensation: Some(CompensationHint::RateLimited { retry_after_ms }),
+                    device_metadata: self.device_metadata.clone(),
+                });
+            }
+
+            self.mutations_silent_dropped += 1;
+            return None; // Silent drop — no frame to client.
+        }
+
+        // --- RLS enforcement ---
+        if let Some(rls) = rls_store
+            && let Err(reason) = enforce_rls_on_delta(msg, &identity, rls)
+        {
+            // Silent rejection with audit.
+            if let Some(audit) = audit_log {
+                log_silent_rejection(audit, &self.session_id, &identity, msg, &reason);
+            }
+            if let Some(q) = dlq {
+                let violation = match &reason {
+                    SyncRejectionReason::RlsPolicyViolation { policy_name } => {
+                        ViolationType::RlsPolicyViolation {
+                            policy_name: policy_name.clone(),
+                        }
+                    }
+                    _ => ViolationType::PermissionDenied,
+                };
+                q.enqueue(DlqEnqueueParams {
+                    session_id: self.session_id.clone(),
+                    tenant_id: identity.tenant_id.as_u32(),
+                    username: identity.username.clone(),
+                    collection: msg.collection.clone(),
+                    document_id: msg.document_id.clone(),
+                    mutation_id: msg.mutation_id,
+                    peer_id: msg.peer_id,
+                    delta: msg.delta.clone(),
+                    violation_type: violation,
+                    compensation: Some(CompensationHint::PermissionDenied),
+                    device_metadata: self.device_metadata.clone(),
+                });
+            }
+
+            self.mutations_silent_dropped += 1;
+            return None; // Silent drop.
         }
 
         // Delta is valid — the caller commits to WAL/Raft and assigns an LSN.
-        // For now, return a pending ack with LSN=0 (caller fills in real LSN).
         self.mutations_processed += 1;
         debug!(
             session = %self.session_id,
@@ -155,7 +284,7 @@ impl SyncSession {
             mutation_id: msg.mutation_id,
             lsn: 0, // Caller fills with actual WAL LSN after commit.
         };
-        SyncFrame::encode_or_empty(SyncMessageType::DeltaAck, &ack)
+        Some(SyncFrame::encode_or_empty(SyncMessageType::DeltaAck, &ack))
     }
 
     /// Process a vector clock sync message.
@@ -198,10 +327,18 @@ impl SyncSession {
     }
 
     /// Process an incoming frame and return a response frame (if any).
+    ///
+    /// Security context parameters are optional — when provided, per-delta
+    /// RLS enforcement, rate limiting, silent rejection, and DLQ persistence
+    /// are active. When `None`, the session operates in permissive mode
+    /// (useful for testing or internal replication channels).
     pub fn process_frame(
         &mut self,
         frame: &SyncFrame,
         jwt_validator: &JwtValidator,
+        rls_store: Option<&RlsPolicyStore>,
+        audit_log: Option<&mut AuditLog>,
+        dlq: Option<&mut SyncDlq>,
     ) -> Option<SyncFrame> {
         match frame.msg_type {
             SyncMessageType::Handshake => {
@@ -210,7 +347,7 @@ impl SyncSession {
             }
             SyncMessageType::DeltaPush => {
                 let msg: DeltaPushMsg = frame.decode_body()?;
-                Some(self.handle_delta_push(&msg))
+                self.handle_delta_push(&msg, rls_store, audit_log, dlq)
             }
             SyncMessageType::VectorClockSync => {
                 let msg: VectorClockSyncMsg = frame.decode_body()?;
@@ -250,9 +387,26 @@ impl SyncSession {
 mod tests {
     use super::*;
     use crate::control::security::jwt::JwtConfig;
+    use crate::control::security::rls::{PolicyType, RlsPolicy};
 
     fn make_session() -> SyncSession {
         SyncSession::new("test-session-1".into())
+    }
+
+    fn make_authenticated_session() -> SyncSession {
+        let mut session = make_session();
+        session.authenticated = true;
+        session.tenant_id = Some(TenantId::new(1));
+        session.username = Some("alice".into());
+        session.identity = Some(AuthenticatedIdentity {
+            user_id: 1,
+            username: "alice".into(),
+            tenant_id: TenantId::new(1),
+            auth_method: crate::control::security::identity::AuthMethod::ApiKey,
+            roles: vec![crate::control::security::identity::Role::ReadWrite],
+            is_superuser: false,
+        });
+        session
     }
 
     #[test]
@@ -288,9 +442,136 @@ mod tests {
             mutation_id: 100,
         };
 
-        let response = session.handle_delta_push(&msg);
-        assert_eq!(response.msg_type, SyncMessageType::DeltaReject);
+        let response = session.handle_delta_push(&msg, None, None, None);
+        assert!(response.is_some());
+        let frame = response.unwrap();
+        assert_eq!(frame.msg_type, SyncMessageType::DeltaReject);
         assert_eq!(session.mutations_rejected, 1);
+    }
+
+    #[test]
+    fn delta_push_accepted_when_authenticated() {
+        let mut session = make_authenticated_session();
+
+        let data = serde_json::json!({"status": "active"});
+        let msg = DeltaPushMsg {
+            collection: "orders".into(),
+            document_id: "o1".into(),
+            delta: rmp_serde::to_vec_named(&data).unwrap(),
+            peer_id: 1,
+            mutation_id: 42,
+        };
+
+        let response = session.handle_delta_push(&msg, None, None, None);
+        assert!(response.is_some());
+        assert_eq!(response.unwrap().msg_type, SyncMessageType::DeltaAck);
+        assert_eq!(session.mutations_processed, 1);
+    }
+
+    #[test]
+    fn delta_push_rls_silent_rejection() {
+        let mut session = make_authenticated_session();
+
+        // Create an RLS write policy requiring status=active.
+        let rls_store = RlsPolicyStore::new();
+        let filter = crate::bridge::scan_filter::ScanFilter {
+            field: "status".into(),
+            op: "eq".into(),
+            value: serde_json::json!("active"),
+            clauses: Vec::new(),
+        };
+        let predicate = rmp_serde::to_vec_named(&vec![filter]).unwrap();
+        rls_store
+            .create_policy(RlsPolicy {
+                name: "require_active".into(),
+                collection: "orders".into(),
+                tenant_id: 1,
+                policy_type: PolicyType::Write,
+                predicate,
+                enabled: true,
+                created_by: "admin".into(),
+                created_at: 0,
+            })
+            .unwrap();
+
+        let mut audit_log = AuditLog::new(100);
+        let mut dlq = SyncDlq::new(super::super::dlq::DlqConfig::default());
+
+        // Delta with status=draft → should be silently dropped.
+        let data = serde_json::json!({"status": "draft"});
+        let msg = DeltaPushMsg {
+            collection: "orders".into(),
+            document_id: "o1".into(),
+            delta: rmp_serde::to_vec_named(&data).unwrap(),
+            peer_id: 1,
+            mutation_id: 42,
+        };
+
+        let response =
+            session.handle_delta_push(&msg, Some(&rls_store), Some(&mut audit_log), Some(&mut dlq));
+
+        // Silent rejection: no frame returned to client.
+        assert!(response.is_none());
+        assert_eq!(session.mutations_silent_dropped, 1);
+        assert_eq!(session.mutations_processed, 0);
+
+        // Audit log has the rejection.
+        assert_eq!(audit_log.len(), 1);
+
+        // DLQ has the entry.
+        assert_eq!(dlq.total_entries(), 1);
+        let entries = dlq.entries_for_collection(1, "orders");
+        assert_eq!(entries[0].mutation_id, 42);
+    }
+
+    #[test]
+    fn delta_push_rate_limited_silent_drop() {
+        let rate_config = RateLimitConfig {
+            rate_per_sec: 0.0, // No refill.
+            burst: 1,          // Only 1 token.
+        };
+        let mut session = SyncSession::with_rate_limit("rate-test".into(), &rate_config);
+        session.authenticated = true;
+        session.tenant_id = Some(TenantId::new(1));
+        session.username = Some("bob".into());
+        session.identity = Some(AuthenticatedIdentity {
+            user_id: 2,
+            username: "bob".into(),
+            tenant_id: TenantId::new(1),
+            auth_method: crate::control::security::identity::AuthMethod::ApiKey,
+            roles: vec![crate::control::security::identity::Role::ReadWrite],
+            is_superuser: false,
+        });
+
+        let data = serde_json::json!({"key": "value"});
+        let msg = DeltaPushMsg {
+            collection: "docs".into(),
+            document_id: "d1".into(),
+            delta: rmp_serde::to_vec_named(&data).unwrap(),
+            peer_id: 1,
+            mutation_id: 1,
+        };
+
+        // First should succeed (1 token available).
+        let r1 = session.handle_delta_push(&msg, None, None, None);
+        assert!(r1.is_some());
+        assert_eq!(session.mutations_processed, 1);
+
+        // Second should be silently dropped (rate limited).
+        let mut audit_log = AuditLog::new(100);
+        let mut dlq = SyncDlq::new(super::super::dlq::DlqConfig::default());
+
+        let msg2 = DeltaPushMsg {
+            collection: "docs".into(),
+            document_id: "d2".into(),
+            delta: rmp_serde::to_vec_named(&data).unwrap(),
+            peer_id: 1,
+            mutation_id: 2,
+        };
+        let r2 = session.handle_delta_push(&msg2, None, Some(&mut audit_log), Some(&mut dlq));
+        assert!(r2.is_none()); // Silent drop.
+        assert_eq!(session.mutations_silent_dropped, 1);
+        assert_eq!(dlq.total_entries(), 1);
     }
 
     #[test]

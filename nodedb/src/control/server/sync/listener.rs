@@ -16,6 +16,8 @@ use tracing::{info, warn};
 
 use crate::control::security::jwt::JwtConfig;
 
+use super::rate_limit::RateLimitConfig;
+
 /// Configuration for the sync WebSocket listener.
 #[derive(Debug, Clone)]
 pub struct SyncListenerConfig {
@@ -27,6 +29,8 @@ pub struct SyncListenerConfig {
     pub idle_timeout_secs: u64,
     /// JWT configuration for authenticating sync clients.
     pub jwt_config: JwtConfig,
+    /// Per-session rate limiting configuration.
+    pub rate_limit: RateLimitConfig,
 }
 
 impl Default for SyncListenerConfig {
@@ -36,6 +40,7 @@ impl Default for SyncListenerConfig {
             max_sessions: 1024,
             idle_timeout_secs: 300,
             jwt_config: JwtConfig::default(),
+            rate_limit: RateLimitConfig::default(),
         }
     }
 }
@@ -157,23 +162,30 @@ async fn handle_sync_session(
         "sync-{addr}-{}",
         state.connections_accepted.load(Ordering::Relaxed)
     );
-    let mut session = super::session::SyncSession::new(session_id.clone());
+    let mut session =
+        super::session::SyncSession::with_rate_limit(session_id.clone(), &state.config.rate_limit);
+    session.device_metadata.remote_addr = addr.to_string();
+
     let jwt_validator =
         crate::control::security::jwt::JwtValidator::new(state.config.jwt_config.clone());
 
     while let Some(msg_result) = ws.next().await {
         match msg_result {
             Ok(Message::Binary(data)) => {
-                if let Some(frame) = super::wire::SyncFrame::from_bytes(&data)
-                    && let Some(response) = session.process_frame(&frame, &jwt_validator)
-                {
-                    let response_bytes = response.to_bytes();
-                    if ws
-                        .send(Message::Binary(response_bytes.into()))
-                        .await
-                        .is_err()
+                if let Some(frame) = super::wire::SyncFrame::from_bytes(&data) {
+                    // process_frame with no security context in listener
+                    // (security context injected at higher level when wired).
+                    if let Some(response) =
+                        session.process_frame(&frame, &jwt_validator, None, None, None)
                     {
-                        break;
+                        let response_bytes = response.to_bytes();
+                        if ws
+                            .send(Message::Binary(response_bytes.into()))
+                            .await
+                            .is_err()
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -201,6 +213,7 @@ async fn handle_sync_session(
         session = %session_id,
         mutations = session.mutations_processed,
         rejected = session.mutations_rejected,
+        silent_dropped = session.mutations_silent_dropped,
         uptime_secs = session.uptime_secs(),
         "sync: session closed"
     );
