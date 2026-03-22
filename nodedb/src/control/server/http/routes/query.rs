@@ -26,6 +26,7 @@ pub async fn query(
     axum::Json(body): axum::Json<serde_json::Value>,
 ) -> Result<impl IntoResponse, ApiError> {
     let identity = resolve_identity(&headers, &state, "http")?;
+    let trace_id = crate::control::trace_context::extract_from_headers(&headers);
 
     let sql = body["sql"]
         .as_str()
@@ -88,9 +89,10 @@ pub async fn query(
         wal_append_if_write(&state, &task)?;
 
         // Dispatch to Data Plane.
-        let response = dispatch_to_data_plane(&state, task.tenant_id, task.vshard_id, task.plan)
-            .await
-            .map_err(|e| ApiError::Internal(format!("dispatch failed: {e}")))?;
+        let response =
+            dispatch_to_data_plane(&state, task.tenant_id, task.vshard_id, task.plan, trace_id)
+                .await
+                .map_err(|e| ApiError::Internal(format!("dispatch failed: {e}")))?;
 
         // Check response status.
         if response.status != Status::Ok {
@@ -143,13 +145,14 @@ async fn dispatch_to_data_plane(
     tenant_id: crate::types::TenantId,
     vshard_id: VShardId,
     plan: PhysicalPlan,
+    trace_id: u64,
 ) -> crate::Result<crate::bridge::envelope::Response> {
     crate::control::server::dispatch_utils::dispatch_to_data_plane(
         &state.shared,
         tenant_id,
         vshard_id,
         plan,
-        0, // trace_id — caller should propagate from request headers
+        trace_id,
     )
     .await
 }
