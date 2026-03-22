@@ -268,9 +268,9 @@ impl Default for ServerConfig {
             .unwrap_or(1);
 
         Self {
-            listen: SocketAddr::from(([127, 0, 0, 1], 5433)),
-            pg_listen: SocketAddr::from(([127, 0, 0, 1], 5432)),
-            http_listen: SocketAddr::from(([127, 0, 0, 1], 8080)),
+            listen: SocketAddr::from(([127, 0, 0, 1], 6433)),
+            pg_listen: SocketAddr::from(([127, 0, 0, 1], 6432)),
+            http_listen: SocketAddr::from(([127, 0, 0, 1], 6480)),
             data_dir: default_data_dir(),
             data_plane_cores: cores,
             max_connections: default_max_connections(),
@@ -385,8 +385,8 @@ mod tests {
         let cfg = ServerConfig::default();
         assert!(cfg.data_plane_cores >= 1);
         assert_eq!(cfg.memory_limit, 1024 * 1024 * 1024);
-        assert_eq!(cfg.listen.port(), 5433);
-        assert_eq!(cfg.pg_listen.port(), 5432);
+        assert_eq!(cfg.listen.port(), 6433);
+        assert_eq!(cfg.pg_listen.port(), 6432);
     }
 
     #[test]

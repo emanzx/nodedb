@@ -30,7 +30,7 @@ where
     // wasm_bindgen_futures::spawn_local(future);
     // For now, this is a compile-gate placeholder. The actual
     // wasm-bindgen-futures dependency is added when WASM support
-    // is fully wired (Section 5.2).
+    // is fully wired.
     let _ = future;
 }
 
