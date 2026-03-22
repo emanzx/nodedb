@@ -43,8 +43,8 @@ fn readonly_user() -> AuthenticatedIdentity {
 }
 
 /// Helper: run DDL, expect success.
-fn ddl_ok(state: &SharedState, identity: &AuthenticatedIdentity, sql: &str) {
-    let result = ddl::dispatch(state, identity, sql);
+async fn ddl_ok(state: &SharedState, identity: &AuthenticatedIdentity, sql: &str) {
+    let result = ddl::dispatch(state, identity, sql).await;
     assert!(result.is_some(), "DDL not recognized: {sql}");
     result
         .unwrap()
@@ -52,8 +52,8 @@ fn ddl_ok(state: &SharedState, identity: &AuthenticatedIdentity, sql: &str) {
 }
 
 /// Helper: run DDL, expect error.
-fn ddl_err(state: &SharedState, identity: &AuthenticatedIdentity, sql: &str) -> String {
-    let result = ddl::dispatch(state, identity, sql);
+async fn ddl_err(state: &SharedState, identity: &AuthenticatedIdentity, sql: &str) -> String {
+    let result = ddl::dispatch(state, identity, sql).await;
     assert!(result.is_some(), "DDL not recognized: {sql}");
     let err = result.unwrap().unwrap_err();
     err.to_string()
@@ -61,15 +61,16 @@ fn ddl_err(state: &SharedState, identity: &AuthenticatedIdentity, sql: &str) -> 
 
 // ── User management ─────────────────────────────────────────────────
 
-#[test]
-fn create_user() {
+#[tokio::test]
+async fn create_user() {
     let state = make_state();
     let su = superuser();
     ddl_ok(
         &state,
         &su,
         "CREATE USER alice WITH PASSWORD 'secret123' ROLE readwrite TENANT 1",
-    );
+    )
+    .await;
 
     let user = state.credentials.get_user("alice").unwrap();
     assert_eq!(user.tenant_id, TenantId::new(1));
@@ -77,78 +78,79 @@ fn create_user() {
     assert!(!user.is_superuser);
 }
 
-#[test]
-fn create_user_duplicate_rejected() {
+#[tokio::test]
+async fn create_user_duplicate_rejected() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER bob WITH PASSWORD 'pass'");
+    ddl_ok(&state, &su, "CREATE USER bob WITH PASSWORD 'pass'").await;
 
-    let err = ddl_err(&state, &su, "CREATE USER bob WITH PASSWORD 'pass2'");
+    let err = ddl_err(&state, &su, "CREATE USER bob WITH PASSWORD 'pass2'").await;
     assert!(
         err.contains("already exists"),
         "expected duplicate error: {err}"
     );
 }
 
-#[test]
-fn create_user_default_role_and_tenant() {
+#[tokio::test]
+async fn create_user_default_role_and_tenant() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER carol WITH PASSWORD 'pass'");
+    ddl_ok(&state, &su, "CREATE USER carol WITH PASSWORD 'pass'").await;
 
     let user = state.credentials.get_user("carol").unwrap();
     // Default role is readwrite, tenant inherited from identity (0 for superuser).
     assert!(user.roles.contains(&Role::ReadWrite));
 }
 
-#[test]
-fn drop_user() {
+#[tokio::test]
+async fn drop_user() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER dave WITH PASSWORD 'pass'");
-    ddl_ok(&state, &su, "DROP USER dave");
+    ddl_ok(&state, &su, "CREATE USER dave WITH PASSWORD 'pass'").await;
+    ddl_ok(&state, &su, "DROP USER dave").await;
 
     assert!(state.credentials.get_user("dave").is_none());
 }
 
-#[test]
-fn drop_self_rejected() {
+#[tokio::test]
+async fn drop_self_rejected() {
     let state = make_state();
     let su = superuser();
-    let err = ddl_err(&state, &su, "DROP USER admin");
+    let err = ddl_err(&state, &su, "DROP USER admin").await;
     assert!(err.contains("cannot drop your own"), "{err}");
 }
 
-#[test]
-fn drop_nonexistent_user() {
+#[tokio::test]
+async fn drop_nonexistent_user() {
     let state = make_state();
     let su = superuser();
-    let err = ddl_err(&state, &su, "DROP USER nobody");
+    let err = ddl_err(&state, &su, "DROP USER nobody").await;
     assert!(err.contains("does not exist"), "{err}");
 }
 
-#[test]
-fn alter_user_password() {
+#[tokio::test]
+async fn alter_user_password() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER eve WITH PASSWORD 'old'");
-    ddl_ok(&state, &su, "ALTER USER eve SET PASSWORD 'new'");
+    ddl_ok(&state, &su, "CREATE USER eve WITH PASSWORD 'old'").await;
+    ddl_ok(&state, &su, "ALTER USER eve SET PASSWORD 'new'").await;
 
     // Verify new password works.
     assert!(state.credentials.verify_password("eve", "new"));
     assert!(!state.credentials.verify_password("eve", "old"));
 }
 
-#[test]
-fn alter_user_role() {
+#[tokio::test]
+async fn alter_user_role() {
     let state = make_state();
     let su = superuser();
     ddl_ok(
         &state,
         &su,
         "CREATE USER frank WITH PASSWORD 'pass' ROLE readonly",
-    );
-    ddl_ok(&state, &su, "ALTER USER frank SET ROLE readwrite");
+    )
+    .await;
+    ddl_ok(&state, &su, "ALTER USER frank SET ROLE readwrite").await;
 
     let user = state.credentials.get_user("frank").unwrap();
     assert!(user.roles.contains(&Role::ReadWrite));
@@ -156,42 +158,44 @@ fn alter_user_role() {
 
 // ── Grant / Revoke ──────────────────────────────────────────────────
 
-#[test]
-fn grant_role() {
+#[tokio::test]
+async fn grant_role() {
     let state = make_state();
     let su = superuser();
     ddl_ok(
         &state,
         &su,
         "CREATE USER grace WITH PASSWORD 'pass' ROLE readonly",
-    );
-    ddl_ok(&state, &su, "GRANT ROLE readwrite TO grace");
+    )
+    .await;
+    ddl_ok(&state, &su, "GRANT ROLE readwrite TO grace").await;
 
     let user = state.credentials.get_user("grace").unwrap();
     assert!(user.roles.contains(&Role::ReadOnly));
     assert!(user.roles.contains(&Role::ReadWrite));
 }
 
-#[test]
-fn revoke_role() {
+#[tokio::test]
+async fn revoke_role() {
     let state = make_state();
     let su = superuser();
     ddl_ok(
         &state,
         &su,
         "CREATE USER heidi WITH PASSWORD 'pass' ROLE readwrite",
-    );
-    ddl_ok(&state, &su, "REVOKE ROLE readwrite FROM heidi");
+    )
+    .await;
+    ddl_ok(&state, &su, "REVOKE ROLE readwrite FROM heidi").await;
 
     let user = state.credentials.get_user("heidi").unwrap();
     assert!(!user.roles.contains(&Role::ReadWrite));
 }
 
-#[test]
-fn grant_superuser_requires_superuser() {
+#[tokio::test]
+async fn grant_superuser_requires_superuser() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER ivan WITH PASSWORD 'pass'");
+    ddl_ok(&state, &su, "CREATE USER ivan WITH PASSWORD 'pass'").await;
 
     // Tenant admin cannot grant superuser.
     let admin = AuthenticatedIdentity {
@@ -202,15 +206,15 @@ fn grant_superuser_requires_superuser() {
         roles: vec![Role::TenantAdmin],
         is_superuser: false,
     };
-    let err = ddl_err(&state, &admin, "GRANT ROLE superuser TO ivan");
+    let err = ddl_err(&state, &admin, "GRANT ROLE superuser TO ivan").await;
     assert!(err.contains("only superuser"), "{err}");
 }
 
-#[test]
-fn revoke_own_superuser_rejected() {
+#[tokio::test]
+async fn revoke_own_superuser_rejected() {
     let state = make_state();
     let su = superuser();
-    let err = ddl_err(&state, &su, "REVOKE ROLE superuser FROM admin");
+    let err = ddl_err(&state, &su, "REVOKE ROLE superuser FROM admin").await;
     // Even though the user doesn't exist in credential store, the self-check
     // should fire first if the username matches.
     assert!(err.contains("cannot revoke your own superuser"), "{err}");
@@ -218,11 +222,11 @@ fn revoke_own_superuser_rejected() {
 
 // ── Tenant management ───────────────────────────────────────────────
 
-#[test]
-fn create_tenant() {
+#[tokio::test]
+async fn create_tenant() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE TENANT acme ID 42");
+    ddl_ok(&state, &su, "CREATE TENANT acme ID 42").await;
 
     // Verify audit event was recorded.
     let log = state.audit.lock().unwrap();
@@ -231,29 +235,32 @@ fn create_tenant() {
     assert!(events.last().unwrap().detail.contains("acme"));
 }
 
-#[test]
-fn drop_system_tenant_rejected() {
+#[tokio::test]
+async fn drop_system_tenant_rejected() {
     let state = make_state();
     let su = superuser();
-    let err = ddl_err(&state, &su, "DROP TENANT 0");
+    let err = ddl_err(&state, &su, "DROP TENANT 0").await;
     assert!(err.contains("cannot drop system tenant"), "{err}");
 }
 
-#[test]
-fn tenant_ops_require_superuser() {
+#[tokio::test]
+async fn tenant_ops_require_superuser() {
     let state = make_state();
     let viewer = readonly_user();
-    let err = ddl_err(&state, &viewer, "CREATE TENANT evil");
+    let err = ddl_err(&state, &viewer, "CREATE TENANT evil").await;
     assert!(err.contains("permission denied"), "{err}");
 }
 
 // ── SHOW commands ───────────────────────────────────────────────────
 
-#[test]
-fn show_session() {
+#[tokio::test]
+async fn show_session() {
     let state = make_state();
     let su = superuser();
-    let result = ddl::dispatch(&state, &su, "SHOW SESSION").unwrap().unwrap();
+    let result = ddl::dispatch(&state, &su, "SHOW SESSION")
+        .await
+        .unwrap()
+        .unwrap();
 
     // Should return one row with username = "admin".
     match &result[0] {
@@ -262,18 +269,20 @@ fn show_session() {
     }
 }
 
-#[test]
-fn show_grants() {
+#[tokio::test]
+async fn show_grants() {
     let state = make_state();
     let su = superuser();
     ddl_ok(
         &state,
         &su,
         "CREATE USER judy WITH PASSWORD 'pass' ROLE readwrite",
-    );
-    ddl_ok(&state, &su, "GRANT ROLE monitor TO judy");
+    )
+    .await;
+    ddl_ok(&state, &su, "GRANT ROLE monitor TO judy").await;
 
     let result = ddl::dispatch(&state, &su, "SHOW GRANTS FOR judy")
+        .await
         .unwrap()
         .unwrap();
     match &result[0] {
@@ -284,52 +293,52 @@ fn show_grants() {
 
 // ── Permission enforcement ──────────────────────────────────────────
 
-#[test]
-fn readonly_cannot_create_user() {
+#[tokio::test]
+async fn readonly_cannot_create_user() {
     let state = make_state();
     let viewer = readonly_user();
-    let err = ddl_err(&state, &viewer, "CREATE USER hacker WITH PASSWORD 'x'");
+    let err = ddl_err(&state, &viewer, "CREATE USER hacker WITH PASSWORD 'x'").await;
     assert!(err.contains("permission denied"), "{err}");
 }
 
-#[test]
-fn readonly_cannot_drop_user() {
+#[tokio::test]
+async fn readonly_cannot_drop_user() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER target WITH PASSWORD 'pass'");
+    ddl_ok(&state, &su, "CREATE USER target WITH PASSWORD 'pass'").await;
 
     let viewer = readonly_user();
-    let err = ddl_err(&state, &viewer, "DROP USER target");
+    let err = ddl_err(&state, &viewer, "DROP USER target").await;
     assert!(err.contains("permission denied"), "{err}");
 }
 
-#[test]
-fn readonly_cannot_grant() {
+#[tokio::test]
+async fn readonly_cannot_grant() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER target WITH PASSWORD 'pass'");
+    ddl_ok(&state, &su, "CREATE USER target WITH PASSWORD 'pass'").await;
 
     let viewer = readonly_user();
-    let err = ddl_err(&state, &viewer, "GRANT ROLE superuser TO target");
+    let err = ddl_err(&state, &viewer, "GRANT ROLE superuser TO target").await;
     assert!(err.contains("permission denied"), "{err}");
 }
 
-#[test]
-fn show_tenants_requires_superuser() {
+#[tokio::test]
+async fn show_tenants_requires_superuser() {
     let state = make_state();
     let viewer = readonly_user();
-    let err = ddl_err(&state, &viewer, "SHOW TENANTS");
+    let err = ddl_err(&state, &viewer, "SHOW TENANTS").await;
     assert!(err.contains("permission denied"), "{err}");
 }
 
 // ── Audit log ───────────────────────────────────────────────────────
 
-#[test]
-fn audit_records_create_and_drop() {
+#[tokio::test]
+async fn audit_records_create_and_drop() {
     let state = make_state();
     let su = superuser();
-    ddl_ok(&state, &su, "CREATE USER audit_test WITH PASSWORD 'pass'");
-    ddl_ok(&state, &su, "DROP USER audit_test");
+    ddl_ok(&state, &su, "CREATE USER audit_test WITH PASSWORD 'pass'").await;
+    ddl_ok(&state, &su, "DROP USER audit_test").await;
 
     let log = state.audit.lock().unwrap();
     let events = log.query_by_event(&AuditEvent::PrivilegeChange);
@@ -342,17 +351,18 @@ fn audit_records_create_and_drop() {
     assert!(events.iter().any(|e| e.detail.contains("dropped")));
 }
 
-#[test]
-fn audit_records_grant_revoke() {
+#[tokio::test]
+async fn audit_records_grant_revoke() {
     let state = make_state();
     let su = superuser();
     ddl_ok(
         &state,
         &su,
         "CREATE USER karl WITH PASSWORD 'pass' ROLE readonly",
-    );
-    ddl_ok(&state, &su, "GRANT ROLE readwrite TO karl");
-    ddl_ok(&state, &su, "REVOKE ROLE readonly FROM karl");
+    )
+    .await;
+    ddl_ok(&state, &su, "GRANT ROLE readwrite TO karl").await;
+    ddl_ok(&state, &su, "REVOKE ROLE readonly FROM karl").await;
 
     let log = state.audit.lock().unwrap();
     let events = log.query_by_event(&AuditEvent::PrivilegeChange);

@@ -26,7 +26,7 @@ const DSL_DEADLINE: Duration = Duration::from_secs(30);
 
 /// SEARCH <collection> USING VECTOR(ARRAY[...], <k>)
 /// SEARCH <collection> USING VECTOR(ARRAY[...], <k>) WITH FILTER <field> <op> <value>
-pub fn search_vector(
+pub async fn search_vector(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     sql: &str,
@@ -92,7 +92,8 @@ pub fn search_vector(
     };
 
     let payload =
-        super::sync_dispatch::dispatch_sync(state, tenant_id, collection, plan, DSL_DEADLINE)
+        super::sync_dispatch::dispatch_async(state, tenant_id, collection, plan, DSL_DEADLINE)
+            .await
             .map_err(|e| sqlstate_error("XX000", &e))?;
 
     let schema = Arc::new(vec![text_field("result")]);
@@ -112,7 +113,7 @@ pub fn search_vector(
 // ── SEARCH USING FUSION ─────────────────────────────────────────────
 
 /// SEARCH <collection> USING FUSION(VECTOR(ARRAY[...], <k>), GRAPH(<label>, <depth>), TOP <n>)
-pub fn search_fusion(
+pub async fn search_fusion(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     sql: &str,
@@ -175,7 +176,8 @@ pub fn search_fusion(
     };
 
     let payload =
-        super::sync_dispatch::dispatch_sync(state, tenant_id, collection, plan, DSL_DEADLINE)
+        super::sync_dispatch::dispatch_async(state, tenant_id, collection, plan, DSL_DEADLINE)
+            .await
             .map_err(|e| sqlstate_error("XX000", &e))?;
 
     let schema = Arc::new(vec![text_field("result")]);
@@ -296,7 +298,7 @@ pub fn create_fulltext_index(
 // ── CRDT MERGE INTO ─────────────────────────────────────────────────
 
 /// CRDT MERGE INTO <collection> FROM '<source_id>' TO '<target_id>'
-pub fn crdt_merge(
+pub async fn crdt_merge(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     parts: &[&str],
@@ -336,13 +338,14 @@ pub fn crdt_merge(
         document_id: source_id.to_string(),
     };
 
-    let source_bytes = super::sync_dispatch::dispatch_sync(
+    let source_bytes = super::sync_dispatch::dispatch_async(
         state,
         tenant_id,
         collection,
         source_plan,
         DSL_DEADLINE,
     )
+    .await
     .map_err(|e| sqlstate_error("XX000", &e))?;
     if source_bytes.is_empty() {
         return Err(sqlstate_error(
@@ -360,7 +363,8 @@ pub fn crdt_merge(
         mutation_id: 0,
     };
 
-    super::sync_dispatch::dispatch_sync(state, tenant_id, collection, apply_plan, DSL_DEADLINE)
+    super::sync_dispatch::dispatch_async(state, tenant_id, collection, apply_plan, DSL_DEADLINE)
+        .await
         .map_err(|e| sqlstate_error("XX000", &e))?;
 
     state.audit_record(

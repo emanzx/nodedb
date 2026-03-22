@@ -140,7 +140,10 @@ impl NodeDbPgHandler {
             ))));
         };
 
-        if super::super::ddl::dispatch(&self.state, identity, inner_sql).is_some() {
+        if super::super::ddl::dispatch(&self.state, identity, inner_sql)
+            .await
+            .is_some()
+        {
             let schema = Arc::new(vec![text_field("QUERY PLAN")]);
             let plan_text = format!(
                 "DDL: {}",

@@ -1,8 +1,6 @@
-//! Shared synchronous dispatch helper for DDL and DSL handlers.
+//! Shared async dispatch helper for DDL and DSL handlers.
 //!
-//! All DDL/DSL modules that need to send a [`PhysicalPlan`] to the Data Plane
-//! and block on the result use [`dispatch_sync`] rather than duplicating the
-//! same boilerplate.
+//! Sends a [`PhysicalPlan`] to the Data Plane and awaits the response.
 
 use std::time::{Duration, Instant};
 
@@ -10,14 +8,11 @@ use crate::bridge::envelope::{PhysicalPlan, Priority, Request, Status};
 use crate::control::state::SharedState;
 use crate::types::{ReadConsistency, RequestId, TenantId, VShardId};
 
-/// Send `plan` to the Data Plane and block until a response arrives or
-/// `timeout` elapses.
+/// Send `plan` to the Data Plane and await the response.
 ///
-/// Returns the raw response payload on success, or a human-readable error
-/// string on failure.  Callers are responsible for mapping the `Err` variant
-/// to their own error type (e.g. via `.map_err(|e| sqlstate_error("XX000",
-/// &e))`).
-pub fn dispatch_sync(
+/// This is async — it yields the Tokio thread while waiting, so the
+/// response poller can deliver the result without deadlocking.
+pub async fn dispatch_async(
     state: &SharedState,
     tenant_id: TenantId,
     collection: &str,
@@ -54,8 +49,10 @@ pub fn dispatch_sync(
             .map_err(|e| e.to_string())?,
     };
 
-    let resp = rx
-        .blocking_recv()
+    // Await with timeout — yields the thread so the response poller can run.
+    let resp = tokio::time::timeout(timeout, rx)
+        .await
+        .map_err(|_| format!("dispatch timeout after {}ms", timeout.as_millis()))?
         .map_err(|_| "response channel closed".to_string())?;
 
     if resp.status != Status::Ok {

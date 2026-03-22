@@ -19,7 +19,7 @@ use super::user::extract_quoted_string;
 const COPY_DEADLINE: Duration = Duration::from_secs(120);
 
 /// COPY <collection> FROM '<path>' [WITH (FORMAT csv|json|ndjson)]
-pub fn copy_from(
+pub async fn copy_from(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     parts: &[&str],
@@ -93,13 +93,14 @@ pub fn copy_from(
                     value,
                 };
 
-                if super::sync_dispatch::dispatch_sync(
+                if super::sync_dispatch::dispatch_async(
                     state,
                     tenant_id,
                     collection,
                     plan,
                     COPY_DEADLINE,
                 )
+                .await
                 .is_ok()
                 {
                     count += 1;
@@ -162,13 +163,14 @@ pub fn copy_from(
                     value,
                 };
 
-                if super::sync_dispatch::dispatch_sync(
+                if super::sync_dispatch::dispatch_async(
                     state,
                     tenant_id,
                     collection,
                     plan,
                     COPY_DEADLINE,
                 )
+                .await
                 .is_ok()
                 {
                     count += 1;

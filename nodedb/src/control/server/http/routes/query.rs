@@ -34,7 +34,7 @@ pub async fn query(
 
     // Try DDL commands first (same as pgwire handler).
     if let Some(result) =
-        crate::control::server::pgwire::ddl::dispatch(&state.shared, &identity, sql.trim())
+        crate::control::server::pgwire::ddl::dispatch(&state.shared, &identity, sql.trim()).await
     {
         return match result {
             Ok(responses) => {

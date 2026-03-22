@@ -44,7 +44,7 @@ fn parse_function_args(sql: &str) -> Vec<String> {
 /// `SELECT crdt_state('collection', 'doc_id')`
 ///
 /// Returns the CRDT document snapshot as a text result.
-pub fn crdt_state(
+pub async fn crdt_state(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     sql: &str,
@@ -68,7 +68,8 @@ pub fn crdt_state(
 
     // Synchronous dispatch via the blocking bridge.
     let result =
-        super::sync_dispatch::dispatch_sync(state, tenant_id, collection, plan, CRDT_DEADLINE)
+        super::sync_dispatch::dispatch_async(state, tenant_id, collection, plan, CRDT_DEADLINE)
+            .await
             .map_err(|e| sqlstate_error("XX000", &e))?;
 
     let schema = Arc::new(vec![text_field("crdt_state")]);
@@ -96,7 +97,7 @@ pub fn crdt_state(
 /// `SELECT crdt_apply('collection', 'doc_id', 'delta_hex')`
 ///
 /// Applies a CRDT delta and returns the result.
-pub fn crdt_apply(
+pub async fn crdt_apply(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     sql: &str,
@@ -126,7 +127,8 @@ pub fn crdt_apply(
         mutation_id: 0,
     };
 
-    super::sync_dispatch::dispatch_sync(state, tenant_id, collection, plan, CRDT_DEADLINE)
+    super::sync_dispatch::dispatch_async(state, tenant_id, collection, plan, CRDT_DEADLINE)
+        .await
         .map_err(|e| sqlstate_error("XX000", &e))?;
 
     let schema = Arc::new(vec![text_field("result")]);

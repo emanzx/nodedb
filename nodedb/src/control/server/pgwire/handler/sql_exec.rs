@@ -241,7 +241,8 @@ impl NodeDbPgHandler {
             return self.handle_explain(identity, sql_trimmed).await;
         }
 
-        if let Some(result) = super::super::ddl::dispatch(&self.state, identity, sql_trimmed) {
+        if let Some(result) = super::super::ddl::dispatch(&self.state, identity, sql_trimmed).await
+        {
             return result;
         }
 

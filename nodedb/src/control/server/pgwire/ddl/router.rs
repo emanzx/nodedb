@@ -8,7 +8,10 @@ use crate::control::state::SharedState;
 ///
 /// These execute directly on the Control Plane without going through
 /// DataFusion or the Data Plane. Returns `None` if not recognized.
-pub fn dispatch(
+///
+/// Async because DSL commands (SEARCH, CRDT) dispatch to the Data Plane
+/// and must await the response without blocking the Tokio runtime.
+pub async fn dispatch(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     sql: &str,
@@ -186,12 +189,12 @@ pub fn dispatch(
         return Some(super::inspect::show_grants(state, identity, &parts));
     }
 
-    // DSL: SEARCH commands.
+    // DSL: SEARCH commands (async — dispatches to Data Plane).
     if upper.starts_with("SEARCH ") && upper.contains("USING VECTOR") {
-        return Some(super::dsl::search_vector(state, identity, sql));
+        return Some(super::dsl::search_vector(state, identity, sql).await);
     }
     if upper.starts_with("SEARCH ") && upper.contains("USING FUSION") {
-        return Some(super::dsl::search_fusion(state, identity, sql));
+        return Some(super::dsl::search_fusion(state, identity, sql).await);
     }
 
     // DSL: CREATE VECTOR INDEX / CREATE FULLTEXT INDEX.
@@ -202,22 +205,22 @@ pub fn dispatch(
         return Some(super::dsl::create_fulltext_index(state, identity, &parts));
     }
 
-    // DSL: CRDT MERGE INTO.
+    // DSL: CRDT MERGE INTO (async — dispatches to Data Plane).
     if upper.starts_with("CRDT MERGE ") {
-        return Some(super::dsl::crdt_merge(state, identity, &parts));
+        return Some(super::dsl::crdt_merge(state, identity, &parts).await);
     }
 
-    // CRDT operations via SQL-like syntax.
+    // CRDT operations via SQL-like syntax (async).
     if upper.starts_with("SELECT CRDT_STATE(") || upper.starts_with("SELECT CRDT_STATE (") {
-        return Some(super::crdt_ops::crdt_state(state, identity, sql));
+        return Some(super::crdt_ops::crdt_state(state, identity, sql).await);
     }
     if upper.starts_with("SELECT CRDT_APPLY(") || upper.starts_with("SELECT CRDT_APPLY (") {
-        return Some(super::crdt_ops::crdt_apply(state, identity, sql));
+        return Some(super::crdt_ops::crdt_apply(state, identity, sql).await);
     }
 
     // COPY FROM file.
     if upper.starts_with("COPY ") && upper.contains(" FROM ") {
-        return Some(super::bulk::copy_from(state, identity, &parts));
+        return Some(super::bulk::copy_from(state, identity, &parts).await);
     }
 
     None
