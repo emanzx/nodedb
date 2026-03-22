@@ -140,6 +140,17 @@ async fn main() -> anyhow::Result<()> {
 
     info!(num_cores, "data plane cores running (eventfd-driven)");
 
+    // Initialize cluster mode if configured.
+    let cluster_handle = if let Some(ref cluster_cfg) = config.cluster {
+        cluster_cfg
+            .validate()
+            .map_err(|e| anyhow::anyhow!("cluster config: {e}"))?;
+        let handle = nodedb::control::cluster::init_cluster(cluster_cfg, &config.data_dir).await?;
+        Some(handle)
+    } else {
+        None
+    };
+
     // Create shared state with persistent system catalog.
     let shared = SharedState::open(
         dispatcher,
@@ -168,6 +179,18 @@ async fn main() -> anyhow::Result<()> {
         Err(e) => {
             return Err(e.into());
         }
+    }
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+
+    // Start cluster Raft loop if in cluster mode.
+    if let Some(ref handle) = cluster_handle {
+        nodedb::control::cluster::start_raft(
+            handle,
+            Arc::clone(&shared),
+            &config.data_dir,
+            shutdown_rx.clone(),
+        )?;
     }
 
     // Start response poller: routes Data Plane responses to waiting sessions.
@@ -205,8 +228,6 @@ async fn main() -> anyhow::Result<()> {
             shared_mem.update_tenant_memory_estimates();
         }
     });
-
-    let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
 
     // Checkpoint manager: periodic engine flush + WAL truncation.
     let shared_ckpt = Arc::clone(&shared);

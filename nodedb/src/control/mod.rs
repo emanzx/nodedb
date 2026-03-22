@@ -1,6 +1,7 @@
 pub mod arrow_convert;
 pub mod change_stream;
 pub mod checkpoint_manager;
+pub mod cluster;
 pub mod forward;
 pub mod metrics;
 pub mod planner;

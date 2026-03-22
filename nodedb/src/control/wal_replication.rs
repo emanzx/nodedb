@@ -224,6 +224,19 @@ pub fn to_replicated_entry(
     })
 }
 
+/// Deserialize a Raft log entry's data bytes back to (TenantId, VShardId, PhysicalPlan).
+///
+/// Returns `None` if the data is not a valid ReplicatedEntry (e.g., ConfChange or no-op).
+pub fn from_replicated_entry(data: &[u8]) -> Option<(TenantId, VShardId, PhysicalPlan)> {
+    let entry = ReplicatedEntry::from_bytes(data)?;
+    let plan = to_physical_plan(&entry.write);
+    Some((
+        TenantId::new(entry.tenant_id),
+        VShardId::new(entry.vshard_id),
+        plan,
+    ))
+}
+
 /// Convert a ReplicatedWrite back into a PhysicalPlan for Data Plane execution.
 fn to_physical_plan(write: &ReplicatedWrite) -> PhysicalPlan {
     match write {
