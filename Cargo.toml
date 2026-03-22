@@ -10,6 +10,7 @@ members = [
   "nodedb-types",
   "nodedb-client",
   "nodedb-lite",
+  "nodedb-lite-ffi",
 ]
 resolver = "2"
 
