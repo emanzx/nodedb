@@ -97,7 +97,7 @@ impl HnswIndex {
                 dist: self.dist_to_node(node_vec, nid),
             })
             .collect();
-        candidates.sort_unstable_by(|a, b| a.dist.partial_cmp(&b.dist).unwrap());
+        candidates.sort_unstable_by(|a, b| a.dist.total_cmp(&b.dist));
 
         let selected = select_neighbors_heuristic(self, &candidates, m);
         self.nodes[node_idx].neighbors[layer] = selected.iter().map(|c| c.id).collect();
