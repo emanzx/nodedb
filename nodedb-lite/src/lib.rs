@@ -4,6 +4,8 @@ pub mod memory;
 pub mod nodedb;
 pub mod runtime;
 pub mod storage;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod sync;
 
 pub use error::LiteError;
 pub use memory::MemoryGovernor;

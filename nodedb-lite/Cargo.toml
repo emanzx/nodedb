@@ -27,7 +27,8 @@ rusqlite = { workspace = true, optional = true }
 
 # Async runtime (native only — WASM uses wasm-bindgen-futures)
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["rt", "sync"] }
+tokio = { workspace = true, features = ["rt", "sync", "time", "net"] }
+tokio-tungstenite = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt", "macros"] }
