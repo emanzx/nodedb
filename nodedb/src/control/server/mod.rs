@@ -1,3 +1,4 @@
+pub mod dispatch_utils;
 pub mod http;
 pub mod listener;
 pub mod pgwire;
