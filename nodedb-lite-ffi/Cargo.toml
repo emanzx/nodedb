@@ -10,7 +10,7 @@ license.workspace = true
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-nodedb-lite = { workspace = true }
+nodedb-lite = { workspace = true, features = ["sqlite"] }
 nodedb-client = { workspace = true }
 nodedb-types = { workspace = true }
 serde_json = { workspace = true }

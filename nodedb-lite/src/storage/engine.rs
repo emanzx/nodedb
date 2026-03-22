@@ -30,7 +30,8 @@ pub enum WriteOp {
 ///
 /// All operations are keyed by `(Namespace, key)`. Values are opaque byte
 /// slices — the storage layer never interprets them.
-#[async_trait]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait StorageEngine: Send + Sync + 'static {
     /// Get a value by namespace and key.
     ///
