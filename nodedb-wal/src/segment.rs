@@ -25,6 +25,19 @@ use std::path::{Path, PathBuf};
 
 use crate::error::{Result, WalError};
 
+/// Fsync a directory to ensure file creation/deletion metadata is durable.
+///
+/// On ext4/XFS, creating or deleting a file writes the file data to disk
+/// but the directory entry may only be in the page cache. A power loss
+/// before the directory entry is persisted causes the file to "disappear"
+/// on reboot. Calling fsync on the directory fd ensures the metadata
+/// (filename, inode pointer) is on stable storage.
+pub fn fsync_directory(dir: &Path) -> Result<()> {
+    let dir_file = fs::File::open(dir).map_err(WalError::Io)?;
+    dir_file.sync_all().map_err(WalError::Io)?;
+    Ok(())
+}
+
 /// Default segment target size: 64 MiB.
 ///
 /// This is a soft limit — the writer finishes the current record before rolling.
@@ -241,6 +254,11 @@ pub fn truncate_segments(
 
             deleted_count += 1;
         }
+    }
+
+    // Fsync the directory to ensure deletions are durable.
+    if deleted_count > 0 {
+        let _ = fsync_directory(wal_dir);
     }
 
     Ok(TruncateResult {

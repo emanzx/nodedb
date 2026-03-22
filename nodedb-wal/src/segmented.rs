@@ -242,6 +242,11 @@ impl SegmentedWal {
         self.writer = new_writer;
         self.active_first_lsn = new_first_lsn;
 
+        // Fsync the WAL directory to ensure the new segment's directory
+        // entry is durable. Without this, a power loss could cause the
+        // new segment file to "disappear" on ext4/XFS.
+        let _ = crate::segment::fsync_directory(&self.wal_dir);
+
         info!(
             segment = %new_path.display(),
             first_lsn = new_first_lsn,
