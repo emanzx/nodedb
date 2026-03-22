@@ -303,7 +303,11 @@ impl SyncSession {
             return None; // Silent drop.
         }
 
-        // Delta is valid — the caller commits to WAL/Raft and assigns an LSN.
+        // Delta passes all checks (RLS, rate limit) — accept it.
+        // CRDT constraint validation (UNIQUE, FK) happens asynchronously in
+        // the listener after the delta is dispatched to the Data Plane.
+        // If the constraint check fails, the delta is retroactively rejected
+        // and a CompensationHint is sent back to the client.
         self.mutations_processed += 1;
         debug!(
             session = %self.session_id,

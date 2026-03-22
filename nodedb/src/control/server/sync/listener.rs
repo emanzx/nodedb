@@ -7,8 +7,12 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use std::time::Duration;
+
 use tokio::net::TcpListener;
 use tracing::{info, warn};
+
+use super::wire::{CompensationHint, DeltaPushMsg, DeltaRejectMsg, SyncFrame, SyncMessageType};
 
 use crate::control::security::jwt::JwtConfig;
 use crate::control::state::SharedState;
@@ -174,7 +178,16 @@ async fn handle_sync_session(
                         session.process_frame(&frame, &jwt_validator, None, None, None)
                     };
 
-                    if let Some(response) = response {
+                    if let Some(mut response) = response {
+                        // For DeltaAck, run async constraint validation before sending.
+                        if response.msg_type == SyncMessageType::DeltaAck
+                            && let Some(shared) = shared
+                            && let Some(delta_msg) = frame.decode_body::<DeltaPushMsg>()
+                        {
+                            response =
+                                validate_delta_constraints(shared, &delta_msg, response).await;
+                        }
+
                         let response_bytes = response.to_bytes();
                         if ws
                             .send(Message::Binary(response_bytes.into()))
@@ -213,4 +226,77 @@ async fn handle_sync_session(
         uptime_secs = session.uptime_secs(),
         "sync: session closed"
     );
+}
+
+/// Async constraint validation for a delta before sending DeltaAck.
+///
+/// Dispatches the delta to the Data Plane's CRDT engine for pre-validation
+/// (UNIQUE, FK constraints). If validation fails, converts the DeltaAck
+/// to a DeltaReject with a typed CompensationHint.
+async fn validate_delta_constraints(
+    shared: &SharedState,
+    delta_msg: &DeltaPushMsg,
+    ack_frame: SyncFrame,
+) -> SyncFrame {
+    use crate::bridge::envelope::PhysicalPlan;
+    use crate::control::server::pgwire::ddl::sync_dispatch::dispatch_async;
+    use crate::types::TenantId;
+
+    // Dispatch a CrdtApply plan to the Data Plane. If the CRDT engine
+    // rejects it (constraint violation), we get an error back.
+    let tenant_id = TenantId::new(0); // Trust mode default tenant.
+    let plan = PhysicalPlan::CrdtApply {
+        collection: delta_msg.collection.clone(),
+        document_id: delta_msg.document_id.clone(),
+        delta: delta_msg.delta.clone(),
+        peer_id: delta_msg.peer_id,
+        mutation_id: delta_msg.mutation_id,
+    };
+
+    match dispatch_async(
+        shared,
+        tenant_id,
+        &delta_msg.collection,
+        plan,
+        Duration::from_secs(10),
+    )
+    .await
+    {
+        Ok(_payload) => {
+            // Constraint check passed — send the original DeltaAck.
+            ack_frame
+        }
+        Err(error_detail) => {
+            // Constraint check failed — convert to DeltaReject.
+            warn!(
+                collection = %delta_msg.collection,
+                doc = %delta_msg.document_id,
+                error = %error_detail,
+                "sync: delta constraint violation"
+            );
+
+            let hint = if error_detail.contains("unique") || error_detail.contains("UNIQUE") {
+                CompensationHint::UniqueViolation {
+                    field: "unknown".into(),
+                    conflicting_value: delta_msg.document_id.clone(),
+                }
+            } else if error_detail.contains("foreign") || error_detail.contains("FK") {
+                CompensationHint::ForeignKeyMissing {
+                    referenced_id: delta_msg.document_id.clone(),
+                }
+            } else {
+                CompensationHint::Custom {
+                    constraint: "constraint".into(),
+                    detail: error_detail.clone(),
+                }
+            };
+
+            let reject = DeltaRejectMsg {
+                mutation_id: delta_msg.mutation_id,
+                reason: error_detail,
+                compensation: Some(hint),
+            };
+            SyncFrame::encode_or_empty(SyncMessageType::DeltaReject, &reject)
+        }
+    }
 }
