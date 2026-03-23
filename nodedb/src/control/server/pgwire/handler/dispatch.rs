@@ -18,6 +18,22 @@ impl NodeDbPgHandler {
     /// In cluster mode, write operations are proposed to Raft first and only
     /// executed on the Data Plane after quorum commit. Reads bypass Raft.
     pub(super) async fn dispatch_task(&self, task: PhysicalTask) -> crate::Result<Response> {
+        // Broadcast scans to all cores — data is distributed across cores.
+        if matches!(
+            task.plan,
+            crate::bridge::envelope::PhysicalPlan::DocumentScan { .. }
+                | crate::bridge::envelope::PhysicalPlan::Aggregate { .. }
+                | crate::bridge::envelope::PhysicalPlan::PartialAggregate { .. }
+        ) {
+            return crate::control::server::dispatch_utils::broadcast_to_all_cores(
+                &self.state,
+                task.tenant_id,
+                task.plan,
+                0,
+            )
+            .await;
+        }
+
         if let (Some(proposer), Some(tracker)) =
             (&self.state.raft_proposer, &self.state.propose_tracker)
             && let Some(entry) = crate::control::wal_replication::to_replicated_entry(

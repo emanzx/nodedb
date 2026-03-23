@@ -5,7 +5,7 @@ use std::sync::Arc;
 use nodedb_types::protocol::NativeResponse;
 use nodedb_types::value::Value;
 
-use crate::bridge::envelope::{Response, Status};
+use crate::bridge::envelope::{PhysicalPlan, Response, Status};
 use crate::control::planner::physical::PhysicalTask;
 use crate::control::server::pgwire::session::TransactionState;
 use crate::data::executor::response_codec;
@@ -161,10 +161,11 @@ async fn execute_planned(ctx: &DispatchCtx<'_>, seq: u64, sql: &str) -> NativeRe
             total_affected += 1;
         } else {
             let json_text = response_codec::decode_payload_to_json(&resp.payload);
-            if all_columns.is_none() {
-                all_columns = Some(vec!["result".into()]);
+            let (cols, rows) = super::parse_json_to_columns_rows(&json_text);
+            if !cols.is_empty() && all_columns.is_none() {
+                all_columns = Some(cols);
             }
-            all_rows.push(vec![Value::String(json_text)]);
+            all_rows.extend(rows);
         }
     }
 
@@ -187,8 +188,24 @@ async fn execute_planned(ctx: &DispatchCtx<'_>, seq: u64, sql: &str) -> NativeRe
     }
 }
 
+/// Check if a plan is a read scan that should broadcast to all cores.
+fn is_broadcast_scan(plan: &PhysicalPlan) -> bool {
+    matches!(
+        plan,
+        PhysicalPlan::DocumentScan { .. }
+            | PhysicalPlan::Aggregate { .. }
+            | PhysicalPlan::PartialAggregate { .. }
+    )
+}
+
 /// Dispatch a single PhysicalTask (WAL + Data Plane, or Raft).
+/// Scan operations are broadcast to all cores; point operations use single-core dispatch.
 async fn dispatch_task(ctx: &DispatchCtx<'_>, task: PhysicalTask) -> crate::Result<Response> {
+    // Broadcast scans to all cores so we find data regardless of which core stored it.
+    if is_broadcast_scan(&task.plan) {
+        return dispatch_utils::broadcast_to_all_cores(ctx.state, task.tenant_id, task.plan, 0)
+            .await;
+    }
     // Raft path for replicated writes.
     if let (Some(proposer), Some(tracker)) = (&ctx.state.raft_proposer, &ctx.state.propose_tracker)
         && let Some(entry) = crate::control::wal_replication::to_replicated_entry(
