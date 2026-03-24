@@ -1,0 +1,260 @@
+//! INSERT INTO dispatch for schemaless collections.
+//!
+//! Intercepts INSERT for collections without typed schemas, parses
+//! column names and values manually, serializes as JSON, and dispatches
+//! as PointPut + optional VectorInsert.
+
+use pgwire::api::results::{Response, Tag};
+use pgwire::error::PgWireResult;
+
+use crate::control::security::identity::AuthenticatedIdentity;
+use crate::control::state::SharedState;
+
+use super::super::types::sqlstate_error;
+
+/// INSERT INTO <collection> (col1, col2, ...) VALUES (val1, val2, ...)
+///
+/// Intercepts INSERT for schemaless collections. Parses column names
+/// and values manually, serializes as JSON, dispatches as PointPut.
+/// Returns `None` if the collection has a typed schema (let DataFusion handle it).
+pub async fn insert_document(
+    state: &SharedState,
+    identity: &AuthenticatedIdentity,
+    sql: &str,
+) -> Option<PgWireResult<Vec<Response>>> {
+    let upper = sql.to_uppercase();
+    let into_pos = upper.find("INSERT INTO ")?;
+    let after_into = sql[into_pos + 12..].trim_start();
+    let coll_name_str = after_into.split_whitespace().next()?;
+    let coll_name_lower = coll_name_str.to_lowercase();
+    let coll_name = coll_name_lower.as_str();
+
+    // Check if collection is schemaless (no declared fields).
+    let tenant_id = identity.tenant_id;
+    if let Some(catalog) = state.credentials.catalog()
+        && let Ok(Some(coll)) = catalog.get_collection(tenant_id.as_u32(), coll_name)
+        && !coll.fields.is_empty()
+    {
+        // Typed collection — let DataFusion handle it.
+        return None;
+    }
+
+    // Find the column list: first (...) in the SQL.
+    let first_open = match sql.find('(') {
+        Some(p) => p,
+        None => {
+            return Some(Err(sqlstate_error(
+                "42601",
+                "missing column list in INSERT",
+            )));
+        }
+    };
+    let values_kw = match upper.find("VALUES") {
+        Some(p) => p,
+        None => return Some(Err(sqlstate_error("42601", "missing VALUES clause"))),
+    };
+    let first_close = match sql[first_open..values_kw].rfind(')') {
+        Some(p) => first_open + p,
+        None => {
+            return Some(Err(sqlstate_error(
+                "42601",
+                "missing closing ) for column list",
+            )));
+        }
+    };
+    let cols_str = &sql[first_open + 1..first_close];
+    let columns: Vec<&str> = cols_str.split(',').map(|c| c.trim()).collect();
+
+    // Find VALUES (...).
+    let after_values = sql[values_kw + 6..].trim_start();
+    let vals_open = match after_values.find('(') {
+        Some(p) => p,
+        None => return Some(Err(sqlstate_error("42601", "missing VALUES (...)"))),
+    };
+    let vals_close = match after_values.rfind(')') {
+        Some(p) => p,
+        None => return Some(Err(sqlstate_error("42601", "missing closing ) for VALUES"))),
+    };
+    let vals_str = &after_values[vals_open + 1..vals_close];
+    let values: Vec<&str> = split_values(vals_str);
+
+    if columns.len() != values.len() {
+        return Some(Err(sqlstate_error(
+            "42601",
+            &format!(
+                "column count ({}) doesn't match value count ({})",
+                columns.len(),
+                values.len()
+            ),
+        )));
+    }
+
+    // First column should be 'id'. Build JSON document from the rest.
+    let mut doc_id = String::new();
+    let mut fields = serde_json::Map::new();
+
+    for (col, val) in columns.iter().zip(values.iter()) {
+        let col = col.trim().trim_matches('"');
+        let val = val.trim();
+        if col.eq_ignore_ascii_case("id") {
+            doc_id = val.trim_matches('\'').to_string();
+        } else {
+            let json_val = parse_sql_value(val);
+            fields.insert(col.to_string(), json_val);
+        }
+    }
+
+    if doc_id.is_empty() {
+        // Auto-generate ID.
+        doc_id = format!(
+            "{:016x}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        );
+    }
+
+    // Detect vector fields (ARRAY[...] values) and extract them for VectorInsert.
+    let mut vector_fields: Vec<(String, Vec<f32>)> = Vec::new();
+    for (col, val) in columns.iter().zip(values.iter()) {
+        let col = col.trim().trim_matches('"');
+        let val = val.trim();
+        if let Some(vec_data) = parse_array_literal(val) {
+            vector_fields.push((col.to_string(), vec_data));
+        }
+    }
+
+    let value_bytes = serde_json::to_vec(&fields).unwrap_or_default();
+    let vshard_id = crate::types::VShardId::from_key(doc_id.as_bytes());
+
+    // 1. Store the document via PointPut.
+    let plan = crate::bridge::envelope::PhysicalPlan::PointPut {
+        collection: coll_name.to_string(),
+        document_id: doc_id.clone(),
+        value: value_bytes,
+    };
+
+    if let Err(e) = crate::control::server::dispatch_utils::wal_append_if_write(
+        &state.wal, tenant_id, vshard_id, &plan,
+    ) {
+        return Some(Err(sqlstate_error("XX000", &e.to_string())));
+    }
+
+    if let Err(e) = crate::control::server::dispatch_utils::dispatch_to_data_plane(
+        state, tenant_id, vshard_id, plan, 0,
+    )
+    .await
+    {
+        return Some(Err(sqlstate_error("XX000", &e.to_string())));
+    }
+
+    // 2. For each vector field, dispatch VectorInsert to HNSW index.
+    let vec_vshard = crate::types::VShardId::from_collection(coll_name);
+    for (_field_name, vector) in &vector_fields {
+        let dim = vector.len();
+        let vec_plan = crate::bridge::envelope::PhysicalPlan::VectorInsert {
+            collection: coll_name.to_string(),
+            vector: vector.clone(),
+            dim,
+            field_name: String::new(),
+            doc_id: Some(doc_id.clone()),
+        };
+
+        if let Err(e) = crate::control::server::dispatch_utils::wal_append_if_write(
+            &state.wal, tenant_id, vec_vshard, &vec_plan,
+        ) {
+            return Some(Err(sqlstate_error("XX000", &e.to_string())));
+        }
+
+        if let Err(e) = crate::control::server::dispatch_utils::dispatch_to_data_plane(
+            state, tenant_id, vec_vshard, vec_plan, 0,
+        )
+        .await
+        {
+            return Some(Err(sqlstate_error("XX000", &e.to_string())));
+        }
+    }
+
+    Some(Ok(vec![Response::Execution(Tag::new("INSERT"))]))
+}
+
+// ─── SQL value parsing helpers ─────────────────────────────────────
+
+/// Parse an ARRAY[0.1, 0.2, 0.3] literal into Vec<f32>.
+fn parse_array_literal(val: &str) -> Option<Vec<f32>> {
+    let trimmed = val.trim().trim_matches('\'');
+    let upper = trimmed.to_uppercase();
+    if !upper.starts_with("ARRAY[") {
+        return None;
+    }
+    let start = trimmed.find('[')? + 1;
+    let end = trimmed.rfind(']')?;
+    if end <= start {
+        return None;
+    }
+    let inner = &trimmed[start..end];
+    let values: Vec<f32> = inner
+        .split(',')
+        .filter_map(|s| s.trim().parse::<f32>().ok())
+        .collect();
+    if values.is_empty() {
+        return None;
+    }
+    Some(values)
+}
+
+/// Split VALUES content respecting quoted strings.
+fn split_values(s: &str) -> Vec<&str> {
+    let mut results = Vec::new();
+    let mut start = 0;
+    let mut in_quote = false;
+    let mut bracket_depth: i32 = 0;
+    let bytes = s.as_bytes();
+
+    for i in 0..bytes.len() {
+        match bytes[i] {
+            b'\'' if bracket_depth == 0 => in_quote = !in_quote,
+            b'[' | b'(' if !in_quote => bracket_depth += 1,
+            b']' | b')' if !in_quote => bracket_depth = (bracket_depth - 1).max(0),
+            b',' if !in_quote && bracket_depth == 0 => {
+                results.push(&s[start..i]);
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    if start < s.len() {
+        results.push(&s[start..]);
+    }
+    results
+}
+
+/// Parse a SQL literal value to a serde_json::Value.
+fn parse_sql_value(val: &str) -> serde_json::Value {
+    let trimmed = val.trim();
+    if trimmed.eq_ignore_ascii_case("NULL") {
+        return serde_json::Value::Null;
+    }
+    if trimmed.eq_ignore_ascii_case("TRUE") {
+        return serde_json::Value::Bool(true);
+    }
+    if trimmed.eq_ignore_ascii_case("FALSE") {
+        return serde_json::Value::Bool(false);
+    }
+    // Quoted string.
+    if trimmed.starts_with('\'') && trimmed.ends_with('\'') {
+        let inner = &trimmed[1..trimmed.len() - 1];
+        let unescaped = inner.replace("''", "'");
+        return serde_json::Value::String(unescaped);
+    }
+    // Number.
+    if let Ok(i) = trimmed.parse::<i64>() {
+        return serde_json::json!(i);
+    }
+    if let Ok(f) = trimmed.parse::<f64>() {
+        return serde_json::json!(f);
+    }
+    // ARRAY[...] — keep as string for now.
+    serde_json::Value::String(trimmed.to_string())
+}

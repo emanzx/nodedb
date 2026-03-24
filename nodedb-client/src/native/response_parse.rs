@@ -1,0 +1,169 @@
+//! Response parsing helpers for native protocol results.
+
+use std::collections::HashMap;
+
+use nodedb_types::error::NodeDbResult;
+use nodedb_types::id::{EdgeId, NodeId};
+use nodedb_types::result::{SearchResult, SubGraph, SubGraphEdge, SubGraphNode};
+use nodedb_types::value::Value;
+
+/// Parse search results from a native response.
+pub(crate) fn parse_search_results(
+    resp: &nodedb_types::protocol::NativeResponse,
+) -> NodeDbResult<Vec<SearchResult>> {
+    let rows = match &resp.rows {
+        Some(r) => r,
+        None => return Ok(Vec::new()),
+    };
+
+    let mut results = Vec::new();
+    for row in rows {
+        if let Some(text) = row.first().and_then(|v| v.as_str()) {
+            if let Ok(items) = serde_json::from_str::<Vec<serde_json::Value>>(text) {
+                for item in items {
+                    if let Some(sr) = parse_single_search_result(&item) {
+                        results.push(sr);
+                    }
+                }
+            } else if let Ok(item) = serde_json::from_str::<serde_json::Value>(text)
+                && let Some(sr) = parse_single_search_result(&item)
+            {
+                results.push(sr);
+            }
+        }
+    }
+    Ok(results)
+}
+
+fn parse_single_search_result(v: &serde_json::Value) -> Option<SearchResult> {
+    let id = v.get("id")?.as_str()?.to_string();
+    let distance = v.get("distance")?.as_f64()? as f32;
+    Some(SearchResult {
+        id,
+        node_id: None,
+        distance,
+        metadata: HashMap::new(),
+    })
+}
+
+/// Convert a serde_json::Value to a nodedb Value (by value, consuming).
+pub(crate) fn json_to_value(v: serde_json::Value) -> Value {
+    match v {
+        serde_json::Value::Null => Value::Null,
+        serde_json::Value::Bool(b) => Value::Bool(b),
+        serde_json::Value::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                Value::Integer(i)
+            } else {
+                Value::Float(n.as_f64().unwrap_or(0.0))
+            }
+        }
+        serde_json::Value::String(s) => Value::String(s),
+        serde_json::Value::Array(arr) => Value::Array(arr.into_iter().map(json_to_value).collect()),
+        serde_json::Value::Object(obj) => Value::Object(
+            obj.into_iter()
+                .map(|(k, v)| (k, json_to_value(v)))
+                .collect(),
+        ),
+    }
+}
+
+/// Parse a graph traversal response into a SubGraph.
+pub(crate) fn parse_subgraph_response(
+    resp: &nodedb_types::protocol::NativeResponse,
+) -> NodeDbResult<SubGraph> {
+    let rows = match &resp.rows {
+        Some(r) => r,
+        None => return Ok(SubGraph::empty()),
+    };
+
+    let mut nodes = Vec::new();
+    let mut edges = Vec::new();
+
+    for row in rows {
+        let text = match row.first().and_then(|v| v.as_str()) {
+            Some(t) => t,
+            None => continue,
+        };
+
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(text) {
+            if let Some(obj) = val.as_object() {
+                if let Some(ns) = obj.get("nodes").and_then(|v| v.as_array()) {
+                    for n in ns {
+                        if let Some(id) = n.get("id").and_then(|v| v.as_str()) {
+                            let depth = n.get("depth").and_then(|v| v.as_u64()).unwrap_or(0) as u8;
+                            nodes.push(SubGraphNode {
+                                id: NodeId::new(id),
+                                depth,
+                                properties: HashMap::new(),
+                            });
+                        }
+                    }
+                }
+                if let Some(es) = obj.get("edges").and_then(|v| v.as_array()) {
+                    for e in es {
+                        let from = e
+                            .get("from")
+                            .or_else(|| e.get("src"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+                        let to = e
+                            .get("to")
+                            .or_else(|| e.get("dst"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+                        let label = e.get("label").and_then(|v| v.as_str()).unwrap_or("");
+                        edges.push(SubGraphEdge {
+                            id: EdgeId::from_components(from, to, label),
+                            from: NodeId::new(from),
+                            to: NodeId::new(to),
+                            label: label.to_string(),
+                            properties: HashMap::new(),
+                        });
+                    }
+                }
+            }
+            if let Some(arr) = val.as_array() {
+                for item in arr {
+                    if let Some(id) = item.get("id").and_then(|v| v.as_str()) {
+                        let depth = item.get("depth").and_then(|v| v.as_u64()).unwrap_or(0) as u8;
+                        nodes.push(SubGraphNode {
+                            id: NodeId::new(id),
+                            depth,
+                            properties: HashMap::new(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(SubGraph { nodes, edges })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_search_result_from_json() {
+        let v = serde_json::json!({"id": "vec-1", "distance": 0.123});
+        let sr = parse_single_search_result(&v).unwrap();
+        assert_eq!(sr.id, "vec-1");
+        assert!((sr.distance - 0.123).abs() < 0.001);
+    }
+
+    #[test]
+    fn json_to_value_conversion() {
+        assert_eq!(json_to_value(serde_json::Value::Null), Value::Null);
+        assert_eq!(
+            json_to_value(serde_json::Value::Bool(true)),
+            Value::Bool(true)
+        );
+        assert_eq!(json_to_value(serde_json::json!(42)), Value::Integer(42));
+        assert_eq!(
+            json_to_value(serde_json::json!("hello")),
+            Value::String("hello".into())
+        );
+    }
+}

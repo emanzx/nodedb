@@ -3,6 +3,7 @@ pub mod backup;
 pub mod bulk;
 pub mod cluster;
 pub mod collection;
+pub mod collection_insert;
 pub mod crdt_ops;
 pub mod dsl;
 pub mod grant;
