@@ -61,6 +61,7 @@ pub fn create_collection(
         created_at: now,
         fields,
         field_defs: Vec::new(),
+        event_defs: Vec::new(),
         is_active: true,
     };
 

@@ -107,3 +107,81 @@ pub fn define_field(
 
     Ok(vec![Response::Execution(Tag::new("DEFINE FIELD"))])
 }
+
+/// Parse and store a DEFINE EVENT statement.
+///
+/// Syntax: DEFINE EVENT <name> ON <collection> WHEN <condition> THEN <action>
+pub fn define_event(
+    state: &SharedState,
+    identity: &AuthenticatedIdentity,
+    sql: &str,
+) -> PgWireResult<Vec<Response>> {
+    use crate::control::security::catalog::types::EventDefinition;
+
+    let parts: Vec<&str> = sql.split_whitespace().collect();
+    if parts.len() < 5 || !parts[3].eq_ignore_ascii_case("ON") {
+        return Err(sqlstate_error(
+            "42601",
+            "syntax: DEFINE EVENT <name> ON <collection> WHEN <condition> THEN <action>",
+        ));
+    }
+
+    let event_name = parts[2].to_lowercase();
+    let collection = parts[4].to_lowercase();
+    let tenant_id = identity.tenant_id;
+
+    // Extract WHEN and THEN clauses using the shared keyword parser.
+    let remainder = if sql.len() > parts[..5].iter().map(|p| p.len() + 1).sum::<usize>() {
+        &sql[parts[..5].iter().map(|p| p.len() + 1).sum::<usize>()..]
+    } else {
+        ""
+    };
+    let upper_rem = remainder.to_uppercase();
+    const EVENT_KEYWORDS: &[&str] = &["WHEN", "THEN"];
+
+    let when_condition =
+        extract_clause(&upper_rem, remainder, "WHEN", EVENT_KEYWORDS).unwrap_or_default();
+    let then_action =
+        extract_clause(&upper_rem, remainder, "THEN", EVENT_KEYWORDS).unwrap_or_default();
+
+    if when_condition.is_empty() || then_action.is_empty() {
+        return Err(sqlstate_error(
+            "42601",
+            "DEFINE EVENT requires both WHEN and THEN clauses",
+        ));
+    }
+
+    let def = EventDefinition {
+        name: event_name.clone(),
+        collection: collection.clone(),
+        when_condition,
+        then_action,
+    };
+
+    if let Some(catalog) = state.credentials.catalog() {
+        match catalog.get_collection(tenant_id.as_u32(), &collection) {
+            Ok(Some(mut coll)) => {
+                coll.event_defs.retain(|e| e.name != event_name);
+                coll.event_defs.push(def);
+                if let Err(e) = catalog.put_collection(&coll) {
+                    return Err(sqlstate_error("XX000", &format!("save collection: {e}")));
+                }
+            }
+            _ => {
+                return Err(sqlstate_error(
+                    "42P01",
+                    &format!("collection '{collection}' does not exist"),
+                ));
+            }
+        }
+    }
+
+    state.audit_record(
+        crate::control::security::audit::AuditEvent::AdminAction,
+        Some(tenant_id),
+        &identity.username,
+        &format!("defined event '{event_name}' on '{collection}'"),
+    );
+
+    Ok(vec![Response::Execution(Tag::new("DEFINE EVENT"))])
+}

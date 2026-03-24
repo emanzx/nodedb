@@ -176,6 +176,9 @@ pub struct StoredCollection {
     /// Keyed by field name. Stored alongside `fields` for backward compatibility.
     #[serde(default)]
     pub field_defs: Vec<FieldDefinition>,
+    /// Event/trigger definitions (DEFINE EVENT).
+    #[serde(default)]
+    pub event_defs: Vec<EventDefinition>,
     pub is_active: bool,
 }
 
@@ -200,6 +203,21 @@ pub struct FieldDefinition {
     /// Whether the field is read-only (cannot be set by user).
     #[serde(default)]
     pub readonly: bool,
+}
+
+/// Table event/trigger definition.
+///
+/// Stored in the catalog alongside field definitions. Evaluated after
+/// write operations (INSERT, UPDATE, DELETE) when the WHEN condition matches.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct EventDefinition {
+    pub name: String,
+    /// Collection this event is attached to.
+    pub collection: String,
+    /// WHEN condition: "INSERT", "UPDATE", "DELETE", or arbitrary expression.
+    pub when_condition: String,
+    /// THEN action: SQL statement(s) to execute when triggered.
+    pub then_action: String,
 }
 
 pub struct SystemCatalog {
