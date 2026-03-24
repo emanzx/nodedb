@@ -93,13 +93,13 @@ impl ListenNotifyManager {
     }
 
     /// Handle `UNLISTEN *` — remove all subscriptions for this connection.
-    pub fn unlisten_all(&self, addr: &SocketAddr, change_stream: &ChangeStream) {
+    pub fn unlisten_all(&self, addr: &SocketAddr, _change_stream: &ChangeStream) {
         let mut conns = self.connections.write().unwrap_or_else(|p| p.into_inner());
         if let Some(state) = conns.remove(addr) {
-            if state.subscription.is_some() {
-                change_stream.unsubscribe();
-            }
+            // Subscription cleanup (counter decrement) happens automatically
+            // via Subscription::drop when state is dropped here.
             debug!(%addr, channels = state.channels.len(), "UNLISTEN *");
+            drop(state);
         }
     }
 

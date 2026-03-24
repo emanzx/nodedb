@@ -55,6 +55,10 @@ impl ChangeOperation {
 }
 
 /// A subscription handle. Receives change events via a bounded channel.
+///
+/// Automatically decrements the active subscription counter on drop,
+/// ensuring the count stays accurate even if the caller forgets to
+/// explicitly unsubscribe.
 pub struct Subscription {
     /// Unique subscription ID.
     pub id: u64,
@@ -64,6 +68,15 @@ pub struct Subscription {
     pub collection_filter: Option<String>,
     /// Optional tenant filter (None = all tenants).
     pub tenant_filter: Option<TenantId>,
+    /// Shared counter for automatic cleanup on drop.
+    active_counter: std::sync::Arc<std::sync::atomic::AtomicU64>,
+}
+
+impl Drop for Subscription {
+    fn drop(&mut self) {
+        self.active_counter
+            .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
+    }
 }
 
 impl Subscription {
@@ -106,8 +119,8 @@ pub struct ChangeStream {
     sender: tokio::sync::broadcast::Sender<ChangeEvent>,
     /// Next subscription ID.
     next_sub_id: std::sync::atomic::AtomicU64,
-    /// Active subscription count (for monitoring).
-    active_subscriptions: std::sync::atomic::AtomicU64,
+    /// Active subscription count (shared with Subscription for Drop cleanup).
+    active_subscriptions: std::sync::Arc<std::sync::atomic::AtomicU64>,
     /// Total events published.
     events_published: std::sync::atomic::AtomicU64,
     /// Last LSN processed from the WAL.
@@ -129,7 +142,7 @@ impl ChangeStream {
         Self {
             sender,
             next_sub_id: std::sync::atomic::AtomicU64::new(1),
-            active_subscriptions: std::sync::atomic::AtomicU64::new(0),
+            active_subscriptions: std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0)),
             events_published: std::sync::atomic::AtomicU64::new(0),
             last_lsn: std::sync::atomic::AtomicU64::new(0),
             recent_changes: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(
@@ -166,6 +179,7 @@ impl ChangeStream {
             receiver,
             collection_filter,
             tenant_filter,
+            active_counter: std::sync::Arc::clone(&self.active_subscriptions),
         }
     }
 
@@ -237,7 +251,11 @@ impl ChangeStream {
             .collect()
     }
 
-    /// Record that a subscriber disconnected.
+    /// Manually decrement the active subscription counter.
+    ///
+    /// **Prefer dropping the `Subscription`** — its `Drop` impl handles
+    /// cleanup automatically. Use this only for legacy callers that
+    /// manage subscriptions outside the `Subscription` struct.
     pub fn unsubscribe(&self) {
         self.active_subscriptions
             .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
@@ -313,7 +331,8 @@ mod tests {
         assert_eq!(stream.events_published(), 10);
         assert_eq!(stream.last_lsn(), 9);
 
-        stream.unsubscribe();
+        // Subscription was dropped at end of loop scope above,
+        // Drop impl automatically decrements the counter.
         assert_eq!(stream.subscriber_count(), 0);
     }
 }
