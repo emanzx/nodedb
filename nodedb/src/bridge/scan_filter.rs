@@ -38,6 +38,18 @@ impl ScanFilter {
             return true;
         }
 
+        // exists / not_exists: check if sub-query has results.
+        // The `value` field contains a JSON object: {"collection": "t", "filters": [...]}
+        // This is evaluated by the caller (Data Plane handler) which has access
+        // to the sparse engine. At the ScanFilter level, we always return true
+        // and let the handler do the actual sub-scan. This is a marker op.
+        if self.op == "exists" || self.op == "not_exists" {
+            // Marker: actual evaluation happens in the DocumentScan handler.
+            // Returning true here means the filter doesn't block; the handler
+            // post-filters using the exists result.
+            return true;
+        }
+
         // OR predicate: document matches if ANY clause group fully matches.
         if self.op == "or" {
             return self

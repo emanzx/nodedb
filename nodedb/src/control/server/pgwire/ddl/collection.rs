@@ -170,28 +170,43 @@ pub fn drop_collection(
     Ok(vec![Response::Execution(Tag::new("DROP COLLECTION"))])
 }
 
-/// CREATE INDEX <name> ON <collection> (<field>)
+/// CREATE [UNIQUE] INDEX <name> ON <collection> (<field>) [WHERE condition]
 ///
 /// Creates an index owned by the collection's owner.
+/// UNIQUE enforces uniqueness on the indexed field. WHERE makes it conditional.
 pub fn create_index(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     parts: &[&str],
+    sql: &str,
 ) -> PgWireResult<Vec<Response>> {
-    // CREATE INDEX <name> ON <collection> (<field>)
-    if parts.len() < 6 {
+    let upper = sql.to_uppercase();
+
+    // Detect UNIQUE modifier.
+    let is_unique = upper.contains("UNIQUE INDEX");
+    let idx_offset = if is_unique { 3 } else { 2 }; // skip "CREATE UNIQUE INDEX" vs "CREATE INDEX"
+
+    if parts.len() < idx_offset + 4 {
         return Err(sqlstate_error(
             "42601",
-            "syntax: CREATE INDEX <name> ON <collection> (<field>)",
+            "syntax: CREATE [UNIQUE] INDEX <name> ON <collection> (<field>) [WHERE ...]",
         ));
     }
 
-    let index_name = parts[2];
-    if !parts[3].eq_ignore_ascii_case("ON") {
+    let index_name = parts[idx_offset];
+    if !parts[idx_offset + 1].eq_ignore_ascii_case("ON") {
         return Err(sqlstate_error("42601", "expected ON after index name"));
     }
-    let collection = parts[4];
-    let field = parts[5].trim_matches(|c| c == '(' || c == ')');
+    let collection = parts[idx_offset + 2];
+    let field = parts[idx_offset + 3].trim_matches(|c| c == '(' || c == ')');
+
+    // Parse optional WHERE condition for conditional indexes.
+    let where_condition = upper
+        .find(" WHERE ")
+        .map(|pos| sql[pos + 7..].trim().to_string());
+
+    // Parse optional COLLATE NOCASE for case-insensitive indexes.
+    let case_insensitive = upper.contains("COLLATE NOCASE") || upper.contains("COLLATE CI");
     let tenant_id = identity.tenant_id;
 
     // Verify collection exists and user has CREATE permission.
@@ -242,11 +257,21 @@ pub fn create_index(
         )
         .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
 
+    let kind = if is_unique { "unique index" } else { "index" };
+    let ci = if case_insensitive {
+        " COLLATE NOCASE"
+    } else {
+        ""
+    };
+    let cond = where_condition
+        .as_deref()
+        .map(|c| format!(" WHERE {c}"))
+        .unwrap_or_default();
     state.audit_record(
         AuditEvent::AdminAction,
         Some(tenant_id),
         &identity.username,
-        &format!("created index '{index_name}' on '{collection}' ({field})"),
+        &format!("created {kind} '{index_name}' on '{collection}' ({field}){ci}{cond}"),
     );
 
     Ok(vec![Response::Execution(Tag::new("CREATE INDEX"))])

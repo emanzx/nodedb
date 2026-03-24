@@ -195,7 +195,71 @@ pub(in crate::control::planner) fn expr_to_scan_filters(expr: &Expr) -> Vec<Scan
                 Vec::new()
             }
         }
+        // EXISTS (SELECT ...) / NOT EXISTS (SELECT ...)
+        // For uncorrelated subqueries, encode the sub-table and sub-filters
+        // into the ScanFilter value. The Data Plane handler evaluates the
+        // sub-scan and filters based on the result.
+        Expr::Exists(exists) => {
+            let subquery_plan = &exists.subquery.subquery;
+            let (sub_collection, sub_filter_bytes) = extract_exists_source(subquery_plan);
+            if let Some((coll, filters)) = sub_collection.zip(sub_filter_bytes) {
+                let op = if exists.negated {
+                    "not_exists"
+                } else {
+                    "exists"
+                };
+                vec![ScanFilter {
+                    field: String::new(),
+                    op: op.into(),
+                    value: serde_json::json!({
+                        "collection": coll,
+                        "filters": match serde_json::from_slice::<serde_json::Value>(&filters) {
+                            Ok(v) => v,
+                            Err(e) => {
+                                warn!("failed to deserialize exists subquery filters: {e}");
+                                serde_json::Value::Object(Default::default())
+                            }
+                        },
+                    }),
+                    clauses: Vec::new(),
+                }]
+            } else {
+                warn!("EXISTS subquery too complex; emitting match_all");
+                vec![ScanFilter {
+                    op: "match_all".into(),
+                    ..Default::default()
+                }]
+            }
+        }
         _ => Vec::new(),
+    }
+}
+
+/// Extract collection name and filters from an EXISTS subquery plan.
+fn extract_exists_source(plan: &LogicalPlan) -> (Option<String>, Option<Vec<u8>>) {
+    match plan {
+        LogicalPlan::TableScan(scan) => {
+            let coll = scan.table_name.to_string().to_lowercase();
+            let filter_bytes = if !scan.filters.is_empty() {
+                let mut all = Vec::new();
+                for f in &scan.filters {
+                    all.extend(expr_to_scan_filters(f));
+                }
+                rmp_serde::to_vec_named(&all).ok()
+            } else {
+                Some(Vec::new())
+            };
+            (Some(coll), filter_bytes)
+        }
+        LogicalPlan::Filter(filter) => {
+            let (coll, _) = extract_exists_source(&filter.input);
+            let filters = expr_to_scan_filters(&filter.predicate);
+            let filter_bytes = rmp_serde::to_vec_named(&filters).ok();
+            (coll, filter_bytes)
+        }
+        LogicalPlan::Projection(proj) => extract_exists_source(&proj.input),
+        LogicalPlan::SubqueryAlias(alias) => extract_exists_source(&alias.input),
+        _ => (None, None),
     }
 }
 
