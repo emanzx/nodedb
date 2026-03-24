@@ -92,7 +92,11 @@ impl Pool {
                 detail: "pool closed".into(),
             })?;
 
-        // Try to reuse an idle connection (synchronous lock — fast, no contention).
+        // std::sync::Mutex is intentional here (not tokio::sync::Mutex):
+        // 1. Critical section is trivial (pop_front / push_back only)
+        // 2. No async operations while holding the lock
+        // 3. Enables synchronous return in Drop (no spawned tasks)
+        // 4. Poison is handled gracefully via unwrap_or_else
         let idle_conn = {
             let mut idle = self.inner.idle.lock().unwrap_or_else(|e| e.into_inner());
             idle.pop_front()
