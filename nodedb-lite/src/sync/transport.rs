@@ -15,6 +15,7 @@ use nodedb_types::sync::wire::{SyncFrame, SyncMessageType};
 
 use super::client::{SyncClient, SyncState};
 use crate::engine::crdt::engine::PendingDelta;
+use crate::error::LiteError;
 
 /// Callback interface for the sync runner to read/write pending deltas
 /// from the owning `NodeDbLite`. This avoids the runner owning the database.
@@ -71,11 +72,13 @@ pub async fn run_sync_loop(client: Arc<SyncClient>, delegate: Arc<dyn SyncDelega
 async fn connect_and_run(
     client: &Arc<SyncClient>,
     delegate: &Arc<dyn SyncDelegate>,
-) -> Result<(), String> {
+) -> Result<(), LiteError> {
     // ── Connect ──
     let (ws_stream, _response) = tokio_tungstenite::connect_async(&client.config().url)
         .await
-        .map_err(|e| format!("WebSocket connect failed: {e}"))?;
+        .map_err(|e| LiteError::Sync {
+            detail: format!("WebSocket connect failed: {e}"),
+        })?;
 
     let (mut sink, mut stream) = ws_stream.split();
 
@@ -84,38 +87,51 @@ async fn connect_and_run(
     let frame = SyncFrame::encode_or_empty(SyncMessageType::Handshake, &handshake);
     sink.send(Message::Binary(frame.to_bytes().into()))
         .await
-        .map_err(|e| format!("handshake send failed: {e}"))?;
+        .map_err(|e| LiteError::Sync {
+            detail: format!("handshake send failed: {e}"),
+        })?;
 
     // Wait for HandshakeAck.
     let ack_msg = tokio::time::timeout(Duration::from_secs(10), stream.next())
         .await
-        .map_err(|_| "handshake timeout".to_string())?
-        .ok_or("connection closed before handshake ack")?
-        .map_err(|e| format!("handshake read error: {e}"))?;
+        .map_err(|_| LiteError::Sync {
+            detail: "handshake timeout".to_string(),
+        })?
+        .ok_or_else(|| LiteError::Sync {
+            detail: "connection closed before handshake ack".to_string(),
+        })?
+        .map_err(|e| LiteError::Sync {
+            detail: format!("handshake read error: {e}"),
+        })?;
 
     let ack_bytes = match &ack_msg {
         Message::Binary(b) => b.as_ref(),
-        _ => return Err("expected binary handshake ack".into()),
+        _ => {
+            return Err(LiteError::Sync {
+                detail: "expected binary handshake ack".to_string(),
+            });
+        }
     };
 
-    let ack_frame = SyncFrame::from_bytes(ack_bytes).ok_or("invalid handshake ack frame")?;
+    let ack_frame = SyncFrame::from_bytes(ack_bytes).ok_or_else(|| LiteError::Sync {
+        detail: "invalid handshake ack frame".to_string(),
+    })?;
 
     if ack_frame.msg_type != SyncMessageType::HandshakeAck {
-        return Err(format!(
-            "expected HandshakeAck, got {:?}",
-            ack_frame.msg_type
-        ));
+        return Err(LiteError::Sync {
+            detail: format!("expected HandshakeAck, got {:?}", ack_frame.msg_type),
+        });
     }
 
-    let ack: nodedb_types::sync::wire::HandshakeAckMsg = ack_frame
-        .decode_body()
-        .ok_or("failed to decode HandshakeAck")?;
+    let ack: nodedb_types::sync::wire::HandshakeAckMsg =
+        ack_frame.decode_body().ok_or_else(|| LiteError::Sync {
+            detail: "failed to decode HandshakeAck".to_string(),
+        })?;
 
     if !client.handle_handshake_ack(&ack).await {
-        return Err(format!(
-            "handshake rejected: {}",
-            ack.error.unwrap_or_default()
-        ));
+        return Err(LiteError::Sync {
+            detail: format!("handshake rejected: {}", ack.error.unwrap_or_default()),
+        });
     }
 
     // ── Message loop ──
@@ -152,12 +168,14 @@ async fn receive_loop<S>(
     client: &Arc<SyncClient>,
     delegate: &Arc<dyn SyncDelegate>,
     stream: &mut S,
-) -> Result<(), String>
+) -> Result<(), LiteError>
 where
     S: StreamExt<Item = Result<Message, tokio_tungstenite::tungstenite::Error>> + Unpin,
 {
     while let Some(msg_result) = stream.next().await {
-        let msg = msg_result.map_err(|e| format!("WebSocket read error: {e}"))?;
+        let msg = msg_result.map_err(|e| LiteError::Sync {
+            detail: format!("WebSocket read error: {e}"),
+        })?;
 
         let bytes = match &msg {
             Message::Binary(b) => b.as_ref(),

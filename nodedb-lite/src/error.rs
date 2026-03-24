@@ -17,6 +17,12 @@ pub enum LiteError {
 
     #[error("namespace {ns} not recognized")]
     InvalidNamespace { ns: u8 },
+
+    #[error("bad request: {detail}")]
+    BadRequest { detail: String },
+
+    #[error("sync error: {detail}")]
+    Sync { detail: String },
 }
 
 impl From<redb::Error> for LiteError {

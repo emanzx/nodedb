@@ -151,13 +151,17 @@ impl MetadataCache {
     }
 
     /// Serialize a metadata entry for Raft proposal.
-    pub fn serialize_entry(entry: &MetadataEntry) -> Result<Vec<u8>, String> {
-        rmp_serde::to_vec_named(entry).map_err(|e| format!("metadata serialize: {e}"))
+    pub fn serialize_entry(entry: &MetadataEntry) -> crate::Result<Vec<u8>> {
+        rmp_serde::to_vec_named(entry).map_err(|e| crate::ClusterError::Codec {
+            detail: format!("metadata serialize: {e}"),
+        })
     }
 
     /// Deserialize a metadata entry from Raft log data.
-    pub fn deserialize_entry(data: &[u8]) -> Result<MetadataEntry, String> {
-        rmp_serde::from_slice(data).map_err(|e| format!("metadata deserialize: {e}"))
+    pub fn deserialize_entry(data: &[u8]) -> crate::Result<MetadataEntry> {
+        rmp_serde::from_slice(data).map_err(|e| crate::ClusterError::Codec {
+            detail: format!("metadata deserialize: {e}"),
+        })
     }
 }
 

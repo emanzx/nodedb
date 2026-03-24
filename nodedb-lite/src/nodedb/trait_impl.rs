@@ -95,7 +95,9 @@ impl<S: StorageEngine> NodeDb for NodeDbLite<S> {
             let id_before = index.len() as u32;
             index
                 .insert(embedding.to_vec())
-                .map_err(|e| NodeDbError::BadRequest { detail: e })?;
+                .map_err(|e| NodeDbError::BadRequest {
+                    detail: e.to_string(),
+                })?;
             id_before
         };
 

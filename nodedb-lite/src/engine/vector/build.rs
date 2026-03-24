@@ -3,6 +3,7 @@
 use super::distance::distance;
 use super::graph::{Candidate, HnswIndex, Node};
 use super::search::search_layer;
+use crate::error::LiteError;
 
 impl HnswIndex {
     /// Insert a vector into the index.
@@ -12,13 +13,15 @@ impl HnswIndex {
     /// 3. At each layer from the node's layer down to 0, search for nearest
     ///    neighbors, select via the diversity heuristic, and add bidirectional edges
     /// 4. Prune over-connected nodes to maintain the M/M0 invariant
-    pub fn insert(&mut self, vector: Vec<f32>) -> Result<(), String> {
+    pub fn insert(&mut self, vector: Vec<f32>) -> Result<(), LiteError> {
         if vector.len() != self.dim {
-            return Err(format!(
-                "vector dimension mismatch: expected {}, got {}",
-                self.dim,
-                vector.len()
-            ));
+            return Err(LiteError::BadRequest {
+                detail: format!(
+                    "vector dimension mismatch: expected {}, got {}",
+                    self.dim,
+                    vector.len()
+                ),
+            });
         }
 
         let new_id = self.nodes.len() as u32;

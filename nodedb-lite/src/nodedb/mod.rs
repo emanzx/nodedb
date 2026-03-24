@@ -281,7 +281,9 @@ impl<S: StorageEngine> NodeDbLite<S> {
                 let internal_id = index.len() as u32;
                 index
                     .insert(embedding.to_vec())
-                    .map_err(|e| NodeDbError::BadRequest { detail: e })?;
+                    .map_err(|e| NodeDbError::BadRequest {
+                        detail: e.to_string(),
+                    })?;
                 id_map.insert(
                     format!("{collection}:{internal_id}"),
                     (id.to_string(), internal_id),

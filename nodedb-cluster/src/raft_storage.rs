@@ -36,28 +36,38 @@ pub struct RedbLogStorage {
 
 impl RedbLogStorage {
     /// Open or create storage at the given path.
-    pub fn open(path: &Path) -> Result<Self, String> {
+    pub fn open(path: &Path) -> crate::Result<Self> {
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).map_err(|e| format!("create raft storage dir: {e}"))?;
+            std::fs::create_dir_all(parent).map_err(|e| crate::ClusterError::Storage {
+                detail: format!("create raft storage dir: {e}"),
+            })?;
         }
 
-        let db = Database::create(path).map_err(|e| format!("open raft storage: {e}"))?;
+        let db = Database::create(path).map_err(|e| crate::ClusterError::Storage {
+            detail: format!("open raft storage: {e}"),
+        })?;
 
         // Ensure tables exist.
-        let write_txn = db
-            .begin_write()
-            .map_err(|e| format!("init raft tables: {e}"))?;
+        let write_txn = db.begin_write().map_err(|e| crate::ClusterError::Storage {
+            detail: format!("init raft tables: {e}"),
+        })?;
         {
             write_txn
                 .open_table(ENTRIES)
-                .map_err(|e| format!("create entries table: {e}"))?;
+                .map_err(|e| crate::ClusterError::Storage {
+                    detail: format!("create entries table: {e}"),
+                })?;
             write_txn
                 .open_table(META)
-                .map_err(|e| format!("create meta table: {e}"))?;
+                .map_err(|e| crate::ClusterError::Storage {
+                    detail: format!("create meta table: {e}"),
+                })?;
         }
         write_txn
             .commit()
-            .map_err(|e| format!("commit raft init: {e}"))?;
+            .map_err(|e| crate::ClusterError::Storage {
+                detail: format!("commit raft init: {e}"),
+            })?;
 
         info!(path = %path.display(), "raft log storage opened");
 
