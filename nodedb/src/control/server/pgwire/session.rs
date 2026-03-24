@@ -47,6 +47,9 @@ pub struct PgSession {
     /// document's current LSN > read_lsn, a concurrent write occurred
     /// and the transaction is rejected with SERIALIZATION_FAILURE.
     pub tx_read_set: Vec<(String, String, crate::types::Lsn)>,
+    /// Savepoint stack: each entry is (name, tx_buffer_len_at_savepoint).
+    /// On ROLLBACK TO, truncate tx_buffer to the saved length.
+    pub savepoints: Vec<(String, usize)>,
 }
 
 impl PgSession {
@@ -74,6 +77,7 @@ impl PgSession {
             tx_buffer: Vec::new(),
             tx_snapshot_lsn: None,
             tx_read_set: Vec::new(),
+            savepoints: Vec::new(),
         }
     }
 }
@@ -100,6 +104,42 @@ impl SessionStore {
     pub fn ensure_session(&self, addr: SocketAddr) {
         let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
         sessions.entry(addr).or_insert_with(PgSession::new);
+    }
+
+    /// Create a savepoint at the current tx_buffer position.
+    pub fn create_savepoint(&self, addr: &SocketAddr, name: String) {
+        let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
+        if let Some(session) = sessions.get_mut(addr) {
+            let pos = session.tx_buffer.len();
+            session.savepoints.push((name, pos));
+        }
+    }
+
+    /// Release a savepoint (remove from stack, keep buffered operations).
+    pub fn release_savepoint(&self, addr: &SocketAddr, name: &str) {
+        let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
+        if let Some(session) = sessions.get_mut(addr) {
+            session.savepoints.retain(|(n, _)| n != name);
+        }
+    }
+
+    /// Rollback to a savepoint: truncate tx_buffer to the saved position.
+    ///
+    /// Returns `Err` if the savepoint does not exist (matches PostgreSQL behavior).
+    pub fn rollback_to_savepoint(&self, addr: &SocketAddr, name: &str) -> Result<(), String> {
+        let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
+        let session = sessions
+            .get_mut(addr)
+            .ok_or_else(|| "no active session".to_string())?;
+        let pos = session
+            .savepoints
+            .iter()
+            .rposition(|(n, _)| n == name)
+            .ok_or_else(|| format!("savepoint \"{name}\" does not exist"))?;
+        let buffer_pos = session.savepoints[pos].1;
+        session.tx_buffer.truncate(buffer_pos);
+        session.savepoints.truncate(pos + 1);
+        Ok(())
     }
 
     /// Set a session parameter.
@@ -225,7 +265,7 @@ impl SessionStore {
             let buffer = std::mem::take(&mut session.tx_buffer);
             session.tx_state = TransactionState::Idle;
             session.tx_snapshot_lsn = None;
-            // Read-set is drained separately via take_read_set() before commit.
+            session.savepoints.clear();
             Ok(buffer)
         } else {
             Ok(Vec::new())
@@ -258,6 +298,7 @@ impl SessionStore {
             session.tx_state = TransactionState::Idle;
             session.tx_snapshot_lsn = None;
             session.tx_read_set.clear();
+            session.savepoints.clear();
         }
         Ok(())
     }

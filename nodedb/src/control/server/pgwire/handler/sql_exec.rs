@@ -139,14 +139,38 @@ impl NodeDbPgHandler {
         }
 
         if upper.starts_with("SAVEPOINT ") {
+            let sp_name = sql_trimmed
+                .split_whitespace()
+                .nth(1)
+                .unwrap_or("sp")
+                .to_string();
+            self.sessions.create_savepoint(addr, sp_name);
             return Ok(vec![Response::Execution(Tag::new("SAVEPOINT"))]);
         }
 
         if upper.starts_with("RELEASE SAVEPOINT ") || upper.starts_with("RELEASE ") {
+            let sp_name = sql_trimmed
+                .split_whitespace()
+                .last()
+                .unwrap_or("sp")
+                .to_string();
+            self.sessions.release_savepoint(addr, &sp_name);
             return Ok(vec![Response::Execution(Tag::new("RELEASE"))]);
         }
 
         if upper.starts_with("ROLLBACK TO ") {
+            let sp_name = sql_trimmed
+                .split_whitespace()
+                .last()
+                .unwrap_or("sp")
+                .to_string();
+            if let Err(msg) = self.sessions.rollback_to_savepoint(addr, &sp_name) {
+                return Err(PgWireError::UserError(Box::new(ErrorInfo::new(
+                    "ERROR".to_owned(),
+                    "3B001".to_owned(),
+                    msg,
+                ))));
+            }
             return Ok(vec![Response::Execution(Tag::new("ROLLBACK"))]);
         }
 
