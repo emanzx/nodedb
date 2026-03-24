@@ -135,6 +135,7 @@ fn cross_model_query_vector_graph_relational() {
             distinct: false,
             projection: Vec::new(),
             computed_columns: Vec::new(),
+            window_functions: Vec::new(),
         },
     );
     let scan_json = payload_json(&scan_payload);
