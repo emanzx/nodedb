@@ -52,7 +52,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Interactive TUI.
     crossterm::terminal::enable_raw_mode()?;
     let mut stdout = io::stdout();
-    crossterm::execute!(stdout, EnterAlternateScreen)?;
+    crossterm::execute!(
+        stdout,
+        EnterAlternateScreen,
+        crossterm::event::EnableMouseCapture
+    )?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -69,7 +73,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Restore terminal.
     crossterm::terminal::disable_raw_mode()?;
-    crossterm::execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    crossterm::execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        crossterm::event::DisableMouseCapture
+    )?;
 
     result?;
     Ok(())
