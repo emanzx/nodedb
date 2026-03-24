@@ -381,6 +381,42 @@ pub enum PhysicalPlan {
         filter_bitmap: Option<Arc<[u8]>>,
     },
 
+    /// Bulk update: scan documents matching filters, apply field updates to all matches.
+    ///
+    /// Unlike `PointUpdate` (which requires `WHERE id = 'x'`), this supports
+    /// arbitrary WHERE predicates: `UPDATE users SET status = 'inactive' WHERE age > 65`.
+    /// Returns affected row count as payload.
+    BulkUpdate {
+        collection: String,
+        /// ScanFilter predicates (same format as DocumentScan filters).
+        filters: Vec<u8>,
+        /// Field name → new JSON value bytes.
+        updates: Vec<(String, Vec<u8>)>,
+    },
+
+    /// Bulk delete: scan documents matching filters, delete all matches.
+    ///
+    /// Unlike `PointDelete` (which requires `WHERE id = 'x'`), this supports
+    /// arbitrary WHERE predicates: `DELETE FROM logs WHERE created < '2024-01-01'`.
+    /// Returns affected row count as payload. Cascades to inverted index,
+    /// secondary indexes, and graph edges (same as PointDelete).
+    BulkDelete {
+        collection: String,
+        /// ScanFilter predicates (same format as DocumentScan filters).
+        filters: Vec<u8>,
+    },
+
+    /// Upsert: insert a document if it doesn't exist, update if it does.
+    ///
+    /// Semantics: if document with `document_id` exists, merge `value` fields
+    /// into the existing document (like PointUpdate). If it doesn't exist,
+    /// insert as a new document (like PointPut).
+    Upsert {
+        collection: String,
+        document_id: String,
+        value: Vec<u8>,
+    },
+
     /// Cancellation signal. Data Plane MUST stop the target request at next safe point.
     Cancel { target_request_id: RequestId },
 

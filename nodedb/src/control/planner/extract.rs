@@ -329,6 +329,42 @@ pub(super) fn extract_delete_targets(
     }
 }
 
+/// Extract WHERE predicate from a DML plan as serialized ScanFilters.
+///
+/// Used by BulkUpdate/BulkDelete to convert arbitrary WHERE predicates
+/// into Data Plane-evaluable filters.
+pub(super) fn extract_where_filters(plan: &LogicalPlan) -> crate::Result<Vec<u8>> {
+    match plan {
+        LogicalPlan::Filter(filter) => {
+            let scan_filters = expr_to_scan_filters(&filter.predicate);
+            if scan_filters.is_empty() {
+                return Err(crate::Error::PlanError {
+                    detail: "WHERE clause contains unsupported expressions for bulk operation"
+                        .into(),
+                });
+            }
+            rmp_serde::to_vec_named(&scan_filters).map_err(|e| crate::Error::Serialization {
+                format: "msgpack".into(),
+                detail: format!("serialize filters: {e}"),
+            })
+        }
+        LogicalPlan::TableScan(_) => Err(crate::Error::PlanError {
+            detail: "bulk UPDATE/DELETE requires a WHERE clause".into(),
+        }),
+        _ => {
+            // Try to recurse through projections.
+            for child in plan.inputs() {
+                if let Ok(filters) = extract_where_filters(child) {
+                    return Ok(filters);
+                }
+            }
+            Err(crate::Error::PlanError {
+                detail: format!("unsupported plan for bulk DML: {}", plan.display()),
+            })
+        }
+    }
+}
+
 /// Try to convert a predicate on a non-id field into an index-backed RangeScan.
 ///
 /// Supports:

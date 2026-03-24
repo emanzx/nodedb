@@ -208,7 +208,7 @@ impl CoreLoop {
     ///
     /// Stores the document, auto-indexes text fields, updates column stats,
     /// and populates the document cache. Does NOT commit the transaction.
-    fn apply_point_put(
+    pub(in crate::data::executor) fn apply_point_put(
         &mut self,
         txn: &WriteTransaction,
         tid: u32,

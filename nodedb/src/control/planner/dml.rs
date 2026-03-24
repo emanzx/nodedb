@@ -7,7 +7,10 @@ use crate::control::planner::physical::PhysicalTask;
 use crate::types::{TenantId, VShardId};
 
 use super::converter::PlanConverter;
-use super::extract::{extract_delete_targets, extract_insert_values, extract_update_assignments};
+use super::extract::{
+    extract_delete_targets, extract_insert_values, extract_update_assignments,
+    extract_where_filters,
+};
 
 impl PlanConverter {
     /// Convert DML operations (INSERT, UPDATE, DELETE) to physical plans.
@@ -47,56 +50,72 @@ impl PlanConverter {
                 Ok(tasks)
             }
             WriteOp::Delete => {
-                let doc_ids = extract_delete_targets(&dml.input, &collection)?;
+                // Try point delete (WHERE id = 'value') first.
+                let doc_ids = extract_delete_targets(&dml.input, &collection).unwrap_or_default();
 
-                if doc_ids.is_empty() {
-                    return Err(crate::Error::PlanError {
-                        detail: "DELETE requires a WHERE clause with id = '<value>'".into(),
-                    });
+                if !doc_ids.is_empty() {
+                    return Ok(doc_ids
+                        .into_iter()
+                        .map(|doc_id| PhysicalTask {
+                            tenant_id,
+                            vshard_id: vshard,
+                            plan: PhysicalPlan::PointDelete {
+                                collection: collection.clone(),
+                                document_id: doc_id,
+                            },
+                        })
+                        .collect());
                 }
 
-                Ok(doc_ids
-                    .into_iter()
-                    .map(|doc_id| PhysicalTask {
-                        tenant_id,
-                        vshard_id: vshard,
-                        plan: PhysicalPlan::PointDelete {
-                            collection: collection.clone(),
-                            document_id: doc_id,
-                        },
-                    })
-                    .collect())
+                // Fall back to bulk delete with arbitrary WHERE predicates.
+                let filter_bytes = extract_where_filters(&dml.input)?;
+                Ok(vec![PhysicalTask {
+                    tenant_id,
+                    vshard_id: vshard,
+                    plan: PhysicalPlan::BulkDelete {
+                        collection,
+                        filters: filter_bytes,
+                    },
+                }])
             }
 
             WriteOp::Update => {
-                let doc_ids = extract_delete_targets(&dml.input, &collection)?;
-
-                if doc_ids.is_empty() {
-                    return Err(crate::Error::PlanError {
-                        detail: "UPDATE requires a WHERE clause with id = '<value>'".into(),
-                    });
-                }
-
                 let updates = extract_update_assignments(&dml.input)?;
-
                 if updates.is_empty() {
                     return Err(crate::Error::PlanError {
                         detail: "UPDATE requires at least one SET assignment".into(),
                     });
                 }
 
-                Ok(doc_ids
-                    .into_iter()
-                    .map(|doc_id| PhysicalTask {
-                        tenant_id,
-                        vshard_id: vshard,
-                        plan: PhysicalPlan::PointUpdate {
-                            collection: collection.clone(),
-                            document_id: doc_id,
-                            updates: updates.clone(),
-                        },
-                    })
-                    .collect())
+                // Try point update (WHERE id = 'value') first.
+                let doc_ids = extract_delete_targets(&dml.input, &collection).unwrap_or_default();
+
+                if !doc_ids.is_empty() {
+                    return Ok(doc_ids
+                        .into_iter()
+                        .map(|doc_id| PhysicalTask {
+                            tenant_id,
+                            vshard_id: vshard,
+                            plan: PhysicalPlan::PointUpdate {
+                                collection: collection.clone(),
+                                document_id: doc_id,
+                                updates: updates.clone(),
+                            },
+                        })
+                        .collect());
+                }
+
+                // Fall back to bulk update with arbitrary WHERE predicates.
+                let filter_bytes = extract_where_filters(&dml.input)?;
+                Ok(vec![PhysicalTask {
+                    tenant_id,
+                    vshard_id: vshard,
+                    plan: PhysicalPlan::BulkUpdate {
+                        collection,
+                        filters: filter_bytes,
+                        updates,
+                    },
+                }])
             }
         }
     }

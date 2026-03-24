@@ -369,6 +369,23 @@ impl CoreLoop {
                 )
             }
 
+            PhysicalPlan::BulkUpdate {
+                collection,
+                filters,
+                updates,
+            } => self.execute_bulk_update(task, tid, collection, filters, updates),
+
+            PhysicalPlan::BulkDelete {
+                collection,
+                filters,
+            } => self.execute_bulk_delete(task, tid, collection, filters),
+
+            PhysicalPlan::Upsert {
+                collection,
+                document_id,
+                value,
+            } => self.execute_upsert(task, tid, collection, document_id, value),
+
             PhysicalPlan::CreateSnapshot => self.execute_create_snapshot(task),
 
             PhysicalPlan::Compact => self.execute_compact(task),

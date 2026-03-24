@@ -6,7 +6,7 @@ use tracing::{debug, info};
 
 /// Table definition for the primary document store.
 /// Key: "{tenant_id}:{collection}:{document_id}" → Value: document bytes.
-pub(super) const DOCUMENTS: TableDefinition<&str, &[u8]> = TableDefinition::new("documents");
+pub(crate) const DOCUMENTS: TableDefinition<&str, &[u8]> = TableDefinition::new("documents");
 
 /// Table definition for secondary indexes.
 /// Key: "{tenant_id}:{collection}:{field}:{value}:{document_id}" → Value: empty (existence index).

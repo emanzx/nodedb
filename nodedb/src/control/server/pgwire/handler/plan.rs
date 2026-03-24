@@ -55,7 +55,10 @@ pub(super) fn extract_collection(plan: &PhysicalPlan) -> Option<&str> {
         | PhysicalPlan::ShuffleJoin {
             left_collection: collection,
             ..
-        } => Some(collection.as_str()),
+        }
+        | PhysicalPlan::BulkUpdate { collection, .. }
+        | PhysicalPlan::BulkDelete { collection, .. }
+        | PhysicalPlan::Upsert { collection, .. } => Some(collection.as_str()),
         PhysicalPlan::EdgePut { .. }
         | PhysicalPlan::EdgeDelete { .. }
         | PhysicalPlan::GraphHop { .. }

@@ -179,7 +179,10 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
         | PhysicalPlan::PointUpdate { .. }
         | PhysicalPlan::EdgePut { .. }
         | PhysicalPlan::EdgeDelete { .. }
-        | PhysicalPlan::WalAppend { .. } => Permission::Write,
+        | PhysicalPlan::WalAppend { .. }
+        | PhysicalPlan::BulkUpdate { .. }
+        | PhysicalPlan::BulkDelete { .. }
+        | PhysicalPlan::Upsert { .. } => Permission::Write,
 
         // DDL / schema changes.
         PhysicalPlan::SetCollectionPolicy { .. } | PhysicalPlan::SetVectorParams { .. } => {

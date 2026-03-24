@@ -267,5 +267,13 @@ pub async fn dispatch(
         return Some(result);
     }
 
+    // UPSERT INTO — same as INSERT but merges into existing document if it exists.
+    if upper.starts_with("UPSERT INTO ")
+        && upper.contains("VALUES")
+        && let Some(result) = super::collection_insert::upsert_document(state, identity, sql).await
+    {
+        return Some(result);
+    }
+
     None
 }

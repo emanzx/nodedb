@@ -1,4 +1,5 @@
 pub mod aggregate;
+pub mod bulk_dml;
 pub mod compact;
 pub mod control;
 pub mod document;
