@@ -8,8 +8,7 @@ use crate::types::{TenantId, VShardId};
 
 use super::converter::PlanConverter;
 use super::extract::{
-    extract_delete_targets, extract_insert_values, extract_update_assignments,
-    extract_where_filters,
+    extract_insert_values, extract_point_targets, extract_update_assignments, extract_where_filters,
 };
 
 impl PlanConverter {
@@ -51,7 +50,7 @@ impl PlanConverter {
             }
             WriteOp::Delete => {
                 // Try point delete (WHERE id = 'value') first.
-                let doc_ids = extract_delete_targets(&dml.input, &collection).unwrap_or_default();
+                let doc_ids = extract_point_targets(&dml.input, &collection).unwrap_or_default();
 
                 if !doc_ids.is_empty() {
                     return Ok(doc_ids
@@ -88,7 +87,7 @@ impl PlanConverter {
                 }
 
                 // Try point update (WHERE id = 'value') first.
-                let doc_ids = extract_delete_targets(&dml.input, &collection).unwrap_or_default();
+                let doc_ids = extract_point_targets(&dml.input, &collection).unwrap_or_default();
 
                 if !doc_ids.is_empty() {
                     return Ok(doc_ids

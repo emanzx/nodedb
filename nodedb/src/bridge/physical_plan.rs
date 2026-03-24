@@ -116,16 +116,12 @@ pub enum PhysicalPlan {
         ef_construction: usize,
         metric: String,
         /// Index type: "hnsw" (default), "hnsw_pq", or "ivf_pq".
-        #[allow(dead_code)]
         index_type: String,
         /// PQ subvectors (for hnsw_pq and ivf_pq). Must divide dim evenly. Default: 8.
-        #[allow(dead_code)]
         pq_m: usize,
         /// IVF cells (for ivf_pq only). Typical: sqrt(N). Default: 256.
-        #[allow(dead_code)]
         ivf_cells: usize,
         /// IVF probe count (for ivf_pq only). Higher = better recall. Default: 16.
-        #[allow(dead_code)]
         ivf_nprobe: usize,
     },
 
