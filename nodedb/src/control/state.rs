@@ -87,6 +87,11 @@ pub struct SharedState {
     /// Migration tracker for observability (None in single-node mode).
     pub migration_tracker: Option<Arc<nodedb_cluster::MigrationTracker>>,
 
+    /// WebSocket session registry: tracks last-seen LSN per client session
+    /// for reconnection replay. Bounded to 10,000 entries with LRU eviction
+    /// (eviction enforced by `save_ws_session()` in ws_rpc.rs).
+    pub ws_sessions: std::sync::RwLock<std::collections::HashMap<String, u64>>,
+
     /// Pub/Sub topic registry with persistent message storage.
     pub topic_registry: crate::control::pubsub::TopicRegistry,
 
@@ -134,6 +139,7 @@ impl SharedState {
             sync_dlq: Mutex::new(SyncDlq::new(DlqConfig::default())),
             audit_retention_days: 0,
             idle_timeout_secs: 0,
+            ws_sessions: std::sync::RwLock::new(std::collections::HashMap::new()),
             topic_registry: crate::control::pubsub::TopicRegistry::new(10_000),
             shape_registry: crate::control::server::sync::shape::ShapeRegistry::new(),
             change_stream: crate::control::change_stream::ChangeStream::new(4096),
@@ -196,6 +202,7 @@ impl SharedState {
             sync_dlq: Mutex::new(SyncDlq::new(DlqConfig::default())),
             audit_retention_days: auth_config.audit_retention_days,
             idle_timeout_secs: auth_config.idle_timeout_secs,
+            ws_sessions: std::sync::RwLock::new(std::collections::HashMap::new()),
             topic_registry: crate::control::pubsub::TopicRegistry::new(10_000),
             shape_registry: crate::control::server::sync::shape::ShapeRegistry::new(),
             change_stream: crate::control::change_stream::ChangeStream::new(4096),

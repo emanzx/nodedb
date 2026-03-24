@@ -10,6 +10,7 @@
 //! {"id": 1, "method": "query", "params": {"sql": "SELECT * FROM users"}}
 //! {"id": 2, "method": "ping"}
 //! {"id": 3, "method": "live", "params": {"sql": "LIVE SELECT * FROM orders"}}
+//! {"id": 4, "method": "auth", "params": {"session_id": "abc", "last_lsn": 42}}
 //!
 //! // Response
 //! {"id": 1, "result": [...]}
@@ -32,6 +33,10 @@ use crate::control::change_stream::ChangeEvent;
 use crate::control::state::SharedState;
 use crate::types::TenantId;
 
+/// Maximum tracked WS sessions for reconnection replay.
+/// Oldest sessions (by LSN) are evicted when this limit is exceeded.
+const MAX_WS_SESSIONS: usize = 10_000;
+
 /// WebSocket upgrade handler.
 pub async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
     ws.on_upgrade(move |socket| handle_ws_connection(socket, state))
@@ -45,11 +50,9 @@ async fn handle_ws_connection(socket: WebSocket, state: AppState) {
     let trace_id = crate::control::trace_context::generate_trace_id();
 
     // Bounded channel for live notifications → WS sender.
-    // 256 messages provides ~10s of buffer at 25 events/sec. If the client
-    // can't keep up, the send will block briefly then we close the connection.
+    // 256 messages provides ~10s of buffer at 25 events/sec.
     let (live_tx, mut live_rx) = tokio::sync::mpsc::channel::<String>(256);
 
-    // Spawn a task that forwards live notifications to the WS sender.
     let send_handle = tokio::spawn(async move {
         loop {
             tokio::select! {
@@ -64,11 +67,13 @@ async fn handle_ws_connection(socket: WebSocket, state: AppState) {
         }
     });
 
-    // Process incoming messages.
+    // Session ID is set only after successful auth inside process_message.
+    let mut authenticated_session_id: Option<String> = None;
+
     while let Some(Ok(msg)) = receiver.next().await {
         match msg {
             Message::Text(text) => {
-                let response = process_message(
+                let (response, auth_session) = process_message(
                     &shared,
                     &state.query_ctx,
                     tenant_id,
@@ -77,6 +82,12 @@ async fn handle_ws_connection(socket: WebSocket, state: AppState) {
                     &live_tx,
                 )
                 .await;
+
+                // Record session_id only after process_message confirms auth.
+                if let Some(sid) = auth_session {
+                    authenticated_session_id = Some(sid);
+                }
+
                 if let Err(e) = live_tx.send(response).await {
                     debug!("response channel closed: {e}; dropping connection");
                     break;
@@ -96,13 +107,58 @@ async fn handle_ws_connection(socket: WebSocket, state: AppState) {
         }
     }
 
-    // Cleanup.
+    // Save session's last-seen LSN for reconnection replay.
+    if let Some(sid) = &authenticated_session_id {
+        save_ws_session(&shared, sid);
+    }
+
     drop(live_tx);
     let _ = send_handle.await;
     debug!("WebSocket RPC connection closed");
 }
 
-/// Process a single JSON-RPC message and return the response.
+/// Save a WS session's last-seen LSN with bounded LRU eviction.
+fn save_ws_session(shared: &SharedState, session_id: &str) {
+    let current_lsn = shared.change_stream.last_lsn();
+    let mut sessions = shared
+        .ws_sessions
+        .write()
+        .unwrap_or_else(|p| p.into_inner());
+
+    // Evict oldest sessions (by LSN) if at capacity.
+    while sessions.len() >= MAX_WS_SESSIONS {
+        if let Some(oldest_key) = sessions
+            .iter()
+            .min_by_key(|(_, lsn)| **lsn)
+            .map(|(k, _)| k.clone())
+        {
+            sessions.remove(&oldest_key);
+        } else {
+            break;
+        }
+    }
+
+    sessions.insert(session_id.to_string(), current_lsn);
+    debug!(
+        session_id,
+        last_lsn = current_lsn,
+        "WS session saved for reconnect"
+    );
+}
+
+/// Extract session_id from an auth request's params.
+fn extract_session_id(req: &serde_json::Value) -> Option<String> {
+    req.get("params")
+        .and_then(|p| p.get("session_id"))
+        .and_then(|s| s.as_str())
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+}
+
+/// Process a single JSON-RPC message.
+///
+/// Returns `(response_json, Option<authenticated_session_id>)`.
+/// The session_id is `Some` only when an "auth" request succeeds.
 async fn process_message(
     shared: &SharedState,
     query_ctx: &crate::control::planner::context::QueryContext,
@@ -110,11 +166,14 @@ async fn process_message(
     trace_id: u64,
     text: &str,
     live_tx: &tokio::sync::mpsc::Sender<String>,
-) -> String {
+) -> (String, Option<String>) {
     let req: serde_json::Value = match serde_json::from_str(text) {
         Ok(v) => v,
         Err(e) => {
-            return error_response(serde_json::Value::Null, &format!("invalid JSON: {e}"));
+            return (
+                error_response(serde_json::Value::Null, &format!("invalid JSON: {e}")),
+                None,
+            );
         }
     };
 
@@ -125,7 +184,60 @@ async fn process_message(
         .unwrap_or("unknown");
 
     match method {
-        "ping" => serde_json::json!({"id": id, "result": "pong"}).to_string(),
+        "ping" => (
+            serde_json::json!({"id": id, "result": "pong"}).to_string(),
+            None,
+        ),
+
+        "auth" => {
+            let session_id = match extract_session_id(&req) {
+                Some(sid) => sid,
+                None => return (error_response(id, "missing params.session_id"), None),
+            };
+            let last_lsn = req
+                .get("params")
+                .and_then(|p| p.get("last_lsn"))
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0);
+
+            // Look up previous session's last LSN for replay.
+            let replay_from_lsn = {
+                let sessions = shared.ws_sessions.read().unwrap_or_else(|p| p.into_inner());
+                sessions.get(&session_id).copied().unwrap_or(0)
+            };
+
+            let effective_lsn = replay_from_lsn.max(last_lsn);
+
+            // Replay missed events from ring buffer.
+            let missed = shared.change_stream.query_changes(None, 0, 10_000);
+            let replay: Vec<_> = missed
+                .iter()
+                .filter(|e| e.lsn.as_u64() > effective_lsn)
+                .collect();
+
+            for event in &replay {
+                let notification = format_live_notification(0, event);
+                if live_tx.send(notification).await.is_err() {
+                    break;
+                }
+            }
+
+            // Register/update session with bounded eviction.
+            save_ws_session(shared, &session_id);
+
+            let response = serde_json::json!({
+                "id": id,
+                "result": {
+                    "session_id": session_id,
+                    "replayed": replay.len(),
+                    "current_lsn": shared.change_stream.last_lsn(),
+                }
+            })
+            .to_string();
+
+            // Return session_id to confirm auth succeeded.
+            (response, Some(session_id))
+        }
 
         "query" => {
             let sql = req
@@ -135,13 +247,14 @@ async fn process_message(
                 .unwrap_or("");
 
             if sql.is_empty() {
-                return error_response(id, "missing params.sql");
+                return (error_response(id, "missing params.sql"), None);
             }
 
-            match execute_sql(shared, query_ctx, tenant_id, sql, trace_id).await {
+            let response = match execute_sql(shared, query_ctx, tenant_id, sql, trace_id).await {
                 Ok(result) => serde_json::json!({"id": id, "result": result}).to_string(),
                 Err(e) => error_response(id, &e),
-            }
+            };
+            (response, None)
         }
 
         "live" => {
@@ -154,7 +267,10 @@ async fn process_message(
             let collection = extract_collection_from_sql(sql);
 
             if collection.is_empty() {
-                return error_response(id, "missing collection in LIVE SELECT");
+                return (
+                    error_response(id, "missing collection in LIVE SELECT"),
+                    None,
+                );
             }
 
             let mut sub = shared
@@ -163,7 +279,6 @@ async fn process_message(
             let sub_id = sub.id;
             let live_tx = live_tx.clone();
 
-            // Spawn background task to deliver live changes.
             tokio::spawn(async move {
                 while let Ok(event) = sub.recv_filtered().await {
                     let notification = format_live_notification(sub_id, &event);
@@ -174,7 +289,7 @@ async fn process_message(
                 }
             });
 
-            serde_json::json!({
+            let response = serde_json::json!({
                 "id": id,
                 "result": {
                     "subscription_id": sub_id,
@@ -182,10 +297,14 @@ async fn process_message(
                     "status": "active"
                 }
             })
-            .to_string()
+            .to_string();
+            (response, None)
         }
 
-        _ => error_response(id, &format!("unknown method: {method}")),
+        _ => (
+            error_response(id, &format!("unknown method: {method}")),
+            None,
+        ),
     }
 }
 
@@ -233,20 +352,12 @@ async fn execute_sql(
     }
 }
 
-/// Extract collection name from a SQL string using the DataFusion-compatible
-/// convention: the first word after FROM (case-insensitive).
-///
-/// Operates on the uppercase copy to find the keyword, then slices the
-/// original string to preserve the original casing before lowercasing.
+/// Extract collection name from SQL (first word after FROM, case-insensitive).
 fn extract_collection_from_sql(sql: &str) -> String {
     let upper = sql.to_uppercase();
     upper
         .find(" FROM ")
-        .and_then(|pos| {
-            // Slice from the original string at the same byte offset.
-            // Safe because " FROM " is ASCII-only, so byte positions match.
-            sql.get(pos + 6..)
-        })
+        .and_then(|pos| sql.get(pos + 6..))
         .and_then(|after| after.split_whitespace().next())
         .map(|s| s.to_lowercase())
         .unwrap_or_default()
