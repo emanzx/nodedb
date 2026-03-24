@@ -114,10 +114,9 @@ impl NativeSession {
             if self.format.is_none() {
                 self.format = Some(FrameFormat::detect(payload[0]));
             }
-            // Safety: format is always Some after the check above.
             let Some(format) = self.format else {
                 return Err(crate::Error::BadRequest {
-                    detail: "internal error: format detection failed".into(),
+                    detail: "format detection failed after first frame".into(),
                 });
             };
 

@@ -1,5 +1,6 @@
 pub mod btree;
 pub mod btree_scan;
+pub mod doc_cache;
 pub mod fuzzy;
 pub mod gsi;
 pub mod inverted;

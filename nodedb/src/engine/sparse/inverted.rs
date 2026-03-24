@@ -104,6 +104,42 @@ impl InvertedIndex {
     /// and upserts into the inverted index. Call this when a document
     /// is inserted or updated.
     pub fn index_document(&self, collection: &str, doc_id: &str, text: &str) -> crate::Result<()> {
+        let write_txn = self.db.begin_write().map_err(|e| crate::Error::Storage {
+            engine: "inverted".into(),
+            detail: format!("write txn: {e}"),
+        })?;
+        self.write_index_data(&write_txn, collection, doc_id, text)?;
+        write_txn.commit().map_err(|e| crate::Error::Storage {
+            engine: "inverted".into(),
+            detail: format!("commit index: {e}"),
+        })?;
+        Ok(())
+    }
+
+    /// Index a document's text content within an externally-owned write transaction.
+    ///
+    /// Same logic as `index_document` but uses the caller's transaction,
+    /// enabling document + inverted index + stats to share a single commit.
+    pub fn index_document_in_txn(
+        &self,
+        txn: &WriteTransaction,
+        collection: &str,
+        doc_id: &str,
+        text: &str,
+    ) -> crate::Result<()> {
+        self.write_index_data(txn, collection, doc_id, text)
+    }
+
+    /// Core indexing logic: tokenize text, upsert postings and doc length.
+    ///
+    /// Shared by both `index_document` (own txn) and `index_document_in_txn` (external txn).
+    fn write_index_data(
+        &self,
+        txn: &WriteTransaction,
+        collection: &str,
+        doc_id: &str,
+        text: &str,
+    ) -> crate::Result<()> {
         let tokens = text_analyzer::analyze(text);
         if tokens.is_empty() {
             return Ok(());
@@ -122,170 +158,66 @@ impl InvertedIndex {
         let scoped_doc_id = format!("{collection}:{doc_id}");
         let doc_len = tokens.len() as u32;
 
-        let write_txn = self.db.begin_write().map_err(|e| crate::Error::Storage {
-            engine: "inverted".into(),
-            detail: format!("write txn: {e}"),
-        })?;
-        {
-            let mut postings_table =
-                write_txn
-                    .open_table(POSTINGS)
-                    .map_err(|e| crate::Error::Storage {
-                        engine: "inverted".into(),
-                        detail: format!("open postings: {e}"),
-                    })?;
+        // Write postings.
+        let mut postings_table = txn
+            .open_table(POSTINGS)
+            .map_err(|e| crate::Error::Storage {
+                engine: "inverted".into(),
+                detail: format!("open postings: {e}"),
+            })?;
 
-            for (term, (freq, positions)) in &term_postings {
-                let term_key = format!("{collection}:{term}");
-                let posting = Posting {
-                    doc_id: scoped_doc_id.clone(),
-                    term_freq: *freq,
-                    positions: positions.clone(),
-                };
+        for (term, (freq, positions)) in &term_postings {
+            let term_key = format!("{collection}:{term}");
+            let posting = Posting {
+                doc_id: scoped_doc_id.clone(),
+                term_freq: *freq,
+                positions: positions.clone(),
+            };
 
-                // Load existing postings, append new one.
-                let mut existing: Vec<Posting> = postings_table
-                    .get(term_key.as_str())
-                    .ok()
-                    .flatten()
-                    .and_then(|v| rmp_serde::from_slice(v.value()).ok())
-                    .unwrap_or_default();
+            let mut existing: Vec<Posting> = postings_table
+                .get(term_key.as_str())
+                .ok()
+                .flatten()
+                .and_then(|v| rmp_serde::from_slice(v.value()).ok())
+                .unwrap_or_default();
 
-                // Remove existing posting for this doc (update case).
-                existing.retain(|p| p.doc_id != scoped_doc_id);
-                existing.push(posting);
+            // Remove existing posting for this doc (update case).
+            existing.retain(|p| p.doc_id != scoped_doc_id);
+            existing.push(posting);
 
-                let bytes =
-                    rmp_serde::to_vec_named(&existing).map_err(|e| crate::Error::Storage {
-                        engine: "inverted".into(),
-                        detail: format!("serialize postings: {e}"),
-                    })?;
-                postings_table
-                    .insert(term_key.as_str(), bytes.as_slice())
-                    .map_err(|e| crate::Error::Storage {
-                        engine: "inverted".into(),
-                        detail: format!("insert posting: {e}"),
-                    })?;
-            }
-
-            // Store document length.
-            let mut lengths =
-                write_txn
-                    .open_table(DOC_LENGTHS)
-                    .map_err(|e| crate::Error::Storage {
-                        engine: "inverted".into(),
-                        detail: format!("open doc_lengths: {e}"),
-                    })?;
-            let len_bytes =
-                rmp_serde::to_vec_named(&doc_len).map_err(|e| crate::Error::Storage {
-                    engine: "inverted".into(),
-                    detail: format!("serialize doc_len: {e}"),
-                })?;
-            lengths
-                .insert(scoped_doc_id.as_str(), len_bytes.as_slice())
+            let bytes = rmp_serde::to_vec_named(&existing).map_err(|e| crate::Error::Storage {
+                engine: "inverted".into(),
+                detail: format!("serialize postings: {e}"),
+            })?;
+            postings_table
+                .insert(term_key.as_str(), bytes.as_slice())
                 .map_err(|e| crate::Error::Storage {
                     engine: "inverted".into(),
-                    detail: format!("insert doc_len: {e}"),
+                    detail: format!("insert posting: {e}"),
                 })?;
         }
-        write_txn.commit().map_err(|e| crate::Error::Storage {
+        // Drop postings_table before opening doc_lengths (redb single-table-at-a-time).
+        drop(postings_table);
+
+        // Write document length.
+        let mut lengths = txn
+            .open_table(DOC_LENGTHS)
+            .map_err(|e| crate::Error::Storage {
+                engine: "inverted".into(),
+                detail: format!("open doc_lengths: {e}"),
+            })?;
+        let len_bytes = rmp_serde::to_vec_named(&doc_len).map_err(|e| crate::Error::Storage {
             engine: "inverted".into(),
-            detail: format!("commit index: {e}"),
+            detail: format!("serialize doc_len: {e}"),
         })?;
+        lengths
+            .insert(scoped_doc_id.as_str(), len_bytes.as_slice())
+            .map_err(|e| crate::Error::Storage {
+                engine: "inverted".into(),
+                detail: format!("insert doc_len: {e}"),
+            })?;
 
         debug!(%collection, %doc_id, tokens = tokens.len(), terms = term_postings.len(), "indexed document");
-        Ok(())
-    }
-
-    /// Index a document's text content within an externally-owned write transaction.
-    ///
-    /// Same logic as `index_document` but uses the caller's transaction,
-    /// enabling document + inverted index + stats to share a single commit.
-    pub fn index_document_in_txn(
-        &self,
-        txn: &WriteTransaction,
-        collection: &str,
-        doc_id: &str,
-        text: &str,
-    ) -> crate::Result<()> {
-        let tokens = text_analyzer::analyze(text);
-        if tokens.is_empty() {
-            return Ok(());
-        }
-
-        let mut term_postings: HashMap<&str, (u32, Vec<u32>)> = HashMap::new();
-        for (pos, token) in tokens.iter().enumerate() {
-            let entry = term_postings
-                .entry(token.as_str())
-                .or_insert((0, Vec::new()));
-            entry.0 += 1;
-            entry.1.push(pos as u32);
-        }
-
-        let scoped_doc_id = format!("{collection}:{doc_id}");
-        let doc_len = tokens.len() as u32;
-
-        {
-            let mut postings_table =
-                txn.open_table(POSTINGS)
-                    .map_err(|e| crate::Error::Storage {
-                        engine: "inverted".into(),
-                        detail: format!("open postings: {e}"),
-                    })?;
-
-            for (term, (freq, positions)) in &term_postings {
-                let term_key = format!("{collection}:{term}");
-                let posting = Posting {
-                    doc_id: scoped_doc_id.clone(),
-                    term_freq: *freq,
-                    positions: positions.clone(),
-                };
-
-                let mut existing: Vec<Posting> = postings_table
-                    .get(term_key.as_str())
-                    .ok()
-                    .flatten()
-                    .and_then(|v| rmp_serde::from_slice(v.value()).ok())
-                    .unwrap_or_default();
-
-                existing.retain(|p| p.doc_id != scoped_doc_id);
-                existing.push(posting);
-
-                let bytes =
-                    rmp_serde::to_vec_named(&existing).map_err(|e| crate::Error::Storage {
-                        engine: "inverted".into(),
-                        detail: format!("serialize postings: {e}"),
-                    })?;
-                postings_table
-                    .insert(term_key.as_str(), bytes.as_slice())
-                    .map_err(|e| crate::Error::Storage {
-                        engine: "inverted".into(),
-                        detail: format!("insert posting: {e}"),
-                    })?;
-            }
-        }
-
-        {
-            let mut lengths = txn
-                .open_table(DOC_LENGTHS)
-                .map_err(|e| crate::Error::Storage {
-                    engine: "inverted".into(),
-                    detail: format!("open doc_lengths: {e}"),
-                })?;
-            let len_bytes =
-                rmp_serde::to_vec_named(&doc_len).map_err(|e| crate::Error::Storage {
-                    engine: "inverted".into(),
-                    detail: format!("serialize doc_len: {e}"),
-                })?;
-            lengths
-                .insert(scoped_doc_id.as_str(), len_bytes.as_slice())
-                .map_err(|e| crate::Error::Storage {
-                    engine: "inverted".into(),
-                    detail: format!("insert doc_len: {e}"),
-                })?;
-        }
-
-        debug!(%collection, %doc_id, tokens = tokens.len(), terms = term_postings.len(), "indexed document (unified txn)");
         Ok(())
     }
 

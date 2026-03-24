@@ -16,11 +16,21 @@ impl CoreLoop {
         document_id: &str,
     ) -> Response {
         debug!(core = self.core_id, %collection, %document_id, "point get");
+
+        // O(1) cache check — skip redb B-Tree traversal for hot keys.
+        // Copy out of borrow before calling response_with_payload (needs &self).
+        let cached = self
+            .doc_cache
+            .get(tid, collection, document_id)
+            .map(|v| v.to_vec());
+        if let Some(data) = cached {
+            return self.response_with_payload(task, data);
+        }
+
         match self.sparse.get(tid, collection, document_id) {
             Ok(Some(data)) => {
-                // Document is stored as MessagePack (or legacy JSON).
-                // Pass through directly — the Control Plane's
-                // decode_payload_to_json() handles format conversion.
+                // Populate cache on miss (write-through).
+                self.doc_cache.put(tid, collection, document_id, &data);
                 self.response_with_payload(task, data)
             }
             Ok(None) => self.response_error(task, ErrorCode::NotFound),
@@ -45,11 +55,8 @@ impl CoreLoop {
         value: &[u8],
     ) -> Response {
         debug!(core = self.core_id, %collection, %document_id, "point put");
-        let stored = super::super::doc_format::json_to_msgpack(value);
-        let doc = super::super::doc_format::decode_document(value);
 
         // Unified write transaction: document + inverted index + stats in one commit.
-        // This reduces N+2 separate transactions (each with its own fsync) to 1.
         let txn = match self.sparse.begin_write() {
             Ok(t) => t,
             Err(e) => {
@@ -62,11 +69,7 @@ impl CoreLoop {
             }
         };
 
-        // 1. Write document.
-        if let Err(e) = self
-            .sparse
-            .put_in_txn(&txn, tid, collection, document_id, &stored)
-        {
+        if let Err(e) = self.apply_point_put(&txn, tid, collection, document_id, value) {
             return self.response_error(
                 task,
                 ErrorCode::Internal {
@@ -75,36 +78,6 @@ impl CoreLoop {
             );
         }
 
-        // 2. Auto-index text fields for full-text search.
-        if let Some(ref doc) = doc {
-            if let Some(obj) = doc.as_object() {
-                let text_content: String = obj
-                    .values()
-                    .filter_map(|v| v.as_str())
-                    .collect::<Vec<_>>()
-                    .join(" ");
-                if !text_content.is_empty()
-                    && let Err(e) = self.inverted.index_document_in_txn(
-                        &txn,
-                        collection,
-                        document_id,
-                        &text_content,
-                    )
-                {
-                    warn!(core = self.core_id, %collection, %document_id, error = %e, "inverted index update failed");
-                }
-            }
-
-            // 3. Update column statistics for CBO.
-            if let Err(e) = self
-                .stats_store
-                .observe_document_in_txn(&txn, tid, collection, doc)
-            {
-                warn!(core = self.core_id, %collection, error = %e, "column stats update failed");
-            }
-        }
-
-        // Single commit for document + index + stats.
         if let Err(e) = txn.commit() {
             return self.response_error(
                 task,
@@ -112,13 +85,6 @@ impl CoreLoop {
                     detail: format!("commit: {e}"),
                 },
             );
-        }
-
-        // Invalidate aggregate cache for this collection (in-memory only, no txn needed).
-        if doc.is_some() {
-            let cache_prefix = format!("{tid}:{collection}\0");
-            self.aggregate_cache
-                .retain(|k, _| !k.starts_with(&cache_prefix));
         }
 
         self.response_ok(task)
@@ -161,6 +127,9 @@ impl CoreLoop {
 
                 // Record deletion for edge referential integrity.
                 self.deleted_nodes.insert(document_id.to_string());
+
+                // Invalidate document cache.
+                self.doc_cache.invalidate(tid, collection, document_id);
 
                 self.response_ok(task)
             }
@@ -211,7 +180,12 @@ impl CoreLoop {
                     .sparse
                     .put(tid, collection, document_id, &updated_bytes)
                 {
-                    Ok(()) => self.response_ok(task),
+                    Ok(()) => {
+                        // Write-through: update cache with new value.
+                        self.doc_cache
+                            .put(tid, collection, document_id, &updated_bytes);
+                        self.response_ok(task)
+                    }
                     Err(e) => self.response_error(
                         task,
                         ErrorCode::Internal {
@@ -230,33 +204,22 @@ impl CoreLoop {
         }
     }
 
-    /// Execute a PointPut within an externally-owned WriteTransaction.
+    /// Apply a PointPut within an externally-owned WriteTransaction.
     ///
-    /// Does NOT open or commit a transaction — the caller is responsible for
-    /// committing the shared transaction after all batched writes complete.
-    /// Returns `Ok(())` on success, `Err(Response)` on failure.
-    fn point_put_in_txn(
+    /// Stores the document, auto-indexes text fields, updates column stats,
+    /// and populates the document cache. Does NOT commit the transaction.
+    fn apply_point_put(
         &mut self,
         txn: &WriteTransaction,
-        task: &ExecutionTask,
         tid: u32,
         collection: &str,
         document_id: &str,
         value: &[u8],
-    ) -> Result<(), Response> {
+    ) -> crate::Result<()> {
         let stored = super::super::doc_format::json_to_msgpack(value);
 
-        if let Err(e) = self
-            .sparse
-            .put_in_txn(txn, tid, collection, document_id, &stored)
-        {
-            return Err(self.response_error(
-                task,
-                ErrorCode::Internal {
-                    detail: e.to_string(),
-                },
-            ));
-        }
+        self.sparse
+            .put_in_txn(txn, tid, collection, document_id, &stored)?;
 
         if let Some(doc) = super::super::doc_format::decode_document(value) {
             if let Some(obj) = doc.as_object() {
@@ -273,7 +236,7 @@ impl CoreLoop {
                         &text_content,
                     )
                 {
-                    warn!(core = self.core_id, %collection, %document_id, error = %e, "inverted index update failed (batch)");
+                    warn!(core = self.core_id, %collection, %document_id, error = %e, "inverted index update failed");
                 }
             }
 
@@ -281,13 +244,15 @@ impl CoreLoop {
                 .stats_store
                 .observe_document_in_txn(txn, tid, collection, &doc)
             {
-                warn!(core = self.core_id, %collection, error = %e, "column stats update failed (batch)");
+                warn!(core = self.core_id, %collection, error = %e, "column stats update failed");
             }
 
             let cache_prefix = format!("{tid}:{collection}\0");
             self.aggregate_cache
                 .retain(|k, _| !k.starts_with(&cache_prefix));
         }
+
+        self.doc_cache.put(tid, collection, document_id, &stored);
 
         Ok(())
     }
@@ -320,7 +285,11 @@ impl CoreLoop {
             if !is_put {
                 break;
             }
-            batch.push(self.task_queue.pop_front().unwrap());
+            if let Some(task) = self.task_queue.pop_front() {
+                batch.push(task);
+            } else {
+                break;
+            }
         }
 
         // Single write: no batching benefit, let poll_one handle it
@@ -357,7 +326,17 @@ impl CoreLoop {
                 unreachable!("batch only contains PointPut");
             };
             let tid = task.request.tenant_id.as_u32();
-            results.push(self.point_put_in_txn(&txn, task, tid, collection, document_id, value));
+            results.push(
+                self.apply_point_put(&txn, tid, collection, document_id, value)
+                    .map_err(|e| {
+                        self.response_error(
+                            task,
+                            ErrorCode::Internal {
+                                detail: e.to_string(),
+                            },
+                        )
+                    }),
+            );
         }
 
         // If ANY write failed hard (document put error), abort the batch.

@@ -12,6 +12,7 @@ use crate::engine::crdt::tenant_state::TenantCrdtEngine;
 use crate::engine::graph::csr::CsrIndex;
 use crate::engine::graph::edge_store::EdgeStore;
 use crate::engine::sparse::btree::SparseEngine;
+use crate::engine::sparse::doc_cache::DocCache;
 use crate::engine::sparse::inverted::InvertedIndex;
 use crate::engine::vector::collection::VectorCollection;
 use crate::types::{Lsn, TenantId};
@@ -121,6 +122,10 @@ pub struct CoreLoop {
 
     /// Tombstone ratio threshold for auto-compaction (0.0–1.0).
     pub(in crate::data::executor) compaction_tombstone_threshold: f64,
+
+    /// Per-core LRU document cache for O(1) hot-key point lookups.
+    /// Invalidated write-through on PointPut/Delete/Update.
+    pub(in crate::data::executor) doc_cache: DocCache,
 }
 
 impl CoreLoop {
@@ -174,6 +179,7 @@ impl CoreLoop {
             compaction_tombstone_threshold: 0.2,
             index_configs: HashMap::new(),
             ivf_indexes: HashMap::new(),
+            doc_cache: DocCache::new(4096),
         })
     }
 
