@@ -8,8 +8,8 @@
 pub use nodedb_types::sync::wire::{
     DeltaAckMsg, DeltaPushMsg, DeltaRejectMsg, HandshakeAckMsg, HandshakeMsg, PingPongMsg,
     ResyncReason, ResyncRequestMsg, ShapeDeltaMsg, ShapeSnapshotMsg, ShapeSubscribeMsg,
-    ShapeUnsubscribeMsg, SyncFrame, SyncMessageType, TimeseriesAckMsg, TimeseriesPushMsg,
-    VectorClockSyncMsg,
+    ShapeUnsubscribeMsg, SyncFrame, SyncMessageType, ThrottleMsg, TimeseriesAckMsg,
+    TimeseriesPushMsg, TokenRefreshAckMsg, TokenRefreshMsg, VectorClockSyncMsg,
 };
 
 // ── Re-export CompensationHint (used by dlq.rs and session.rs) ──
@@ -75,7 +75,8 @@ mod tests {
     #[test]
     fn message_type_roundtrip() {
         for v in [
-            0x01, 0x02, 0x10, 0x11, 0x12, 0x20, 0x21, 0x22, 0x23, 0x30, 0x40, 0x41, 0x50, 0xFF,
+            0x01, 0x02, 0x10, 0x11, 0x12, 0x20, 0x21, 0x22, 0x23, 0x30, 0x40, 0x41, 0x50, 0x52,
+            0x60, 0x61, 0xFF,
         ] {
             let mt = SyncMessageType::from_u8(v).unwrap();
             assert_eq!(mt as u8, v);

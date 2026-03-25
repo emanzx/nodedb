@@ -43,6 +43,13 @@ pub enum SyncMessageType {
     /// Re-sync request (bidirectional, 0x50).
     /// Sent when sequence gaps or checksum failures are detected.
     ResyncRequest = 0x50,
+    /// Downstream throttle (client → server, 0x52).
+    /// Sent when Lite's incoming queue is overwhelmed.
+    Throttle = 0x52,
+    /// Token refresh request (client → server, 0x60).
+    TokenRefresh = 0x60,
+    /// Token refresh acknowledgment (server → client, 0x61).
+    TokenRefreshAck = 0x61,
     PingPong = 0xFF,
 }
 
@@ -62,6 +69,9 @@ impl SyncMessageType {
             0x40 => Some(Self::TimeseriesPush),
             0x41 => Some(Self::TimeseriesAck),
             0x50 => Some(Self::ResyncRequest),
+            0x52 => Some(Self::Throttle),
+            0x60 => Some(Self::TokenRefresh),
+            0x61 => Some(Self::TokenRefreshAck),
             0xFF => Some(Self::PingPong),
             _ => None,
         }
@@ -294,6 +304,45 @@ pub enum ResyncReason {
     CorruptedState,
 }
 
+/// Downstream throttle message (client → server, 0x52).
+///
+/// Sent by Lite when its incoming shape delta queue is overwhelmed.
+/// Origin should reduce its push rate for this peer until a
+/// `Throttle { throttle: false }` is received.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThrottleMsg {
+    /// `true` to enable throttling, `false` to release.
+    pub throttle: bool,
+    /// Current queue depth at Lite (informational).
+    pub queue_depth: u64,
+    /// Suggested max deltas per second (0 = use server default).
+    pub suggested_rate: u64,
+}
+
+/// Token refresh request (client → server, 0x60).
+///
+/// Sent by Lite before the current JWT expires. The client provides
+/// a fresh token obtained from the application's auth layer.
+/// Origin validates the new token and either upgrades the session
+/// or disconnects if the token is invalid.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TokenRefreshMsg {
+    /// New JWT bearer token.
+    pub new_token: String,
+}
+
+/// Token refresh acknowledgment (server → client, 0x61).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TokenRefreshAckMsg {
+    /// Whether the token refresh succeeded.
+    pub success: bool,
+    /// Error message (if !success).
+    pub error: Option<String>,
+    /// Seconds until this new token expires (so Lite can schedule next refresh).
+    #[serde(default)]
+    pub expires_in_secs: u64,
+}
+
 /// Ping/Pong keepalive (0xFF).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PingPongMsg {
@@ -400,7 +449,8 @@ mod tests {
     #[test]
     fn message_type_roundtrip() {
         for v in [
-            0x01, 0x02, 0x10, 0x11, 0x12, 0x20, 0x21, 0x22, 0x23, 0x30, 0x40, 0x41, 0x50, 0xFF,
+            0x01, 0x02, 0x10, 0x11, 0x12, 0x20, 0x21, 0x22, 0x23, 0x30, 0x40, 0x41, 0x50, 0x52,
+            0x60, 0x61, 0xFF,
         ] {
             let mt = SyncMessageType::from_u8(v).unwrap();
             assert_eq!(mt as u8, v);
