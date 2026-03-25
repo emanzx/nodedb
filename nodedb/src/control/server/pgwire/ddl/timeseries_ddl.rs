@@ -220,8 +220,7 @@ pub fn alter_timeseries(
             let mut regs =
                 crate::control::lock_utils::lock_or_recover(registries.lock(), "ts_registries");
             if let Some(registry) = regs.get_mut(&key)
-                && let Some(ref config_str) = coll.timeseries_config
-                && let Ok(config) = serde_json::from_str::<serde_json::Value>(config_str)
+                && let Some(config) = coll.get_timeseries_config()
                 && let Some(partition_by) = config.get("partition_by").and_then(|v| v.as_str())
                 && let Ok(interval) =
                     nodedb_types::timeseries::PartitionInterval::parse(partition_by)

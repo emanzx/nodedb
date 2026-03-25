@@ -42,6 +42,10 @@ pub async fn dispatch_to_data_plane(
     trace_id: u64,
 ) -> crate::Result<Response> {
     // Extract write metadata before the plan is moved into the request.
+    let is_ts_collection = matches!(
+        &plan,
+        PhysicalPlan::TimeseriesIngest { .. } | PhysicalPlan::TimeseriesScan { .. }
+    );
     let change_meta = extract_write_metadata(&plan, tenant_id);
 
     let request_id = RequestId::new(DISPATCH_COUNTER.fetch_add(1, Ordering::Relaxed));
@@ -106,16 +110,26 @@ pub async fn dispatch_to_data_plane(
     if response.status == crate::bridge::envelope::Status::Ok
         && let Some((collection, doc_id, op)) = change_meta
     {
-        use crate::control::change_stream::ChangeEvent;
-        shared.change_stream.publish(ChangeEvent {
-            lsn: response.watermark_lsn,
-            tenant_id,
-            collection,
-            document_id: doc_id,
-            operation: op,
-            timestamp_ms: current_timestamp_ms(),
-            after: None,
-        });
+        // CDC opt-in check for timeseries: skip publishing unless cdc_enabled.
+        // Document collections always publish (backward compatible).
+        let should_publish = if is_ts_collection {
+            is_timeseries_cdc_enabled(shared, tenant_id, &collection)
+        } else {
+            true
+        };
+
+        if should_publish {
+            use crate::control::change_stream::ChangeEvent;
+            shared.change_stream.publish(ChangeEvent {
+                lsn: response.watermark_lsn,
+                tenant_id,
+                collection,
+                document_id: doc_id,
+                operation: op,
+                timestamp_ms: current_timestamp_ms(),
+                after: None,
+            });
+        }
     }
 
     Ok(response)
@@ -178,6 +192,35 @@ fn extract_write_metadata(
         PhysicalPlan::Truncate { collection } => {
             Some((collection.clone(), "*".into(), ChangeOperation::Delete))
         }
+        // Timeseries ingest: batch write. CDC is opt-in for timeseries
+        // collections (high-cardinality metrics would flood the bus).
+        // The change event uses document_id="*" to indicate a batch.
+        // Consumers can subscribe with collection_filter to get these events.
+        PhysicalPlan::TimeseriesIngest { collection, .. } => {
+            Some((collection.clone(), "*".into(), ChangeOperation::Insert))
+        }
         _ => None,
     }
+}
+
+/// Check if a timeseries collection has CDC enabled.
+///
+/// Returns `false` (CDC off) by default for timeseries to prevent
+/// high-cardinality metric streams from flooding the ChangeStream bus.
+/// Users opt in via `CREATE TIMESERIES name WITH (cdc = 'true')`.
+fn is_timeseries_cdc_enabled(shared: &SharedState, tenant_id: TenantId, collection: &str) -> bool {
+    if let Some(catalog) = shared.credentials.catalog()
+        && let Ok(Some(coll)) = catalog.get_collection(tenant_id.as_u32(), collection)
+        && coll.collection_type.is_timeseries()
+    {
+        if let Some(config) = coll.get_timeseries_config()
+            && let Some(cdc_val) = config.get("cdc")
+        {
+            return cdc_val.as_str() == Some("true") || cdc_val.as_bool() == Some(true);
+        }
+        // Default: CDC off for timeseries.
+        return false;
+    }
+    // Not timeseries or catalog unavailable — allow publishing.
+    true
 }

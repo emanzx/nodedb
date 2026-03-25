@@ -4,6 +4,7 @@
 //! WAL record type. Read operations are no-ops.
 
 use crate::bridge::envelope::PhysicalPlan;
+use crate::control::security::credential::CredentialStore;
 use crate::types::{TenantId, VShardId};
 use crate::wal::manager::WalManager;
 
@@ -16,6 +17,17 @@ pub fn wal_append_if_write(
     tenant_id: TenantId,
     vshard_id: VShardId,
     plan: &PhysicalPlan,
+) -> crate::Result<()> {
+    wal_append_if_write_with_creds(wal, tenant_id, vshard_id, plan, None)
+}
+
+/// WAL append with optional credential store for timeseries WAL bypass check.
+pub fn wal_append_if_write_with_creds(
+    wal: &WalManager,
+    tenant_id: TenantId,
+    vshard_id: VShardId,
+    plan: &PhysicalPlan,
+    credentials: Option<&CredentialStore>,
 ) -> crate::Result<()> {
     match plan {
         PhysicalPlan::PointPut {
@@ -144,8 +156,17 @@ pub fn wal_append_if_write(
             payload,
             format: _,
         } => {
-            // Use TimeseriesBatch WAL record. Payload is already the raw ILP/samples bytes.
-            // Wrap with collection name for replay routing.
+            // WAL bypass: skip WAL if collection has wal=false in timeseries_config.
+            if let Some(creds) = credentials
+                && let Some(catalog) = creds.catalog()
+                && let Ok(Some(coll)) = catalog.get_collection(tenant_id.as_u32(), collection)
+                && let Some(config) = coll.get_timeseries_config()
+                && config.get("wal").and_then(|v| v.as_str()) == Some("false")
+            {
+                // WAL bypassed — acceptable data loss of last flush interval on crash.
+                return Ok(());
+            }
+
             let wal_payload = rmp_serde::to_vec(&(collection, payload)).map_err(|e| {
                 crate::Error::Serialization {
                     format: "msgpack".into(),

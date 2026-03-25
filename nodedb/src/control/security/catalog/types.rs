@@ -192,6 +192,15 @@ pub struct StoredCollection {
     pub is_active: bool,
 }
 
+impl StoredCollection {
+    /// Parse the timeseries config JSON, if present.
+    pub fn get_timeseries_config(&self) -> Option<serde_json::Value> {
+        self.timeseries_config
+            .as_ref()
+            .and_then(|s| serde_json::from_str(s).ok())
+    }
+}
+
 /// Extended field definition supporting DEFAULT, VALUE, ASSERT, and TYPE constraints.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FieldDefinition {
