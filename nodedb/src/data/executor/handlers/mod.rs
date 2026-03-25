@@ -4,6 +4,7 @@ pub mod compact;
 pub mod control;
 pub mod document;
 pub mod graph;
+pub mod graph_algo;
 pub mod graph_rag;
 pub mod join;
 pub mod point;

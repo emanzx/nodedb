@@ -313,6 +313,10 @@ impl CoreLoop {
                 filter_bitmap.as_ref(),
             ),
 
+            PhysicalPlan::GraphAlgo { algorithm, params } => {
+                self.execute_graph_algo(task, algorithm, params)
+            }
+
             PhysicalPlan::WalAppend { payload } => self.execute_wal_append(task, payload),
 
             PhysicalPlan::Cancel { target_request_id } => {

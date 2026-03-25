@@ -78,7 +78,8 @@ pub(super) fn extract_collection(plan: &PhysicalPlan) -> Option<&str> {
         | PhysicalPlan::TransactionBatch { .. }
         | PhysicalPlan::CreateSnapshot
         | PhysicalPlan::Compact
-        | PhysicalPlan::Checkpoint => None,
+        | PhysicalPlan::Checkpoint
+        | PhysicalPlan::GraphAlgo { .. } => None,
     }
 }
 

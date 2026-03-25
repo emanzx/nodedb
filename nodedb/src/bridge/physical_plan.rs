@@ -5,6 +5,7 @@
 
 use std::sync::Arc;
 
+use crate::engine::graph::algo::params::{AlgoParams, GraphAlgorithm};
 use crate::engine::graph::edge_store::Direction;
 use crate::engine::graph::traversal_options::GraphTraversalOptions;
 use crate::types::RequestId;
@@ -375,6 +376,15 @@ pub enum PhysicalPlan {
         rrf_k: (f64, f64),
         /// Traversal options for the graph expansion phase.
         options: GraphTraversalOptions,
+    },
+
+    /// Graph algorithm execution (PageRank, WCC, SSSP, etc.).
+    ///
+    /// Dispatched to the Data Plane. The algorithm runs on the in-memory
+    /// CSR index and returns results as a JSON-serialized array of objects.
+    GraphAlgo {
+        algorithm: GraphAlgorithm,
+        params: AlgoParams,
     },
 
     /// WAL append (write path).
