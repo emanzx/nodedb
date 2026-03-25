@@ -123,6 +123,96 @@ pub trait NodeDb: Send + Sync {
     /// On Remote: `DELETE FROM collection WHERE id = $1`.
     async fn document_delete(&self, collection: &str, id: &str) -> NodeDbResult<()>;
 
+    // ─── Named Vector Fields ──────────────────────────────────────────
+
+    /// Insert a vector into a named field within a collection.
+    ///
+    /// Enables multiple embeddings per collection (e.g., "title_embedding",
+    /// "body_embedding") with independent HNSW indexes.
+    /// Default: delegates to `vector_insert()` ignoring field_name.
+    async fn vector_insert_field(
+        &self,
+        collection: &str,
+        field_name: &str,
+        id: &str,
+        embedding: &[f32],
+        metadata: Option<Document>,
+    ) -> NodeDbResult<()> {
+        let _ = field_name;
+        self.vector_insert(collection, id, embedding, metadata)
+            .await
+    }
+
+    /// Search a named vector field.
+    ///
+    /// Default: delegates to `vector_search()` ignoring field_name.
+    async fn vector_search_field(
+        &self,
+        collection: &str,
+        field_name: &str,
+        query: &[f32],
+        k: usize,
+        filter: Option<&MetadataFilter>,
+    ) -> NodeDbResult<Vec<SearchResult>> {
+        let _ = field_name;
+        self.vector_search(collection, query, k, filter).await
+    }
+
+    // ─── Graph Shortest Path ────────────────────────────────────────
+
+    /// Find the shortest path between two nodes.
+    ///
+    /// Returns the path as a list of node IDs, or None if no path exists
+    /// within `max_depth` hops. Uses bidirectional BFS.
+    async fn graph_shortest_path(
+        &self,
+        from: &NodeId,
+        to: &NodeId,
+        max_depth: u8,
+        edge_filter: Option<&EdgeFilter>,
+    ) -> NodeDbResult<Option<Vec<NodeId>>> {
+        let _ = (from, to, max_depth, edge_filter);
+        Ok(None)
+    }
+
+    // ─── Text Search ────────────────────────────────────────────────
+
+    /// Full-text search with BM25 scoring.
+    ///
+    /// Returns document IDs with relevance scores, ordered by descending score.
+    async fn text_search(
+        &self,
+        collection: &str,
+        query: &str,
+        top_k: usize,
+    ) -> NodeDbResult<Vec<SearchResult>> {
+        let _ = (collection, query, top_k);
+        Ok(Vec::new())
+    }
+
+    // ─── Batch Operations ───────────────────────────────────────────
+
+    /// Batch insert vectors — amortizes CRDT delta export to O(1) per batch.
+    async fn batch_vector_insert(
+        &self,
+        collection: &str,
+        vectors: &[(&str, &[f32])],
+    ) -> NodeDbResult<()> {
+        for &(id, embedding) in vectors {
+            self.vector_insert(collection, id, embedding, None).await?;
+        }
+        Ok(())
+    }
+
+    /// Batch insert graph edges — amortizes CRDT delta export to O(1) per batch.
+    async fn batch_graph_insert_edges(&self, edges: &[(&str, &str, &str)]) -> NodeDbResult<()> {
+        for &(from, to, label) in edges {
+            self.graph_insert_edge(&NodeId::new(from), &NodeId::new(to), label, None)
+                .await?;
+        }
+        Ok(())
+    }
+
     // ─── SQL Escape Hatch ────────────────────────────────────────────
 
     /// Execute a raw SQL query with parameters.
