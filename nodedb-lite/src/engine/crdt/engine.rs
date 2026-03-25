@@ -226,6 +226,39 @@ impl CrdtEngine {
         self.state.row_ids(collection)
     }
 
+    /// Delete all documents in a collection in a single batch.
+    /// Returns the number of documents deleted. Generates one delta.
+    pub fn clear_collection(&mut self, collection: &str) -> Result<usize, LiteError> {
+        let version_before = self.state.doc().oplog_vv();
+
+        let count = self
+            .state
+            .clear_collection(collection)
+            .map_err(|e| LiteError::Storage {
+                detail: format!("clear collection: {e}"),
+            })?;
+
+        if count > 0 {
+            let delta_bytes = self
+                .state
+                .doc()
+                .export(loro::ExportMode::updates(&version_before))
+                .map_err(|e| LiteError::Storage {
+                    detail: format!("delta export after clear: {e}"),
+                })?;
+
+            let mutation_id = self.next_mutation_id.fetch_add(1, Ordering::Relaxed);
+            self.pending_deltas.push(PendingDelta {
+                mutation_id,
+                collection: collection.to_string(),
+                document_id: "*".to_string(),
+                delta_bytes,
+            });
+        }
+
+        Ok(count)
+    }
+
     /// List all collection names (top-level Loro map keys).
     pub fn collection_names(&self) -> Vec<String> {
         self.state.collection_names()

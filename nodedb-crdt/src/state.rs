@@ -50,6 +50,18 @@ impl CrdtState {
         Ok(())
     }
 
+    /// Delete all rows in a collection. Returns the number of rows deleted.
+    pub fn clear_collection(&self, collection: &str) -> Result<usize> {
+        let coll = self.doc.get_map(collection);
+        let keys: Vec<String> = coll.keys().map(|k| k.to_string()).collect();
+        let count = keys.len();
+        for key in &keys {
+            coll.delete(key)
+                .map_err(|e| CrdtError::Loro(e.to_string()))?;
+        }
+        Ok(count)
+    }
+
     /// Read a single row's fields as a `LoroValue::Map`.
     ///
     /// Returns the deep value of the row (all nested containers resolved),
