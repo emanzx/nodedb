@@ -572,6 +572,22 @@ impl SyncSession {
                 }
                 None // Re-sync is initiated via shape re-subscribe, not a direct response.
             }
+            SyncMessageType::TokenRefresh => {
+                let msg: TokenRefreshMsg = frame.decode_body()?;
+                Some(self.handle_token_refresh(&msg, jwt_validator))
+            }
+            SyncMessageType::Throttle => {
+                if let Some(msg) = frame.decode_body::<ThrottleMsg>() {
+                    info!(
+                        session = %self.session_id,
+                        throttle = msg.throttle,
+                        queue_depth = msg.queue_depth,
+                        suggested_rate = msg.suggested_rate,
+                        "client throttle signal received"
+                    );
+                }
+                None // Informational — Origin adjusts push rate internally.
+            }
             SyncMessageType::PingPong => {
                 let msg: PingPongMsg = frame.decode_body()?;
                 if msg.is_pong {
@@ -587,6 +603,79 @@ impl SyncSession {
                     "unhandled sync message type"
                 );
                 None
+            }
+        }
+    }
+
+    /// Handle a token refresh request: validate the new JWT, upgrade the session.
+    ///
+    /// If the new token is valid and belongs to the same tenant, the session
+    /// continues with the new credentials. If invalid, the session stays on the
+    /// old credentials (no disruption) and sends an error response.
+    pub fn handle_token_refresh(
+        &mut self,
+        msg: &TokenRefreshMsg,
+        jwt_validator: &JwtValidator,
+    ) -> SyncFrame {
+        self.last_activity = Instant::now();
+
+        if msg.new_token.is_empty() {
+            let ack = TokenRefreshAckMsg {
+                success: false,
+                error: Some("empty token".into()),
+                expires_in_secs: 0,
+            };
+            return SyncFrame::encode_or_empty(SyncMessageType::TokenRefreshAck, &ack);
+        }
+
+        match jwt_validator.validate(&msg.new_token) {
+            Ok(new_identity) => {
+                // Verify the new token is for the same tenant (prevent tenant escalation).
+                if let Some(current_tenant) = self.tenant_id
+                    && new_identity.tenant_id != current_tenant
+                {
+                    warn!(
+                        session = %self.session_id,
+                        current_tenant = current_tenant.as_u32(),
+                        new_tenant = new_identity.tenant_id.as_u32(),
+                        "token refresh rejected: tenant mismatch"
+                    );
+                    let ack = TokenRefreshAckMsg {
+                        success: false,
+                        error: Some("tenant mismatch".into()),
+                        expires_in_secs: 0,
+                    };
+                    return SyncFrame::encode_or_empty(SyncMessageType::TokenRefreshAck, &ack);
+                }
+
+                // Upgrade the session with the new identity.
+                self.username = Some(new_identity.username.clone());
+                self.identity = Some(new_identity);
+
+                info!(
+                    session = %self.session_id,
+                    "JWT token refreshed successfully"
+                );
+
+                let ack = TokenRefreshAckMsg {
+                    success: true,
+                    error: None,
+                    expires_in_secs: 3600, // Default 1h; real value from JWT claims.
+                };
+                SyncFrame::encode_or_empty(SyncMessageType::TokenRefreshAck, &ack)
+            }
+            Err(e) => {
+                warn!(
+                    session = %self.session_id,
+                    error = %e,
+                    "token refresh FAILED — keeping existing credentials"
+                );
+                let ack = TokenRefreshAckMsg {
+                    success: false,
+                    error: Some(e.to_string()),
+                    expires_in_secs: 0,
+                };
+                SyncFrame::encode_or_empty(SyncMessageType::TokenRefreshAck, &ack)
             }
         }
     }

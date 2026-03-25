@@ -25,12 +25,30 @@ use super::flow_control::{FlowControlConfig, FlowController, SyncMetrics, SyncMe
 use super::shapes::ShapeManager;
 use crate::engine::crdt::engine::PendingDelta;
 
+/// Token provider callback type.
+///
+/// Called when the sync client needs a fresh JWT token — either proactively
+/// before expiry or reactively after an auth rejection. The provider should
+/// return a fresh JWT token string.
+///
+/// # Example
+/// ```ignore
+/// let provider: TokenProvider = Arc::new(|| Box::pin(async {
+///     my_auth_service.get_token().await
+/// }));
+/// ```
+pub type TokenProvider = Arc<
+    dyn Fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = Option<String>> + Send>>
+        + Send
+        + Sync,
+>;
+
 /// Sync client configuration.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SyncConfig {
     /// WebSocket URL to the Origin sync endpoint (e.g., `wss://api.nodedb.cloud/sync`).
     pub url: String,
-    /// JWT bearer token for authentication.
+    /// JWT bearer token for initial authentication.
     pub jwt_token: String,
     /// Client version string (sent in handshake).
     pub client_version: String,
@@ -42,6 +60,27 @@ pub struct SyncConfig {
     pub ping_interval: Duration,
     /// Maximum deltas to batch in a single push.
     pub max_batch_size: usize,
+    /// Token provider for automatic refresh. If `None`, no auto-refresh occurs.
+    pub token_provider: Option<TokenProvider>,
+    /// Token lifetime in seconds (used to schedule proactive refresh at 80%).
+    /// If 0, no proactive refresh occurs — only reactive on auth rejection.
+    pub token_lifetime_secs: u64,
+}
+
+impl std::fmt::Debug for SyncConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SyncConfig")
+            .field("url", &self.url)
+            .field("jwt_token", &"[REDACTED]")
+            .field("client_version", &self.client_version)
+            .field("min_backoff", &self.min_backoff)
+            .field("max_backoff", &self.max_backoff)
+            .field("ping_interval", &self.ping_interval)
+            .field("max_batch_size", &self.max_batch_size)
+            .field("token_provider", &self.token_provider.is_some())
+            .field("token_lifetime_secs", &self.token_lifetime_secs)
+            .finish()
+    }
 }
 
 impl SyncConfig {
@@ -54,7 +93,16 @@ impl SyncConfig {
             max_backoff: Duration::from_secs(60),
             ping_interval: Duration::from_secs(30),
             max_batch_size: 100,
+            token_provider: None,
+            token_lifetime_secs: 0,
         }
+    }
+
+    /// Set a token provider for automatic JWT refresh.
+    pub fn with_token_provider(mut self, provider: TokenProvider, lifetime_secs: u64) -> Self {
+        self.token_provider = Some(provider);
+        self.token_lifetime_secs = lifetime_secs;
+        self
     }
 }
 
@@ -107,6 +155,12 @@ pub struct SyncClient {
     flow: Arc<Mutex<FlowController>>,
     /// Sync metrics: atomic counters for monitoring.
     metrics: Arc<SyncMetrics>,
+    /// Timestamp (epoch ms) when the current JWT was set (for proactive refresh).
+    token_set_at_ms: Arc<Mutex<u64>>,
+    /// Whether a token refresh is currently in-flight.
+    token_refresh_pending: Arc<Mutex<bool>>,
+    /// Whether delta push is paused due to auth failure (awaiting refresh).
+    push_paused_for_auth: Arc<Mutex<bool>>,
 }
 
 impl SyncClient {
@@ -136,6 +190,9 @@ impl SyncClient {
             pending_resync: Arc::new(Mutex::new(None)),
             flow: Arc::new(Mutex::new(FlowController::new(flow_config))),
             metrics: Arc::new(SyncMetrics::new()),
+            token_set_at_ms: Arc::new(Mutex::new(crate::runtime::now_millis())),
+            token_refresh_pending: Arc::new(Mutex::new(false)),
+            push_paused_for_auth: Arc::new(Mutex::new(false)),
         }
     }
 
@@ -292,7 +349,20 @@ impl SyncClient {
         }
         self.metrics.record_reject();
 
+        // Track conflict telemetry for constraint-related rejections.
         if let Some(hint) = &reject.compensation {
+            use nodedb_types::sync::compensation::CompensationHint;
+            let is_conflict = matches!(
+                hint,
+                CompensationHint::UniqueViolation { .. }
+                    | CompensationHint::ForeignKeyMissing { .. }
+                    | CompensationHint::SchemaViolation { .. }
+            );
+            if is_conflict {
+                // We don't have the collection in the reject msg, use reason as fallback.
+                self.metrics.record_conflict(&reject.reason);
+            }
+
             self.compensation.dispatch(CompensationEvent {
                 mutation_id: reject.mutation_id,
                 collection: String::new(),
@@ -477,6 +547,76 @@ impl SyncClient {
         let mut flow = self.flow.lock().await;
         flow.reset();
         self.metrics.record_reconnect();
+    }
+
+    // ─── Token Refresh ──────────────────────────────────────────────
+
+    /// Check if the JWT token needs proactive refresh (at 80% of lifetime).
+    ///
+    /// Returns `true` if a refresh should be initiated. Called from the
+    /// ping loop to piggyback on the keepalive timer.
+    pub async fn should_refresh_token(&self) -> bool {
+        if self.config.token_provider.is_none() || self.config.token_lifetime_secs == 0 {
+            return false;
+        }
+        if *self.token_refresh_pending.lock().await {
+            return false;
+        }
+        let set_at = *self.token_set_at_ms.lock().await;
+        let now = crate::runtime::now_millis();
+        let elapsed_ms = now.saturating_sub(set_at);
+        let threshold_ms = self.config.token_lifetime_secs * 800; // 80% of lifetime
+        elapsed_ms >= threshold_ms
+    }
+
+    /// Initiate a token refresh via the token provider.
+    ///
+    /// Returns `Some(TokenRefreshMsg)` with the new token if the provider
+    /// returned one, or `None` if the provider failed.
+    pub async fn initiate_token_refresh(
+        &self,
+    ) -> Option<nodedb_types::sync::wire::TokenRefreshMsg> {
+        let provider = self.config.token_provider.as_ref()?;
+        *self.token_refresh_pending.lock().await = true;
+
+        tracing::info!("initiating proactive JWT token refresh");
+        let new_token = provider().await?;
+
+        Some(nodedb_types::sync::wire::TokenRefreshMsg { new_token })
+    }
+
+    /// Handle a TokenRefreshAck from Origin.
+    pub async fn handle_token_refresh_ack(
+        &self,
+        ack: &nodedb_types::sync::wire::TokenRefreshAckMsg,
+    ) {
+        *self.token_refresh_pending.lock().await = false;
+
+        if ack.success {
+            *self.token_set_at_ms.lock().await = crate::runtime::now_millis();
+            *self.push_paused_for_auth.lock().await = false;
+            tracing::info!(
+                expires_in_secs = ack.expires_in_secs,
+                "JWT token refresh accepted by Origin"
+            );
+        } else {
+            tracing::warn!(
+                error = ack.error.as_deref().unwrap_or("unknown"),
+                "JWT token refresh rejected by Origin"
+            );
+        }
+    }
+
+    /// Pause delta push due to auth failure. Called when Origin rejects
+    /// with PermissionDenied, indicating the token has expired.
+    pub async fn pause_for_auth(&self) {
+        *self.push_paused_for_auth.lock().await = true;
+        tracing::warn!("delta push paused — auth failure, awaiting token refresh");
+    }
+
+    /// Check if push is paused for auth.
+    pub async fn is_push_paused_for_auth(&self) -> bool {
+        *self.push_paused_for_auth.lock().await
     }
 }
 

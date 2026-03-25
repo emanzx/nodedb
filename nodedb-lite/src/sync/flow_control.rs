@@ -79,6 +79,8 @@ pub struct SyncMetricsSnapshot {
     pub checksum_failures: u64,
     /// Current adaptive batch size.
     pub current_batch_size: u64,
+    /// Total conflict-related rejections (lifetime).
+    pub conflicts_total: u64,
 }
 
 /// Sync metrics — atomic counters for lock-free concurrent access.
@@ -89,6 +91,10 @@ pub struct SyncMetrics {
     pub reconnect_count: AtomicU64,
     pub last_sync_ts: AtomicU64,
     pub checksum_failures: AtomicU64,
+    /// Total conflict-related rejections (UNIQUE, FK, schema violations).
+    pub conflicts_total: AtomicU64,
+    /// Per-collection conflict counts. Protected by std::sync::Mutex for HashMap.
+    conflicts_by_collection: std::sync::Mutex<HashMap<String, u64>>,
 }
 
 impl SyncMetrics {
@@ -100,6 +106,8 @@ impl SyncMetrics {
             reconnect_count: AtomicU64::new(0),
             last_sync_ts: AtomicU64::new(0),
             checksum_failures: AtomicU64::new(0),
+            conflicts_total: AtomicU64::new(0),
+            conflicts_by_collection: std::sync::Mutex::new(HashMap::new()),
         }
     }
 
@@ -125,6 +133,22 @@ impl SyncMetrics {
 
     pub fn record_checksum_failure(&self) {
         self.checksum_failures.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Record a conflict (constraint-related rejection) for a collection.
+    pub fn record_conflict(&self, collection: &str) {
+        self.conflicts_total.fetch_add(1, Ordering::Relaxed);
+        if let Ok(mut map) = self.conflicts_by_collection.lock() {
+            *map.entry(collection.to_string()).or_insert(0) += 1;
+        }
+    }
+
+    /// Get per-collection conflict counts snapshot.
+    pub fn conflicts_by_collection(&self) -> HashMap<String, u64> {
+        self.conflicts_by_collection
+            .lock()
+            .map(|m| m.clone())
+            .unwrap_or_default()
     }
 }
 
@@ -298,6 +322,7 @@ impl FlowController {
             last_sync_ts: metrics.last_sync_ts.load(Ordering::Relaxed),
             checksum_failures: metrics.checksum_failures.load(Ordering::Relaxed),
             current_batch_size: self.current_batch_size as u64,
+            conflicts_total: metrics.conflicts_total.load(Ordering::Relaxed),
         }
     }
 
