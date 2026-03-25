@@ -9,6 +9,7 @@
 //! let results = db.vector_search("embeddings", &query, 5, None).await?;
 //! ```
 
+mod batch;
 pub(crate) mod convert;
 mod trait_impl;
 
@@ -58,13 +59,16 @@ pub struct NodeDbLite<S: StorageEngine> {
     /// Single CSR graph index (covers all collections).
     pub(crate) csr: Mutex<CsrIndex>,
     /// CRDT engine for delta generation and sync.
-    pub(crate) crdt: Mutex<CrdtEngine>,
+    /// Arc-wrapped for sharing with the query engine's TableProvider.
+    pub(crate) crdt: Arc<Mutex<CrdtEngine>>,
     /// Memory budget governor.
     pub(crate) governor: MemoryGovernor,
     /// HNSW search ef parameter (configurable).
     pub(crate) search_ef: usize,
     /// Vector ID to collection+doc_id mapping (for CRDT integration).
     pub(crate) vector_id_map: Mutex<HashMap<String, (String, u32)>>,
+    /// SQL query engine (DataFusion over Loro documents).
+    pub(crate) query_engine: crate::query::LiteQueryEngine,
 }
 
 impl<S: StorageEngine> NodeDbLite<S> {
@@ -111,14 +115,18 @@ impl<S: StorageEngine> NodeDbLite<S> {
 
         let governor = MemoryGovernor::new(memory_budget);
 
+        let crdt = Arc::new(Mutex::new(crdt));
+        let query_engine = crate::query::LiteQueryEngine::new(Arc::clone(&crdt));
+
         Ok(Self {
             storage,
             hnsw_indices: Mutex::new(hnsw_indices),
             csr: Mutex::new(csr),
-            crdt: Mutex::new(crdt),
+            crdt,
             governor,
             search_ef: 128,
             vector_id_map: Mutex::new(HashMap::new()),
+            query_engine,
         })
     }
 
@@ -239,188 +247,6 @@ impl<S: StorageEngine> NodeDbLite<S> {
         if let Ok(crdt) = self.crdt.lock() {
             self.governor
                 .report_usage(EngineId::Loro, crdt.estimated_memory_bytes());
-        }
-    }
-
-    /// Batch insert vectors — O(1) CRDT delta export instead of O(N).
-    ///
-    /// Use this for bulk loading (cold-start hydration, benchmark setup, imports).
-    /// Each vector is inserted into HNSW and tracked in the ID map, but only one
-    /// Loro delta is generated for the entire batch.
-    pub fn batch_vector_insert(
-        &self,
-        collection: &str,
-        vectors: &[(&str, &[f32])],
-    ) -> NodeDbResult<()> {
-        if vectors.is_empty() {
-            return Ok(());
-        }
-
-        let dim = vectors[0].1.len();
-
-        // ── Insert all vectors into HNSW ──
-        {
-            let mut indices = self.hnsw_indices.lock_or_recover();
-            let index = Self::ensure_hnsw(&mut indices, collection, dim);
-            let mut id_map = self.vector_id_map.lock_or_recover();
-
-            for &(id, embedding) in vectors {
-                let internal_id = index.len() as u32;
-                index
-                    .insert(embedding.to_vec())
-                    .map_err(NodeDbError::bad_request)?;
-                id_map.insert(
-                    format!("{collection}:{internal_id}"),
-                    (id.to_string(), internal_id),
-                );
-            }
-        }
-
-        // ── Single CRDT batch ──
-        {
-            let mut crdt = self.crdt.lock_or_recover();
-
-            use crate::engine::crdt::engine::{CrdtBatchOp, CrdtField};
-
-            // Pre-allocate field arrays so references live long enough.
-            let fields: Vec<Vec<CrdtField<'_>>> = vectors
-                .iter()
-                .map(|&(_, emb)| vec![("embedding_dim", loro::LoroValue::I64(emb.len() as i64))])
-                .collect();
-
-            let ops: Vec<CrdtBatchOp<'_>> = vectors
-                .iter()
-                .zip(fields.iter())
-                .map(|(&(id, _), f)| (collection, id, f.as_slice()))
-                .collect();
-
-            crdt.batch_upsert(&ops).map_err(NodeDbError::storage)?;
-        }
-
-        self.update_memory_stats();
-        Ok(())
-    }
-
-    /// Batch insert graph edges — O(1) CRDT delta export instead of O(N).
-    pub fn batch_graph_insert_edges(
-        &self,
-        edges: &[(&str, &str, &str)], // (src, dst, label)
-    ) -> NodeDbResult<()> {
-        if edges.is_empty() {
-            return Ok(());
-        }
-
-        // ── Insert all edges into CSR ──
-        {
-            let mut csr = self.csr.lock_or_recover();
-            for &(src, dst, label) in edges {
-                csr.add_edge(src, label, dst);
-            }
-        }
-
-        // ── Single CRDT batch ──
-        {
-            let mut crdt = self.crdt.lock_or_recover();
-
-            use crate::engine::crdt::engine::{CrdtBatchOp, CrdtField};
-
-            let ops: Vec<(String, Vec<CrdtField<'_>>)> = edges
-                .iter()
-                .map(|&(src, dst, label)| {
-                    let edge_id = format!("{src}--{label}-->{dst}");
-                    let fields: Vec<CrdtField<'_>> = vec![
-                        ("src", loro::LoroValue::String(src.into())),
-                        ("dst", loro::LoroValue::String(dst.into())),
-                        ("label", loro::LoroValue::String(label.into())),
-                    ];
-                    (edge_id, fields)
-                })
-                .collect();
-
-            let refs: Vec<CrdtBatchOp<'_>> = ops
-                .iter()
-                .map(|(id, fields)| ("__edges", id.as_str(), fields.as_slice()))
-                .collect();
-
-            crdt.batch_upsert(&refs).map_err(NodeDbError::storage)?;
-        }
-
-        self.update_memory_stats();
-        Ok(())
-    }
-
-    /// Compact the CSR graph index (merge buffer into dense arrays).
-    ///
-    /// Call after bulk edge insertion for optimal traversal performance.
-    pub fn compact_graph(&self) -> NodeDbResult<()> {
-        let mut csr = self.csr.lock_or_recover();
-        csr.compact();
-        Ok(())
-    }
-
-    /// Evict HNSW collections to reduce memory usage.
-    ///
-    /// Persists each evicted collection to storage first, then drops
-    /// it from memory. The data is reloaded lazily on next `vector_search`.
-    ///
-    /// `max_to_evict` limits how many collections to drop in one pass.
-    /// Collections are evicted smallest-first (least data = cheapest to reload).
-    pub async fn evict_collections(&self, max_to_evict: usize) -> NodeDbResult<usize> {
-        let mut evicted = 0;
-
-        // Identify candidates.
-        let candidates: Vec<(String, usize)> = {
-            let indices = self.hnsw_indices.lock_or_recover();
-            let mut sorted: Vec<(String, usize)> = indices
-                .iter()
-                .map(|(name, idx)| (name.clone(), idx.len()))
-                .collect();
-            sorted.sort_by_key(|(_, size)| *size);
-            sorted
-        };
-
-        for (name, _) in candidates.into_iter().take(max_to_evict) {
-            // Persist before evicting.
-            let checkpoint = {
-                let indices = self.hnsw_indices.lock_or_recover();
-                match indices.get(&name) {
-                    Some(idx) => idx.checkpoint_to_bytes(),
-                    None => continue,
-                }
-            };
-
-            let key = format!("hnsw:{name}");
-            self.storage
-                .put(Namespace::Vector, key.as_bytes(), &checkpoint)
-                .await
-                .map_err(NodeDbError::storage)?;
-
-            // Remove from memory.
-            {
-                let mut indices = self.hnsw_indices.lock_or_recover();
-                indices.remove(&name);
-            }
-
-            tracing::info!(collection = %name, "HNSW collection evicted from memory");
-            evicted += 1;
-        }
-
-        self.update_memory_stats();
-        Ok(evicted)
-    }
-
-    /// Check memory pressure and evict if needed.
-    ///
-    /// Call periodically (e.g., after batch inserts or on a timer).
-    /// Returns the number of collections evicted.
-    pub async fn check_and_evict(&self) -> NodeDbResult<usize> {
-        use crate::memory::PressureLevel;
-
-        self.update_memory_stats();
-        match self.governor.pressure() {
-            PressureLevel::Critical => self.evict_collections(2).await,
-            PressureLevel::Warning => self.evict_collections(1).await,
-            PressureLevel::Normal => Ok(0),
         }
     }
 
@@ -636,13 +462,34 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn sql_not_enabled() {
+    async fn sql_basic_query() {
         let db = make_db().await;
-        let result = db.execute_sql("SELECT 1", &[]).await;
-        assert!(result.as_ref().is_err_and(|e| matches!(
-            e.details(),
-            nodedb_types::error::ErrorDetails::SqlNotEnabled
-        )));
+        // SQL is now enabled via DataFusion.
+        let result = db.execute_sql("SELECT 1 AS value", &[]).await.unwrap();
+        assert_eq!(result.row_count(), 1);
+        assert_eq!(result.columns, vec!["value"]);
+    }
+
+    #[tokio::test]
+    async fn sql_query_documents() {
+        let db = make_db().await;
+        // Insert documents.
+        let mut doc1 = Document::new("u1");
+        doc1.set("name", Value::String("Alice".into()));
+        doc1.set("age", Value::Integer(30));
+        db.document_put("users", doc1).await.unwrap();
+
+        let mut doc2 = Document::new("u2");
+        doc2.set("name", Value::String("Bob".into()));
+        doc2.set("age", Value::Integer(25));
+        db.document_put("users", doc2).await.unwrap();
+
+        // Query via SQL.
+        let result = db
+            .execute_sql("SELECT id, document FROM users", &[])
+            .await
+            .unwrap();
+        assert_eq!(result.row_count(), 2);
     }
 
     #[tokio::test]

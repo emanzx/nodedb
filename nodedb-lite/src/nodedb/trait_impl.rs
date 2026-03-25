@@ -291,7 +291,10 @@ impl<S: StorageEngine> NodeDb for NodeDbLite<S> {
         Ok(())
     }
 
-    async fn execute_sql(&self, _query: &str, _params: &[Value]) -> NodeDbResult<QueryResult> {
-        Err(NodeDbError::sql_not_enabled())
+    async fn execute_sql(&self, query: &str, _params: &[Value]) -> NodeDbResult<QueryResult> {
+        self.query_engine
+            .execute_sql(query)
+            .await
+            .map_err(NodeDbError::storage)
     }
 }

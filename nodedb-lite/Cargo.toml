@@ -22,6 +22,7 @@ rmp-serde = { workspace = true }
 serde_json = { workspace = true }
 loro = { workspace = true }
 redb = { workspace = true }
+datafusion = { workspace = true }
 
 # Async runtime (native only — WASM uses wasm-bindgen-futures)
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

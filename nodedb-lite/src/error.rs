@@ -23,6 +23,12 @@ pub enum LiteError {
 
     #[error("sync error: {detail}")]
     Sync { detail: String },
+
+    #[error("query error: {0}")]
+    Query(String),
+
+    #[error("Arrow type conversion: expected {expected}, got {got}")]
+    ArrowTypeConversion { expected: String, got: String },
 }
 
 impl From<redb::Error> for LiteError {

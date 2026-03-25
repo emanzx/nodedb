@@ -2,6 +2,7 @@ pub mod engine;
 pub mod error;
 pub mod memory;
 pub mod nodedb;
+pub mod query;
 pub mod runtime;
 pub mod storage;
 #[cfg(not(target_arch = "wasm32"))]
