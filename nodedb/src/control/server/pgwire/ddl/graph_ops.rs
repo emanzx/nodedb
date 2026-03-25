@@ -180,7 +180,8 @@ pub async fn shortest_path(
                 && nodes.contains(&dst)
             {
                 // Path exists — return the discovered nodes as the path.
-                let payload = serde_json::to_vec(&nodes).unwrap_or_default();
+                let payload = serde_json::to_vec(&nodes)
+                    .map_err(|e| sqlstate_error("XX000", &format!("serialize path: {e}")))?;
                 let path_resp = crate::bridge::envelope::Response {
                     request_id: crate::types::RequestId::new(0),
                     status: crate::bridge::envelope::Status::Ok,
@@ -198,6 +199,143 @@ pub async fn shortest_path(
         }
         Err(e) => Err(sqlstate_error("XX000", &e.to_string())),
     }
+}
+
+/// GRAPH ALGO <algorithm> ON <collection> [params...]
+///
+/// Supported algorithms and their parameters:
+/// ```text
+/// GRAPH ALGO PAGERANK   ON <collection> [DAMPING 0.85] [ITERATIONS 20] [TOLERANCE 1e-7]
+/// GRAPH ALGO WCC        ON <collection>
+/// GRAPH ALGO COMMUNITY  ON <collection> [ITERATIONS 10]
+/// GRAPH ALGO LCC        ON <collection>
+/// GRAPH ALGO SSSP       ON <collection> FROM '<source_node>'
+/// ```
+///
+/// Returns a multi-row result set. Results are broadcast to all Data Plane
+/// cores; each core runs the algorithm on its local CSR and returns results.
+pub async fn algo(
+    state: &SharedState,
+    identity: &AuthenticatedIdentity,
+    _parts: &[&str],
+    sql: &str,
+) -> PgWireResult<Vec<Response>> {
+    let upper = sql.to_uppercase();
+
+    // Parse algorithm name: third word after "GRAPH ALGO".
+    let algo_name = upper
+        .strip_prefix("GRAPH ALGO ")
+        .and_then(|rest| rest.split_whitespace().next())
+        .ok_or_else(|| sqlstate_error("42601", "GRAPH ALGO requires an algorithm name"))?;
+
+    let algorithm = match algo_name {
+        "PAGERANK" => crate::engine::graph::algo::GraphAlgorithm::PageRank,
+        "WCC" => crate::engine::graph::algo::GraphAlgorithm::Wcc,
+        "COMMUNITY" => crate::engine::graph::algo::GraphAlgorithm::LabelPropagation,
+        "LCC" => crate::engine::graph::algo::GraphAlgorithm::Lcc,
+        "SSSP" => crate::engine::graph::algo::GraphAlgorithm::Sssp,
+        "BETWEENNESS" => crate::engine::graph::algo::GraphAlgorithm::Betweenness,
+        "CLOSENESS" => crate::engine::graph::algo::GraphAlgorithm::Closeness,
+        "HARMONIC" => crate::engine::graph::algo::GraphAlgorithm::Harmonic,
+        "DEGREE" => crate::engine::graph::algo::GraphAlgorithm::Degree,
+        "LOUVAIN" => crate::engine::graph::algo::GraphAlgorithm::Louvain,
+        "TRIANGLES" => crate::engine::graph::algo::GraphAlgorithm::Triangles,
+        "DIAMETER" => crate::engine::graph::algo::GraphAlgorithm::Diameter,
+        "KCORE" => crate::engine::graph::algo::GraphAlgorithm::KCore,
+        _ => {
+            return Err(sqlstate_error(
+                "42601",
+                &format!("unknown graph algorithm '{algo_name}'"),
+            ));
+        }
+    };
+
+    // Parse collection: word after "ON".
+    let collection = extract_word_after(&upper, " ON ")
+        .map(|s| s.to_lowercase())
+        .ok_or_else(|| sqlstate_error("42601", "GRAPH ALGO requires ON <collection>"))?;
+
+    // Parse optional parameters.
+    let params = crate::engine::graph::algo::AlgoParams {
+        collection: collection.clone(),
+        damping: extract_float_after(&upper, "DAMPING"),
+        max_iterations: extract_number_after(&upper, "ITERATIONS"),
+        tolerance: extract_float_after(&upper, "TOLERANCE"),
+        source_node: extract_quoted_after(&upper, sql, "FROM"),
+        sample_size: extract_number_after(&upper, "SAMPLE"),
+        direction: extract_word_after(&upper, "DIRECTION"),
+        resolution: extract_float_after(&upper, "RESOLUTION"),
+        mode: extract_word_after(&upper, "MODE"),
+    };
+
+    let tenant_id = identity.tenant_id;
+
+    let plan = PhysicalPlan::GraphAlgo { algorithm, params };
+
+    // Broadcast to all cores — the algorithm runs on each core's local CSR.
+    // Results from all cores are merged into a single JSON array response.
+    match dispatch_utils::broadcast_to_all_cores(state, tenant_id, plan, 0).await {
+        Ok(resp) => algo_payload_to_query_response(&resp.payload, algorithm),
+        Err(e) => Err(sqlstate_error("XX000", &e.to_string())),
+    }
+}
+
+/// Convert a graph algorithm result payload to a typed pgwire QueryResponse.
+///
+/// Uses the algorithm's result schema to create properly-named columns
+/// (e.g., `node_id`, `rank` for PageRank) instead of a single `result` column.
+fn algo_payload_to_query_response(
+    payload: &crate::bridge::envelope::Payload,
+    algorithm: crate::engine::graph::algo::GraphAlgorithm,
+) -> PgWireResult<Vec<Response>> {
+    use crate::engine::graph::algo::params::AlgoColumnType;
+
+    // Build schema from algorithm definition (consistent for empty and non-empty results).
+    let result_schema = algorithm.result_schema();
+    let schema = Arc::new(
+        result_schema
+            .iter()
+            .map(|&(name, _)| text_field(name))
+            .collect::<Vec<_>>(),
+    );
+
+    if payload.is_empty() {
+        return Ok(vec![Response::Query(QueryResponse::new(
+            schema,
+            stream::empty(),
+        ))]);
+    }
+
+    let json_text = response_codec::decode_payload_to_json(payload);
+
+    // Parse the JSON array of result objects.
+    let rows: Vec<serde_json::Value> = serde_json::from_str(&json_text)
+        .map_err(|e| sqlstate_error("XX000", &format!("invalid algorithm result JSON: {e}")))?;
+
+    let mut pgwire_rows = Vec::with_capacity(rows.len());
+    for row in &rows {
+        let mut encoder = DataRowEncoder::new(schema.clone());
+        for &(col_name, col_type) in result_schema {
+            let field = row.get(col_name).unwrap_or(&serde_json::Value::Null);
+            let val_str = match col_type {
+                AlgoColumnType::Text => field.as_str().unwrap_or("").to_string(),
+                AlgoColumnType::Float64 => match field.as_f64() {
+                    Some(v) => format!("{v}"),
+                    None => "Infinity".to_string(),
+                },
+                AlgoColumnType::Int64 => field.as_i64().map_or("0".into(), |v| v.to_string()),
+            };
+            encoder
+                .encode_field(&val_str)
+                .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
+        }
+        pgwire_rows.push(Ok(encoder.take_row()));
+    }
+
+    Ok(vec![Response::Query(QueryResponse::new(
+        schema,
+        stream::iter(pgwire_rows),
+    ))])
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -257,4 +395,13 @@ fn extract_word_after(upper: &str, keyword: &str) -> Option<String> {
     let after = &upper[kw_pos + keyword.len()..];
     let word = after.split_whitespace().next()?;
     Some(word.to_string())
+}
+
+/// Extract a float after a keyword. e.g., `DAMPING 0.85` → `Some(0.85)`
+/// Handles scientific notation: `TOLERANCE 1E-7` → `Some(1e-7)`.
+fn extract_float_after(upper: &str, keyword: &str) -> Option<f64> {
+    let kw_pos = upper.find(keyword)?;
+    let after = &upper[kw_pos + keyword.len()..];
+    let word = after.split_whitespace().next()?;
+    word.parse().ok()
 }

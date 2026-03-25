@@ -293,6 +293,9 @@ pub async fn dispatch(
     if upper.starts_with("GRAPH PATH ") {
         return Some(super::graph_ops::shortest_path(state, identity, &parts, sql).await);
     }
+    if upper.starts_with("GRAPH ALGO ") {
+        return Some(super::graph_ops::algo(state, identity, &parts, sql).await);
+    }
 
     // COPY FROM file.
     if upper.starts_with("COPY ") && upper.contains(" FROM ") {

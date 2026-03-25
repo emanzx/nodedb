@@ -95,7 +95,8 @@ pub(super) fn describe_plan(plan: &PhysicalPlan) -> PlanKind {
         | PhysicalPlan::GraphRagFusion { .. }
         | PhysicalPlan::DocumentScan { .. }
         | PhysicalPlan::Aggregate { .. }
-        | PhysicalPlan::HashJoin { .. } => PlanKind::MultiRow,
+        | PhysicalPlan::HashJoin { .. }
+        | PhysicalPlan::GraphAlgo { .. } => PlanKind::MultiRow,
         _ => PlanKind::Execution,
     }
 }
