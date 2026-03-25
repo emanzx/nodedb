@@ -85,6 +85,10 @@ pub struct SyncClient {
     session_id: Arc<Mutex<Option<String>>>,
     /// Peer ID of this Lite client (for CRDT identity).
     peer_id: u64,
+    /// Lite instance identity (UUID v7) for fork detection.
+    lite_id: Option<String>,
+    /// Monotonic epoch counter for fork detection.
+    epoch: Option<u64>,
 }
 
 impl SyncClient {
@@ -98,7 +102,15 @@ impl SyncClient {
             compensation: Arc::new(CompensationRegistry::new()),
             session_id: Arc::new(Mutex::new(None)),
             peer_id,
+            lite_id: None,
+            epoch: None,
         }
+    }
+
+    /// Set the Lite identity for fork detection (called after LiteIdentity::load_or_create).
+    pub fn set_identity(&mut self, lite_id: String, epoch: u64) {
+        self.lite_id = Some(lite_id);
+        self.epoch = Some(epoch);
     }
 
     /// Current connection state.
@@ -141,6 +153,8 @@ impl SyncClient {
             vector_clock,
             subscribed_shapes: shapes.active_shape_ids(),
             client_version: self.config.client_version.clone(),
+            lite_id: self.lite_id.clone().unwrap_or_default(),
+            epoch: self.epoch.unwrap_or(0),
         }
     }
 
@@ -333,6 +347,7 @@ mod tests {
             session_id: "sess-123".into(),
             server_clock: std::collections::HashMap::new(),
             error: None,
+            fork_detected: false,
         };
 
         assert!(client.handle_handshake_ack(&ack).await);
@@ -347,6 +362,7 @@ mod tests {
             session_id: String::new(),
             server_clock: std::collections::HashMap::new(),
             error: Some("invalid token".into()),
+            fork_detected: false,
         };
 
         assert!(!client.handle_handshake_ack(&ack).await);
