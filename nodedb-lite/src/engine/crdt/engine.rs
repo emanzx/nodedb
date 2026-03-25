@@ -37,17 +37,17 @@ const VCLOCK_KEY: &[u8] = b"vector_clock";
 /// Not `Send` — owned by a single task. The `NodeDbLite` wrapper handles
 /// the async bridging via `spawn_blocking` or `Mutex` as needed.
 pub struct CrdtEngine {
-    state: CrdtState,
+    pub(super) state: CrdtState,
     /// Monotonically increasing mutation ID. Used as delta ordering key.
     next_mutation_id: AtomicU64,
     /// Unsent deltas accumulated since last sync ACK.
     /// Each entry: `(mutation_id, collection, doc_id, delta_bytes)`.
-    pending_deltas: Vec<PendingDelta>,
+    pub(super) pending_deltas: Vec<PendingDelta>,
     /// Per-collection version: highest mutation_id that's been ACK'd by Origin.
     acked_versions: HashMap<String, u64>,
     /// Conflict resolution policies per collection.
     /// Evaluated on sync when Origin rejects a delta.
-    policies: nodedb_crdt::PolicyRegistry,
+    pub(super) policies: nodedb_crdt::PolicyRegistry,
 }
 
 /// A pending (unsent) delta waiting to be synced to Origin.
