@@ -351,6 +351,33 @@ pub fn eval_function(name: &str, args: &[serde_json::Value]) -> serde_json::Valu
             let point = nodedb_types::geometry::Geometry::point(lng, lat);
             serde_json::to_value(&point).unwrap_or(serde_json::Value::Null)
         }
+        "geo_geohash" => {
+            let lng = num_arg(args, 0).unwrap_or(0.0);
+            let lat = num_arg(args, 1).unwrap_or(0.0);
+            let precision = num_arg(args, 2).unwrap_or(6.0) as u8;
+            serde_json::Value::String(nodedb_spatial::geohash_encode(lng, lat, precision))
+        }
+        "geo_geohash_decode" => {
+            let hash = str_arg(args, 0).unwrap_or_default();
+            match nodedb_spatial::geohash_decode(&hash) {
+                Some(bb) => serde_json::json!({
+                    "min_lng": bb.min_lng,
+                    "min_lat": bb.min_lat,
+                    "max_lng": bb.max_lng,
+                    "max_lat": bb.max_lat,
+                }),
+                None => serde_json::Value::Null,
+            }
+        }
+        "geo_geohash_neighbors" => {
+            let hash = str_arg(args, 0).unwrap_or_default();
+            let neighbors = nodedb_spatial::geohash_neighbors(&hash);
+            let arr: Vec<serde_json::Value> = neighbors
+                .into_iter()
+                .map(|(dir, h)| serde_json::json!({"direction": format!("{dir:?}"), "hash": h}))
+                .collect();
+            serde_json::Value::Array(arr)
+        }
         "decimal" | "to_decimal" => args.first().map_or(serde_json::Value::Null, |v| {
             let s = json_to_display_string(v);
             match s.parse::<rust_decimal::Decimal>() {
@@ -571,5 +598,33 @@ mod tests {
         };
         let doc = json!({"name": "alice"});
         assert_eq!(expr.eval(&doc), json!("ALICE"));
+    }
+
+    #[test]
+    fn geo_geohash_encode() {
+        let result = eval_fn(
+            "geo_geohash",
+            vec![json!(-73.9857), json!(40.758), json!(6)],
+        );
+        let hash = result.as_str().unwrap();
+        assert_eq!(hash.len(), 6);
+        assert!(hash.starts_with("dr5ru"), "got {hash}");
+    }
+
+    #[test]
+    fn geo_geohash_decode() {
+        let hash = eval_fn("geo_geohash", vec![json!(0.0), json!(0.0), json!(6)]);
+        let result = eval_fn("geo_geohash_decode", vec![hash]);
+        assert!(result.is_object());
+        assert!(result["min_lng"].as_f64().is_some());
+        assert!(result["max_lat"].as_f64().is_some());
+    }
+
+    #[test]
+    fn geo_geohash_neighbors_returns_8() {
+        let hash = eval_fn("geo_geohash", vec![json!(10.0), json!(50.0), json!(6)]);
+        let result = eval_fn("geo_geohash_neighbors", vec![hash]);
+        let arr = result.as_array().unwrap();
+        assert_eq!(arr.len(), 8);
     }
 }
