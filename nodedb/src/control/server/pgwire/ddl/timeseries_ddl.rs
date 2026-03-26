@@ -61,7 +61,7 @@ pub fn create_timeseries(
         fields,
         field_defs: Vec::new(),
         event_defs: Vec::new(),
-        collection_type: nodedb_types::CollectionType::Timeseries,
+        collection_type: nodedb_types::CollectionType::timeseries("timestamp", "1h"),
         timeseries_config: config_json,
         is_active: true,
     };
