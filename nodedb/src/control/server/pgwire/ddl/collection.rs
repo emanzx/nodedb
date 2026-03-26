@@ -517,30 +517,43 @@ pub fn show_indexes(
         None
     };
 
-    let schema = Arc::new(vec![text_field("index_name"), text_field("owner")]);
+    let schema = Arc::new(vec![
+        text_field("index_name"),
+        text_field("type"),
+        text_field("owner"),
+    ]);
 
-    // List all index owners for this tenant.
-    let indexes = state.permissions.list_owners("index", tenant_id);
+    // List all index types for this tenant.
+    let index_types = [
+        ("index", "btree"),
+        ("vector_index", "vector"),
+        ("fulltext_index", "fulltext"),
+        ("spatial_index", "spatial"),
+    ];
 
     let mut rows = Vec::new();
     let mut encoder = DataRowEncoder::new(schema.clone());
 
-    for (index_name, owner) in &indexes {
-        // If filtering by collection, only show indexes whose name starts with the collection.
-        // Convention: index names are typically "<collection>_<field>_idx".
-        if let Some(coll) = filter_collection
-            && !index_name.starts_with(coll)
-        {
-            continue;
-        }
+    for (owner_type, display_type) in &index_types {
+        let indexes = state.permissions.list_owners(owner_type, tenant_id);
+        for (index_name, owner) in &indexes {
+            if let Some(coll) = filter_collection
+                && !index_name.starts_with(coll)
+            {
+                continue;
+            }
 
-        encoder
-            .encode_field(index_name)
-            .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
-        encoder
-            .encode_field(owner)
-            .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
-        rows.push(Ok(encoder.take_row()));
+            encoder
+                .encode_field(index_name)
+                .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
+            encoder
+                .encode_field(display_type)
+                .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
+            encoder
+                .encode_field(owner)
+                .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
+            rows.push(Ok(encoder.take_row()));
+        }
     }
 
     Ok(vec![Response::Query(QueryResponse::new(
