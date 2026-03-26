@@ -9,6 +9,7 @@ use nodedb_types::error::{NodeDbError, NodeDbResult};
 use super::lock_ext::LockExt;
 use crate::engine::crdt::CrdtEngine;
 use crate::engine::graph::index::CsrIndex;
+use crate::engine::strict::StrictEngine;
 use crate::engine::vector::graph::{HnswIndex, HnswParams};
 use crate::memory::{EngineId, MemoryGovernor};
 use crate::storage::engine::{StorageEngine, WriteOp};
@@ -43,13 +44,16 @@ pub struct NodeDbLite<S: StorageEngine> {
     pub(crate) search_ef: usize,
     /// Vector ID to collection+doc_id mapping (for CRDT integration).
     pub(crate) vector_id_map: Mutex<HashMap<String, (String, u32)>>,
-    /// SQL query engine (DataFusion over Loro documents).
-    pub(crate) query_engine: crate::query::LiteQueryEngine,
+    /// SQL query engine (DataFusion over Loro documents and strict collections).
+    pub(crate) query_engine: crate::query::LiteQueryEngine<S>,
     /// Per-collection in-memory inverted index for full-text search.
     /// Updated incrementally on `document_put` and `document_delete`.
     pub(crate) text_indices: Mutex<HashMap<String, nodedb_query::text_search::InvertedIndex>>,
     /// Spatial R-tree indexes for geometry fields.
     pub(crate) spatial: Mutex<crate::engine::spatial::SpatialIndexManager>,
+    /// Strict document engine (Binary Tuple collections).
+    /// Arc-wrapped for sharing with the query engine's StrictTableProvider.
+    pub(crate) strict: Arc<Mutex<StrictEngine<S>>>,
 }
 
 impl<S: StorageEngine> NodeDbLite<S> {
@@ -156,10 +160,20 @@ impl<S: StorageEngine> NodeDbLite<S> {
         // ── Restore spatial indices ──
         let spatial = Self::restore_spatial_indices(&storage).await;
 
+        // ── Restore strict document engine ──
+        let strict = StrictEngine::restore(Arc::clone(&storage))
+            .await
+            .map_err(NodeDbError::storage)?;
+
         let governor = MemoryGovernor::new(memory_budget);
 
         let crdt = Arc::new(Mutex::new(crdt));
-        let query_engine = crate::query::LiteQueryEngine::new(Arc::clone(&crdt));
+        let strict = Arc::new(Mutex::new(strict));
+        let query_engine = crate::query::LiteQueryEngine::new(
+            Arc::clone(&crdt),
+            Arc::clone(&strict),
+            Arc::clone(&storage),
+        );
 
         let db = Self {
             storage,
@@ -172,6 +186,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             query_engine,
             text_indices: Mutex::new(HashMap::new()),
             spatial: Mutex::new(spatial),
+            strict,
         };
 
         // Rebuild text indices from CRDT state (cold start).
@@ -531,6 +546,11 @@ impl<S: StorageEngine> NodeDbLite<S> {
     /// Access the memory governor.
     pub fn governor(&self) -> &MemoryGovernor {
         &self.governor
+    }
+
+    /// Access the strict document engine (for direct Binary Tuple CRUD).
+    pub fn strict_engine(&self) -> &Arc<Mutex<StrictEngine<S>>> {
+        &self.strict
     }
 
     /// Access pending CRDT deltas (for sync client).

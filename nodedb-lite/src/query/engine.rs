@@ -14,29 +14,43 @@ use nodedb_types::result::QueryResult;
 use nodedb_types::value::Value;
 
 use crate::engine::crdt::CrdtEngine;
+use crate::engine::strict::StrictEngine;
 use crate::error::LiteError;
+use crate::storage::engine::StorageEngine;
 
+use super::strict_provider::StrictTableProvider;
 use super::table_provider::LiteTableProvider;
 
 /// Lite-side query engine wrapping DataFusion.
 ///
 /// Registered collections appear as tables. SQL queries execute
-/// entirely in-process against the Loro CRDT state.
-pub struct LiteQueryEngine {
+/// entirely in-process against the Loro CRDT state or strict Binary Tuple store.
+pub struct LiteQueryEngine<S: StorageEngine> {
     ctx: SessionContext,
     crdt: Arc<Mutex<CrdtEngine>>,
+    strict: Arc<Mutex<StrictEngine<S>>>,
+    storage: Arc<S>,
 }
 
-impl LiteQueryEngine {
+impl<S: StorageEngine> LiteQueryEngine<S> {
     /// Create a new query engine.
-    pub fn new(crdt: Arc<Mutex<CrdtEngine>>) -> Self {
+    pub fn new(
+        crdt: Arc<Mutex<CrdtEngine>>,
+        strict: Arc<Mutex<StrictEngine<S>>>,
+        storage: Arc<S>,
+    ) -> Self {
         let config = SessionConfig::new()
             .with_information_schema(false)
             .with_default_catalog_and_schema("nodedb", "public");
 
         let ctx = SessionContext::new_with_config(config);
         super::spatial_udf::register_spatial_udfs(&ctx);
-        Self { ctx, crdt }
+        Self {
+            ctx,
+            crdt,
+            strict,
+            storage,
+        }
     }
 
     /// Register a collection as a queryable table.
@@ -49,26 +63,50 @@ impl LiteQueryEngine {
         let _ = self.ctx.register_table(name, Arc::new(provider));
     }
 
-    /// Register all existing collections as tables.
+    /// Register a strict collection as a queryable table.
+    pub fn register_strict_collection(&self, name: &str) {
+        let strict = match self.strict.lock() {
+            Ok(s) => s,
+            Err(p) => p.into_inner(),
+        };
+        if let Some(schema) = strict.schema(name) {
+            let provider =
+                StrictTableProvider::new(name.to_string(), schema, Arc::clone(&self.storage));
+            let _ = self.ctx.register_table(name, Arc::new(provider));
+        }
+    }
+
+    /// Register all existing collections as tables (both CRDT and strict).
     pub fn register_all_collections(&self) {
+        // Register CRDT (schemaless) collections.
         let crdt = match self.crdt.lock() {
             Ok(c) => c,
             Err(p) => p.into_inner(),
         };
-
-        // Loro's top-level map keys are collection names.
-        // We iterate them and register each as a table.
-        // CrdtEngine doesn't expose collection listing directly,
-        // but we can get it from the state.
-        let collections = crdt.collection_names();
+        let crdt_collections = crdt.collection_names();
         drop(crdt);
 
-        for name in &collections {
-            // Skip internal collections.
+        for name in &crdt_collections {
             if name.starts_with("__") {
                 continue;
             }
             self.register_collection(name);
+        }
+
+        // Register strict document collections.
+        let strict = match self.strict.lock() {
+            Ok(s) => s,
+            Err(p) => p.into_inner(),
+        };
+        let strict_names: Vec<String> = strict
+            .collection_names()
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        drop(strict);
+
+        for name in &strict_names {
+            self.register_strict_collection(name);
         }
     }
 
