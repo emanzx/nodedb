@@ -1,3 +1,4 @@
+pub mod columnar_provider;
 pub mod engine;
 pub mod spatial_udf;
 pub mod strict_provider;

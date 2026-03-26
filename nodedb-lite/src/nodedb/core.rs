@@ -7,6 +7,7 @@ use nodedb_types::Namespace;
 use nodedb_types::error::{NodeDbError, NodeDbResult};
 
 use super::lock_ext::LockExt;
+use crate::engine::columnar::ColumnarEngine;
 use crate::engine::crdt::CrdtEngine;
 use crate::engine::graph::index::CsrIndex;
 use crate::engine::strict::StrictEngine;
@@ -54,6 +55,9 @@ pub struct NodeDbLite<S: StorageEngine> {
     /// Strict document engine (Binary Tuple collections).
     /// Arc-wrapped for sharing with the query engine's StrictTableProvider.
     pub(crate) strict: Arc<Mutex<StrictEngine<S>>>,
+    /// Columnar engine (compressed segment collections).
+    /// Arc-wrapped for sharing with the query engine's ColumnarTableProvider.
+    pub(crate) columnar: Arc<Mutex<ColumnarEngine<S>>>,
 }
 
 impl<S: StorageEngine> NodeDbLite<S> {
@@ -165,13 +169,20 @@ impl<S: StorageEngine> NodeDbLite<S> {
             .await
             .map_err(NodeDbError::storage)?;
 
+        // ── Restore columnar engine ──
+        let columnar = ColumnarEngine::restore(Arc::clone(&storage))
+            .await
+            .map_err(NodeDbError::storage)?;
+
         let governor = MemoryGovernor::new(memory_budget);
 
         let crdt = Arc::new(Mutex::new(crdt));
         let strict = Arc::new(Mutex::new(strict));
+        let columnar = Arc::new(Mutex::new(columnar));
         let query_engine = crate::query::LiteQueryEngine::new(
             Arc::clone(&crdt),
             Arc::clone(&strict),
+            Arc::clone(&columnar),
             Arc::clone(&storage),
         );
 
@@ -187,6 +198,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             text_indices: Mutex::new(HashMap::new()),
             spatial: Mutex::new(spatial),
             strict,
+            columnar,
         };
 
         // Rebuild text indices from CRDT state (cold start).
@@ -551,6 +563,11 @@ impl<S: StorageEngine> NodeDbLite<S> {
     /// Access the strict document engine (for direct Binary Tuple CRUD).
     pub fn strict_engine(&self) -> &Arc<Mutex<StrictEngine<S>>> {
         &self.strict
+    }
+
+    /// Access the columnar analytics engine (for direct segment operations).
+    pub fn columnar_engine(&self) -> &Arc<Mutex<crate::engine::columnar::ColumnarEngine<S>>> {
+        &self.columnar
     }
 
     /// Access pending CRDT deltas (for sync client).

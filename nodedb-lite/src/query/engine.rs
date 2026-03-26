@@ -13,22 +13,26 @@ use datafusion::prelude::*;
 use nodedb_types::result::QueryResult;
 use nodedb_types::value::Value;
 
+use crate::engine::columnar::ColumnarEngine;
 use crate::engine::crdt::CrdtEngine;
 use crate::engine::strict::StrictEngine;
 use crate::error::LiteError;
 use crate::storage::engine::StorageEngine;
 
+use super::columnar_provider::ColumnarTableProvider;
 use super::strict_provider::StrictTableProvider;
 use super::table_provider::LiteTableProvider;
 
 /// Lite-side query engine wrapping DataFusion.
 ///
 /// Registered collections appear as tables. SQL queries execute
-/// entirely in-process against the Loro CRDT state or strict Binary Tuple store.
+/// entirely in-process against the Loro CRDT state, strict Binary Tuple store,
+/// or columnar compressed segments.
 pub struct LiteQueryEngine<S: StorageEngine> {
     ctx: SessionContext,
     crdt: Arc<Mutex<CrdtEngine>>,
     strict: Arc<Mutex<StrictEngine<S>>>,
+    columnar: Arc<Mutex<ColumnarEngine<S>>>,
     storage: Arc<S>,
 }
 
@@ -37,6 +41,7 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
     pub fn new(
         crdt: Arc<Mutex<CrdtEngine>>,
         strict: Arc<Mutex<StrictEngine<S>>>,
+        columnar: Arc<Mutex<ColumnarEngine<S>>>,
         storage: Arc<S>,
     ) -> Self {
         let config = SessionConfig::new()
@@ -49,6 +54,7 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
             ctx,
             crdt,
             strict,
+            columnar,
             storage,
         }
     }
@@ -108,6 +114,46 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
         for name in &strict_names {
             self.register_strict_collection(name);
         }
+
+        // Register columnar collections.
+        let columnar = match self.columnar.lock() {
+            Ok(c) => c,
+            Err(p) => p.into_inner(),
+        };
+        let columnar_names: Vec<String> = columnar
+            .collection_names()
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        drop(columnar);
+
+        for name in &columnar_names {
+            self.register_columnar_collection(name);
+        }
+    }
+
+    /// Register a columnar collection as a queryable table.
+    pub fn register_columnar_collection(&self, name: &str) {
+        let columnar = match self.columnar.lock() {
+            Ok(c) => c,
+            Err(p) => p.into_inner(),
+        };
+        let Some(schema) = columnar.schema(name) else {
+            return;
+        };
+        let schema = schema.clone();
+
+        // Collect segment IDs and delete bitmaps.
+        drop(columnar);
+
+        let provider = ColumnarTableProvider::new(
+            name.to_string(),
+            &schema,
+            Arc::clone(&self.storage),
+            Vec::new(),
+            Vec::new(),
+        );
+        let _ = self.ctx.register_table(name, Arc::new(provider));
     }
 
     /// Execute a SQL query and return results.
@@ -182,6 +228,14 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
             return Some(self.handle_create_strict(sql).await);
         }
 
+        // CREATE COLLECTION ... WITH storage = 'columnar'
+        if upper.starts_with("CREATE COLLECTION ")
+            && upper.contains("STORAGE")
+            && upper.contains("COLUMNAR")
+        {
+            return Some(self.handle_create_columnar(sql).await);
+        }
+
         // DROP COLLECTION <name> — check if it's strict, handle accordingly.
         if upper.starts_with("DROP COLLECTION ") {
             let parts: Vec<&str> = sql.split_whitespace().collect();
@@ -200,6 +254,18 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
                 }; // Guard dropped here, before await.
                 if is_strict {
                     return Some(self.handle_drop_strict(&name_lower).await);
+                }
+
+                // Check if it's a columnar collection.
+                let is_columnar = {
+                    let columnar = match self.columnar.lock() {
+                        Ok(c) => c,
+                        Err(p) => p.into_inner(),
+                    };
+                    columnar.schema(&name_lower).is_some()
+                };
+                if is_columnar {
+                    return Some(self.handle_drop_columnar(&name_lower).await);
                 }
             }
         }
@@ -280,6 +346,80 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
             columns: vec!["result".into()],
             rows: vec![vec![Value::String(format!(
                 "strict collection '{name}' dropped"
+            ))]],
+            rows_affected: 0,
+        })
+    }
+
+    /// Handle: CREATE COLLECTION <name> (<col_defs>) WITH storage = 'columnar'
+    async fn handle_create_columnar(&self, sql: &str) -> Result<QueryResult, LiteError> {
+        // Reuse the same parser as strict — column defs are the same syntax.
+        let (name, strict_schema) = parse_strict_create_sql(sql)?;
+
+        // Convert StrictSchema → ColumnarSchema (same column defs, different wrapper).
+        let columnar_schema = nodedb_types::columnar::ColumnarSchema::new(strict_schema.columns)
+            .map_err(|e| LiteError::Query(e.to_string()))?;
+
+        // Determine profile from SQL (plain by default).
+        let upper = sql.to_uppercase();
+        let profile = if upper.contains("PROFILE") && upper.contains("SPATIAL") {
+            // Find the geometry column.
+            let geom_col = columnar_schema
+                .columns
+                .iter()
+                .find(|c| matches!(c.column_type, nodedb_types::columnar::ColumnType::Geometry))
+                .map(|c| c.name.clone())
+                .unwrap_or_default();
+            nodedb_types::columnar::ColumnarProfile::Spatial {
+                geometry_column: geom_col,
+                auto_rtree: true,
+                auto_geohash: true,
+            }
+        } else {
+            nodedb_types::columnar::ColumnarProfile::Plain
+        };
+
+        {
+            let mut columnar = match self.columnar.lock() {
+                Ok(c) => c,
+                Err(p) => p.into_inner(),
+            };
+            tokio::task::block_in_place(|| {
+                let handle = tokio::runtime::Handle::current();
+                handle.block_on(columnar.create_collection(&name, columnar_schema, profile))
+            })?;
+        }
+
+        self.register_columnar_collection(&name);
+
+        Ok(QueryResult {
+            columns: vec!["result".into()],
+            rows: vec![vec![Value::String(format!(
+                "columnar collection '{name}' created"
+            ))]],
+            rows_affected: 0,
+        })
+    }
+
+    /// Handle: DROP COLLECTION <name> (for columnar collections).
+    async fn handle_drop_columnar(&self, name: &str) -> Result<QueryResult, LiteError> {
+        {
+            let mut columnar = match self.columnar.lock() {
+                Ok(c) => c,
+                Err(p) => p.into_inner(),
+            };
+            tokio::task::block_in_place(|| {
+                let handle = tokio::runtime::Handle::current();
+                handle.block_on(columnar.drop_collection(name))
+            })?;
+        }
+
+        let _ = self.ctx.deregister_table(name);
+
+        Ok(QueryResult {
+            columns: vec!["result".into()],
+            rows: vec![vec![Value::String(format!(
+                "columnar collection '{name}' dropped"
             ))]],
             rows_affected: 0,
         })

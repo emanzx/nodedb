@@ -19,6 +19,7 @@ nodedb-graph = { workspace = true }
 nodedb-vector = { workspace = true }
 nodedb-document = { workspace = true }
 nodedb-strict = { workspace = true }
+nodedb-columnar = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }

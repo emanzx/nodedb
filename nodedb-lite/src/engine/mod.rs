@@ -1,3 +1,4 @@
+pub mod columnar;
 pub mod crdt;
 pub mod graph;
 pub mod spatial;

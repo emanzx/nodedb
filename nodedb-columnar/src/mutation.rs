@@ -250,6 +250,11 @@ impl MutationEngine {
         &self.pk_index
     }
 
+    /// Mutable access to the PK index (for cold-start rebuild).
+    pub fn pk_index_mut(&mut self) -> &mut PkIndex {
+        &mut self.pk_index
+    }
+
     /// Access a segment's delete bitmap.
     pub fn delete_bitmap(&self, segment_id: u32) -> Option<&DeleteBitmap> {
         self.delete_bitmaps.get(&segment_id)
