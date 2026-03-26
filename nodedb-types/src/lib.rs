@@ -1,4 +1,5 @@
 pub mod approx;
+pub mod bbox;
 pub mod collection;
 pub mod conversion;
 pub mod datetime;
@@ -19,6 +20,7 @@ pub mod value;
 pub mod vector_distance;
 
 pub use approx::{HyperLogLog, SpaceSaving, TDigest};
+pub use bbox::{BoundingBox, geometry_bbox};
 pub use collection::CollectionType;
 pub use datetime::{NdbDateTime, NdbDuration};
 pub use document::Document;

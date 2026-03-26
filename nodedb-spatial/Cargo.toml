@@ -1,0 +1,16 @@
+[package]
+name = "nodedb-spatial"
+description = "Spatial indexing and query operations shared between NodeDB Origin and NodeDB-Lite"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+nodedb-types = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

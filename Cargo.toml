@@ -15,6 +15,7 @@ members = [
   "nodedb-cli",
   "nodedb-query",
   "nodedb-codec",
+  "nodedb-spatial",
 ]
 resolver = "2"
 
@@ -37,6 +38,7 @@ nodedb-raft = { path = "nodedb-raft" }
 nodedb-cluster = { path = "nodedb-cluster" }
 nodedb-query = { path = "nodedb-query" }
 nodedb-codec = { path = "nodedb-codec" }
+nodedb-spatial = { path = "nodedb-spatial" }
 
 # Async runtimes
 tokio = { version = "1", features = ["full"] }
