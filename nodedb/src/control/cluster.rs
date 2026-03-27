@@ -140,9 +140,11 @@ pub fn start_raft(
         shared: shared.clone(),
     };
 
-    // Create the ClusterForwarder for executing forwarded queries locally.
-    let query_ctx = Arc::new(crate::control::planner::context::QueryContext::new());
-    let forwarder = Arc::new(crate::control::cluster_forwarder::ClusterForwarder::new(
+    // Create the LocalForwarder for executing forwarded queries on this node's
+    // local Data Plane. This is the canonical path for leader-side execution
+    // of queries forwarded by non-leader nodes via QUIC RPC.
+    let query_ctx = crate::control::planner::context::QueryContext::new();
+    let forwarder = Arc::new(crate::control::LocalForwarder::new(
         shared.clone(),
         query_ctx,
     ));
