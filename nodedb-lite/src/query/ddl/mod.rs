@@ -2,6 +2,7 @@
 
 pub mod alter;
 pub mod columnar;
+pub mod htap;
 pub mod parser;
 pub mod strict;
 #[cfg(test)]
@@ -26,6 +27,16 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
         sql: &str,
     ) -> Option<Result<QueryResult, LiteError>> {
         let upper = sql.trim().to_uppercase();
+
+        // CREATE MATERIALIZED VIEW <target> FROM <source> ...
+        if upper.starts_with("CREATE MATERIALIZED VIEW ") {
+            return Some(self.handle_create_materialized_view(sql).await);
+        }
+
+        // DROP MATERIALIZED VIEW <target>
+        if upper.starts_with("DROP MATERIALIZED VIEW ") {
+            return Some(self.handle_drop_materialized_view(sql).await);
+        }
 
         // CREATE TIMESERIES [COLLECTION] <name> ...
         if upper.starts_with("CREATE TIMESERIES ") {

@@ -13,6 +13,7 @@ use nodedb_types::value::Value;
 
 use crate::engine::columnar::ColumnarEngine;
 use crate::engine::crdt::CrdtEngine;
+use crate::engine::htap::HtapBridge;
 use crate::engine::strict::StrictEngine;
 use crate::error::LiteError;
 use crate::storage::engine::StorageEngine;
@@ -32,6 +33,7 @@ pub struct LiteQueryEngine<S: StorageEngine> {
     pub(in crate::query) crdt: Arc<Mutex<CrdtEngine>>,
     pub(in crate::query) strict: Arc<Mutex<StrictEngine<S>>>,
     pub(in crate::query) columnar: Arc<Mutex<ColumnarEngine<S>>>,
+    pub(in crate::query) htap: Arc<Mutex<HtapBridge>>,
     pub(in crate::query) storage: Arc<S>,
 }
 
@@ -41,6 +43,7 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
         crdt: Arc<Mutex<CrdtEngine>>,
         strict: Arc<Mutex<StrictEngine<S>>>,
         columnar: Arc<Mutex<ColumnarEngine<S>>>,
+        htap: Arc<Mutex<HtapBridge>>,
         storage: Arc<S>,
     ) -> Self {
         let config = SessionConfig::new()
@@ -54,6 +57,7 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
             crdt,
             strict,
             columnar,
+            htap,
             storage,
         }
     }
@@ -131,6 +135,70 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
         }
     }
 
+    /// Apply HTAP routing: for analytical queries, re-register source strict
+    /// tables to point at their materialized columnar views.
+    ///
+    /// Only applies when the HtapBridge has registered views. The source table
+    /// name is re-registered to point at the columnar view, so DataFusion
+    /// transparently reads from the faster columnar format.
+    fn apply_htap_routing(&self, sql: &str) {
+        use crate::engine::htap::routing::is_analytical_query;
+
+        if !is_analytical_query(sql) {
+            return;
+        }
+
+        let htap = match self.htap.lock() {
+            Ok(h) => h,
+            Err(p) => p.into_inner(),
+        };
+
+        if htap.is_empty() {
+            return;
+        }
+
+        // For each materialized view, re-register the source table name to
+        // point at the columnar view's table provider.
+        for target_name in htap.all_targets() {
+            if let Some(view) = htap.view_by_target(target_name) {
+                let source = view.source.clone();
+                let target = view.target.clone();
+                drop(htap); // Release lock before registering.
+
+                // Re-register the SOURCE name to point at the COLUMNAR target.
+                // This makes `SELECT ... FROM customers GROUP BY ...` read from
+                // the columnar materialized view instead of the strict B-tree.
+                self.register_columnar_collection_as(&target, &source);
+                return; // Only one routing redirect per query.
+            }
+        }
+    }
+
+    /// Register a columnar collection under a different table name.
+    ///
+    /// Used by HTAP routing to make a source table name point at its
+    /// materialized columnar view.
+    fn register_columnar_collection_as(&self, collection: &str, table_name: &str) {
+        let columnar = match self.columnar.lock() {
+            Ok(c) => c,
+            Err(p) => p.into_inner(),
+        };
+        let Some(schema) = columnar.schema(collection) else {
+            return;
+        };
+        let schema = schema.clone();
+        drop(columnar);
+
+        let provider = ColumnarTableProvider::new(
+            collection.to_string(),
+            &schema,
+            Arc::clone(&self.storage),
+            Vec::new(),
+            Vec::new(),
+        );
+        let _ = self.ctx.register_table(table_name, Arc::new(provider));
+    }
+
     /// Register a columnar collection as a queryable table.
     pub fn register_columnar_collection(&self, name: &str) {
         let columnar = match self.columnar.lock() {
@@ -167,6 +235,10 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
 
         // Auto-register collections mentioned in the query.
         self.register_all_collections();
+
+        // HTAP routing: for analytical queries, re-register source tables to point
+        // at their materialized columnar views (if any exist and session allows it).
+        self.apply_htap_routing(sql);
 
         let df = self
             .ctx

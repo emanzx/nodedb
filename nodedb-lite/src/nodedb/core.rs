@@ -10,6 +10,7 @@ use super::lock_ext::LockExt;
 use crate::engine::columnar::ColumnarEngine;
 use crate::engine::crdt::CrdtEngine;
 use crate::engine::graph::index::CsrIndex;
+use crate::engine::htap::HtapBridge;
 use crate::engine::strict::StrictEngine;
 use crate::engine::vector::graph::{HnswIndex, HnswParams};
 use crate::memory::{EngineId, MemoryGovernor};
@@ -58,6 +59,9 @@ pub struct NodeDbLite<S: StorageEngine> {
     /// Columnar engine (compressed segment collections).
     /// Arc-wrapped for sharing with the query engine's ColumnarTableProvider.
     pub(crate) columnar: Arc<Mutex<ColumnarEngine<S>>>,
+    /// HTAP bridge: CDC from strict → columnar materialized views.
+    /// Arc-wrapped for sharing with the query engine's DDL handlers.
+    pub(crate) htap: Arc<Mutex<HtapBridge>>,
 }
 
 impl<S: StorageEngine> NodeDbLite<S> {
@@ -179,10 +183,12 @@ impl<S: StorageEngine> NodeDbLite<S> {
         let crdt = Arc::new(Mutex::new(crdt));
         let strict = Arc::new(Mutex::new(strict));
         let columnar = Arc::new(Mutex::new(columnar));
+        let htap = Arc::new(Mutex::new(HtapBridge::new()));
         let query_engine = crate::query::LiteQueryEngine::new(
             Arc::clone(&crdt),
             Arc::clone(&strict),
             Arc::clone(&columnar),
+            Arc::clone(&htap),
             Arc::clone(&storage),
         );
 
@@ -199,6 +205,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             spatial: Mutex::new(spatial),
             strict,
             columnar,
+            htap,
         };
 
         // Rebuild text indices from CRDT state (cold start).
@@ -591,14 +598,12 @@ impl<S: StorageEngine> NodeDbLite<S> {
                 .clone()
         };
 
-        // Insert into storage.
-        {
+        // Insert into storage (drop guard before await).
+        tokio::task::block_in_place(|| {
             let strict = self.strict.lock_or_recover();
-            strict
-                .insert(collection, values)
-                .await
-                .map_err(NodeDbError::storage)?;
-        }
+            tokio::runtime::Handle::current().block_on(strict.insert(collection, values))
+        })
+        .map_err(NodeDbError::storage)?;
 
         // Build a row_id string from the PK value for index keying.
         let row_id = pk_to_string(&schema.columns, values);
@@ -613,6 +618,12 @@ impl<S: StorageEngine> NodeDbLite<S> {
             &self.spatial,
             &self.text_indices,
         );
+
+        // Replicate to materialized columnar views (HTAP CDC).
+        {
+            let mut htap = self.htap.lock_or_recover();
+            htap.replicate_insert(collection, values, &self.columnar);
+        }
 
         Ok(())
     }
@@ -643,11 +654,17 @@ impl<S: StorageEngine> NodeDbLite<S> {
             &self.text_indices,
         );
 
-        let strict = self.strict.lock_or_recover();
-        strict
-            .delete(collection, pk)
-            .await
-            .map_err(NodeDbError::storage)
+        // Replicate delete to materialized columnar views (HTAP CDC).
+        {
+            let mut htap = self.htap.lock_or_recover();
+            htap.replicate_delete(collection, pk, &self.columnar);
+        }
+
+        tokio::task::block_in_place(|| {
+            let strict = self.strict.lock_or_recover();
+            tokio::runtime::Handle::current().block_on(strict.delete(collection, pk))
+        })
+        .map_err(NodeDbError::storage)
     }
 
     /// Insert a row into a columnar collection and update secondary indexes.
@@ -752,14 +769,14 @@ fn pk_to_string(
     use nodedb_types::value::Value;
     let mut parts = Vec::new();
     for (i, col) in columns.iter().enumerate() {
-        if col.primary_key {
-            if let Some(val) = values.get(i) {
-                match val {
-                    Value::Integer(n) => parts.push(n.to_string()),
-                    Value::String(s) => parts.push(s.clone()),
-                    Value::Uuid(s) => parts.push(s.clone()),
-                    other => parts.push(format!("{other:?}")),
-                }
+        if col.primary_key
+            && let Some(val) = values.get(i)
+        {
+            match val {
+                Value::Integer(n) => parts.push(n.to_string()),
+                Value::String(s) => parts.push(s.clone()),
+                Value::Uuid(s) => parts.push(s.clone()),
+                other => parts.push(format!("{other:?}")),
             }
         }
     }

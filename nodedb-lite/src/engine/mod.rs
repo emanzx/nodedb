@@ -1,6 +1,7 @@
 pub mod columnar;
 pub mod crdt;
 pub mod graph;
+pub mod htap;
 pub mod index_integration;
 pub mod spatial;
 pub mod strict;
