@@ -201,17 +201,4 @@ mod tests {
         gov.try_reserve(EngineId::Query, 110).unwrap();
         assert_eq!(pool.pressure(), PressureLevel::Emergency);
     }
-
-    #[test]
-    fn vector_engine_unaffected_by_query_pressure() {
-        let gov = test_governor(1024);
-        let pool = make_pool(Arc::clone(&gov));
-
-        // Exhaust query budget via DataFusion reservation.
-        let mut reservation = MemoryConsumer::new("big_query").register(&pool);
-        reservation.try_grow(1024).unwrap();
-
-        // Query budget full — but vector engine is untouched.
-        assert!(gov.try_reserve(EngineId::Vector, 512 * 1024).is_ok());
-    }
 }

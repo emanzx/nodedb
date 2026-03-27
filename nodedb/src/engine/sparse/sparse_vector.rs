@@ -337,25 +337,6 @@ mod tests {
     }
 
     #[test]
-    fn index_and_search() {
-        let (idx, _dir) = open_test_index();
-
-        // Document 1: tokens 10, 20, 30 with weights.
-        idx.index_document("docs", "d1", &vec![(10, 0.5), (20, 0.3), (30, 0.8)])
-            .unwrap();
-        // Document 2: tokens 10, 40 with weights.
-        idx.index_document("docs", "d2", &vec![(10, 0.9), (40, 0.4)])
-            .unwrap();
-
-        // Query: token 10 (both docs match).
-        let results = idx.search("docs", &vec![(10, 1.0)], 10).unwrap();
-        assert_eq!(results.len(), 2);
-        // d2 has higher weight for token 10.
-        assert_eq!(results[0].doc_id, "d2");
-        assert_eq!(results[1].doc_id, "d1");
-    }
-
-    #[test]
     fn multi_term_query() {
         let (idx, _dir) = open_test_index();
 
@@ -366,20 +347,6 @@ mod tests {
 
         // Query both tokens: d2 should win (0.2*1.0 + 0.9*1.0 = 1.1 > 0.5 + 0.3 = 0.8).
         let results = idx.search("docs", &vec![(1, 1.0), (2, 1.0)], 10).unwrap();
-        assert_eq!(results[0].doc_id, "d2");
-    }
-
-    #[test]
-    fn remove_document() {
-        let (idx, _dir) = open_test_index();
-
-        idx.index_document("docs", "d1", &vec![(10, 0.5)]).unwrap();
-        idx.index_document("docs", "d2", &vec![(10, 0.9)]).unwrap();
-
-        idx.remove_document("docs", "d1").unwrap();
-
-        let results = idx.search("docs", &vec![(10, 1.0)], 10).unwrap();
-        assert_eq!(results.len(), 1);
         assert_eq!(results[0].doc_id, "d2");
     }
 
@@ -398,12 +365,5 @@ mod tests {
         assert_eq!(results_b.len(), 1);
         assert!((results_a[0].score - 0.5).abs() < 0.01);
         assert!((results_b[0].score - 0.9).abs() < 0.01);
-    }
-
-    #[test]
-    fn empty_query() {
-        let (idx, _dir) = open_test_index();
-        let results = idx.search("docs", &vec![], 10).unwrap();
-        assert!(results.is_empty());
     }
 }

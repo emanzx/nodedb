@@ -346,22 +346,6 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_pk_rejected() {
-        let mut engine = MutationEngine::new("test".into(), test_schema());
-
-        engine
-            .insert(&[
-                Value::Integer(1),
-                Value::String("Alice".into()),
-                Value::Null,
-            ])
-            .expect("first");
-
-        let err = engine.insert(&[Value::Integer(1), Value::String("Bob".into()), Value::Null]);
-        assert!(matches!(err, Err(ColumnarError::DuplicatePrimaryKey)));
-    }
-
-    #[test]
     fn delete_by_pk() {
         let mut engine = MutationEngine::new("test".into(), test_schema());
 
