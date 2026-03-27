@@ -45,7 +45,7 @@ impl HnswIndex {
         // Phase 1: Greedy descent from top layer to new_layer + 1.
         if self.max_layer > new_layer {
             for layer in (new_layer + 1..=self.max_layer).rev() {
-                let results = search_layer(self, &query, current_ep, 1, layer);
+                let results = search_layer(self, &query, current_ep, 1, layer, None);
                 if let Some(nearest) = results.first() {
                     current_ep = nearest.id;
                 }
@@ -56,7 +56,7 @@ impl HnswIndex {
         let insert_top = new_layer.min(self.max_layer);
         for layer in (0..=insert_top).rev() {
             let ef = self.params.ef_construction;
-            let candidates = search_layer(self, &query, current_ep, ef, layer);
+            let candidates = search_layer(self, &query, current_ep, ef, layer, None);
 
             let m = self.max_neighbors(layer);
             let selected = select_neighbors_heuristic(self, &candidates, m);

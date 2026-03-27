@@ -9,6 +9,53 @@ use std::collections::{BinaryHeap, HashSet};
 use crate::hnsw::{Candidate, HnswIndex, SearchResult};
 
 impl HnswIndex {
+    /// K-NN search with pre-filtering: only consider vectors whose IDs are in `allowed`.
+    ///
+    /// The graph is still traversed through all nodes for connectivity, but
+    /// only nodes in `allowed` are added to the result set. This gives much
+    /// better recall than post-filtering because the beam search can explore
+    /// deeper before filling the result set.
+    ///
+    /// `ef` is automatically scaled up to compensate for filter selectivity.
+    pub fn search_filtered(
+        &self,
+        query: &[f32],
+        k: usize,
+        ef: usize,
+        allowed: &HashSet<u32>,
+    ) -> Vec<SearchResult> {
+        assert_eq!(query.len(), self.dim, "query dimension mismatch");
+        if self.is_empty() || allowed.is_empty() {
+            return Vec::new();
+        }
+
+        let ef = ef.max(k);
+        let Some(ep) = self.entry_point else {
+            return Vec::new();
+        };
+
+        // Phase 1: Greedy descent from top layer to layer 1.
+        let mut current_ep = ep;
+        for layer in (1..=self.max_layer).rev() {
+            let results = search_layer(self, query, current_ep, 1, layer, None);
+            if let Some(nearest) = results.first() {
+                current_ep = nearest.id;
+            }
+        }
+
+        // Phase 2: Beam search at layer 0 with filter applied.
+        let results = search_layer(self, query, current_ep, ef, 0, Some(allowed));
+
+        results
+            .into_iter()
+            .take(k)
+            .map(|c| SearchResult {
+                id: c.id,
+                distance: c.dist,
+            })
+            .collect()
+    }
+
     /// K-NN search: find the `k` closest vectors to `query`.
     ///
     /// `ef` controls the search beam width (higher = better recall, slower).
@@ -27,14 +74,14 @@ impl HnswIndex {
         // Phase 1: Greedy descent from top layer to layer 1.
         let mut current_ep = ep;
         for layer in (1..=self.max_layer).rev() {
-            let results = search_layer(self, query, current_ep, 1, layer);
+            let results = search_layer(self, query, current_ep, 1, layer, None);
             if let Some(nearest) = results.first() {
                 current_ep = nearest.id;
             }
         }
 
         // Phase 2: Beam search at layer 0.
-        let results = search_layer(self, query, current_ep, ef, 0);
+        let results = search_layer(self, query, current_ep, ef, 0, None);
 
         results
             .into_iter()
@@ -47,17 +94,19 @@ impl HnswIndex {
     }
 }
 
-/// Search a single layer using beam search.
+/// Unified HNSW beam search on a single layer with optional pre-filter.
 ///
-/// Returns up to `ef` nearest candidates sorted by distance (ascending).
-/// Tombstoned nodes are excluded from results but still traversed for
-/// graph connectivity.
+/// When `allowed` is `None`, all non-deleted nodes enter the result set.
+/// When `allowed` is `Some`, only nodes in the set enter results, but all
+/// nodes are traversed for graph connectivity (preserves recall while filtering).
+/// Filtered mode uses a 3x internal beam to compensate for filter selectivity.
 pub(crate) fn search_layer(
     index: &HnswIndex,
     query: &[f32],
     entry_point: u32,
     ef: usize,
     layer: usize,
+    allowed: Option<&HashSet<u32>>,
 ) -> Vec<Candidate> {
     let mut visited: HashSet<u32> = HashSet::new();
     visited.insert(entry_point);
@@ -68,19 +117,20 @@ pub(crate) fn search_layer(
         id: entry_point,
     };
 
-    // Min-heap: closest unexplored candidates first.
     let mut candidates: BinaryHeap<Reverse<Candidate>> = BinaryHeap::new();
     candidates.push(Reverse(ep_candidate));
 
-    // Max-heap: best ef results found so far (worst at top for O(1) eviction).
     let mut results: BinaryHeap<Candidate> = BinaryHeap::new();
 
-    if !index.nodes[entry_point as usize].deleted {
+    let internal_ef = if allowed.is_some() { ef * 3 } else { ef };
+
+    let ep_passes = !index.nodes[entry_point as usize].deleted
+        && allowed.is_none_or(|a| a.contains(&entry_point));
+    if ep_passes {
         results.push(ep_candidate);
     }
 
     while let Some(Reverse(current)) = candidates.pop() {
-        // Termination: closest unexplored is worse than worst result.
         if let Some(worst) = results.peek()
             && current.dist > worst.dist
             && results.len() >= ef
@@ -104,19 +154,19 @@ pub(crate) fn search_layer(
                 id: neighbor_id,
             };
 
-            let dominated = match results.peek() {
-                Some(w) => dist >= w.dist && results.len() >= ef,
-                None => false,
-            };
+            let worst_dist = results.peek().map_or(f32::INFINITY, |w| w.dist);
+            let should_explore = dist < worst_dist || results.len() < internal_ef;
 
-            if !dominated {
+            if should_explore {
                 candidates.push(Reverse(neighbor));
+            }
 
-                if !index.nodes[neighbor_id as usize].deleted {
-                    results.push(neighbor);
-                    if results.len() > ef {
-                        results.pop();
-                    }
+            let passes = !index.nodes[neighbor_id as usize].deleted
+                && allowed.is_none_or(|a| a.contains(&neighbor_id));
+            if passes {
+                results.push(neighbor);
+                if results.len() > ef {
+                    results.pop();
                 }
             }
         }
@@ -239,6 +289,30 @@ mod tests {
         for r in &results {
             assert_ne!(r.id, 0, "tombstoned node appeared in results");
         }
+    }
+
+    #[test]
+    fn search_filtered_respects_allowed_set() {
+        let idx = build_index(50, 3);
+        // Only allow even IDs.
+        let allowed: std::collections::HashSet<u32> = (0..50).filter(|i| i % 2 == 0).collect();
+        let results = idx.search_filtered(&[0.0, 0.0, 0.0], 5, 64, &allowed);
+        assert_eq!(results.len(), 5);
+        for r in &results {
+            assert!(
+                r.id % 2 == 0,
+                "filtered result should only contain even IDs, got {}",
+                r.id
+            );
+        }
+    }
+
+    #[test]
+    fn search_filtered_empty_allowed_returns_empty() {
+        let idx = build_index(20, 3);
+        let allowed = std::collections::HashSet::new();
+        let results = idx.search_filtered(&[0.0, 0.0, 0.0], 5, 64, &allowed);
+        assert!(results.is_empty());
     }
 
     #[test]
