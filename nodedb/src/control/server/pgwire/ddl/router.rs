@@ -95,7 +95,7 @@ pub async fn dispatch(
     // Collection management.
     if upper.starts_with("CREATE COLLECTION ") {
         return Some(super::collection::create_collection(
-            state, identity, &parts,
+            state, identity, &parts, sql,
         ));
     }
     if upper.starts_with("DROP COLLECTION ") {
@@ -159,6 +159,14 @@ pub async fn dispatch(
     if upper.starts_with("ALTER COLLECTION ") && upper.contains("OWNER TO") {
         return Some(super::ownership::alter_collection_owner(
             state, identity, &parts,
+        ));
+    }
+
+    // ALTER TABLE ADD COLUMN — schema modification for strict/columnar collections.
+    if upper.starts_with("ALTER TABLE ") && (upper.contains("ADD COLUMN") || upper.contains("ADD "))
+    {
+        return Some(super::collection::alter_table_add_column(
+            state, identity, &parts, sql,
         ));
     }
 

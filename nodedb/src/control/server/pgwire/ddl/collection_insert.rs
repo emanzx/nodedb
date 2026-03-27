@@ -39,13 +39,21 @@ fn parse_write_statement(
     let coll_name_str = after_into.split_whitespace().next()?;
     let coll_name = coll_name_str.to_lowercase();
 
-    // Check if collection is schemaless.
+    // Check if collection is schemaless. Let DataFusion handle typed collections.
     let tenant_id = identity.tenant_id;
     if let Some(catalog) = state.credentials.catalog()
         && let Ok(Some(coll)) = catalog.get_collection(tenant_id.as_u32(), &coll_name)
-        && !coll.fields.is_empty()
     {
-        return None;
+        // Skip if collection has typed fields (handled by DataFusion).
+        if !coll.fields.is_empty() {
+            return None;
+        }
+        // Skip strict/columnar collections — they need schema-aware insert,
+        // not schemaless document insert. For now, dispatch them to the Data
+        // Plane which validates against the stored schema.
+        if coll.collection_type.is_strict() || coll.collection_type.is_columnar() {
+            return None;
+        }
     }
 
     // Parse column list.

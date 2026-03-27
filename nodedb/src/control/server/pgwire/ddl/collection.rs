@@ -23,6 +23,7 @@ pub fn create_collection(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     parts: &[&str],
+    sql: &str,
 ) -> PgWireResult<Vec<Response>> {
     if parts.len() < 3 {
         return Err(sqlstate_error(
@@ -54,14 +55,8 @@ pub fn create_collection(
     // Detect storage mode: WITH storage = 'strict' | 'columnar'.
     let upper = sql_upper_from_parts(parts);
     let collection_type = if upper.contains("STORAGE") && upper.contains("STRICT") {
-        nodedb_types::CollectionType::strict(
-            // Schema will be parsed below and stored in timeseries_config
-            // as JSON until StoredCollection gets a proper strict_schema field.
-            nodedb_types::columnar::StrictSchema {
-                columns: Vec::new(),
-                version: 1,
-            },
-        )
+        let schema = parse_typed_schema(sql).map_err(|e| sqlstate_error("42601", &e))?;
+        nodedb_types::CollectionType::strict(schema)
     } else if upper.contains("STORAGE") && upper.contains("COLUMNAR") {
         nodedb_types::CollectionType::columnar()
     } else {
@@ -70,6 +65,15 @@ pub fn create_collection(
 
     // Parse optional FIELDS clause: CREATE COLLECTION name FIELDS (field type, ...)
     let fields = parse_fields_clause(parts);
+
+    // For strict/columnar collections, serialize the schema as JSON in timeseries_config
+    // (reused for schema storage until StoredCollection gets a dedicated schema field).
+    let schema_json = match &collection_type {
+        nodedb_types::CollectionType::Document(nodedb_types::DocumentMode::Strict(schema)) => {
+            serde_json::to_string(schema).ok()
+        }
+        _ => None,
+    };
 
     let coll = StoredCollection {
         tenant_id: tenant_id.as_u32(),
@@ -80,7 +84,7 @@ pub fn create_collection(
         field_defs: Vec::new(),
         event_defs: Vec::new(),
         collection_type,
-        timeseries_config: None,
+        timeseries_config: schema_json,
         is_active: true,
     };
 
@@ -593,7 +597,220 @@ pub fn show_indexes(
     ))])
 }
 
+/// ALTER TABLE <name> ADD [COLUMN] <name> <type> [NOT NULL] [DEFAULT ...]
+pub fn alter_table_add_column(
+    state: &SharedState,
+    identity: &AuthenticatedIdentity,
+    parts: &[&str],
+    sql: &str,
+) -> PgWireResult<Vec<Response>> {
+    let table_name = parts
+        .get(2)
+        .ok_or_else(|| sqlstate_error("42601", "ALTER TABLE requires a table name"))?
+        .to_lowercase();
+    let tenant_id = identity.tenant_id;
+
+    // Find column def after ADD [COLUMN].
+    let upper = sql.to_uppercase();
+    let add_pos = upper
+        .find("ADD COLUMN ")
+        .map(|p| p + 11)
+        .or_else(|| upper.find("ADD ").map(|p| p + 4))
+        .ok_or_else(|| sqlstate_error("42601", "expected ADD [COLUMN]"))?;
+
+    let col_def_str = sql[add_pos..].trim();
+    let column = parse_origin_column_def(col_def_str).map_err(|e| sqlstate_error("42601", &e))?;
+    let column_name = column.name.clone(); // Save before potential move.
+
+    // Validate: new column must be nullable or have a default.
+    if !column.nullable && column.default.is_none() {
+        return Err(sqlstate_error(
+            "42601",
+            &format!(
+                "ALTER ADD COLUMN '{}': non-nullable column must have a DEFAULT",
+                column.name
+            ),
+        ));
+    }
+
+    // Verify collection exists.
+    if let Some(catalog) = state.credentials.catalog() {
+        match catalog.get_collection(tenant_id.as_u32(), &table_name) {
+            Ok(Some(coll)) if coll.is_active => {
+                // Update the stored schema if it's a strict collection.
+                if coll.collection_type.is_strict()
+                    && let Some(config_json) = &coll.timeseries_config
+                    && let Ok(mut schema) =
+                        serde_json::from_str::<nodedb_types::columnar::StrictSchema>(config_json)
+                {
+                    if schema.columns.iter().any(|c| c.name == column.name) {
+                        return Err(sqlstate_error(
+                            "42P07",
+                            &format!("column '{}' already exists", column.name),
+                        ));
+                    }
+                    schema.columns.push(column);
+                    schema.version = schema.version.saturating_add(1);
+
+                    let mut updated = coll;
+                    updated.timeseries_config = serde_json::to_string(&schema).ok();
+                    catalog
+                        .put_collection(&updated)
+                        .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;
+                }
+            }
+            _ => {
+                return Err(sqlstate_error(
+                    "42P01",
+                    &format!("collection '{table_name}' does not exist"),
+                ));
+            }
+        }
+    }
+
+    state.audit_record(
+        AuditEvent::AdminAction,
+        Some(tenant_id),
+        &identity.username,
+        &format!("ALTER TABLE '{table_name}' ADD COLUMN '{column_name}'"),
+    );
+
+    Ok(vec![Response::Execution(Tag::new("ALTER TABLE"))])
+}
+
 /// Reconstruct uppercase SQL from split parts for keyword detection.
 fn sql_upper_from_parts(parts: &[&str]) -> String {
     parts.join(" ").to_uppercase()
+}
+
+/// Parse column definitions from a CREATE COLLECTION SQL statement into a StrictSchema.
+///
+/// Extracts the parenthesized column list: `(id BIGINT NOT NULL PRIMARY KEY, name TEXT, ...)`.
+/// Auto-generates `_rowid` PK if no PK column is declared.
+fn parse_typed_schema(sql: &str) -> Result<nodedb_types::columnar::StrictSchema, String> {
+    use nodedb_types::columnar::{ColumnDef, ColumnType, StrictSchema};
+
+    // Find parenthesized column definitions.
+    let paren_start = sql
+        .find('(')
+        .ok_or("expected column definitions in parentheses")?;
+
+    // Find matching close paren (handle nested parens for VECTOR(dim)).
+    let mut depth = 0;
+    let mut paren_end = None;
+    for (i, b) in sql.bytes().enumerate().skip(paren_start) {
+        match b {
+            b'(' => depth += 1,
+            b')' => {
+                depth -= 1;
+                if depth == 0 {
+                    paren_end = Some(i);
+                    break;
+                }
+            }
+            _ => {}
+        }
+    }
+    let paren_end = paren_end.ok_or("unmatched parenthesis")?;
+    let col_defs_str = &sql[paren_start + 1..paren_end];
+
+    // Split by top-level commas.
+    let mut columns = Vec::new();
+    let mut depth = 0;
+    let mut start = 0;
+    for (i, c) in col_defs_str.char_indices() {
+        match c {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            ',' if depth == 0 => {
+                let part = col_defs_str[start..i].trim();
+                if !part.is_empty() {
+                    columns.push(parse_origin_column_def(part)?);
+                }
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    let last = col_defs_str[start..].trim();
+    if !last.is_empty() {
+        columns.push(parse_origin_column_def(last)?);
+    }
+
+    if columns.is_empty() {
+        return Err("at least one column required".into());
+    }
+
+    // Auto-generate _rowid PK if none declared.
+    if !columns.iter().any(|c| c.primary_key) {
+        columns.insert(
+            0,
+            ColumnDef::required("_rowid", ColumnType::Int64).with_primary_key(),
+        );
+    }
+
+    StrictSchema::new(columns).map_err(|e| e.to_string())
+}
+
+/// Parse a single column definition: `name TYPE [NOT NULL] [PRIMARY KEY] [DEFAULT expr]`
+fn parse_origin_column_def(s: &str) -> Result<nodedb_types::columnar::ColumnDef, String> {
+    use nodedb_types::columnar::{ColumnDef, ColumnType};
+
+    let upper = s.to_uppercase();
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 2 {
+        return Err(format!(
+            "column definition requires name and type, got: '{s}'"
+        ));
+    }
+
+    let name = tokens[0].to_lowercase();
+
+    // Find the type string (may span tokens for VECTOR(dim)).
+    let keywords = [" NOT ", " NULL", " PRIMARY ", " DEFAULT "];
+    let type_end = keywords
+        .iter()
+        .filter_map(|kw| upper[name.len()..].find(kw))
+        .min()
+        .map(|p| p + name.len())
+        .unwrap_or(s.len());
+    let type_str = s[name.len()..type_end].trim();
+
+    let column_type: ColumnType = type_str
+        .parse()
+        .map_err(|e: nodedb_types::columnar::ColumnTypeParseError| e.to_string())?;
+
+    let is_not_null = upper.contains("NOT NULL");
+    let is_pk = upper.contains("PRIMARY KEY");
+    let nullable = !is_not_null && !is_pk;
+
+    let default = if let Some(pos) = upper.find("DEFAULT ") {
+        let after_default = s[pos + 8..].trim();
+        let end = keywords
+            .iter()
+            .filter_map(|kw| after_default.to_uppercase().find(kw))
+            .min()
+            .unwrap_or(after_default.len());
+        let expr = after_default[..end].trim();
+        if expr.is_empty() {
+            None
+        } else {
+            Some(expr.to_string())
+        }
+    } else {
+        None
+    };
+
+    let mut col = if nullable {
+        ColumnDef::nullable(name, column_type)
+    } else {
+        ColumnDef::required(name, column_type)
+    };
+    if is_pk {
+        col = col.with_primary_key();
+    }
+    if let Some(d) = default {
+        col = col.with_default(d);
+    }
+    Ok(col)
 }
