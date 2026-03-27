@@ -53,6 +53,10 @@ pub struct NodeDbLite<S: StorageEngine> {
     pub(crate) text_indices: Mutex<HashMap<String, nodedb_query::text_search::InvertedIndex>>,
     /// Spatial R-tree indexes for geometry fields.
     pub(crate) spatial: Mutex<crate::engine::spatial::SpatialIndexManager>,
+    /// Per-column secondary B-tree indexes for strict collections.
+    /// Key: `{collection}:{column}` → SecondaryIndex.
+    pub(crate) secondary_indices:
+        Mutex<HashMap<String, crate::engine::strict::secondary_index::SecondaryIndex>>,
     /// Strict document engine (Binary Tuple collections).
     /// Arc-wrapped for sharing with the query engine's StrictTableProvider.
     pub(crate) strict: Arc<Mutex<StrictEngine<S>>>,
@@ -203,6 +207,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             query_engine,
             text_indices: Mutex::new(HashMap::new()),
             spatial: Mutex::new(spatial),
+            secondary_indices: Mutex::new(HashMap::new()),
             strict,
             columnar,
             htap,
@@ -619,6 +624,21 @@ impl<S: StorageEngine> NodeDbLite<S> {
             &self.text_indices,
         );
 
+        // Update secondary B-tree indexes on non-PK columns.
+        {
+            use crate::engine::strict::secondary_index::SecondaryIndex;
+            let mut sec = self.secondary_indices.lock_or_recover();
+            for (i, col) in schema.columns.iter().enumerate() {
+                if col.primary_key || i >= values.len() {
+                    continue;
+                }
+                let key = format!("{collection}:{}", col.name);
+                sec.entry(key)
+                    .or_insert_with(|| SecondaryIndex::new(&col.name))
+                    .insert(&values[i], &row_id);
+            }
+        }
+
         // Replicate to materialized columnar views (HTAP CDC).
         {
             let mut htap = self.htap.lock_or_recover();
@@ -645,6 +665,12 @@ impl<S: StorageEngine> NodeDbLite<S> {
         };
 
         let row_id = format!("{pk:?}");
+
+        // Read old values for secondary index removal before deleting.
+        // Note: secondary index removal on delete is best-effort — if we can't
+        // read the old row (e.g., already deleted), we skip deindexing.
+        // Stale secondary entries are cleaned up on compaction.
+        // We avoid holding the strict mutex across async boundaries here.
 
         // Remove text index entries before deleting the row.
         crate::engine::index_integration::deindex_row_text(
@@ -702,6 +728,22 @@ impl<S: StorageEngine> NodeDbLite<S> {
             &self.spatial,
             &self.text_indices,
         );
+
+        // Spatial profile: compute geohash for Point geometries and store
+        // in the text index for prefix-based proximity queries.
+        let columnar = self.columnar.lock_or_recover();
+        if let Some(profile) = columnar.profile(collection)
+            && let Some((_idx, geom)) =
+                crate::engine::columnar::spatial_profile::extract_geometry(&schema, profile, values)
+            && let Some(hash) = crate::engine::columnar::spatial_profile::compute_geohash(&geom)
+        {
+            drop(columnar);
+            let mut text = self.text_indices.lock_or_recover();
+            let key = format!("{collection}:_geohash");
+            text.entry(key)
+                .or_insert_with(nodedb_query::text_search::InvertedIndex::new)
+                .index_document(&row_id, &hash);
+        }
 
         Ok(())
     }

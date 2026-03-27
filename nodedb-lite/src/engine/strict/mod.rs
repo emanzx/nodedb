@@ -2,6 +2,7 @@ pub mod arrow;
 pub mod crud;
 pub mod engine;
 pub mod schema;
+pub mod secondary_index;
 #[cfg(test)]
 mod tests;
 
