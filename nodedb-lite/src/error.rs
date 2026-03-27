@@ -63,6 +63,14 @@ impl From<redb::StorageError> for LiteError {
     }
 }
 
+impl From<nodedb_types::columnar::SchemaError> for LiteError {
+    fn from(e: nodedb_types::columnar::SchemaError) -> Self {
+        Self::BadRequest {
+            detail: e.to_string(),
+        }
+    }
+}
+
 impl From<LiteError> for nodedb_types::error::NodeDbError {
     fn from(e: LiteError) -> Self {
         nodedb_types::error::NodeDbError::storage(e)

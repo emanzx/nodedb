@@ -6,6 +6,7 @@ pub mod parser;
 pub mod strict;
 #[cfg(test)]
 mod tests;
+pub mod timeseries;
 
 pub(crate) use parser::describe_strict_collection;
 
@@ -25,6 +26,11 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
         sql: &str,
     ) -> Option<Result<QueryResult, LiteError>> {
         let upper = sql.trim().to_uppercase();
+
+        // CREATE TIMESERIES [COLLECTION] <name> ...
+        if upper.starts_with("CREATE TIMESERIES ") {
+            return Some(self.handle_create_timeseries(sql).await);
+        }
 
         // CREATE COLLECTION ... WITH storage = 'strict'
         if upper.starts_with("CREATE COLLECTION ")

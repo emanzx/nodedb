@@ -353,8 +353,20 @@ impl<S: StorageEngine> ColumnarEngine<S> {
     }
 
     /// Delete a row by PK.
+    ///
+    /// Rejects deletion on timeseries collections (append-only constraint).
     pub fn delete(&mut self, collection: &str, pk: &Value) -> Result<bool, LiteError> {
         let state = self.get_state_mut(collection)?;
+
+        // Timeseries profile is append-only — DELETE not allowed.
+        if matches!(state.profile, ColumnarProfile::Timeseries { .. }) {
+            return Err(LiteError::BadRequest {
+                detail: format!(
+                    "DELETE not allowed on timeseries collection '{collection}' (append-only)"
+                ),
+            });
+        }
+
         match state.mutation.delete(pk) {
             Ok(_) => Ok(true),
             Err(nodedb_columnar::ColumnarError::PrimaryKeyNotFound) => Ok(false),
@@ -363,6 +375,8 @@ impl<S: StorageEngine> ColumnarEngine<S> {
     }
 
     /// Update a row: DELETE old + INSERT new.
+    ///
+    /// Rejects update on timeseries collections (append-only constraint).
     pub fn update(
         &mut self,
         collection: &str,
@@ -370,6 +384,16 @@ impl<S: StorageEngine> ColumnarEngine<S> {
         new_values: &[Value],
     ) -> Result<bool, LiteError> {
         let state = self.get_state_mut(collection)?;
+
+        // Timeseries profile is append-only — UPDATE not allowed.
+        if matches!(state.profile, ColumnarProfile::Timeseries { .. }) {
+            return Err(LiteError::BadRequest {
+                detail: format!(
+                    "UPDATE not allowed on timeseries collection '{collection}' (append-only)"
+                ),
+            });
+        }
+
         match state.mutation.update(old_pk, new_values) {
             Ok(_) => Ok(true),
             Err(nodedb_columnar::ColumnarError::PrimaryKeyNotFound) => Ok(false),
