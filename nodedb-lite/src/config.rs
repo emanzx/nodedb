@@ -47,6 +47,31 @@ pub struct LiteConfig {
 
     /// Percentage of `memory_budget` reserved for query scratch space. Default: 15.
     pub query_percent: usize,
+
+    /// Argon2id memory cost in KiB. Default: 19 MiB (19_456 KiB).
+    /// Corresponds to the OWASP recommended minimum for interactive login.
+    #[serde(default = "default_argon2_m_cost")]
+    pub argon2_m_cost: u32,
+
+    /// Argon2id iteration count. Default: 2.
+    #[serde(default = "default_argon2_t_cost")]
+    pub argon2_t_cost: u32,
+
+    /// Argon2id parallelism lanes. Default: 1.
+    #[serde(default = "default_argon2_p_cost")]
+    pub argon2_p_cost: u32,
+}
+
+fn default_argon2_m_cost() -> u32 {
+    19_456
+}
+
+fn default_argon2_t_cost() -> u32 {
+    2
+}
+
+fn default_argon2_p_cost() -> u32 {
+    1
 }
 
 impl Default for LiteConfig {
@@ -57,6 +82,9 @@ impl Default for LiteConfig {
             csr_percent: 15,
             loro_percent: 15,
             query_percent: 15,
+            argon2_m_cost: default_argon2_m_cost(),
+            argon2_t_cost: default_argon2_t_cost(),
+            argon2_p_cost: default_argon2_p_cost(),
         }
     }
 }
@@ -142,6 +170,9 @@ mod tests {
         assert_eq!(cfg.csr_percent, 15);
         assert_eq!(cfg.loro_percent, 15);
         assert_eq!(cfg.query_percent, 15);
+        assert_eq!(cfg.argon2_m_cost, 19_456);
+        assert_eq!(cfg.argon2_t_cost, 2);
+        assert_eq!(cfg.argon2_p_cost, 1);
     }
 
     #[test]

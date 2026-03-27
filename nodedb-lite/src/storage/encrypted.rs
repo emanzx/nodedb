@@ -27,11 +27,6 @@ const SALT_SIZE: usize = 16;
 /// Meta key for the stored salt.
 const SALT_KEY: &[u8] = b"encryption:salt";
 
-/// Argon2id parameters (OWASP recommended minimums for interactive login).
-const ARGON2_M_COST: u32 = 19_456; // 19 MiB
-const ARGON2_T_COST: u32 = 2; // 2 iterations
-const ARGON2_P_COST: u32 = 1; // 1 lane
-
 /// Encrypted storage wrapper.
 ///
 /// Encrypts all values with AES-256-GCM. Keys are plaintext (needed for scans).
@@ -61,9 +56,19 @@ impl<S: StorageEngine> EncryptedStorage<S> {
     /// On first use (no salt stored), generates a random salt and stores it.
     /// On subsequent opens, reads the existing salt for key derivation.
     ///
+    /// `m_cost`, `t_cost`, and `p_cost` are the Argon2id parameters (memory in
+    /// KiB, iteration count, and parallelism lanes respectively). Callers should
+    /// obtain these from [`crate::config::LiteConfig`].
+    ///
     /// # Errors
     /// Returns `LiteError` if salt generation fails or the storage is inaccessible.
-    pub async fn open(inner: S, passphrase: &str) -> Result<Self, LiteError> {
+    pub async fn open(
+        inner: S,
+        passphrase: &str,
+        m_cost: u32,
+        t_cost: u32,
+        p_cost: u32,
+    ) -> Result<Self, LiteError> {
         // Read or generate salt.
         let salt = match inner.get(Namespace::Meta, SALT_KEY).await? {
             Some(existing_salt) => {
@@ -95,11 +100,11 @@ impl<S: StorageEngine> EncryptedStorage<S> {
         let argon2 = argon2::Argon2::new(
             argon2::Algorithm::Argon2id,
             argon2::Version::V0x13,
-            argon2::Params::new(ARGON2_M_COST, ARGON2_T_COST, ARGON2_P_COST, Some(32)).map_err(
-                |e| LiteError::Storage {
+            argon2::Params::new(m_cost, t_cost, p_cost, Some(32)).map_err(|e| {
+                LiteError::Storage {
                     detail: format!("argon2 params: {e}"),
-                },
-            )?,
+                }
+            })?,
         );
         argon2
             .hash_password_into(passphrase.as_bytes(), &salt, &mut key_bytes)
@@ -253,13 +258,21 @@ impl<S: StorageEngine> StorageEngine for EncryptedStorage<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::LiteConfig;
     use crate::storage::redb_storage::RedbStorage;
 
     async fn make_encrypted() -> EncryptedStorage<RedbStorage> {
+        let cfg = LiteConfig::default();
         let inner = RedbStorage::open_in_memory().unwrap();
-        EncryptedStorage::open(inner, "test-passphrase-123")
-            .await
-            .unwrap()
+        EncryptedStorage::open(
+            inner,
+            "test-passphrase-123",
+            cfg.argon2_m_cost,
+            cfg.argon2_t_cost,
+            cfg.argon2_p_cost,
+        )
+        .await
+        .unwrap()
     }
 
     #[tokio::test]
@@ -296,10 +309,19 @@ mod tests {
 
     #[tokio::test]
     async fn wrong_passphrase_fails_decrypt() {
+        let cfg = LiteConfig::default();
         let inner = RedbStorage::open_in_memory().unwrap();
         // Write with passphrase A.
         {
-            let s = EncryptedStorage::open(inner, "passphrase-A").await.unwrap();
+            let s = EncryptedStorage::open(
+                inner,
+                "passphrase-A",
+                cfg.argon2_m_cost,
+                cfg.argon2_t_cost,
+                cfg.argon2_p_cost,
+            )
+            .await
+            .unwrap();
             s.put(Namespace::Vector, b"secret", b"classified data")
                 .await
                 .unwrap();

@@ -20,6 +20,7 @@ use super::LockExt;
 use super::NodeDbLite;
 use super::convert::{loro_value_to_document, value_to_loro};
 use crate::engine::graph::index::Direction;
+use crate::engine::graph::traversal::DEFAULT_MAX_VISITED;
 use crate::storage::engine::StorageEngine;
 
 /// Internal fields to exclude from metadata by index type.
@@ -256,6 +257,7 @@ impl<S: StorageEngine> NodeDb for NodeDbLite<S> {
             &label_strs,
             Direction::Out,
             depth as usize,
+            DEFAULT_MAX_VISITED,
         );
 
         let crdt = self.crdt.lock_or_recover();
@@ -512,7 +514,13 @@ impl<S: StorageEngine> NodeDb for NodeDbLite<S> {
             .and_then(|f| f.labels.first())
             .map(|s| s.as_str());
 
-        let path = csr.shortest_path(from.as_str(), to.as_str(), label_filter, max_depth as usize);
+        let path = csr.shortest_path(
+            from.as_str(),
+            to.as_str(),
+            label_filter,
+            max_depth as usize,
+            DEFAULT_MAX_VISITED,
+        );
 
         Ok(path.map(|p| p.into_iter().map(NodeId::new).collect()))
     }
