@@ -57,6 +57,22 @@ impl CoreLoop {
                 entries,
                 ttl_ms,
             } => self.execute_kv_batch_put(task, tid, collection, entries, *ttl_ms),
+            KvOp::RegisterIndex {
+                collection,
+                field,
+                field_position,
+                backfill,
+            } => self.execute_kv_register_index(
+                task,
+                tid,
+                collection,
+                field,
+                *field_position,
+                *backfill,
+            ),
+            KvOp::DropIndex { collection, field } => {
+                self.execute_kv_drop_index(task, tid, collection, field)
+            }
         }
     }
 
@@ -227,6 +243,48 @@ impl CoreLoop {
         let payload = serde_json::json!({ "inserted": new_count })
             .to_string()
             .into_bytes();
+        self.response_with_payload(task, payload)
+    }
+
+    fn execute_kv_register_index(
+        &mut self,
+        task: &ExecutionTask,
+        tid: u32,
+        collection: &str,
+        field: &str,
+        field_position: usize,
+        backfill: bool,
+    ) -> Response {
+        debug!(core = self.core_id, %collection, %field, "kv register index");
+        let now_ms = current_ms();
+        let backfilled =
+            self.kv_engine
+                .register_index(tid, collection, field, field_position, backfill, now_ms);
+        let payload = serde_json::json!({
+            "index": field,
+            "backfilled": backfilled,
+            "write_amp_estimate": format!("{:.0}%", 15.0 + 10.0 * self.kv_engine.index_count(tid, collection) as f64),
+        })
+        .to_string()
+        .into_bytes();
+        self.response_with_payload(task, payload)
+    }
+
+    fn execute_kv_drop_index(
+        &mut self,
+        task: &ExecutionTask,
+        tid: u32,
+        collection: &str,
+        field: &str,
+    ) -> Response {
+        debug!(core = self.core_id, %collection, %field, "kv drop index");
+        let removed = self.kv_engine.drop_index(tid, collection, field);
+        let payload = serde_json::json!({
+            "index": field,
+            "entries_removed": removed,
+        })
+        .to_string()
+        .into_bytes();
         self.response_with_payload(task, payload)
     }
 }

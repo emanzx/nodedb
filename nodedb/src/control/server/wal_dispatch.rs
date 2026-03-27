@@ -238,6 +238,29 @@ pub fn wal_append_if_write_with_creds(
             })?;
             wal.append_put(tenant_id, vshard_id, &entry)?;
         }
+        PhysicalPlan::Kv(KvOp::RegisterIndex {
+            collection,
+            field,
+            field_position,
+            backfill: _,
+        }) => {
+            let entry =
+                rmp_serde::to_vec(&("kv_register_index", collection, field, field_position))
+                    .map_err(|e| crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal kv register index: {e}"),
+                    })?;
+            wal.append_put(tenant_id, vshard_id, &entry)?;
+        }
+        PhysicalPlan::Kv(KvOp::DropIndex { collection, field }) => {
+            let entry = rmp_serde::to_vec(&("kv_drop_index", collection, field)).map_err(|e| {
+                crate::Error::Serialization {
+                    format: "msgpack".into(),
+                    detail: format!("wal kv drop index: {e}"),
+                }
+            })?;
+            wal.append_put(tenant_id, vshard_id, &entry)?;
+        }
         // Read operations and control commands: no WAL needed.
         _ => {}
     }

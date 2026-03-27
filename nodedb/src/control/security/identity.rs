@@ -250,7 +250,9 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
             | KvOp::Delete { .. }
             | KvOp::Expire { .. }
             | KvOp::Persist { .. }
-            | KvOp::BatchPut { .. },
+            | KvOp::BatchPut { .. }
+            | KvOp::RegisterIndex { .. }
+            | KvOp::DropIndex { .. },
         ) => Permission::Write,
     }
 }

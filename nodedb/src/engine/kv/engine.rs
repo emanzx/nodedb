@@ -6,9 +6,13 @@
 
 use std::collections::HashMap;
 
+use super::engine_helpers::{
+    expiry_key, extract_all_field_values_from_msgpack, parse_expiry_key, table_key,
+};
 use super::entry::NO_EXPIRY;
 use super::expiry_wheel::ExpiryWheel;
 use super::hash_table::KvHashTable;
+use super::index::KvIndexSet;
 
 /// Result of a KV SCAN operation: `(entries, next_cursor_bytes)`.
 ///
@@ -22,7 +26,9 @@ pub type ScanResult = (Vec<(Vec<u8>, Vec<u8>)>, Vec<u8>);
 /// Dispatched from the Data Plane executor via `PhysicalPlan::Kv(KvOp)`.
 pub struct KvEngine {
     /// Per-collection hash tables. Key: "{tenant_id}:{collection}".
-    tables: HashMap<String, KvHashTable>,
+    pub(super) tables: HashMap<String, KvHashTable>,
+    /// Per-collection secondary index sets. Key: "{tenant_id}:{collection}".
+    pub(super) indexes: HashMap<String, KvIndexSet>,
     /// Shared expiry wheel across all collections on this core.
     expiry: ExpiryWheel,
     /// Default tuning parameters for new collections.
@@ -45,6 +51,7 @@ impl KvEngine {
     ) -> Self {
         Self {
             tables: HashMap::new(),
+            indexes: HashMap::new(),
             expiry: ExpiryWheel::new(now_ms, expiry_tick_ms, expiry_reap_budget),
             default_capacity,
             load_factor_threshold,
@@ -126,12 +133,32 @@ impl KvEngine {
         }
 
         let table = self.table(tenant_id, collection);
-        let old = table.put(key.clone(), value, expire_at);
+        let old = table.put(key.clone(), value.clone(), expire_at);
 
         // Schedule new expiry.
         if expire_at != NO_EXPIRY {
             let composite = expiry_key(tenant_id, collection, &key);
             self.expiry.insert(composite, expire_at);
+        }
+
+        // Secondary index maintenance (zero-index fast path: skip if no indexes).
+        if let Some(idx_set) = self.indexes.get_mut(&tkey)
+            && !idx_set.is_empty()
+        {
+            let new_fields = extract_all_field_values_from_msgpack(&value);
+            let old_fields = old
+                .as_ref()
+                .map(|v| extract_all_field_values_from_msgpack(v));
+
+            let new_refs: Vec<(&str, &[u8])> = new_fields
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_slice()))
+                .collect();
+            let old_refs: Option<Vec<(&str, &[u8])>> = old_fields
+                .as_ref()
+                .map(|f| f.iter().map(|(k, v)| (k.as_str(), v.as_slice())).collect());
+
+            idx_set.on_put(&key, &new_refs, old_refs.as_deref());
         }
 
         old
@@ -152,6 +179,8 @@ impl KvEngine {
         };
 
         let mut count = 0;
+        let has_indexes = self.indexes.get(&tkey).is_some_and(|s| !s.is_empty());
+
         for key in keys {
             // Cancel expiry if the key had one.
             if let Some(meta) = table.get_entry_meta(key)
@@ -161,8 +190,28 @@ impl KvEngine {
                 self.expiry.cancel(&composite, meta.expire_at_ms);
             }
 
+            // Extract field values before deletion (for index cleanup).
+            let old_fields = if has_indexes {
+                table
+                    .get(key, now_ms)
+                    .map(extract_all_field_values_from_msgpack)
+            } else {
+                None
+            };
+
             if table.delete(key, now_ms) {
                 count += 1;
+
+                // Clean up secondary indexes.
+                if let Some(fields) = &old_fields
+                    && let Some(idx_set) = self.indexes.get_mut(&tkey)
+                {
+                    let refs: Vec<(&str, &[u8])> = fields
+                        .iter()
+                        .map(|(k, v)| (k.as_str(), v.as_slice()))
+                        .collect();
+                    idx_set.on_delete(key, &refs);
+                }
             }
         }
         count
@@ -358,35 +407,6 @@ impl KvEngine {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Key encoding helpers
-// ---------------------------------------------------------------------------
-
-/// Construct the per-collection hash table key: "{tenant_id}:{collection}".
-fn table_key(tenant_id: u32, collection: &str) -> String {
-    format!("{tenant_id}:{collection}")
-}
-
-/// Construct a composite key for the expiry wheel: "{tenant_id}:{collection}\0{key_bytes}".
-/// The null byte separator is safe because collection names can't contain null.
-fn expiry_key(tenant_id: u32, collection: &str, key: &[u8]) -> Vec<u8> {
-    let prefix = format!("{tenant_id}:{collection}\0");
-    let mut composite = prefix.into_bytes();
-    composite.extend_from_slice(key);
-    composite
-}
-
-/// Parse a composite expiry key back into (tenant_id, collection, key_bytes).
-fn parse_expiry_key(composite: &[u8]) -> Option<(u32, String, Vec<u8>)> {
-    let null_pos = composite.iter().position(|&b| b == 0)?;
-    let prefix = std::str::from_utf8(&composite[..null_pos]).ok()?;
-    let colon_pos = prefix.find(':')?;
-    let tenant_id: u32 = prefix[..colon_pos].parse().ok()?;
-    let collection = prefix[colon_pos + 1..].to_string();
-    let key = composite[null_pos + 1..].to_vec();
-    Some((tenant_id, collection, key))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -505,5 +525,165 @@ mod tests {
         assert_eq!(e.total_entries(), 10);
         assert_eq!(e.collection_len(1, "c"), 10);
         assert!(e.total_mem_usage() > 0);
+    }
+
+    /// Helper: create a MessagePack-encoded JSON object value.
+    fn mp_obj(fields: &[(&str, &str)]) -> Vec<u8> {
+        let obj: serde_json::Map<String, serde_json::Value> = fields
+            .iter()
+            .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string())))
+            .collect();
+        rmp_serde::to_vec(&serde_json::Value::Object(obj)).unwrap()
+    }
+
+    #[test]
+    fn register_index_and_lookup() {
+        let mut e = make_engine();
+        let n = now();
+
+        // Insert some entries before creating the index.
+        e.put(
+            1,
+            "sessions",
+            b"s1".to_vec(),
+            mp_obj(&[("region", "us-east"), ("status", "active")]),
+            0,
+            n,
+        );
+        e.put(
+            1,
+            "sessions",
+            b"s2".to_vec(),
+            mp_obj(&[("region", "us-east"), ("status", "inactive")]),
+            0,
+            n,
+        );
+        e.put(
+            1,
+            "sessions",
+            b"s3".to_vec(),
+            mp_obj(&[("region", "eu-west"), ("status", "active")]),
+            0,
+            n,
+        );
+
+        // Create index with backfill.
+        let backfilled = e.register_index(1, "sessions", "region", 0, true, n);
+        assert_eq!(backfilled, 3);
+
+        // Lookup by indexed field.
+        let us_east = e.index_lookup_eq(1, "sessions", "region", b"us-east");
+        assert_eq!(us_east.len(), 2);
+        assert!(us_east.contains(&b"s1".to_vec()));
+        assert!(us_east.contains(&b"s2".to_vec()));
+
+        let eu_west = e.index_lookup_eq(1, "sessions", "region", b"eu-west");
+        assert_eq!(eu_west.len(), 1);
+    }
+
+    #[test]
+    fn index_maintained_on_put() {
+        let mut e = make_engine();
+        let n = now();
+
+        // Create index first (no backfill needed — empty collection).
+        e.register_index(1, "c", "status", 0, false, n);
+
+        // Insert.
+        e.put(
+            1,
+            "c",
+            b"k1".to_vec(),
+            mp_obj(&[("status", "active")]),
+            0,
+            n,
+        );
+        assert_eq!(e.index_lookup_eq(1, "c", "status", b"active").len(), 1);
+
+        // Update: status changes.
+        e.put(
+            1,
+            "c",
+            b"k1".to_vec(),
+            mp_obj(&[("status", "inactive")]),
+            0,
+            n,
+        );
+        assert!(e.index_lookup_eq(1, "c", "status", b"active").is_empty());
+        assert_eq!(e.index_lookup_eq(1, "c", "status", b"inactive").len(), 1);
+    }
+
+    #[test]
+    fn index_cleaned_on_delete() {
+        let mut e = make_engine();
+        let n = now();
+
+        e.register_index(1, "c", "region", 0, false, n);
+        e.put(1, "c", b"k1".to_vec(), mp_obj(&[("region", "us")]), 0, n);
+        e.put(1, "c", b"k2".to_vec(), mp_obj(&[("region", "us")]), 0, n);
+
+        assert_eq!(e.index_lookup_eq(1, "c", "region", b"us").len(), 2);
+
+        e.delete(1, "c", &[b"k1".to_vec()], n);
+        assert_eq!(e.index_lookup_eq(1, "c", "region", b"us").len(), 1);
+    }
+
+    #[test]
+    fn zero_index_fast_path() {
+        let mut e = make_engine();
+        let n = now();
+
+        // No indexes — PUT should work without index overhead.
+        assert!(!e.has_indexes(1, "c"));
+        e.put(1, "c", b"k".to_vec(), b"raw_value".to_vec(), 0, n);
+        assert!(e.get(1, "c", b"k", n).is_some());
+        assert_eq!(e.write_amp_ratio(1, "c"), 0.0);
+    }
+
+    #[test]
+    fn drop_index_clears_entries() {
+        let mut e = make_engine();
+        let n = now();
+
+        e.register_index(1, "c", "status", 0, false, n);
+        e.put(
+            1,
+            "c",
+            b"k1".to_vec(),
+            mp_obj(&[("status", "active")]),
+            0,
+            n,
+        );
+        assert_eq!(e.index_count(1, "c"), 1);
+
+        let dropped = e.drop_index(1, "c", "status");
+        assert_eq!(dropped, 1);
+        assert_eq!(e.index_count(1, "c"), 0);
+        assert!(e.index_lookup_eq(1, "c", "status", b"active").is_empty());
+    }
+
+    #[test]
+    fn write_amp_tracking() {
+        let mut e = make_engine();
+        let n = now();
+
+        e.register_index(1, "c", "a", 0, false, n);
+        e.register_index(1, "c", "b", 1, false, n);
+
+        for i in 0..10u32 {
+            let k = format!("k{i}");
+            e.put(
+                1,
+                "c",
+                k.into_bytes(),
+                mp_obj(&[("a", "x"), ("b", "y")]),
+                0,
+                n,
+            );
+        }
+
+        // 10 PUTs, 2 indexes each = write amp ratio of 2.0.
+        let ratio = e.write_amp_ratio(1, "c");
+        assert!((ratio - 2.0).abs() < f64::EPSILON);
     }
 }

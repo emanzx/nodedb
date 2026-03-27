@@ -66,4 +66,21 @@ pub enum KvOp {
         /// Per-key TTL override in milliseconds. 0 = use collection default.
         ttl_ms: u64,
     },
+
+    /// Register a secondary index on a value field (DDL).
+    ///
+    /// Dispatched when `CREATE INDEX idx ON kv_collection (field)` is executed.
+    /// If `backfill` is true, scans all existing entries to populate the index.
+    RegisterIndex {
+        collection: String,
+        /// Field name to index (must match a column in the KV schema).
+        field: String,
+        /// Position of the field in the schema column list.
+        field_position: usize,
+        /// Whether to backfill the index with existing entries.
+        backfill: bool,
+    },
+
+    /// Remove a secondary index from a value field (DDL).
+    DropIndex { collection: String, field: String },
 }
