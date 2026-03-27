@@ -156,6 +156,10 @@ pub struct HandshakeMsg {
     /// Monotonic epoch counter (incremented on every open). 0 for legacy clients.
     #[serde(default)]
     pub epoch: u64,
+    /// Wire format version. Server rejects connections with incompatible versions.
+    /// 0 = legacy client (pre-wire-version; treated as version 1).
+    #[serde(default)]
+    pub wire_version: u16,
 }
 
 /// Handshake acknowledgment (server → client, 0x02).
@@ -172,6 +176,9 @@ pub struct HandshakeAckMsg {
     /// Fork detection: if true, client must regenerate LiteId and reconnect.
     #[serde(default)]
     pub fork_detected: bool,
+    /// Server's wire format version (for client-side compatibility check).
+    #[serde(default)]
+    pub server_wire_version: u16,
 }
 
 /// Delta push message (client → server, 0x10).
@@ -417,6 +424,7 @@ mod tests {
             client_version: "0.1.0".into(),
             lite_id: String::new(),
             epoch: 0,
+            wire_version: 1,
         };
         let frame = SyncFrame::new_msgpack(SyncMessageType::Handshake, &msg).unwrap();
         let bytes = frame.to_bytes();

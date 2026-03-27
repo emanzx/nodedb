@@ -17,6 +17,11 @@ pub const WIRE_FORMAT_VERSION: u16 = 1;
 /// Messages below this version are rejected.
 pub const MIN_WIRE_FORMAT_VERSION: u16 = 1;
 
+/// Wire version assigned to legacy clients that send wire_version == 0.
+/// Must always equal MIN_WIRE_FORMAT_VERSION to prevent silent upgrades
+/// across breaking changes.
+pub const LEGACY_CLIENT_WIRE_VERSION: u16 = MIN_WIRE_FORMAT_VERSION;
+
 /// Check if a remote node's wire version is compatible.
 ///
 /// Returns `Ok(())` if compatible, `Err(reason)` if not.

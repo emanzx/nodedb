@@ -27,6 +27,7 @@ async fn connect_and_handshake()
         client_version: "live-test".into(),
         lite_id: String::new(),
         epoch: 0,
+        wire_version: 1,
     };
     ws.send(Message::Binary(
         SyncFrame::encode_or_empty(SyncMessageType::Handshake, &hs)
@@ -108,6 +109,7 @@ async fn test_handshake() -> Result<(), String> {
         client_version: "test-handshake".into(),
         lite_id: String::new(),
         epoch: 0,
+        wire_version: 1,
     };
     ws.send(Message::Binary(
         SyncFrame::encode_or_empty(SyncMessageType::Handshake, &hs)

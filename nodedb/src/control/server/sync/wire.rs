@@ -43,6 +43,7 @@ mod tests {
             client_version: "0.1.0".into(),
             lite_id: String::new(),
             epoch: 0,
+            wire_version: 1,
         };
         let frame = SyncFrame::new_msgpack(SyncMessageType::Handshake, &msg).unwrap();
         let bytes = frame.to_bytes();

@@ -115,6 +115,7 @@ async fn run_client(
         client_version: format!("load-test-{id}"),
         lite_id: String::new(),
         epoch: 0,
+        wire_version: 1,
     };
     if ws
         .send(Message::Binary(

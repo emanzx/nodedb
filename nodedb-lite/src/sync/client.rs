@@ -244,6 +244,7 @@ impl SyncClient {
             client_version: self.config.client_version.clone(),
             lite_id: self.lite_id.clone().unwrap_or_default(),
             epoch: self.epoch.unwrap_or(0),
+            wire_version: 1,
         }
     }
 
@@ -666,6 +667,7 @@ mod tests {
             server_clock: std::collections::HashMap::new(),
             error: None,
             fork_detected: false,
+            server_wire_version: 1,
         };
 
         assert!(client.handle_handshake_ack(&ack).await);
@@ -681,6 +683,7 @@ mod tests {
             server_clock: std::collections::HashMap::new(),
             error: Some("invalid token".into()),
             fork_detected: false,
+            server_wire_version: 1,
         };
 
         assert!(!client.handle_handshake_ack(&ack).await);

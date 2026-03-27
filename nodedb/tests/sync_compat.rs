@@ -24,6 +24,7 @@ fn lite_handshake_frame_roundtrips() {
         client_version: "0.1.0-lite".into(),
         lite_id: String::new(),
         epoch: 0,
+        wire_version: 1,
     };
 
     let frame = SyncFrame::new_msgpack(SyncMessageType::Handshake, &msg).unwrap();

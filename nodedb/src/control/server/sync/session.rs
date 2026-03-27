@@ -98,6 +98,31 @@ impl SyncSession {
     ) -> SyncFrame {
         self.last_activity = Instant::now();
 
+        // Wire format compatibility check: reject incompatible clients early.
+        // wire_version == 0 means legacy client (pre-wire-version), treat as v1.
+        let client_wire = if msg.wire_version == 0 {
+            crate::version::LEGACY_CLIENT_WIRE_VERSION
+        } else {
+            msg.wire_version
+        };
+        if let Err(e) = crate::version::check_wire_compatibility(client_wire) {
+            warn!(
+                session = %self.session_id,
+                client_wire_version = client_wire,
+                error = %e,
+                "sync handshake rejected: incompatible wire version"
+            );
+            let ack = HandshakeAckMsg {
+                success: false,
+                session_id: self.session_id.clone(),
+                server_clock: current_server_clock,
+                error: Some(format!("incompatible wire version: {e}")),
+                fork_detected: false,
+                server_wire_version: crate::version::WIRE_FORMAT_VERSION,
+            };
+            return SyncFrame::encode_or_empty(SyncMessageType::HandshakeAck, &ack);
+        }
+
         // Trust mode: empty token auto-authenticates as default identity.
         if msg.jwt_token.is_empty() {
             let identity = AuthenticatedIdentity {
@@ -136,6 +161,7 @@ impl SyncSession {
                 server_clock: current_server_clock,
                 error: None,
                 fork_detected: false,
+                server_wire_version: crate::version::WIRE_FORMAT_VERSION,
             };
             return SyncFrame::encode_or_empty(SyncMessageType::HandshakeAck, &ack);
         }
@@ -177,6 +203,7 @@ impl SyncSession {
                     server_clock: current_server_clock,
                     error: None,
                     fork_detected: false,
+                    server_wire_version: crate::version::WIRE_FORMAT_VERSION,
                 };
                 SyncFrame::encode_or_empty(SyncMessageType::HandshakeAck, &ack)
             }
@@ -193,6 +220,7 @@ impl SyncSession {
                     server_clock: HashMap::new(),
                     error: Some(e.to_string()),
                     fork_detected: false,
+                    server_wire_version: crate::version::WIRE_FORMAT_VERSION,
                 };
                 SyncFrame::encode_or_empty(SyncMessageType::HandshakeAck, &ack)
             }
@@ -234,6 +262,7 @@ impl SyncSession {
                 server_clock: server_clock.clone(),
                 error: Some("FORK_DETECTED: regenerate LiteId and reconnect".into()),
                 fork_detected: true,
+                server_wire_version: crate::version::WIRE_FORMAT_VERSION,
             };
             return Some(SyncFrame::encode_or_empty(
                 SyncMessageType::HandshakeAck,
@@ -729,6 +758,7 @@ mod tests {
             client_version: "0.1".into(),
             lite_id: String::new(),
             epoch: 0,
+            wire_version: 1,
         };
 
         let response = session.handle_handshake(&msg, &validator, HashMap::new(), None);
