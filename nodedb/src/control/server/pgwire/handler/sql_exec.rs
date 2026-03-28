@@ -379,13 +379,17 @@ impl NodeDbPgHandler {
             tenant_id.as_u32(),
         );
 
-        let tasks = query_ctx.plan_sql(sql, tenant_id).await.map_err(|e| {
-            PgWireError::UserError(Box::new(ErrorInfo::new(
-                "ERROR".to_owned(),
-                "42000".to_owned(),
-                e.to_string(),
-            )))
-        })?;
+        let auth_ctx = crate::control::server::session_auth::build_auth_context(identity);
+        let tasks = query_ctx
+            .plan_sql_with_rls(sql, tenant_id, &auth_ctx, &self.state.rls)
+            .await
+            .map_err(|e| {
+                PgWireError::UserError(Box::new(ErrorInfo::new(
+                    "ERROR".to_owned(),
+                    "42000".to_owned(),
+                    e.to_string(),
+                )))
+            })?;
 
         let mut rows = Vec::new();
         for task in tasks {

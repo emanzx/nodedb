@@ -25,6 +25,7 @@ use crate::types::{TenantId, VShardId};
 pub(crate) struct DispatchCtx<'a> {
     pub state: &'a SharedState,
     pub identity: &'a AuthenticatedIdentity,
+    pub auth_context: &'a crate::control::security::auth_context::AuthContext,
     pub query_ctx: &'a QueryContext,
     pub sessions: &'a SessionStore,
     pub peer_addr: &'a std::net::SocketAddr,

@@ -105,7 +105,11 @@ pub(crate) async fn handle_sql(ctx: &DispatchCtx<'_>, seq: u64, sql: &str) -> Na
 
 /// Plan SQL via DataFusion and dispatch tasks to the Data Plane.
 async fn execute_planned(ctx: &DispatchCtx<'_>, seq: u64, sql: &str) -> NativeResponse {
-    let tasks = match ctx.query_ctx.plan_sql(sql, ctx.tenant_id()).await {
+    let tasks = match ctx
+        .query_ctx
+        .plan_sql_with_rls(sql, ctx.tenant_id(), ctx.auth_context, &ctx.state.rls)
+        .await
+    {
         Ok(t) => t,
         Err(e) => return error_to_native(seq, &e),
     };
@@ -400,7 +404,11 @@ async fn handle_explain(ctx: &DispatchCtx<'_>, seq: u64, sql: &str) -> NativeRes
         };
     }
 
-    match ctx.query_ctx.plan_sql(inner_sql, ctx.tenant_id()).await {
+    match ctx
+        .query_ctx
+        .plan_sql_with_rls(inner_sql, ctx.tenant_id(), ctx.auth_context, &ctx.state.rls)
+        .await
+    {
         Ok(tasks) => {
             let plan_text = tasks
                 .iter()

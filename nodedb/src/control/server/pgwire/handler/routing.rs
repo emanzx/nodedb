@@ -25,14 +25,19 @@ impl NodeDbPgHandler {
         tenant_id: TenantId,
         addr: &std::net::SocketAddr,
     ) -> PgWireResult<Vec<Response>> {
-        let tasks = self.query_ctx.plan_sql(sql, tenant_id).await.map_err(|e| {
-            let (severity, code, message) = error_to_sqlstate(&e);
-            PgWireError::UserError(Box::new(ErrorInfo::new(
-                severity.to_owned(),
-                code.to_owned(),
-                message,
-            )))
-        })?;
+        let auth_ctx = crate::control::server::session_auth::build_auth_context(identity);
+        let tasks = self
+            .query_ctx
+            .plan_sql_with_rls(sql, tenant_id, &auth_ctx, &self.state.rls)
+            .await
+            .map_err(|e| {
+                let (severity, code, message) = error_to_sqlstate(&e);
+                PgWireError::UserError(Box::new(ErrorInfo::new(
+                    severity.to_owned(),
+                    code.to_owned(),
+                    message,
+                )))
+            })?;
 
         if tasks.is_empty() {
             return Ok(vec![Response::Execution(Tag::new("OK"))]);

@@ -187,9 +187,10 @@ impl NodeDbPgHandler {
         }
 
         let tenant_id = identity.tenant_id;
+        let auth_ctx = crate::control::server::session_auth::build_auth_context(identity);
         let tasks = self
             .query_ctx
-            .plan_sql(inner_sql, tenant_id)
+            .plan_sql_with_rls(inner_sql, tenant_id, &auth_ctx, &self.state.rls)
             .await
             .map_err(|e| {
                 let (severity, code, message) = error_to_sqlstate(&e);

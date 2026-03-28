@@ -48,11 +48,12 @@ pub async fn query(
         };
     }
 
-    // Plan SQL via DataFusion.
+    // Plan SQL via DataFusion with RLS injection.
     let tenant_id = identity.tenant_id;
+    let auth_ctx = crate::control::server::session_auth::build_auth_context(&identity);
     let tasks = state
         .query_ctx
-        .plan_sql(sql, tenant_id)
+        .plan_sql_with_rls(sql, tenant_id, &auth_ctx, &state.shared.rls)
         .await
         .map_err(|e| ApiError::BadRequest(format!("SQL planning failed: {e}")))?;
 
@@ -230,7 +231,11 @@ pub async fn query_ndjson(
     let tenant_id = identity.tenant_id;
     let query_ctx = &state.query_ctx;
 
-    let tasks = match query_ctx.plan_sql(sql, tenant_id).await {
+    let auth_ctx = crate::control::server::session_auth::build_auth_context(&identity);
+    let tasks = match query_ctx
+        .plan_sql_with_rls(sql, tenant_id, &auth_ctx, &state.shared.rls)
+        .await
+    {
         Ok(t) => t,
         Err(e) => return (StatusCode::BAD_REQUEST, e.to_string()).into_response(),
     };
