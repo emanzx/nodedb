@@ -77,6 +77,9 @@ rustls-pemfile = { workspace = true }
 x509-parser = "0.16"
 pem = "3"
 rsa = "0.9"
+p256 = { workspace = true }
+p384 = { workspace = true }
+reqwest = { workspace = true }
 
 # PostgreSQL wire protocol
 pgwire = { workspace = true }

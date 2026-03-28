@@ -14,6 +14,95 @@ pub enum AuthMode {
     Certificate,
 }
 
+/// JWT authentication configuration.
+///
+/// Supports multiple identity providers (Auth0, Clerk, Keycloak, etc.),
+/// each with its own JWKS endpoint and claim mapping.
+///
+/// ```toml
+/// [auth.jwt]
+/// allowed_algorithms = ["RS256", "ES256"]
+///
+/// [[auth.jwt.providers]]
+/// name = "nodedb-auth"
+/// jwks_url = "https://auth.example.com/.well-known/jwks.json"
+/// issuer = "https://auth.example.com"
+/// audience = "nodedb"
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JwtAuthConfig {
+    /// JWKS refresh interval in seconds (default: 3600 = 1 hour).
+    #[serde(default = "default_jwks_refresh")]
+    pub jwks_refresh_secs: u64,
+
+    /// Minimum interval between on-demand JWKS re-fetches for unknown `kid`
+    /// (default: 60 seconds). Prevents abuse of unknown-kid triggering floods.
+    #[serde(default = "default_jwks_min_refetch")]
+    pub jwks_min_refetch_secs: u64,
+
+    /// Allowed JWT algorithms. Tokens using other algorithms are rejected.
+    /// Empty = allow RS256 + ES256 (safe defaults). `"none"` is always rejected.
+    #[serde(default = "default_allowed_algorithms")]
+    pub allowed_algorithms: Vec<String>,
+
+    /// Clock skew tolerance in seconds for `exp`/`nbf` validation.
+    #[serde(default = "default_clock_skew")]
+    pub clock_skew_secs: u64,
+
+    /// Path to cache JWKS on disk for offline fallback.
+    /// If set, JWKS responses are persisted and used when providers are unreachable.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jwks_cache_path: Option<String>,
+
+    /// Identity providers. Each has its own JWKS endpoint, issuer, and audience.
+    #[serde(default)]
+    pub providers: Vec<JwtProviderConfig>,
+}
+
+/// Configuration for a single JWT identity provider.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JwtProviderConfig {
+    /// Provider name (for logging and diagnostics).
+    pub name: String,
+
+    /// JWKS endpoint URL. Must be HTTPS in production.
+    pub jwks_url: String,
+
+    /// Expected `iss` claim. Empty = don't validate issuer for this provider.
+    #[serde(default)]
+    pub issuer: String,
+
+    /// Expected `aud` claim. Empty = don't validate audience for this provider.
+    #[serde(default)]
+    pub audience: String,
+}
+
+fn default_jwks_refresh() -> u64 {
+    3600
+}
+fn default_jwks_min_refetch() -> u64 {
+    60
+}
+fn default_clock_skew() -> u64 {
+    60
+}
+fn default_allowed_algorithms() -> Vec<String> {
+    vec!["RS256".into(), "ES256".into()]
+}
+
+impl Default for JwtAuthConfig {
+    fn default() -> Self {
+        Self {
+            jwks_refresh_secs: default_jwks_refresh(),
+            jwks_min_refetch_secs: default_jwks_min_refetch(),
+            allowed_algorithms: default_allowed_algorithms(),
+            clock_skew_secs: default_clock_skew(),
+            jwks_cache_path: None,
+            providers: Vec::new(),
+        }
+    }
+}
+
 /// Authentication and authorization configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthConfig {
@@ -52,6 +141,11 @@ pub struct AuthConfig {
     /// Audit retention in days (0 = keep forever).
     /// Entries older than this are pruned during periodic flush.
     pub audit_retention_days: u32,
+
+    /// JWT authentication configuration (JWKS providers, algorithms, etc.).
+    /// If not present, JWT auth is disabled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jwt: Option<JwtAuthConfig>,
 }
 
 impl Default for AuthConfig {
@@ -67,6 +161,7 @@ impl Default for AuthConfig {
             max_connections_per_user: 0,
             password_expiry_days: 0,
             audit_retention_days: 0,
+            jwt: None,
         }
     }
 }

@@ -79,6 +79,13 @@ aes-gcm = "0.10"
 argon2 = "0.5"
 zeroize = { version = "1", features = ["derive"] }
 
+# JWT / JWKS (EC key support for ES256/ES384)
+p256 = { version = "0.13", features = ["ecdsa"] }
+p384 = { version = "0.13", features = ["ecdsa"] }
+
+# HTTP client (JWKS fetch)
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+
 # Memory-mapped I/O
 memmap2 = "0.9"
 
