@@ -1,6 +1,4 @@
 //! Key encoding and field extraction helpers for the KV engine.
-//!
-//! Separated from `engine.rs` to keep per-file code under the 500-line limit.
 
 /// Construct the per-collection hash table key: "{tenant_id}:{collection}".
 pub(super) fn table_key(tenant_id: u32, collection: &str) -> String {

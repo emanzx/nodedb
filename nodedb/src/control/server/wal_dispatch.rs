@@ -261,6 +261,31 @@ pub fn wal_append_if_write_with_creds(
             })?;
             wal.append_put(tenant_id, vshard_id, &entry)?;
         }
+        PhysicalPlan::Kv(KvOp::FieldSet {
+            collection,
+            key,
+            updates,
+        }) => {
+            let entry =
+                rmp_serde::to_vec(&("kv_field_set", collection, key, updates)).map_err(|e| {
+                    crate::Error::Serialization {
+                        format: "msgpack".into(),
+                        detail: format!("wal kv field set: {e}"),
+                    }
+                })?;
+            wal.append_put(tenant_id, vshard_id, &entry)?;
+        }
+        // Truncate uses append_delete to mark the collection as cleared in the WAL.
+        // On recovery, replaying this entry drops all hash table state for the collection.
+        PhysicalPlan::Kv(KvOp::Truncate { collection }) => {
+            let entry = rmp_serde::to_vec(&("kv_truncate", collection)).map_err(|e| {
+                crate::Error::Serialization {
+                    format: "msgpack".into(),
+                    detail: format!("wal kv truncate: {e}"),
+                }
+            })?;
+            wal.append_delete(tenant_id, vshard_id, &entry)?;
+        }
         // Read operations and control commands: no WAL needed.
         _ => {}
     }

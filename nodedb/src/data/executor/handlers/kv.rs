@@ -73,6 +73,17 @@ impl CoreLoop {
             KvOp::DropIndex { collection, field } => {
                 self.execute_kv_drop_index(task, tid, collection, field)
             }
+            KvOp::FieldGet {
+                collection,
+                key,
+                fields,
+            } => self.execute_kv_field_get(task, tid, collection, key, fields),
+            KvOp::FieldSet {
+                collection,
+                key,
+                updates,
+            } => self.execute_kv_field_set(task, tid, collection, key, updates),
+            KvOp::Truncate { collection } => self.execute_kv_truncate(task, tid, collection),
         }
     }
 
@@ -285,6 +296,108 @@ impl CoreLoop {
         })
         .to_string()
         .into_bytes();
+        self.response_with_payload(task, payload)
+    }
+
+    fn execute_kv_field_get(
+        &self,
+        task: &ExecutionTask,
+        tid: u32,
+        collection: &str,
+        key: &[u8],
+        fields: &[String],
+    ) -> Response {
+        debug!(core = self.core_id, %collection, field_count = fields.len(), "kv field get");
+        let now_ms = current_ms();
+
+        // Get the full value.
+        let Some(value) = self.kv_engine.get(tid, collection, key, now_ms) else {
+            return self.response_error(task, ErrorCode::NotFound);
+        };
+
+        // Deserialize as MessagePack → JSON.
+        let doc: serde_json::Value = match rmp_serde::from_slice(&value) {
+            Ok(v) => v,
+            Err(_) => {
+                return self.response_error(
+                    task,
+                    ErrorCode::Internal {
+                        detail: "value is not MessagePack-encoded; use GET for raw values".into(),
+                    },
+                );
+            }
+        };
+
+        // Extract requested fields.
+        let result: serde_json::Map<String, serde_json::Value> = fields
+            .iter()
+            .map(|f| {
+                let v = doc.get(f).cloned().unwrap_or(serde_json::Value::Null);
+                (f.clone(), v)
+            })
+            .collect();
+
+        let payload = serde_json::to_vec(&result).unwrap_or_default();
+        self.response_with_payload(task, payload)
+    }
+
+    fn execute_kv_field_set(
+        &mut self,
+        task: &ExecutionTask,
+        tid: u32,
+        collection: &str,
+        key: &[u8],
+        updates: &[(String, Vec<u8>)],
+    ) -> Response {
+        debug!(core = self.core_id, %collection, field_count = updates.len(), "kv field set");
+        let now_ms = current_ms();
+
+        // Read current value.
+        let current = self.kv_engine.get(tid, collection, key, now_ms);
+
+        let mut doc: serde_json::Map<String, serde_json::Value> = current
+            .as_ref()
+            .and_then(|v| rmp_serde::from_slice(v).ok())
+            .and_then(|v: serde_json::Value| v.as_object().cloned())
+            .unwrap_or_default();
+
+        // Merge field updates.
+        for (field, value_bytes) in updates {
+            let new_value: serde_json::Value = serde_json::from_slice(value_bytes).unwrap_or(
+                serde_json::Value::String(String::from_utf8_lossy(value_bytes).into_owned()),
+            );
+            doc.insert(field.clone(), new_value);
+        }
+
+        // Serialize back to MessagePack and write.
+        let new_value = match rmp_serde::to_vec(&serde_json::Value::Object(doc)) {
+            Ok(v) => v,
+            Err(e) => {
+                return self.response_error(
+                    task,
+                    ErrorCode::Internal {
+                        detail: format!("field set serialization: {e}"),
+                    },
+                );
+            }
+        };
+
+        self.kv_engine
+            .put(tid, collection, key.to_vec(), new_value, 0, now_ms);
+        self.response_ok(task)
+    }
+
+    fn execute_kv_truncate(
+        &mut self,
+        task: &ExecutionTask,
+        tid: u32,
+        collection: &str,
+    ) -> Response {
+        debug!(core = self.core_id, %collection, "kv truncate");
+        let count = self.kv_engine.truncate(tid, collection);
+        let payload = serde_json::json!({ "deleted": count })
+            .to_string()
+            .into_bytes();
         self.response_with_payload(task, payload)
     }
 }

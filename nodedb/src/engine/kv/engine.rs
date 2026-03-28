@@ -387,6 +387,26 @@ impl KvEngine {
     }
 
     // -----------------------------------------------------------------------
+    // -----------------------------------------------------------------------
+    // Truncate
+    // -----------------------------------------------------------------------
+
+    /// Truncate: delete all entries in a KV collection. Returns count deleted.
+    pub fn truncate(&mut self, tenant_id: u32, collection: &str) -> usize {
+        let tkey = table_key(tenant_id, collection);
+        let count = self.tables.get(&tkey).map(|t| t.len()).unwrap_or(0);
+
+        // Remove the hash table entirely.
+        self.tables.remove(&tkey);
+        // Remove all indexes.
+        self.indexes.remove(&tkey);
+        // Note: expiry wheel entries for this collection will be no-ops
+        // when they fire (key won't be found in the hash table).
+
+        count
+    }
+
+    // -----------------------------------------------------------------------
     // Stats
     // -----------------------------------------------------------------------
 

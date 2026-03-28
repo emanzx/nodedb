@@ -83,4 +83,29 @@ pub enum KvOp {
 
     /// Remove a secondary index from a value field (DDL).
     DropIndex { collection: String, field: String },
+
+    /// Extract one or more fields from a key's value (HGET/HMGET).
+    ///
+    /// Deserializes the stored value, extracts the named fields, and returns
+    /// them as a JSON object. O(1) key lookup + field extraction.
+    FieldGet {
+        collection: String,
+        key: Vec<u8>,
+        /// Field names to extract.
+        fields: Vec<String>,
+    },
+
+    /// Update specific fields in a key's value (HSET).
+    ///
+    /// Read-modify-write: reads the current value, merges field updates,
+    /// writes back. Maintains secondary indexes if any.
+    FieldSet {
+        collection: String,
+        key: Vec<u8>,
+        /// Field name → new value (JSON-encoded bytes).
+        updates: Vec<(String, Vec<u8>)>,
+    },
+
+    /// Truncate: delete ALL entries in a KV collection.
+    Truncate { collection: String },
 }

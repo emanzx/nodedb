@@ -1,6 +1,4 @@
 //! Cursor-based KV scan with optional glob pattern matching.
-//!
-//! Separated from `hash_table.rs` to keep per-file code under the 500-line limit.
 
 use super::entry::KvEntry;
 use super::hash_table::KvHashTable;

@@ -240,9 +240,9 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
         }
 
         // KV engine: read operations.
-        PhysicalPlan::Kv(KvOp::Get { .. } | KvOp::Scan { .. } | KvOp::BatchGet { .. }) => {
-            Permission::Read
-        }
+        PhysicalPlan::Kv(
+            KvOp::Get { .. } | KvOp::Scan { .. } | KvOp::BatchGet { .. } | KvOp::FieldGet { .. },
+        ) => Permission::Read,
 
         // KV engine: write operations.
         PhysicalPlan::Kv(
@@ -252,7 +252,9 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
             | KvOp::Persist { .. }
             | KvOp::BatchPut { .. }
             | KvOp::RegisterIndex { .. }
-            | KvOp::DropIndex { .. },
+            | KvOp::DropIndex { .. }
+            | KvOp::FieldSet { .. }
+            | KvOp::Truncate { .. },
         ) => Permission::Write,
     }
 }

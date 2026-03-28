@@ -1,6 +1,4 @@
 //! Hash table helpers: FxHash hasher and value storage operations.
-//!
-//! Separated from `hash_table.rs` to keep per-file code under the 500-line limit.
 
 use std::hash::{BuildHasher, Hasher};
 
