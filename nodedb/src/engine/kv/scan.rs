@@ -55,6 +55,11 @@ impl KvHashTable {
     }
 }
 
+/// Public entry point for pattern matching (used by engine.rs index scan path).
+pub fn matches_pattern_pub(key: &[u8], pattern: Option<&str>) -> bool {
+    matches_pattern(key, pattern)
+}
+
 /// Simple glob-style pattern matching for SCAN MATCH.
 ///
 /// Supports `*` (match any sequence) and `?` (match single byte).

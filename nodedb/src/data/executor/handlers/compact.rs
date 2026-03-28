@@ -173,16 +173,27 @@ impl CoreLoop {
 
         // KV expiry wheel tick: process expired keys on every maintenance call.
         // Bounded by the per-tick reap budget internally — safe for the reactor.
+        // Expired keys are emitted as structured log events for CDC visibility.
         {
             let now_ms = crate::engine::kv::current_ms();
-            let reaped = self.kv_engine.tick_expiry(now_ms);
-            if reaped > 0 {
+            let expired_keys = self.kv_engine.tick_expiry(now_ms);
+            if !expired_keys.is_empty() {
                 tracing::debug!(
                     core = self.core_id,
-                    reaped,
+                    reaped = expired_keys.len(),
                     backlog = self.kv_engine.expiry_backlog(),
                     "kv expiry wheel tick"
                 );
+
+                for ek in &expired_keys {
+                    tracing::info!(
+                        target: "nodedb::kv::expired",
+                        tenant_id = ek.tenant_id,
+                        collection = %ek.collection,
+                        key_len = ek.key.len(),
+                        "kv key expired"
+                    );
+                }
             }
         }
 

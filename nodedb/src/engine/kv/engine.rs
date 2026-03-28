@@ -14,6 +14,17 @@ use super::expiry_wheel::ExpiryWheel;
 use super::hash_table::KvHashTable;
 use super::index::KvIndexSet;
 
+/// A key that was reaped by the expiry wheel.
+///
+/// Returned by [`KvEngine::tick_expiry`] so the caller can produce WAL
+/// tombstones and CDC/keyspace notification events.
+#[derive(Debug, Clone)]
+pub struct ExpiredKey {
+    pub tenant_id: u32,
+    pub collection: String,
+    pub key: Vec<u8>,
+}
+
 /// Result of a KV SCAN operation: `(entries, next_cursor_bytes)`.
 ///
 /// Each entry is `(key_bytes, value_bytes)`. `next_cursor` is empty
@@ -310,10 +321,16 @@ impl KvEngine {
         new_count
     }
 
-    /// SCAN: cursor-based iteration with optional key pattern matching.
+    /// SCAN: cursor-based iteration with optional key pattern matching and
+    /// index-accelerated predicate pushdown.
+    ///
+    /// If `filter_field` and `filter_value` are provided AND a secondary index
+    /// exists for that field, the scan uses the index to narrow candidates
+    /// (O(log n) + O(k) where k = matching keys) instead of full table scan.
     ///
     /// Returns `(entries, next_cursor_bytes)`. `next_cursor_bytes` is empty
     /// when the scan is complete. Each entry is `(key, value)`.
+    #[allow(clippy::too_many_arguments)]
     pub fn scan(
         &self,
         tenant_id: u32,
@@ -322,6 +339,8 @@ impl KvEngine {
         count: usize,
         now_ms: u64,
         match_pattern: Option<&str>,
+        filter_field: Option<&str>,
+        filter_value: Option<&[u8]>,
     ) -> ScanResult {
         let tkey = table_key(tenant_id, collection);
         let table = match self.tables.get(&tkey) {
@@ -329,7 +348,33 @@ impl KvEngine {
             None => return (Vec::new(), Vec::new()),
         };
 
-        // Decode cursor: 4 bytes big-endian u32 slot index, or 0 for start.
+        // Index-accelerated path: if we have a filter and an index, use it.
+        if let Some(field) = filter_field
+            && let Some(value) = filter_value
+            && let Some(idx_set) = self.indexes.get(&tkey)
+            && idx_set.get_index(field).is_some()
+        {
+            let candidate_keys = idx_set.lookup_eq(field, value);
+            let mut results = Vec::with_capacity(count.min(candidate_keys.len()));
+
+            for pk in candidate_keys {
+                if results.len() >= count {
+                    break;
+                }
+                if let Some(val) = table.get(pk, now_ms)
+                    && (match_pattern.is_none()
+                        || super::scan::matches_pattern_pub(pk, match_pattern))
+                {
+                    results.push((pk.to_vec(), val.to_vec()));
+                }
+            }
+
+            // Index scan is always complete (no cursor-based pagination needed —
+            // the index already narrowed to matching keys).
+            return (results, Vec::new());
+        }
+
+        // Full scan fallback: iterate hash table slots.
         let cursor_idx = if cursor.len() >= 4 {
             u32::from_be_bytes([cursor[0], cursor[1], cursor[2], cursor[3]]) as usize
         } else {
@@ -344,7 +389,7 @@ impl KvEngine {
             .collect();
 
         let next_cursor = if next_cursor_idx == 0 {
-            Vec::new() // Scan complete.
+            Vec::new()
         } else {
             (next_cursor_idx as u32).to_be_bytes().to_vec()
         };
@@ -359,17 +404,22 @@ impl KvEngine {
     /// Advance the expiry wheel and reap expired keys.
     ///
     /// Call this from the TPC core's event loop at the configured tick interval.
-    /// Returns the number of keys reaped.
-    pub fn tick_expiry(&mut self, now_ms: u64) -> usize {
+    /// Returns a list of `(tenant_id, collection, key)` for each reaped key,
+    /// enabling the caller to produce WAL tombstones and CDC/keyspace events.
+    pub fn tick_expiry(&mut self, now_ms: u64) -> Vec<ExpiredKey> {
         let batch = self.expiry.tick(now_ms);
-        let mut reaped = 0;
+        let mut reaped = Vec::new();
 
         for (composite_key, expire_at_ms) in &batch.expired {
             if let Some((tid, collection, key)) = parse_expiry_key(composite_key)
                 && let Some(table) = self.tables.get_mut(&table_key(tid, &collection))
                 && table.reap_expired(&key, *expire_at_ms)
             {
-                reaped += 1;
+                reaped.push(ExpiredKey {
+                    tenant_id: tid,
+                    collection,
+                    key,
+                });
             }
         }
 
@@ -425,6 +475,69 @@ impl KvEngine {
         let tkey = table_key(tenant_id, collection);
         self.tables.get(&tkey).map(|t| t.len()).unwrap_or(0)
     }
+
+    /// Comprehensive observability snapshot for this KV engine.
+    pub fn stats(&self) -> KvStats {
+        let mut total_entries = 0usize;
+        let mut total_mem = 0usize;
+        let mut total_index_entries = 0usize;
+        let mut is_rehashing = false;
+        let mut max_load_factor: f32 = 0.0;
+
+        for table in self.tables.values() {
+            total_entries += table.len();
+            total_mem += table.mem_usage();
+            if table.load_factor() > max_load_factor {
+                max_load_factor = table.load_factor();
+            }
+            if table.is_rehashing() {
+                is_rehashing = true;
+            }
+        }
+
+        for idx_set in self.indexes.values() {
+            for field in idx_set.indexed_fields() {
+                if let Some(idx) = idx_set.get_index(field) {
+                    total_index_entries += idx.entry_count();
+                }
+            }
+        }
+
+        KvStats {
+            total_entries,
+            total_mem_bytes: total_mem,
+            collection_count: self.tables.len(),
+            max_load_factor,
+            is_rehashing,
+            total_index_entries,
+            expiry_queue_depth: self.expiry.len(),
+            expiry_backlog: self.expiry.backlog(),
+        }
+    }
+}
+
+/// Observability snapshot for the KV engine on a single TPC core.
+///
+/// Produced by [`KvEngine::stats`]. Written to the telemetry ring
+/// for the Control Plane to expose via HTTP metrics endpoint.
+#[derive(Debug, Clone, Default)]
+pub struct KvStats {
+    /// Total key count across all collections.
+    pub total_entries: usize,
+    /// Approximate total memory usage in bytes.
+    pub total_mem_bytes: usize,
+    /// Number of active KV collections on this core.
+    pub collection_count: usize,
+    /// Highest load factor across all hash tables (triggers rehash at threshold).
+    pub max_load_factor: f32,
+    /// Whether any hash table is currently in incremental rehash.
+    pub is_rehashing: bool,
+    /// Total secondary index entries across all collections.
+    pub total_index_entries: usize,
+    /// Number of entries in the expiry wheel.
+    pub expiry_queue_depth: usize,
+    /// Number of deferred expirations (reap budget exceeded).
+    pub expiry_backlog: usize,
 }
 
 #[cfg(test)]
@@ -473,7 +586,9 @@ mod tests {
 
         // Tick reaps it.
         let reaped = e.tick_expiry(n + 5000);
-        assert_eq!(reaped, 1);
+        assert_eq!(reaped.len(), 1);
+        assert_eq!(reaped[0].collection, "sess");
+        assert_eq!(reaped[0].key, b"s1");
         assert_eq!(e.total_entries(), 0);
     }
 

@@ -31,7 +31,7 @@ impl CoreLoop {
                 collection,
                 cursor,
                 count,
-                filters: _,
+                filters,
                 match_pattern,
             } => self.execute_kv_scan(
                 task,
@@ -40,6 +40,7 @@ impl CoreLoop {
                 cursor,
                 *count,
                 match_pattern.as_deref(),
+                filters,
             ),
             KvOp::Expire {
                 collection,
@@ -124,6 +125,7 @@ impl CoreLoop {
         self.response_ok(task)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn execute_kv_scan(
         &self,
         task: &ExecutionTask,
@@ -132,12 +134,23 @@ impl CoreLoop {
         cursor: &[u8],
         count: usize,
         match_pattern: Option<&str>,
+        filters: &[u8],
     ) -> Response {
         debug!(core = self.core_id, %collection, count, "kv scan");
         let now_ms = current_ms();
-        let (entries, next_cursor) =
-            self.kv_engine
-                .scan(tid, collection, cursor, count, now_ms, match_pattern);
+
+        // Try to extract a single equality filter for index pushdown.
+        let (filter_field, filter_value) = extract_eq_filter(filters);
+        let (entries, next_cursor) = self.kv_engine.scan(
+            tid,
+            collection,
+            cursor,
+            count,
+            now_ms,
+            match_pattern,
+            filter_field.as_deref(),
+            filter_value.as_deref(),
+        );
 
         // Encode as JSON: { "cursor": "<base64>", "entries": [{"key":"...","value":"..."}] }
         let cursor_b64 = if next_cursor.is_empty() {
@@ -400,4 +413,55 @@ impl CoreLoop {
             .into_bytes();
         self.response_with_payload(task, payload)
     }
+}
+
+/// Extract a single equality filter from serialized ScanFilter bytes.
+///
+/// Looks for the first `{"field": "x", "op": "eq", "value": "y"}` filter.
+/// Returns `(Some(field), Some(value_bytes))` if found, `(None, None)` otherwise.
+fn extract_eq_filter(filters: &[u8]) -> (Option<String>, Option<Vec<u8>>) {
+    if filters.is_empty() {
+        return (None, None);
+    }
+
+    // Filters are MessagePack-encoded Vec<ScanFilter>.
+    let Ok(parsed) = rmp_serde::from_slice::<Vec<serde_json::Value>>(filters) else {
+        tracing::trace!(
+            len = filters.len(),
+            "filter deserialization failed, falling back to full scan"
+        );
+        return (None, None);
+    };
+
+    for filter in &parsed {
+        let Some(field) = filter.get("field").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let Some(op) = filter.get("op").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        if op != "eq" {
+            continue;
+        }
+        let Some(value) = filter.get("value") else {
+            continue;
+        };
+
+        let value_bytes = match value {
+            serde_json::Value::String(s) => s.as_bytes().to_vec(),
+            serde_json::Value::Number(n) => {
+                if let Some(i) = n.as_i64() {
+                    let sortable = (i as u64) ^ (1u64 << 63);
+                    sortable.to_be_bytes().to_vec()
+                } else {
+                    n.to_string().into_bytes()
+                }
+            }
+            other => other.to_string().into_bytes(),
+        };
+
+        return (Some(field.to_string()), Some(value_bytes));
+    }
+
+    (None, None)
 }
