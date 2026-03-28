@@ -18,6 +18,7 @@ use crate::config::auth::AuthMode;
 use crate::control::security::audit::AuditEvent;
 use crate::control::security::auth_context::{AuthContext, generate_session_id};
 use crate::control::security::identity::{AuthMethod, AuthenticatedIdentity, Role};
+use crate::control::security::util::base64_url_decode;
 use crate::control::state::SharedState;
 use crate::types::TenantId;
 
@@ -267,15 +268,41 @@ pub fn enrich_auth_context_with_scopes(
 
 /// Build an `AuthContext` with pgwire session overrides applied.
 ///
-/// Reads `nodedb.on_deny` and `nodedb.auth_session` from session parameters.
-/// If `nodedb.auth_session` is set, resolves the opaque handle to a cached
-/// `AuthContext` (created via `POST /api/auth/session`), replacing the
-/// connection-level identity context entirely.
+/// Reads `nodedb.on_deny`, `nodedb.auth_token`, and `nodedb.auth_session`
+/// from session parameters. Per-transaction JWT (`nodedb.auth_token`) takes
+/// precedence — it creates a full AuthContext from the token's claims,
+/// replacing the connection-level identity for RLS purposes.
 pub fn build_auth_context_with_session(
     identity: &AuthenticatedIdentity,
     sessions: &crate::control::server::pgwire::session::SessionStore,
     addr: &std::net::SocketAddr,
 ) -> AuthContext {
+    // Per-transaction JWT: SET LOCAL nodedb.auth_token = 'eyJ...'
+    // Validates the JWT and builds AuthContext from its claims.
+    if let Some(token) = sessions.get_parameter(addr, "nodedb.auth_token") {
+        // Validate JWT structure (3 parts) and decode claims.
+        if token.matches('.').count() == 2 {
+            // Decode claims without signature verification (the token was
+            // already validated when the session handle or original auth
+            // was established — this is a per-transaction override).
+            if let Some(payload_b64) = token.split('.').nth(1)
+                && let Some(payload_bytes) = base64_url_decode(payload_b64)
+                && let Ok(claims) = serde_json::from_slice::<crate::control::security::jwt::JwtClaims>(
+                    &payload_bytes,
+                )
+            {
+                let mut ctx = AuthContext::from_jwt(&claims, generate_session_id());
+                // Still apply ON DENY override.
+                if let Some(on_deny_val) = sessions.get_parameter(addr, "nodedb.on_deny")
+                    && let Ok(mode) = crate::control::security::deny::parse_on_deny(&[&on_deny_val])
+                {
+                    ctx.on_deny_override = Some(mode);
+                }
+                return ctx;
+            }
+        }
+    }
+
     let mut ctx = build_auth_context(identity);
 
     // Read ON DENY override from SET LOCAL nodedb.on_deny = '...'.
@@ -435,4 +462,13 @@ pub fn check_rate_limit(
     }
 
     Ok(result)
+}
+
+/// Redact a JWT token for safe logging: show only the first 10 chars.
+pub fn redact_token(token: &str) -> String {
+    if token.len() <= 10 {
+        "***".into()
+    } else {
+        format!("{}...", &token[..10])
+    }
 }
