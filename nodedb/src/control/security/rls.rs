@@ -21,6 +21,10 @@ use std::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
+use super::auth_context::AuthContext;
+use super::predicate::{PolicyMode, RlsPredicate};
+use super::predicate_eval::{combine_policies, substitute_to_scan_filters};
+
 /// A single RLS policy.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RlsPolicy {
@@ -32,14 +36,18 @@ pub struct RlsPolicy {
     pub tenant_id: u32,
     /// Policy type: read, write, or both.
     pub policy_type: PolicyType,
-    /// Predicate expression as a serialized `ScanFilter`.
-    /// Applied to each row during scan (read) or before WAL (write).
-    ///
-    /// The predicate can reference:
-    /// - Document fields via `doc_get('$.field')`
-    /// - Session variables via `current_user()`, `current_tenant()`
-    /// - Literal values
+    /// Legacy predicate as serialized `ScanFilter` (static, no `$auth`).
+    /// Retained for backward compatibility with existing policies.
     pub predicate: Vec<u8>,
+    /// Compiled predicate AST with `$auth.*` support.
+    ///
+    /// If present, this takes precedence over `predicate`. Substituted at
+    /// plan time via `AuthContext` to produce concrete `ScanFilter` values.
+    #[serde(default)]
+    pub compiled_predicate: Option<RlsPredicate>,
+    /// Policy combination mode: permissive (OR) or restrictive (AND).
+    #[serde(default)]
+    pub mode: PolicyMode,
     /// Whether this policy is enabled.
     pub enabled: bool,
     /// Creator username (for audit).
@@ -201,10 +209,13 @@ impl RlsPolicyStore {
         Ok(())
     }
 
-    /// Get the combined read predicate bytes for a tenant+collection.
+    /// Get the combined read predicate bytes for a tenant+collection (legacy).
     ///
     /// Returns the serialized filters to inject into DocumentScan.
     /// Multiple policies are AND-combined (all must pass).
+    ///
+    /// **Deprecated**: Use `combined_read_predicate_with_auth()` for policies
+    /// that reference `$auth.*` session variables.
     pub fn combined_read_predicate(&self, tenant_id: u32, collection: &str) -> Vec<u8> {
         let policies = self.read_policies(tenant_id, collection);
         if policies.is_empty() {
@@ -228,6 +239,164 @@ impl RlsPolicyStore {
         } else {
             rmp_serde::to_vec_named(&all_filters).unwrap_or_default()
         }
+    }
+
+    /// Get the combined read predicate bytes with `$auth.*` substitution.
+    ///
+    /// This is the primary read-path RLS method. It:
+    /// 1. Fetches all enabled read policies for the collection.
+    /// 2. For policies with compiled predicates, substitutes `$auth.*` variables
+    ///    using the provided `AuthContext`.
+    /// 3. For legacy policies (static predicates), includes them as-is.
+    /// 4. Combines permissive policies (OR) and restrictive policies (AND).
+    /// 5. Returns serialized `ScanFilter` bytes to inject into the query plan.
+    ///
+    /// Returns empty `Vec` if no policies exist (allow all).
+    /// Returns `None` if a required `$auth` field is missing (deny — fail-closed).
+    pub fn combined_read_predicate_with_auth(
+        &self,
+        tenant_id: u32,
+        collection: &str,
+        auth: &AuthContext,
+    ) -> Option<Vec<u8>> {
+        // Superusers bypass RLS entirely.
+        if auth.is_superuser() {
+            return Some(Vec::new());
+        }
+
+        let policies = self.read_policies(tenant_id, collection);
+        if policies.is_empty() {
+            return Some(Vec::new());
+        }
+
+        let mut compiled_policies: Vec<(RlsPredicate, PolicyMode)> = Vec::new();
+        let mut legacy_filters: Vec<crate::bridge::scan_filter::ScanFilter> = Vec::new();
+
+        for policy in &policies {
+            if let Some(ref compiled) = policy.compiled_predicate {
+                compiled_policies.push((compiled.clone(), policy.mode));
+            } else if !policy.predicate.is_empty() {
+                // Legacy static predicate — deserialize and include directly.
+                if let Ok(filters) = rmp_serde::from_slice::<
+                    Vec<crate::bridge::scan_filter::ScanFilter>,
+                >(&policy.predicate)
+                {
+                    legacy_filters.extend(filters);
+                }
+            }
+        }
+
+        // Combine compiled policies with auth substitution.
+        let mut all_filters = if !compiled_policies.is_empty() {
+            combine_policies(&compiled_policies, auth)?
+        } else {
+            Vec::new()
+        };
+
+        // Append legacy static filters (always AND-combined).
+        all_filters.extend(legacy_filters);
+
+        if all_filters.is_empty() {
+            Some(Vec::new())
+        } else {
+            Some(rmp_serde::to_vec_named(&all_filters).unwrap_or_default())
+        }
+    }
+
+    /// Check if a document passes all write policies (with `$auth` support).
+    ///
+    /// Evaluates both compiled and legacy write policies. For compiled policies,
+    /// `$auth.*` references are substituted before evaluation.
+    pub fn check_write_with_auth(
+        &self,
+        tenant_id: u32,
+        collection: &str,
+        document: &serde_json::Value,
+        auth: &AuthContext,
+    ) -> crate::Result<()> {
+        if auth.is_superuser() {
+            return Ok(());
+        }
+
+        let policies = self.write_policies(tenant_id, collection);
+        if policies.is_empty() {
+            return Ok(());
+        }
+
+        for policy in &policies {
+            if let Some(ref compiled) = policy.compiled_predicate {
+                // Substitute $auth and produce concrete filters.
+                let filters = match substitute_to_scan_filters(compiled, auth) {
+                    Some(f) => f,
+                    None => {
+                        // Unresolved auth ref → deny (fail-closed).
+                        info!(
+                            policy = %policy.name,
+                            username = %auth.username,
+                            %collection,
+                            "RLS write policy: unresolved $auth reference → denied"
+                        );
+                        return Err(crate::Error::RejectedAuthz {
+                            tenant_id: crate::types::TenantId::new(tenant_id),
+                            resource: format!(
+                                "RLS policy '{}' on '{}': unresolved session variable",
+                                policy.name, collection
+                            ),
+                        });
+                    }
+                };
+
+                let passes = filters.iter().all(|f| f.matches(document));
+                if !passes {
+                    info!(
+                        policy = %policy.name,
+                        username = %auth.username,
+                        %collection,
+                        "RLS write policy rejected (compiled)"
+                    );
+                    return Err(crate::Error::RejectedAuthz {
+                        tenant_id: crate::types::TenantId::new(tenant_id),
+                        resource: format!(
+                            "RLS policy '{}' on collection '{}'",
+                            policy.name, collection
+                        ),
+                    });
+                }
+            } else if !policy.predicate.is_empty() {
+                // Legacy static predicate.
+                let filters: Vec<crate::bridge::scan_filter::ScanFilter> =
+                    match rmp_serde::from_slice(&policy.predicate) {
+                        Ok(f) => f,
+                        Err(e) => {
+                            warn!(
+                                policy = %policy.name,
+                                error = %e,
+                                "RLS write policy predicate deserialization failed"
+                            );
+                            continue;
+                        }
+                    };
+
+                let passes = filters.iter().all(|f| f.matches(document));
+                if !passes {
+                    info!(
+                        policy = %policy.name,
+                        username = %auth.username,
+                        %collection,
+                        "RLS write policy rejected (legacy)"
+                    );
+                    return Err(crate::Error::RejectedAuthz {
+                        tenant_id: crate::types::TenantId::new(tenant_id),
+                        resource: format!(
+                            "RLS policy '{}' on collection '{}'",
+                            policy.name, collection
+                        ),
+                    });
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// Total policies across all collections.
@@ -314,6 +483,8 @@ mod tests {
             tenant_id: 1,
             policy_type,
             predicate: Vec::new(),
+            compiled_predicate: None,
+            mode: PolicyMode::default(),
             enabled: true,
             created_by: "admin".into(),
             created_at: now,

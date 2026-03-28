@@ -1,5 +1,6 @@
 pub mod apikey;
 pub mod audit;
+pub mod auth_context;
 pub mod catalog;
 pub mod credential;
 pub mod crl;
@@ -8,6 +9,9 @@ pub mod identity;
 pub mod jwt;
 pub mod mtls;
 pub mod permission;
+pub mod predicate;
+pub mod predicate_eval;
+pub mod predicate_parser;
 pub mod rls;
 pub mod role;
 pub mod tenant;

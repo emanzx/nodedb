@@ -88,6 +88,14 @@ pub struct JwtClaims {
     /// Whether this is a superuser token.
     #[serde(default)]
     pub is_superuser: bool,
+    /// Extended claims not covered by the standard fields above.
+    ///
+    /// Captures provider-specific claims (email, org_id, groups, permissions,
+    /// status, metadata) that `AuthContext::from_jwt()` maps to session
+    /// variables. Different providers use different claim names — the
+    /// `[auth.jwt.claims]` config section (Wave 2) remaps them.
+    #[serde(flatten)]
+    pub extra: std::collections::HashMap<String, serde_json::Value>,
 }
 
 /// JWT validator.
