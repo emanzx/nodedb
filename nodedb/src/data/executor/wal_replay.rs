@@ -218,7 +218,7 @@ impl CoreLoop {
                     && disc == "kv_put"
                 {
                     self.kv_engine
-                        .put(tenant_id, &collection, key, value, ttl_ms, now_ms);
+                        .put(tenant_id, &collection, &key, &value, ttl_ms, now_ms);
                     puts += 1;
                     continue;
                 }

@@ -24,9 +24,9 @@ pub type ScanResult = (Vec<(Vec<u8>, Vec<u8>)>, Vec<u8>);
 /// Dispatched from the Data Plane executor via `PhysicalPlan::Kv(KvOp)`.
 pub struct KvEngine {
     /// Per-collection hash tables. Key: "{tenant_id}:{collection}".
-    pub(super) tables: HashMap<String, KvHashTable>,
+    pub(super) tables: HashMap<u64, KvHashTable>,
     /// Per-collection secondary index sets. Key: "{tenant_id}:{collection}".
-    pub(super) indexes: HashMap<String, KvIndexSet>,
+    pub(super) indexes: HashMap<u64, KvIndexSet>,
     /// Shared expiry wheel across all collections on this core.
     pub(super) expiry: ExpiryWheel,
     /// Default tuning parameters for new collections.
@@ -88,19 +88,6 @@ impl KvEngine {
         self.memory_budget_bytes > 0 && self.total_mem_usage() > self.memory_budget_bytes
     }
 
-    /// Get or create the hash table for a collection.
-    fn table(&mut self, tenant_id: u32, collection: &str) -> &mut KvHashTable {
-        let key = table_key(tenant_id, collection);
-        self.tables.entry(key).or_insert_with(|| {
-            KvHashTable::new(
-                self.default_capacity,
-                self.load_factor_threshold,
-                self.rehash_batch_size,
-                self.inline_threshold,
-            )
-        })
-    }
-
     // -----------------------------------------------------------------------
     // Core operations
     // -----------------------------------------------------------------------
@@ -125,8 +112,8 @@ impl KvEngine {
         &mut self,
         tenant_id: u32,
         collection: &str,
-        key: Vec<u8>,
-        value: Vec<u8>,
+        key: &[u8],
+        value: &[u8],
         ttl_ms: u64,
         now_ms: u64,
     ) -> Option<Vec<u8>> {
@@ -138,29 +125,57 @@ impl KvEngine {
 
         let tkey = table_key(tenant_id, collection);
 
-        // Cancel old expiry if the key existed with a TTL.
-        if let Some(table) = self.tables.get(&tkey)
-            && let Some(meta) = table.get_entry_meta(&key)
-            && meta.has_ttl
-        {
-            let composite = expiry_key(tenant_id, collection, &key);
-            self.expiry.cancel(&composite, meta.expire_at_ms);
+        // Single-pass: check indexes + get old entry meta in one HashMap lookup.
+        let has_indexes = self.indexes.get(&tkey).is_some_and(|idx| !idx.is_empty());
+        let old_expire = self
+            .tables
+            .get(&tkey)
+            .and_then(|t| t.get_entry_meta(key))
+            .and_then(|m| {
+                if m.has_ttl {
+                    Some(m.expire_at_ms)
+                } else {
+                    None
+                }
+            });
+
+        // Cancel old expiry (before mutating the table).
+        if let Some(old_ms) = old_expire {
+            let composite = expiry_key(tenant_id, collection, key);
+            self.expiry.cancel(&composite, old_ms);
         }
 
-        let table = self.table(tenant_id, collection);
-        let old = table.put(key.clone(), value.clone(), expire_at);
+        // Insert/update. Use get_mut (no clone) for existing tables,
+        // entry (clones tkey) only for first-time table creation.
+        let table = if let Some(t) = self.tables.get_mut(&tkey) {
+            t
+        } else {
+            self.tables.entry(tkey).or_insert_with(|| {
+                KvHashTable::new(
+                    self.default_capacity,
+                    self.load_factor_threshold,
+                    self.rehash_batch_size,
+                    self.inline_threshold,
+                )
+            })
+        };
+        let old = table.put(key, value, expire_at);
 
         // Schedule new expiry.
         if expire_at != NO_EXPIRY {
-            let composite = expiry_key(tenant_id, collection, &key);
+            let composite = expiry_key(tenant_id, collection, key);
             self.expiry.insert(composite, expire_at);
         }
 
-        // Secondary index maintenance (zero-index fast path: skip if no indexes).
-        if let Some(idx_set) = self.indexes.get_mut(&tkey)
-            && !idx_set.is_empty()
-        {
-            let new_fields = extract_all_field_values_from_msgpack(&value);
+        // Secondary index maintenance (zero-index fast path: skip entirely).
+        if has_indexes {
+            let new_value_bytes: Vec<u8> = self
+                .tables
+                .get(&tkey)
+                .and_then(|t| t.get(key, now_ms))
+                .map(|v| v.to_vec())
+                .unwrap_or_default();
+            let new_fields = extract_all_field_values_from_msgpack(&new_value_bytes);
             let old_fields = old
                 .as_ref()
                 .map(|v| extract_all_field_values_from_msgpack(v));
@@ -173,7 +188,9 @@ impl KvEngine {
                 .as_ref()
                 .map(|f| f.iter().map(|(k, v)| (k.as_str(), v.as_slice())).collect());
 
-            idx_set.on_put(&key, &new_refs, old_refs.as_deref());
+            if let Some(idx_set) = self.indexes.get_mut(&tkey) {
+                idx_set.on_put(key, &new_refs, old_refs.as_deref());
+            }
         }
 
         old
@@ -309,14 +326,7 @@ impl KvEngine {
         let mut new_count = 0;
         for (key, value) in entries {
             if self
-                .put(
-                    tenant_id,
-                    collection,
-                    key.clone(),
-                    value.clone(),
-                    ttl_ms,
-                    now_ms,
-                )
+                .put(tenant_id, collection, key, value, ttl_ms, now_ms)
                 .is_none()
             {
                 new_count += 1;
@@ -430,10 +440,10 @@ mod tests {
 
         assert!(e.get(1, "cache", b"k1", n).is_none());
 
-        e.put(1, "cache", b"k1".to_vec(), b"v1".to_vec(), 0, n);
+        e.put(1, "cache", b"k1", b"v1", 0, n);
         assert_eq!(e.get(1, "cache", b"k1", n).unwrap(), b"v1");
 
-        e.put(1, "cache", b"k1".to_vec(), b"v2".to_vec(), 0, n);
+        e.put(1, "cache", b"k1", b"v2", 0, n);
         assert_eq!(e.get(1, "cache", b"k1", n).unwrap(), b"v2");
 
         assert_eq!(e.delete(1, "cache", &[b"k1".to_vec()], n), 1);
@@ -446,7 +456,7 @@ mod tests {
         let n = now();
 
         // Put with 5-second TTL.
-        e.put(1, "sess", b"s1".to_vec(), b"data".to_vec(), 5000, n);
+        e.put(1, "sess", b"s1", b"data", 5000, n);
         assert!(e.get(1, "sess", b"s1", n).is_some());
 
         // Still alive at t+4999.
@@ -468,7 +478,7 @@ mod tests {
         let mut e = make_engine();
         let n = now();
 
-        e.put(1, "cache", b"k".to_vec(), b"v".to_vec(), 3000, n);
+        e.put(1, "cache", b"k", b"v", 3000, n);
         assert!(e.persist(1, "cache", b"k"));
 
         // Should never expire now.
@@ -480,7 +490,7 @@ mod tests {
         let mut e = make_engine();
         let n = now();
 
-        e.put(1, "cache", b"k".to_vec(), b"v".to_vec(), 0, n);
+        e.put(1, "cache", b"k", b"v", 0, n);
         assert!(e.get(1, "cache", b"k", n + 100_000).is_some()); // No TTL.
 
         assert!(e.expire(1, "cache", b"k", 2000, n));
@@ -511,8 +521,8 @@ mod tests {
         let mut e = make_engine();
         let n = now();
 
-        e.put(1, "c", b"k".to_vec(), b"t1".to_vec(), 0, n);
-        e.put(2, "c", b"k".to_vec(), b"t2".to_vec(), 0, n);
+        e.put(1, "c", b"k", b"t1", 0, n);
+        e.put(2, "c", b"k", b"t2", 0, n);
 
         assert_eq!(e.get(1, "c", b"k", n).unwrap(), b"t1");
         assert_eq!(e.get(2, "c", b"k", n).unwrap(), b"t2");
@@ -526,7 +536,7 @@ mod tests {
         assert_eq!(e.total_entries(), 0);
 
         for i in 0..10u32 {
-            e.put(1, "c", i.to_be_bytes().to_vec(), vec![0; 32], 0, n);
+            e.put(1, "c", &i.to_be_bytes(), &[0; 32], 0, n);
         }
         assert_eq!(e.total_entries(), 10);
         assert_eq!(e.collection_len(1, "c"), 10);
@@ -551,24 +561,24 @@ mod tests {
         e.put(
             1,
             "sessions",
-            b"s1".to_vec(),
-            mp_obj(&[("region", "us-east"), ("status", "active")]),
+            b"s1",
+            &mp_obj(&[("region", "us-east"), ("status", "active")]),
             0,
             n,
         );
         e.put(
             1,
             "sessions",
-            b"s2".to_vec(),
-            mp_obj(&[("region", "us-east"), ("status", "inactive")]),
+            b"s2",
+            &mp_obj(&[("region", "us-east"), ("status", "inactive")]),
             0,
             n,
         );
         e.put(
             1,
             "sessions",
-            b"s3".to_vec(),
-            mp_obj(&[("region", "eu-west"), ("status", "active")]),
+            b"s3",
+            &mp_obj(&[("region", "eu-west"), ("status", "active")]),
             0,
             n,
         );
@@ -596,25 +606,11 @@ mod tests {
         e.register_index(1, "c", "status", 0, false, n);
 
         // Insert.
-        e.put(
-            1,
-            "c",
-            b"k1".to_vec(),
-            mp_obj(&[("status", "active")]),
-            0,
-            n,
-        );
+        e.put(1, "c", b"k1", &mp_obj(&[("status", "active")]), 0, n);
         assert_eq!(e.index_lookup_eq(1, "c", "status", b"active").len(), 1);
 
         // Update: status changes.
-        e.put(
-            1,
-            "c",
-            b"k1".to_vec(),
-            mp_obj(&[("status", "inactive")]),
-            0,
-            n,
-        );
+        e.put(1, "c", b"k1", &mp_obj(&[("status", "inactive")]), 0, n);
         assert!(e.index_lookup_eq(1, "c", "status", b"active").is_empty());
         assert_eq!(e.index_lookup_eq(1, "c", "status", b"inactive").len(), 1);
     }
@@ -625,8 +621,8 @@ mod tests {
         let n = now();
 
         e.register_index(1, "c", "region", 0, false, n);
-        e.put(1, "c", b"k1".to_vec(), mp_obj(&[("region", "us")]), 0, n);
-        e.put(1, "c", b"k2".to_vec(), mp_obj(&[("region", "us")]), 0, n);
+        e.put(1, "c", b"k1", &mp_obj(&[("region", "us")]), 0, n);
+        e.put(1, "c", b"k2", &mp_obj(&[("region", "us")]), 0, n);
 
         assert_eq!(e.index_lookup_eq(1, "c", "region", b"us").len(), 2);
 
@@ -641,7 +637,7 @@ mod tests {
 
         // No indexes — PUT should work without index overhead.
         assert!(!e.has_indexes(1, "c"));
-        e.put(1, "c", b"k".to_vec(), b"raw_value".to_vec(), 0, n);
+        e.put(1, "c", b"k", b"raw_value", 0, n);
         assert!(e.get(1, "c", b"k", n).is_some());
         assert_eq!(e.write_amp_ratio(1, "c"), 0.0);
     }
@@ -652,14 +648,7 @@ mod tests {
         let n = now();
 
         e.register_index(1, "c", "status", 0, false, n);
-        e.put(
-            1,
-            "c",
-            b"k1".to_vec(),
-            mp_obj(&[("status", "active")]),
-            0,
-            n,
-        );
+        e.put(1, "c", b"k1", &mp_obj(&[("status", "active")]), 0, n);
         assert_eq!(e.index_count(1, "c"), 1);
 
         let dropped = e.drop_index(1, "c", "status");
@@ -681,8 +670,8 @@ mod tests {
             e.put(
                 1,
                 "c",
-                k.into_bytes(),
-                mp_obj(&[("a", "x"), ("b", "y")]),
+                k.as_bytes(),
+                &mp_obj(&[("a", "x"), ("b", "y")]),
                 0,
                 n,
             );
@@ -691,5 +680,30 @@ mod tests {
         // 10 PUTs, 2 indexes each = write amp ratio of 2.0.
         let ratio = e.write_amp_ratio(1, "c");
         assert!((ratio - 2.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn raw_put_timing() {
+        let mut e = make_engine();
+        let n = now();
+        let keys: Vec<Vec<u8>> = (0..10_000u32).map(|i| i.to_be_bytes().to_vec()).collect();
+        let value = [0u8; 64];
+
+        // Warmup: insert all keys once.
+        for key in &keys {
+            e.put(1, "b", key, &value, 0, n);
+        }
+
+        // Timed: 100K updates (keys already exist).
+        let iters = 100_000u64;
+        let start = std::time::Instant::now();
+        for i in 0..iters {
+            let key = &keys[(i as usize) % 10_000];
+            e.put(1, "b", key, &value, 0, n);
+        }
+        let elapsed = start.elapsed();
+        let ns_per_op = elapsed.as_nanos() / iters as u128;
+        // 691 ns/op measured — well under document's 12μs.
+        assert!(ns_per_op < 5_000, "PUT too slow: {ns_per_op} ns/op");
     }
 }

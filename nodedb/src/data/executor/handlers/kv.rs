@@ -125,14 +125,9 @@ impl CoreLoop {
         }
 
         let now_ms = current_ms();
-        let _old = self.kv_engine.put(
-            tid,
-            collection,
-            key.to_vec(),
-            value.to_vec(),
-            ttl_ms,
-            now_ms,
-        );
+        let _old = self
+            .kv_engine
+            .put(tid, collection, key, value, ttl_ms, now_ms);
         self.response_ok(task)
     }
 
@@ -407,7 +402,7 @@ impl CoreLoop {
         };
 
         self.kv_engine
-            .put(tid, collection, key.to_vec(), new_value, 0, now_ms);
+            .put(tid, collection, key, &new_value, 0, now_ms);
         self.response_ok(task)
     }
 

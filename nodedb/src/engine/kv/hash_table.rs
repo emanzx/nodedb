@@ -187,18 +187,18 @@ impl KvHashTable {
     ///
     /// Triggers incremental rehash migration if a rehash is in progress.
     /// Triggers a new rehash if the load factor exceeds the threshold.
-    pub fn put(&mut self, key: Vec<u8>, value: Vec<u8>, expire_at_ms: u64) -> Option<Vec<u8>> {
+    pub fn put(&mut self, key: &[u8], value: &[u8], expire_at_ms: u64) -> Option<Vec<u8>> {
         // Progress incremental rehash.
         self.rehash_step();
 
-        let h = hash_key(&key);
+        let h = hash_key(key);
 
-        // Check if key exists in primary — update in place.
-        if let Some(idx) = Self::probe_find_index_static(&self.slots, h, &key) {
+        // Check if key exists in primary — update in place (no key copy needed).
+        if let Some(idx) = Self::probe_find_index_static(&self.slots, h, key) {
             let old_value =
                 extract_value_from(&self.slots[idx].as_ref().unwrap().value, &self.overflow);
             free_value_from(&self.slots[idx].as_ref().unwrap().value, &mut self.overflow);
-            let new_kv_value = store_value_in(&mut self.overflow, &value, self.inline_threshold);
+            let new_kv_value = store_value_in(&mut self.overflow, value, self.inline_threshold);
             let entry = self.slots[idx].as_mut().unwrap();
             entry.value = new_kv_value;
             entry.expire_at_ms = expire_at_ms;
@@ -207,15 +207,15 @@ impl KvHashTable {
 
         // Check rehash source — if found, remove from old and insert into primary.
         if let Some(old_slots) = self.rehash_source.as_mut()
-            && let Some(idx) = Self::probe_find_index_static(old_slots, h, &key)
+            && let Some(idx) = Self::probe_find_index_static(old_slots, h, key)
         {
             let old_entry = old_slots[idx].take().unwrap();
             let old_value = extract_value_from(&old_entry.value, &self.overflow);
             free_value_from(&old_entry.value, &mut self.overflow);
-            let new_kv_value = store_value_in(&mut self.overflow, &value, self.inline_threshold);
+            let new_kv_value = store_value_in(&mut self.overflow, value, self.inline_threshold);
             let new_entry = KvEntry {
                 hash: h,
-                key,
+                key: key.to_vec(), // Only copy key when migrating from rehash source.
                 value: new_kv_value,
                 expire_at_ms,
             };
@@ -223,11 +223,11 @@ impl KvHashTable {
             return Some(old_value);
         }
 
-        // New key — insert into primary.
-        let kv_value = store_value_in(&mut self.overflow, &value, self.inline_threshold);
+        // New key — insert into primary. Single key copy here (unavoidable — entry owns key).
+        let kv_value = store_value_in(&mut self.overflow, value, self.inline_threshold);
         let entry = KvEntry {
             hash: h,
-            key,
+            key: key.to_vec(),
             value: kv_value,
             expire_at_ms,
         };
@@ -512,11 +512,11 @@ mod tests {
         let mut t = make_table();
         assert!(t.is_empty());
 
-        t.put(b"key1".to_vec(), b"value1".to_vec(), NO_EXPIRY);
+        t.put(b"key1", b"value1", NO_EXPIRY);
         assert_eq!(t.len(), 1);
         assert_eq!(t.get(b"key1", 0), Some(b"value1".as_slice()));
 
-        t.put(b"key2".to_vec(), b"value2".to_vec(), NO_EXPIRY);
+        t.put(b"key2", b"value2", NO_EXPIRY);
         assert_eq!(t.len(), 2);
 
         assert!(t.delete(b"key1", 0));
@@ -528,8 +528,8 @@ mod tests {
     #[test]
     fn overwrite_returns_old_value() {
         let mut t = make_table();
-        assert!(t.put(b"k".to_vec(), b"v1".to_vec(), NO_EXPIRY).is_none());
-        let old = t.put(b"k".to_vec(), b"v2".to_vec(), NO_EXPIRY);
+        assert!(t.put(b"k", b"v1", NO_EXPIRY).is_none());
+        let old = t.put(b"k", b"v2", NO_EXPIRY);
         assert_eq!(old, Some(b"v1".to_vec()));
         assert_eq!(t.get(b"k", 0), Some(b"v2".as_slice()));
         assert_eq!(t.len(), 1);
@@ -544,7 +544,7 @@ mod tests {
     #[test]
     fn lazy_expiry_on_get() {
         let mut t = make_table();
-        t.put(b"k".to_vec(), b"v".to_vec(), 1000);
+        t.put(b"k", b"v", 1000);
 
         assert_eq!(t.get(b"k", 999), Some(b"v".as_slice()));
         assert!(t.get(b"k", 1000).is_none()); // Expired.
@@ -554,14 +554,14 @@ mod tests {
     #[test]
     fn set_expire_and_persist() {
         let mut t = make_table();
-        t.put(b"k".to_vec(), b"v".to_vec(), NO_EXPIRY);
+        t.put(b"k", b"v", NO_EXPIRY);
 
         assert!(t.set_expire(b"k", 5000));
         assert!(t.get(b"k", 4999).is_some());
         assert!(t.get(b"k", 5000).is_none());
 
         // Reset expiry to force it to be visible again — need to re-put.
-        t.put(b"k".to_vec(), b"v".to_vec(), 10000);
+        t.put(b"k", b"v", 10000);
         assert!(t.persist(b"k"));
         assert!(t.get(b"k", u64::MAX).is_some()); // Never expires.
     }
@@ -569,7 +569,7 @@ mod tests {
     #[test]
     fn reap_expired_removes_matching() {
         let mut t = make_table();
-        t.put(b"k".to_vec(), b"v".to_vec(), 5000);
+        t.put(b"k", b"v", 5000);
 
         // Wrong expire_at_ms — should not reap.
         assert!(!t.reap_expired(b"k", 9999));
@@ -588,7 +588,7 @@ mod tests {
         for i in 0..10 {
             let key = format!("key{i:03}");
             let val = format!("val{i:03}");
-            t.put(key.into_bytes(), val.into_bytes(), NO_EXPIRY);
+            t.put(key.as_bytes(), val.as_bytes(), NO_EXPIRY);
         }
 
         // Rehash should have been triggered.
@@ -596,7 +596,7 @@ mod tests {
         for i in 10..20 {
             let key = format!("key{i:03}");
             let val = format!("val{i:03}");
-            t.put(key.into_bytes(), val.into_bytes(), NO_EXPIRY);
+            t.put(key.as_bytes(), val.as_bytes(), NO_EXPIRY);
         }
 
         // All entries should be findable.
@@ -618,8 +618,8 @@ mod tests {
         let small = b"tiny".to_vec(); // 4 bytes — inline.
         let large = vec![0xAB; 100]; // 100 bytes — overflow.
 
-        t.put(b"s".to_vec(), small.clone(), NO_EXPIRY);
-        t.put(b"l".to_vec(), large.clone(), NO_EXPIRY);
+        t.put(b"s", &small, NO_EXPIRY);
+        t.put(b"l", &large, NO_EXPIRY);
 
         assert_eq!(t.get(b"s", 0), Some(small.as_slice()));
         assert_eq!(t.get(b"l", 0), Some(large.as_slice()));
@@ -631,9 +631,7 @@ mod tests {
 
         // Insert 500 keys.
         for i in 0u32..500 {
-            let key = i.to_be_bytes().to_vec();
-            let val = (i * 7).to_be_bytes().to_vec();
-            t.put(key, val, NO_EXPIRY);
+            t.put(&i.to_be_bytes(), &(i * 7).to_be_bytes(), NO_EXPIRY);
         }
         assert_eq!(t.len(), 500);
 
@@ -666,13 +664,13 @@ mod tests {
     fn get_entry_meta_returns_ttl_info() {
         let mut t = make_table();
         // Key without TTL.
-        t.put(b"persistent".to_vec(), b"v".to_vec(), NO_EXPIRY);
+        t.put(b"persistent", b"v", NO_EXPIRY);
         let meta = t.get_entry_meta(b"persistent").unwrap();
         assert!(!meta.has_ttl);
         assert_eq!(meta.expire_at_ms, NO_EXPIRY);
 
         // Key with TTL.
-        t.put(b"ephemeral".to_vec(), b"v".to_vec(), 5000);
+        t.put(b"ephemeral", b"v", 5000);
         let meta = t.get_entry_meta(b"ephemeral").unwrap();
         assert!(meta.has_ttl);
         assert_eq!(meta.expire_at_ms, 5000);
@@ -687,7 +685,7 @@ mod tests {
         let base = t.mem_usage();
 
         for i in 0..100u32 {
-            t.put(i.to_be_bytes().to_vec(), vec![0; 32], NO_EXPIRY);
+            t.put(&i.to_be_bytes(), &[0u8; 32], NO_EXPIRY);
         }
 
         assert!(t.mem_usage() > base);

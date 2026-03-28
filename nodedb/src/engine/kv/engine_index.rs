@@ -23,7 +23,7 @@ impl KvEngine {
         now_ms: u64,
     ) -> usize {
         let tkey = table_key(tenant_id, collection);
-        let idx_set = self.indexes.entry(tkey.clone()).or_default();
+        let idx_set = self.indexes.entry(tkey).or_default();
 
         if !idx_set.add_index(field, field_position) {
             return 0; // Already indexed.

@@ -47,6 +47,20 @@ pub(super) fn hash_key(key: &[u8]) -> u64 {
     h.finish()
 }
 
+/// Compute FxHash over multiple byte slices concatenated.
+///
+/// Used by [`super::engine_helpers::table_key`] to hash `(tenant_id, collection)`
+/// without allocating a String. Same algorithm as [`hash_key`].
+pub(super) fn fxhash_multi(slices: &[&[u8]]) -> u64 {
+    let mut h: u64 = 0;
+    for slice in slices {
+        for &b in *slice {
+            h = h.rotate_left(5) ^ (b as u64).wrapping_mul(FX_SEED);
+        }
+    }
+    h
+}
+
 // ---------------------------------------------------------------------------
 // Value storage operations (avoids borrow conflicts in hash table methods)
 // ---------------------------------------------------------------------------
