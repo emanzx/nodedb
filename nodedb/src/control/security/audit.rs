@@ -5,6 +5,42 @@ use std::time::SystemTime;
 
 use crate::types::TenantId;
 
+/// Auth context for enriched audit entries.
+#[derive(Debug, Clone, Default)]
+pub struct AuditAuth {
+    /// Authenticated user ID.
+    pub user_id: String,
+    /// Authenticated username (for display).
+    pub user_name: String,
+    /// Session ID for correlation.
+    pub session_id: String,
+}
+
+/// Audit level: controls which events are recorded.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum AuditLevel {
+    /// Auth success/failure, privilege changes only.
+    Minimal = 0,
+    /// + admin actions, config changes, DDL (default).
+    #[default]
+    Standard = 1,
+    /// + every query execution, RLS denials.
+    Full = 2,
+    /// + row-level changes, CRDT deltas, full request/response.
+    Forensic = 3,
+}
+
 /// Security-relevant audit event.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AuditEntry {
@@ -16,12 +52,20 @@ pub struct AuditEntry {
     pub event: AuditEvent,
     /// Tenant context (if applicable).
     pub tenant_id: Option<TenantId>,
+    /// Authenticated user ID (from AuthContext). Empty for unauthenticated.
+    #[serde(default)]
+    pub auth_user_id: String,
+    /// Authenticated username (for display/audit trail).
+    #[serde(default)]
+    pub auth_user_name: String,
+    /// Session ID (for audit correlation across events).
+    #[serde(default)]
+    pub session_id: String,
     /// Source IP or node identifier.
     pub source: String,
     /// Human-readable detail.
     pub detail: String,
     /// SHA-256 hash of the previous entry (hex). Empty for first entry.
-    /// Forms a hash chain for tamper detection.
     pub prev_hash: String,
 }
 
@@ -62,6 +106,55 @@ pub enum AuditEvent {
     NodeLeft,
     /// Admin action (catch-all for ops).
     AdminAction,
+    /// Session connected.
+    SessionConnect,
+    /// Session disconnected.
+    SessionDisconnect,
+    /// Query executed (full/forensic level only).
+    QueryExec,
+    /// RLS denial (full level).
+    RlsDenied,
+    /// Row-level change (forensic level only).
+    RowChange,
+}
+
+impl AuditEvent {
+    /// Whether this event belongs to the auth event stream.
+    pub fn is_auth_event(&self) -> bool {
+        matches!(
+            self,
+            Self::AuthSuccess
+                | Self::AuthFailure
+                | Self::AuthzDenied
+                | Self::SessionConnect
+                | Self::SessionDisconnect
+        )
+    }
+
+    /// Minimum audit level required to record this event.
+    pub fn min_level(&self) -> AuditLevel {
+        match self {
+            Self::AuthSuccess | Self::AuthFailure | Self::AuthzDenied => AuditLevel::Minimal,
+            Self::PrivilegeChange
+            | Self::AdminAction
+            | Self::ConfigChange
+            | Self::SessionConnect
+            | Self::SessionDisconnect
+            | Self::TenantCreated
+            | Self::TenantDeleted
+            | Self::SnapshotBegin
+            | Self::SnapshotEnd
+            | Self::RestoreBegin
+            | Self::RestoreEnd
+            | Self::CertRotation
+            | Self::CertRotationFailed
+            | Self::KeyRotation
+            | Self::NodeJoined
+            | Self::NodeLeft => AuditLevel::Standard,
+            Self::QueryExec | Self::RlsDenied => AuditLevel::Full,
+            Self::RowChange => AuditLevel::Forensic,
+        }
+    }
 }
 
 /// Append-only audit log.
@@ -72,6 +165,8 @@ pub enum AuditEvent {
 /// Lives on the Control Plane (Send + Sync).
 pub struct AuditLog {
     entries: VecDeque<AuditEntry>,
+    /// Separate auth event stream for login/logout/MFA/deactivation.
+    auth_events: VecDeque<AuditEntry>,
     /// Maximum entries retained in memory.
     max_entries: usize,
     /// Next sequence number.
@@ -80,17 +175,31 @@ pub struct AuditLog {
     total_entries: u64,
     /// Hash of the last recorded entry (for chain continuity).
     last_hash: String,
+    /// Current audit level (controls which events are recorded).
+    level: AuditLevel,
 }
 
 impl AuditLog {
     pub fn new(max_entries: usize) -> Self {
         Self {
             entries: VecDeque::with_capacity(max_entries.min(10_000)),
+            auth_events: VecDeque::with_capacity(1_000),
             max_entries,
             next_seq: 1,
             total_entries: 0,
             last_hash: String::new(),
+            level: AuditLevel::default(),
         }
+    }
+
+    /// Set the audit level.
+    pub fn set_level(&mut self, level: AuditLevel) {
+        self.level = level;
+    }
+
+    /// Get the current audit level.
+    pub fn level(&self) -> AuditLevel {
+        self.level
     }
 
     /// Set the next sequence number (used on startup to resume from catalog).
@@ -103,7 +212,7 @@ impl AuditLog {
         self.last_hash = hash;
     }
 
-    /// Record an audit event with hash chain.
+    /// Record an audit event with hash chain (legacy — no auth context).
     pub fn record(
         &mut self,
         event: AuditEvent,
@@ -111,30 +220,50 @@ impl AuditLog {
         source: &str,
         detail: &str,
     ) -> u64 {
+        self.record_with_auth(event, tenant_id, source, detail, &AuditAuth::default())
+    }
+
+    /// Record an audit event with auth context enrichment.
+    pub fn record_with_auth(
+        &mut self,
+        event: AuditEvent,
+        tenant_id: Option<TenantId>,
+        source: &str,
+        detail: &str,
+        auth: &AuditAuth,
+    ) -> u64 {
         let seq = self.next_seq;
         self.next_seq += 1;
-
         let prev_hash = self.last_hash.clone();
 
         let entry = AuditEntry {
             seq,
             timestamp_us: now_us(),
-            event,
+            event: event.clone(),
             tenant_id,
+            auth_user_id: auth.user_id.clone(),
+            auth_user_name: auth.user_name.clone(),
+            session_id: auth.session_id.clone(),
             source: source.to_string(),
             detail: detail.to_string(),
             prev_hash,
         };
 
-        // Compute this entry's hash for the chain.
         self.last_hash = hash_entry(&entry);
+
+        // Route auth events to the separate auth_events stream.
+        if event.is_auth_event() {
+            if self.auth_events.len() >= 10_000 {
+                self.auth_events.pop_front();
+            }
+            self.auth_events.push_back(entry.clone());
+        }
 
         if self.entries.len() >= self.max_entries {
             self.entries.pop_front();
         }
         self.entries.push_back(entry);
         self.total_entries += 1;
-
         seq
     }
 
@@ -173,6 +302,19 @@ impl AuditLog {
         self.total_entries
     }
 
+    /// Query entries by auth user ID.
+    pub fn query_by_user(&self, auth_user_id: &str) -> Vec<&AuditEntry> {
+        self.entries
+            .iter()
+            .filter(|e| e.auth_user_id == auth_user_id)
+            .collect()
+    }
+
+    /// Get the separate auth events stream (login/logout/MFA/deactivation).
+    pub fn auth_events(&self) -> &VecDeque<AuditEntry> {
+        &self.auth_events
+    }
+
     /// Drain entries for persistence (WAL or segment file).
     pub fn drain_for_persistence(&mut self) -> Vec<AuditEntry> {
         self.entries.drain(..).collect()
@@ -208,6 +350,9 @@ fn hash_entry(entry: &AuditEntry) -> String {
     hasher.update(entry.seq.to_le_bytes());
     hasher.update(entry.timestamp_us.to_le_bytes());
     hasher.update(format!("{:?}", entry.event).as_bytes());
+    hasher.update(entry.auth_user_id.as_bytes());
+    hasher.update(entry.auth_user_name.as_bytes());
+    hasher.update(entry.session_id.as_bytes());
     hasher.update(entry.source.as_bytes());
     hasher.update(entry.detail.as_bytes());
     format!("{:x}", hasher.finalize())
