@@ -58,6 +58,22 @@ pub struct SystemMetrics {
     /// SPSC bridge latency spikes above p95 threshold).
     pub cache_contention_events: AtomicU64,
 
+    // ── KV engine metrics ──
+    /// Total KV GET operations.
+    pub kv_gets_total: AtomicU64,
+    /// Total KV PUT operations.
+    pub kv_puts_total: AtomicU64,
+    /// Total KV DELETE operations.
+    pub kv_deletes_total: AtomicU64,
+    /// Total KV SCAN operations.
+    pub kv_scans_total: AtomicU64,
+    /// Total KV keys expired by the expiry wheel.
+    pub kv_expiries_total: AtomicU64,
+    /// Current total KV memory usage in bytes (across all cores).
+    pub kv_memory_bytes: AtomicU64,
+    /// Current total KV key count (across all cores).
+    pub kv_total_keys: AtomicU64,
+
     // ── Subscription metrics ──
     /// Active WebSocket subscriptions.
     pub active_subscriptions: AtomicU64,
@@ -124,6 +140,41 @@ impl SystemMetrics {
     /// Record a cache contention event.
     pub fn record_cache_contention(&self) {
         self.cache_contention_events.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Record a KV GET.
+    pub fn record_kv_get(&self) {
+        self.kv_gets_total.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Record a KV PUT.
+    pub fn record_kv_put(&self) {
+        self.kv_puts_total.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Record a KV DELETE.
+    pub fn record_kv_delete(&self) {
+        self.kv_deletes_total.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Record a KV SCAN.
+    pub fn record_kv_scan(&self) {
+        self.kv_scans_total.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Record KV key expirations.
+    pub fn record_kv_expiries(&self, count: u64) {
+        self.kv_expiries_total.fetch_add(count, Ordering::Relaxed);
+    }
+
+    /// Update KV memory gauge.
+    pub fn update_kv_memory(&self, bytes: u64) {
+        self.kv_memory_bytes.store(bytes, Ordering::Relaxed);
+    }
+
+    /// Update KV key count gauge.
+    pub fn update_kv_keys(&self, count: u64) {
+        self.kv_total_keys.store(count, Ordering::Relaxed);
     }
 
     /// Update NVMe queue depth.
@@ -205,6 +256,43 @@ impl SystemMetrics {
              # TYPE nodedb_cache_contention_events counter\n\
              nodedb_cache_contention_events {}\n",
             self.cache_contention_events.load(Ordering::Relaxed)
+        ));
+        // KV engine metrics.
+        out.push_str(&format!(
+            "# HELP nodedb_kv_gets_total KV GET operations\n\
+             # TYPE nodedb_kv_gets_total counter\n\
+             nodedb_kv_gets_total {}\n",
+            self.kv_gets_total.load(Ordering::Relaxed)
+        ));
+        out.push_str(&format!(
+            "# HELP nodedb_kv_puts_total KV PUT operations\n\
+             # TYPE nodedb_kv_puts_total counter\n\
+             nodedb_kv_puts_total {}\n",
+            self.kv_puts_total.load(Ordering::Relaxed)
+        ));
+        out.push_str(&format!(
+            "# HELP nodedb_kv_deletes_total KV DELETE operations\n\
+             # TYPE nodedb_kv_deletes_total counter\n\
+             nodedb_kv_deletes_total {}\n",
+            self.kv_deletes_total.load(Ordering::Relaxed)
+        ));
+        out.push_str(&format!(
+            "# HELP nodedb_kv_expiries_total KV keys expired\n\
+             # TYPE nodedb_kv_expiries_total counter\n\
+             nodedb_kv_expiries_total {}\n",
+            self.kv_expiries_total.load(Ordering::Relaxed)
+        ));
+        out.push_str(&format!(
+            "# HELP nodedb_kv_memory_bytes KV engine memory usage\n\
+             # TYPE nodedb_kv_memory_bytes gauge\n\
+             nodedb_kv_memory_bytes {}\n",
+            self.kv_memory_bytes.load(Ordering::Relaxed)
+        ));
+        out.push_str(&format!(
+            "# HELP nodedb_kv_total_keys Total KV keys\n\
+             # TYPE nodedb_kv_total_keys gauge\n\
+             nodedb_kv_total_keys {}\n",
+            self.kv_total_keys.load(Ordering::Relaxed)
         ));
         out.push_str(&format!(
             "# HELP nodedb_active_subscriptions Active WebSocket/LISTEN subscriptions\n\

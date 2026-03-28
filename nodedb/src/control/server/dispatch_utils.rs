@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 
 use crate::bridge::envelope::Payload;
 use crate::bridge::envelope::{PhysicalPlan, Priority, Request, Response};
-use crate::bridge::physical_plan::{DocumentOp, TimeseriesOp};
+use crate::bridge::physical_plan::{DocumentOp, KvOp, TimeseriesOp};
 use crate::control::state::SharedState;
 use crate::types::{ReadConsistency, RequestId, TenantId, VShardId};
 
@@ -200,6 +200,30 @@ fn extract_write_metadata(
         // Consumers can subscribe with collection_filter to get these events.
         PhysicalPlan::Timeseries(TimeseriesOp::Ingest { collection, .. }) => {
             Some((collection.clone(), "*".into(), ChangeOperation::Insert))
+        }
+        // KV engine write operations.
+        PhysicalPlan::Kv(KvOp::Put {
+            collection, key, ..
+        }) => Some((
+            collection.clone(),
+            String::from_utf8_lossy(key).into_owned(),
+            ChangeOperation::Insert,
+        )),
+        PhysicalPlan::Kv(KvOp::Delete { collection, .. }) => {
+            Some((collection.clone(), "*".into(), ChangeOperation::Delete))
+        }
+        PhysicalPlan::Kv(KvOp::FieldSet {
+            collection, key, ..
+        }) => Some((
+            collection.clone(),
+            String::from_utf8_lossy(key).into_owned(),
+            ChangeOperation::Update,
+        )),
+        PhysicalPlan::Kv(KvOp::BatchPut { collection, .. }) => {
+            Some((collection.clone(), "*".into(), ChangeOperation::Insert))
+        }
+        PhysicalPlan::Kv(KvOp::Truncate { collection }) => {
+            Some((collection.clone(), "*".into(), ChangeOperation::Delete))
         }
         _ => None,
     }
