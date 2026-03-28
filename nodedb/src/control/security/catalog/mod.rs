@@ -3,10 +3,14 @@ pub mod auth_users;
 pub mod blacklist;
 pub mod collections;
 pub mod metadata;
+pub mod orgs;
+pub mod scopes;
 pub mod security;
 pub mod types;
 pub mod users;
 
+pub use orgs::{StoredOrg, StoredOrgMember};
+pub use scopes::{StoredScope, StoredScopeGrant};
 pub use types::{
     StoredApiKey, StoredAuditEntry, StoredAuthUser, StoredBlacklistEntry, StoredCollection,
     StoredOwner, StoredPermission, StoredRole, StoredTenant, StoredUser, SystemCatalog,

@@ -47,6 +47,20 @@ pub(super) const BLACKLIST: TableDefinition<&str, &[u8]> =
 pub(super) const AUTH_USERS: TableDefinition<&str, &[u8]> =
     TableDefinition::new("_system.auth_users");
 
+/// Table: org_id -> MessagePack-serialized org record.
+pub(super) const ORGS: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.orgs");
+
+/// Table: "{org_id}:{user_id}" -> MessagePack-serialized org membership.
+pub(super) const ORG_MEMBERS: TableDefinition<&str, &[u8]> =
+    TableDefinition::new("_system.org_members");
+
+/// Table: scope_name -> MessagePack-serialized scope definition.
+pub(super) const SCOPES: TableDefinition<&str, &[u8]> = TableDefinition::new("_system.scopes");
+
+/// Table: "{scope_name}:{grantee_type}:{grantee_id}" -> MessagePack-serialized scope grant.
+pub(super) const SCOPE_GRANTS: TableDefinition<&str, &[u8]> =
+    TableDefinition::new("_system.scope_grants");
+
 pub fn catalog_err<E: std::fmt::Display>(ctx: &str, e: E) -> crate::Error {
     crate::Error::Storage {
         engine: "catalog".into(),
@@ -351,6 +365,18 @@ impl SystemCatalog {
             let _ = write_txn
                 .open_table(AUTH_USERS)
                 .map_err(|e| catalog_err("init auth_users table", e))?;
+            let _ = write_txn
+                .open_table(ORGS)
+                .map_err(|e| catalog_err("init orgs table", e))?;
+            let _ = write_txn
+                .open_table(ORG_MEMBERS)
+                .map_err(|e| catalog_err("init org_members table", e))?;
+            let _ = write_txn
+                .open_table(SCOPES)
+                .map_err(|e| catalog_err("init scopes table", e))?;
+            let _ = write_txn
+                .open_table(SCOPE_GRANTS)
+                .map_err(|e| catalog_err("init scope_grants table", e))?;
         }
         write_txn
             .commit()

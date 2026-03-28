@@ -61,6 +61,15 @@ pub struct SharedState {
     /// JIT-provisioned auth user store (from JWT claims).
     pub auth_users: crate::control::security::jit::auth_user::AuthUserStore,
 
+    /// Organization store.
+    pub orgs: crate::control::security::org::store::OrgStore,
+
+    /// Scope definition store.
+    pub scope_defs: crate::control::security::scope::store::ScopeStore,
+
+    /// Scope grant store (who has what scope).
+    pub scope_grants: crate::control::security::scope::grant::ScopeGrantStore,
+
     /// Dead-Letter Queue for sync-rejected deltas.
     pub sync_dlq: Mutex<SyncDlq>,
 
@@ -172,6 +181,9 @@ impl SharedState {
             rls: RlsPolicyStore::new(),
             blacklist: crate::control::security::blacklist::store::BlacklistStore::new(),
             auth_users: crate::control::security::jit::auth_user::AuthUserStore::new(),
+            orgs: crate::control::security::org::store::OrgStore::new(),
+            scope_defs: crate::control::security::scope::store::ScopeStore::new(),
+            scope_grants: crate::control::security::scope::grant::ScopeGrantStore::new(),
             sync_dlq: Mutex::new(SyncDlq::new(DlqConfig::default())),
             audit_retention_days: 0,
             idle_timeout_secs: 0,
@@ -245,6 +257,9 @@ impl SharedState {
             rls: RlsPolicyStore::new(),
             blacklist: crate::control::security::blacklist::store::BlacklistStore::new(),
             auth_users: crate::control::security::jit::auth_user::AuthUserStore::new(),
+            orgs: crate::control::security::org::store::OrgStore::new(),
+            scope_defs: crate::control::security::scope::store::ScopeStore::new(),
+            scope_grants: crate::control::security::scope::grant::ScopeGrantStore::new(),
             sync_dlq: Mutex::new(SyncDlq::new(DlqConfig::default())),
             audit_retention_days: auth_config.audit_retention_days,
             idle_timeout_secs: auth_config.idle_timeout_secs,

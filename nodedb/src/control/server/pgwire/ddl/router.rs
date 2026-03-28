@@ -206,6 +206,37 @@ pub async fn dispatch(
         ));
     }
 
+    // Organization management.
+    if upper.starts_with("CREATE ORG ")
+        || upper.starts_with("ALTER ORG ")
+        || upper.starts_with("DROP ORG ")
+    {
+        return Some(super::org_ddl::handle_org(state, identity, &parts));
+    }
+    if upper.starts_with("SHOW ORGS") {
+        return Some(super::org_ddl::show_orgs(state, identity, &parts));
+    }
+    if upper.starts_with("SHOW MEMBERS OF ORG") {
+        return Some(super::org_ddl::show_members(state, identity, &parts));
+    }
+
+    // Scope management.
+    if upper.starts_with("DEFINE SCOPE ") {
+        return Some(super::scope_ddl::define_scope(state, identity, &parts));
+    }
+    if upper.starts_with("DROP SCOPE ") {
+        return Some(super::scope_ddl::drop_scope(state, identity, &parts));
+    }
+    if upper.starts_with("GRANT SCOPE ") {
+        return Some(super::scope_ddl::grant_scope(state, identity, &parts));
+    }
+    if upper.starts_with("REVOKE SCOPE ") {
+        return Some(super::scope_ddl::revoke_scope(state, identity, &parts));
+    }
+    if upper.starts_with("SHOW SCOPE") {
+        return Some(super::scope_ddl::show_scopes(state, identity, &parts));
+    }
+
     // API keys.
     if upper.starts_with("CREATE API KEY ") {
         return Some(super::apikey::create_api_key(state, identity, &parts));
