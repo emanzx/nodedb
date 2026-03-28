@@ -163,6 +163,8 @@ fn register_udfs(session: &SessionContext) {
     session.register_udf(ScalarUDF::new_from_impl(StWithin::new()));
     session.register_udf(ScalarUDF::new_from_impl(StDistance::new()));
     session.register_udf(ScalarUDF::new_from_impl(GeoDistance::new()));
+    // Timeseries UDFs (window + aggregate).
+    nodedb_query::ts_udfs::register_timeseries_udfs(session);
 }
 
 #[cfg(test)]

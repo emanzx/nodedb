@@ -8,7 +8,10 @@ pub mod metadata_filter;
 pub mod scan_filter;
 pub mod simd_agg;
 pub mod text_search;
+pub mod ts_functions;
 pub mod window;
+
+pub mod ts_udfs;
 
 pub use expr::{BinaryOp, CastType, ComputedColumn, SqlExpr};
 pub use fusion::{

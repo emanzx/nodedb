@@ -106,6 +106,7 @@ datafusion-common = "53"
 datafusion-execution = "53"
 datafusion-expr = "53"
 datafusion-physical-plan = "53"
+datafusion-functions-window-common = "53"
 
 # Config & serialization
 toml = "0.8"

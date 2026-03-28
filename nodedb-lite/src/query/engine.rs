@@ -52,6 +52,7 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
 
         let ctx = SessionContext::new_with_config(config);
         super::spatial_udf::register_spatial_udfs(&ctx);
+        nodedb_query::ts_udfs::register_timeseries_udfs(&ctx);
         Self {
             ctx,
             crdt,
