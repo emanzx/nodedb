@@ -175,7 +175,10 @@ pub async fn dispatch_register_if_needed(
 
     // Parse index paths from FIELDS clause (if any).
     let fields = super::schema_validation::parse_fields_clause(parts);
-    let index_paths: Vec<String> = fields.iter().map(|(name, _ty)| format!("$.{name}")).collect();
+    let index_paths: Vec<String> = fields
+        .iter()
+        .map(|(name, _ty)| format!("$.{name}"))
+        .collect();
 
     let _ = sql; // Reserved for future CRDT detection from SQL.
     let crdt_enabled = false;
@@ -190,11 +193,10 @@ pub async fn dispatch_register_if_needed(
         },
     );
 
-    if let Err(e) =
-        crate::control::server::dispatch_utils::dispatch_to_data_plane(
-            state, tenant_id, vshard, plan, 0,
-        )
-        .await
+    if let Err(e) = crate::control::server::dispatch_utils::dispatch_to_data_plane(
+        state, tenant_id, vshard, plan, 0,
+    )
+    .await
     {
         tracing::warn!(
             %name,

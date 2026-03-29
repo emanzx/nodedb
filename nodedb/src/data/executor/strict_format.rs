@@ -128,11 +128,8 @@ fn json_to_typed_value(
         },
         ColumnType::Bytes => match val {
             serde_json::Value::String(s) => {
-                let bytes = base64::Engine::decode(
-                    &base64::engine::general_purpose::STANDARD,
-                    s,
-                )
-                .unwrap_or_else(|_| s.as_bytes().to_vec());
+                let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s)
+                    .unwrap_or_else(|_| s.as_bytes().to_vec());
                 Ok(Value::Bytes(bytes))
             }
             _ => Err(format!(
@@ -157,9 +154,9 @@ fn json_to_typed_value(
         },
         ColumnType::Decimal => match val {
             serde_json::Value::Number(n) => {
-                let f = n
-                    .as_f64()
-                    .ok_or_else(|| format!("column '{col_name}': number not representable as f64"))?;
+                let f = n.as_f64().ok_or_else(|| {
+                    format!("column '{col_name}': number not representable as f64")
+                })?;
                 let d = rust_decimal::Decimal::try_from(f)
                     .map_err(|_| format!("column '{col_name}': cannot convert {f} to DECIMAL"))?;
                 Ok(Value::Decimal(d))
@@ -170,9 +167,7 @@ fn json_to_typed_value(
                     .map_err(|_| format!("column '{col_name}': cannot parse '{s}' as DECIMAL"))?;
                 Ok(Value::Decimal(d))
             }
-            _ => Err(format!(
-                "column '{col_name}': expected DECIMAL, got {val}"
-            )),
+            _ => Err(format!("column '{col_name}': expected DECIMAL, got {val}")),
         },
         ColumnType::Vector(dim) => match val {
             serde_json::Value::Array(arr) => {
@@ -210,9 +205,10 @@ fn typed_value_to_json(val: &Value) -> serde_json::Value {
             .map(serde_json::Value::Number)
             .unwrap_or(serde_json::Value::Null),
         Value::String(s) => serde_json::Value::String(s.clone()),
-        Value::Bytes(b) => serde_json::Value::String(
-            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, b),
-        ),
+        Value::Bytes(b) => serde_json::Value::String(base64::Engine::encode(
+            &base64::engine::general_purpose::STANDARD,
+            b,
+        )),
         Value::Uuid(s) => serde_json::Value::String(s.clone()),
         Value::Ulid(s) => serde_json::Value::String(s.clone()),
         Value::DateTime(dt) => serde_json::json!(dt.micros / 1000),
@@ -228,7 +224,10 @@ fn typed_value_to_json(val: &Value) -> serde_json::Value {
             }
             serde_json::Value::Object(obj)
         }
-        Value::Geometry(_) | Value::Set(_) | Value::Regex(_) | Value::Range { .. }
+        Value::Geometry(_)
+        | Value::Set(_)
+        | Value::Regex(_)
+        | Value::Range { .. }
         | Value::Record { .. } => serde_json::Value::Null,
     }
 }

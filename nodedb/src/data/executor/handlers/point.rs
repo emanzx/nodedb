@@ -21,8 +21,7 @@ impl CoreLoop {
         // Check if this is a strict collection — affects decode format.
         let config_key = format!("{tid}:{collection}");
         let strict_schema = self.doc_configs.get(&config_key).and_then(|c| {
-            if let crate::bridge::physical_plan::StorageMode::Strict { ref schema } =
-                c.storage_mode
+            if let crate::bridge::physical_plan::StorageMode::Strict { ref schema } = c.storage_mode
             {
                 Some(schema.clone())
             } else {
@@ -197,10 +196,12 @@ impl CoreLoop {
         debug!(core = self.core_id, %collection, %document_id, fields = updates.len(), "point update");
 
         let config_key = format!("{tid}:{collection}");
-        let is_strict = self
-            .doc_configs
-            .get(&config_key)
-            .is_some_and(|c| matches!(c.storage_mode, crate::bridge::physical_plan::StorageMode::Strict { .. }));
+        let is_strict = self.doc_configs.get(&config_key).is_some_and(|c| {
+            matches!(
+                c.storage_mode,
+                crate::bridge::physical_plan::StorageMode::Strict { .. }
+            )
+        });
 
         match self.sparse.get(tid, collection, document_id) {
             Ok(Some(current_bytes)) => {
@@ -266,10 +267,8 @@ impl CoreLoop {
                             config.storage_mode
                     {
                         let json_bytes = serde_json::to_vec(&doc).unwrap_or_default();
-                        match super::super::strict_format::json_to_binary_tuple(
-                            &json_bytes,
-                            schema,
-                        ) {
+                        match super::super::strict_format::json_to_binary_tuple(&json_bytes, schema)
+                        {
                             Ok(bytes) => bytes,
                             Err(e) => {
                                 return self.response_error(
