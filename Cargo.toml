@@ -100,6 +100,9 @@ io-uring = "0.7"
 # CRDTs
 loro = "1"
 
+# Regex
+regex = "1"
+
 # Query engine
 datafusion = "53"
 datafusion-common = "53"

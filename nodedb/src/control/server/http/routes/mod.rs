@@ -5,6 +5,7 @@ pub mod crdt;
 pub mod document;
 pub mod health;
 pub mod metrics;
+pub mod promql;
 pub mod query;
 pub mod search;
 pub mod status;

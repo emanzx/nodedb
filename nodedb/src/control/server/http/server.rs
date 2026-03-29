@@ -47,6 +47,21 @@ fn build_router(state: AppState) -> Router {
         .route("/ws", get(routes::ws_rpc::ws_handler))
         .route("/cdc/{collection}", get(routes::cdc::sse_stream))
         .route("/cdc/{collection}/poll", get(routes::cdc::poll_changes))
+        // PromQL-compatible observability API (Grafana data source URL: /obsv/api).
+        .route(
+            "/obsv/api/v1/query",
+            get(routes::promql::instant_query).post(routes::promql::instant_query),
+        )
+        .route(
+            "/obsv/api/v1/query_range",
+            get(routes::promql::range_query).post(routes::promql::range_query),
+        )
+        .route("/obsv/api/v1/series", get(routes::promql::series_query))
+        .route("/obsv/api/v1/labels", get(routes::promql::label_names))
+        .route(
+            "/obsv/api/v1/label/{name}/values",
+            get(routes::promql::label_values),
+        )
         .with_state(state)
 }
 

@@ -10,6 +10,7 @@ pub mod forward;
 pub mod lock_utils;
 pub mod metrics;
 pub mod planner;
+pub mod promql;
 pub mod pubsub;
 pub mod request_tracker;
 pub mod rolling_upgrade;
