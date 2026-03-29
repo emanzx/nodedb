@@ -84,6 +84,34 @@ WHERE ts > now() - INTERVAL '24 hours';
 | `ts_stddev`      | Standard deviation                    |
 | `ts_derivative`  | Rate of change                        |
 
+## ILP Ingest (InfluxDB Line Protocol)
+
+NodeDB accepts metrics via the InfluxDB Line Protocol over TCP. ILP is **disabled by default** — enable it by setting a port:
+
+```toml
+# nodedb.toml
+[server.ports]
+ilp = 8086
+```
+
+Or via environment variable: `NODEDB_PORT_ILP=8086`
+
+Once enabled, any ILP-compatible client (telegraf, vector, InfluxDB client libraries) can push metrics directly:
+
+```bash
+# Raw ILP over TCP
+echo "cpu,host=web-01,region=us-east usage=72.5,mem=84.2 1609459200000000000" | nc localhost 8086
+```
+
+```toml
+# telegraf.conf
+[[outputs.socket_writer]]
+address = "tcp://localhost:8086"
+data_format = "influx"
+```
+
+NodeDB uses adaptive batching (auto-tuned by ingest rate) and per-series core routing to eliminate cross-core contention. No configuration needed — it self-tunes.
+
 ## Grafana Integration
 
 NodeDB works as a native Grafana data source:

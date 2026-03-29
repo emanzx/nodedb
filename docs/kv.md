@@ -63,6 +63,50 @@ JOIN sessions s ON u.id = s.user_id
 WHERE s.role = 'admin';
 ```
 
+## Redis-Compatible Access (RESP)
+
+NodeDB speaks the Redis wire protocol (RESP2), so existing Redis clients work out of the box for KV operations. RESP is **disabled by default** — enable it by setting a port:
+
+```toml
+# nodedb.toml
+[server.ports]
+resp = 6381
+```
+
+Or via environment variable: `NODEDB_PORT_RESP=6381`
+
+Then connect with any Redis client:
+
+```bash
+redis-cli -p 6381
+
+# Switch to a KV collection (default: "default")
+SELECT sessions
+
+# Standard Redis commands
+SET sess_abc123 '{"user_id":"alice","role":"admin"}' EX 3600
+GET sess_abc123
+DEL sess_abc123
+EXPIRE sess_abc123 7200
+TTL sess_abc123
+
+# Batch operations
+MSET key1 val1 key2 val2
+MGET key1 key2
+
+# Scan with glob pattern
+SCAN 0 MATCH sess_* COUNT 100
+
+# Field-level access (hash commands)
+HSET sess_abc123 role superadmin
+HGET sess_abc123 role
+
+# Pub/sub (backed by NodeDB change streams)
+SUBSCRIBE sessions
+```
+
+**Supported commands:** `GET`, `SET` (with `EX`/`PX`/`NX`/`XX`), `DEL`, `EXISTS`, `MGET`, `MSET`, `EXPIRE`, `PEXPIRE`, `TTL`, `PTTL`, `PERSIST`, `SCAN`, `KEYS`, `HGET`, `HMGET`, `HSET`, `FLUSHDB`, `DBSIZE`, `SUBSCRIBE`, `PUBLISH`, `PING`, `ECHO`, `SELECT`, `INFO`, `QUIT`.
+
 ## Converting to KV
 
 ```sql

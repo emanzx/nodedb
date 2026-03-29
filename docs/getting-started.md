@@ -38,9 +38,71 @@ By default, NodeDB listens on:
 - **6432** — PostgreSQL wire protocol (pgwire)
 - **6433** — Native MessagePack protocol
 - **6480** — HTTP API (REST, SSE, WebSocket)
-- **6381** — RESP (Redis-compatible KV protocol) — optional
-- **8086** — ILP (InfluxDB Line Protocol for timeseries ingest) — optional
 - **9090** — WebSocket sync (NodeDB-Lite clients)
+
+Two additional protocols are available but **disabled by default**:
+
+- **RESP** (Redis-compatible KV protocol) — `GET`/`SET`/`DEL`/`EXPIRE`/`SCAN`/`SUBSCRIBE`
+- **ILP** (InfluxDB Line Protocol) — high-throughput timeseries ingest
+
+Enable them by setting a listen address in config or via env var (see below).
+
+### Configuration
+
+All protocols share one bind address (`host`). Only the port differs per protocol. Env vars take precedence over the TOML file.
+
+```toml
+# nodedb.toml
+[server]
+host = "127.0.0.1"               # Shared bind address (use 0.0.0.0 for all interfaces)
+data_dir = "/var/lib/nodedb"
+memory_limit = "4GiB"
+data_plane_cores = 4
+max_connections = 1024
+log_format = "text"               # "text" or "json"
+
+[server.ports]
+native = 6433                     # Always-on protocols have defaults
+pgwire = 6432
+http = 6480
+resp = 6381                       # Optional: set to enable, omit to disable
+ilp = 8086                        # Optional: set to enable, omit to disable
+
+[server.tls]
+cert_path = "/etc/nodedb/tls/server.crt"
+key_path = "/etc/nodedb/tls/server.key"
+native = true                     # Per-protocol TLS toggle (all default true)
+pgwire = true
+http = true
+resp = true
+ilp = false                       # Example: disable TLS for ILP ingest
+```
+
+**Server settings:**
+
+| Config field | Environment variable | Default |
+| ------------ | -------------------- | ------- |
+| `host` | `NODEDB_HOST` | `127.0.0.1` |
+| `ports.native` | `NODEDB_PORT_NATIVE` | `6433` |
+| `ports.pgwire` | `NODEDB_PORT_PGWIRE` | `6432` |
+| `ports.http` | `NODEDB_PORT_HTTP` | `6480` |
+| `ports.resp` | `NODEDB_PORT_RESP` | disabled |
+| `ports.ilp` | `NODEDB_PORT_ILP` | disabled |
+| `data_dir` | `NODEDB_DATA_DIR` | `~/.nodedb/data` |
+| `memory_limit` | `NODEDB_MEMORY_LIMIT` | `1GiB` |
+| `data_plane_cores` | `NODEDB_DATA_PLANE_CORES` | CPUs - 1 |
+| `max_connections` | `NODEDB_MAX_CONNECTIONS` | `1024` |
+| `log_format` | `NODEDB_LOG_FORMAT` | `text` |
+
+**Per-protocol TLS** (only applies when `[server.tls]` is configured):
+
+| Config field | Environment variable | Default |
+| ------------ | -------------------- | ------- |
+| `tls.native` | `NODEDB_TLS_NATIVE` | `true` |
+| `tls.pgwire` | `NODEDB_TLS_PGWIRE` | `true` |
+| `tls.http` | `NODEDB_TLS_HTTP` | `true` |
+| `tls.resp` | `NODEDB_TLS_RESP` | `true` |
+| `tls.ilp` | `NODEDB_TLS_ILP` | `true` |
 
 ## Connect
 

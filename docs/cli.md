@@ -4,19 +4,21 @@
 
 ## Connecting
 
+`ndb` connects to NodeDB's **native MessagePack protocol** (default port 6433).
+
 ```bash
-# Default (localhost:6433)
+# Default (127.0.0.1:6433)
 ndb
 
 # Specify host and port
 ndb -h db.example.com -p 6433
 
 # With authentication
-ndb -u admin -W                    # Prompt for password
+ndb -u admin -w                    # Prompt for password
 ndb -u admin --password mypass     # Inline (not recommended)
 
 # With TLS
-ndb --tls --ca-cert /path/to/ca.pem
+ndb --tls --tls-ca-cert /path/to/ca.pem
 
 # Execute a query and exit
 ndb -e "SELECT * FROM users LIMIT 10"
@@ -24,18 +26,39 @@ ndb -e "SELECT * FROM users LIMIT 10"
 # Execute from file
 ndb -f queries.sql
 
+# Write output to file
+ndb -o results.json --format json -e "SELECT * FROM users"
+
 # Pipe input
 echo "SELECT 1" | ndb
 ```
 
+## CLI Flags
+
+| Flag | Long | Default | Purpose |
+| ---- | ---- | ------- | ------- |
+| `-h` | `--host` | `127.0.0.1` | Server host |
+| `-p` | `--port` | `6433` | Server port (native protocol) |
+| `-u` | `--user` | `admin` | Username |
+| `-w` | `--password` | | Password (prompts if flag given without value) |
+| `-e` | `--execute` | | Execute SQL and exit |
+| `-f` | `--file` | | Execute SQL from file and exit |
+| `-o` | `--output` | | Write output to file |
+| | `--tls` | off | Enable TLS encryption |
+| | `--tls-ca-cert` | | Path to CA certificate (PEM) |
+| | `--format` | `table` | Output format (`table`, `json`, `csv`) |
+| | `--help` | | Print help information |
+
 ## Environment Variables
 
-| Variable          | Purpose          |
-| ----------------- | ---------------- |
-| `NODEDB_HOST`     | Default host     |
-| `NODEDB_PORT`     | Default port     |
-| `NODEDB_USER`     | Default username |
-| `NODEDB_PASSWORD` | Default password |
+| Variable | Purpose | Precedence |
+| -------- | ------- | ---------- |
+| `NODEDB_HOST` | Server host | env > config file > default |
+| `NODEDB_PORT` | Server port | env > config file > default |
+| `NODEDB_USER` | Username | env > config file > default |
+| `NODEDB_PASSWORD` | Password | env > config file > default |
+
+CLI flags always take highest precedence.
 
 ## Interactive Features
 
