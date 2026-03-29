@@ -95,7 +95,8 @@ async fn main() -> anyhow::Result<()> {
     }
 
     info!(
-        listen = %config.listen,
+        host = %config.host,
+        native_port = config.ports.native,
         cores = config.data_plane_cores,
         memory_limit = config.memory_limit,
         "starting nodedb"
@@ -349,15 +350,16 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // Bind all listeners before starting accept loops.
-    let listener = nodedb::control::server::listener::Listener::bind(config.listen).await?;
+    let listener =
+        nodedb::control::server::listener::Listener::bind(config.native_addr()).await?;
     let pg_listener =
-        nodedb::control::server::pgwire::listener::PgListener::bind(config.pg_listen).await?;
-    let ilp_listener = if let Some(ilp_addr) = config.ilp_listen {
+        nodedb::control::server::pgwire::listener::PgListener::bind(config.pgwire_addr()).await?;
+    let ilp_listener = if let Some(ilp_addr) = config.ilp_addr() {
         Some(nodedb::control::server::ilp_listener::IlpListener::bind(ilp_addr).await?)
     } else {
         None
     };
-    let resp_listener = if let Some(resp_addr) = config.resp_listen {
+    let resp_listener = if let Some(resp_addr) = config.resp_addr() {
         Some(nodedb::control::server::resp::RespListener::bind(resp_addr).await?)
     } else {
         None
@@ -367,13 +369,14 @@ async fn main() -> anyhow::Result<()> {
     eprintln!();
     eprintln!("  NodeDB v{}", env!("CARGO_PKG_VERSION"));
     eprintln!("  ─────────────────────────────────────");
-    eprintln!("  Native protocol : {}", config.listen);
-    eprintln!("  PostgreSQL wire : {}", config.pg_listen);
-    eprintln!("  HTTP API        : {}", config.http_listen);
-    if let Some(addr) = config.resp_listen {
+    eprintln!("  Host            : {}", config.host);
+    eprintln!("  Native protocol : {}", config.native_addr());
+    eprintln!("  PostgreSQL wire : {}", config.pgwire_addr());
+    eprintln!("  HTTP API        : {}", config.http_addr());
+    if let Some(addr) = config.resp_addr() {
         eprintln!("  RESP (KV)       : {addr}");
     }
-    if let Some(addr) = config.ilp_listen {
+    if let Some(addr) = config.ilp_addr() {
         eprintln!("  ILP ingest      : {addr}");
     }
     eprintln!("  Data Plane cores: {}", config.data_plane_cores);
@@ -415,10 +418,10 @@ async fn main() -> anyhow::Result<()> {
         std::process::exit(1);
     });
 
-    // Build TLS acceptor if configured.
-    // Uses the hot-reload module: background task watches cert/key files for
-    // mtime changes and atomically swaps the ServerConfig via watch channel.
-    let tls_acceptor = match &config.tls {
+    // Build shared TLS acceptor if configured. Per-protocol flags control
+    // which listeners actually use it — `tls_for(flag)` returns None when
+    // the flag is false, disabling TLS on that protocol.
+    let base_acceptor: Option<tokio_rustls::TlsAcceptor> = match &config.tls {
         Some(tls) => {
             let check_interval = Duration::from_secs(tls.cert_reload_interval_secs.unwrap_or(3600));
             let (_tls_rx, _tls_tx) = nodedb::control::server::tls_reload::start_tls_reloader(
@@ -426,26 +429,42 @@ async fn main() -> anyhow::Result<()> {
                 check_interval,
                 Arc::clone(&shared),
             )?;
-            let acceptor = build_tls_acceptor(tls)?;
+            let acceptor: tokio_rustls::TlsAcceptor = build_tls_acceptor(tls)?;
             info!(
                 reload_interval_secs = check_interval.as_secs(),
-                "pgwire TLS enabled with hot rotation"
+                "TLS enabled with hot rotation"
             );
             Some(acceptor)
         }
         None => None,
     };
 
+    // Per-protocol TLS: returns the acceptor only if the protocol flag is true.
+    let tls_for = |enabled: bool| -> Option<tokio_rustls::TlsAcceptor> {
+        if enabled {
+            base_acceptor.clone()
+        } else {
+            None
+        }
+    };
+    let tls_flags = config.tls.as_ref();
+    let pgwire_tls_enabled = tls_flags.map_or(false, |t| t.pgwire);
+    let http_tls_enabled = tls_flags.map_or(false, |t| t.http);
+    let resp_tls_enabled = tls_flags.map_or(false, |t| t.resp);
+    let ilp_tls_enabled = tls_flags.map_or(false, |t| t.ilp);
+    let native_tls_enabled = tls_flags.map_or(false, |t| t.native);
+
     // Run pgwire listener in a separate task.
     let shared_pg = Arc::clone(&shared);
     let shutdown_rx_pg = shutdown_rx.clone();
     let conn_sem_pg = Arc::clone(&conn_semaphore);
+    let pgwire_tls = tls_for(pgwire_tls_enabled);
     tokio::spawn(async move {
         if let Err(e) = pg_listener
             .run(
                 shared_pg,
                 auth_mode,
-                tls_acceptor,
+                pgwire_tls,
                 conn_sem_pg,
                 shutdown_rx_pg,
             )
@@ -458,8 +477,13 @@ async fn main() -> anyhow::Result<()> {
     // Run HTTP API server.
     let shared_http = Arc::clone(&shared);
     let http_auth_mode = config.auth.mode.clone();
-    let http_listen = config.http_listen;
-    let http_tls = config.tls.clone();
+    let http_listen = config.http_addr();
+    // HTTP uses TlsSettings directly (axum-server loads certs itself).
+    let http_tls = if http_tls_enabled {
+        config.tls.clone()
+    } else {
+        None
+    };
     let shutdown_rx_http = shutdown_rx.clone();
     tokio::spawn(async move {
         if let Err(e) = nodedb::control::server::http::server::run(
@@ -479,9 +503,13 @@ async fn main() -> anyhow::Result<()> {
     if let Some(ilp) = ilp_listener {
         let shared_ilp = Arc::clone(&shared);
         let conn_sem_ilp = Arc::clone(&conn_semaphore);
+        let ilp_tls = tls_for(ilp_tls_enabled);
         let shutdown_rx_ilp = shutdown_rx.clone();
         tokio::spawn(async move {
-            if let Err(e) = ilp.run(shared_ilp, conn_sem_ilp, shutdown_rx_ilp).await {
+            if let Err(e) = ilp
+                .run(shared_ilp, conn_sem_ilp, ilp_tls, shutdown_rx_ilp)
+                .await
+            {
                 tracing::error!(error = %e, "ILP listener failed");
             }
         });
@@ -491,9 +519,13 @@ async fn main() -> anyhow::Result<()> {
     if let Some(resp) = resp_listener {
         let shared_resp = Arc::clone(&shared);
         let conn_sem_resp = Arc::clone(&conn_semaphore);
+        let resp_tls = tls_for(resp_tls_enabled);
         let shutdown_rx_resp = shutdown_rx.clone();
         tokio::spawn(async move {
-            if let Err(e) = resp.run(shared_resp, conn_sem_resp, shutdown_rx_resp).await {
+            if let Err(e) = resp
+                .run(shared_resp, conn_sem_resp, resp_tls, shutdown_rx_resp)
+                .await
+            {
                 tracing::error!(error = %e, "RESP listener failed");
             }
         });
@@ -519,17 +551,8 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    // Build native TLS acceptor if configured (reuses same cert/key as pgwire).
-    let native_tls: Option<tokio_rustls::TlsAcceptor> = match &config.tls {
-        Some(tls) => {
-            // pgwire::tokio::TlsAcceptor is tokio_rustls::TlsAcceptor — build one directly.
-            let acceptor = build_tls_acceptor(tls)?;
-            // Convert pgwire TlsAcceptor back to tokio_rustls TlsAcceptor.
-            // They're the same type underneath.
-            Some(acceptor)
-        }
-        None => None,
-    };
+    // Native protocol TLS.
+    let native_tls = tls_for(native_tls_enabled);
 
     // Run native listener on main task.
     let native_auth_mode = config.auth.mode.clone();

@@ -17,6 +17,7 @@ use tracing::{debug, info, warn};
 
 use crate::bridge::envelope::PhysicalPlan;
 use crate::bridge::physical_plan::TimeseriesOp;
+use crate::control::server::conn_stream::ConnStream;
 use crate::control::state::SharedState;
 use crate::types::{TenantId, VShardId};
 
@@ -39,8 +40,12 @@ impl IlpListener {
         self,
         state: Arc<SharedState>,
         conn_semaphore: Arc<Semaphore>,
+        tls_acceptor: Option<tokio_rustls::TlsAcceptor>,
         mut shutdown: tokio::sync::watch::Receiver<bool>,
     ) -> crate::Result<()> {
+        let tls_label = if tls_acceptor.is_some() { "tls" } else { "plain" };
+        info!(addr = %self.addr, tls = tls_label, "ILP listener accepting connections");
+
         let mut connections = tokio::task::JoinSet::new();
 
         loop {
@@ -56,12 +61,32 @@ impl IlpListener {
                                 }
                             };
                             let state = Arc::clone(&state);
-                            connections.spawn(async move {
-                                if let Err(e) = handle_ilp_connection(stream, peer, &state).await {
-                                    debug!(%peer, error = %e, "ILP connection error");
-                                }
-                                drop(permit);
-                            });
+
+                            if let Some(ref acceptor) = tls_acceptor {
+                                let acceptor = acceptor.clone();
+                                connections.spawn(async move {
+                                    match acceptor.accept(stream).await {
+                                        Ok(tls_stream) => {
+                                            let cs = ConnStream::tls(tls_stream);
+                                            if let Err(e) = handle_ilp_connection(cs, peer, &state).await {
+                                                debug!(%peer, error = %e, "ILP TLS connection error");
+                                            }
+                                        }
+                                        Err(e) => {
+                                            warn!(%peer, error = %e, "ILP TLS handshake failed");
+                                        }
+                                    }
+                                    drop(permit);
+                                });
+                            } else {
+                                connections.spawn(async move {
+                                    let cs = ConnStream::plain(stream);
+                                    if let Err(e) = handle_ilp_connection(cs, peer, &state).await {
+                                        debug!(%peer, error = %e, "ILP connection error");
+                                    }
+                                    drop(permit);
+                                });
+                            }
                         }
                         Err(e) => {
                             warn!(error = %e, "ILP accept error");
@@ -95,7 +120,7 @@ impl IlpListener {
 /// Larger batches amortize per-batch overhead (WAL append, memtable lock,
 /// partition lookup).
 async fn handle_ilp_connection(
-    stream: tokio::net::TcpStream,
+    stream: ConnStream,
     peer: SocketAddr,
     state: &SharedState,
 ) -> crate::Result<()> {

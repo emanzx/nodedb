@@ -2,9 +2,9 @@
 //! and topic_registry.
 
 use tokio::io::AsyncWriteExt;
-use tokio::net::TcpStream;
 use tracing::debug;
 
+use crate::control::server::conn_stream::ConnStream;
 use crate::control::state::SharedState;
 
 use super::codec::RespValue;
@@ -23,7 +23,7 @@ pub async fn handle_subscribe(
     cmd: &RespCommand,
     session: &RespSession,
     state: &SharedState,
-    stream: &mut TcpStream,
+    stream: &mut ConnStream,
 ) -> crate::Result<()> {
     if cmd.argc() < 1 {
         let resp = RespValue::err("ERR wrong number of arguments for 'subscribe' command");

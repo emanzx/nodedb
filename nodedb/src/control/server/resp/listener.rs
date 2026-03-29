@@ -8,10 +8,11 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{TcpListener, TcpStream};
+use tokio::net::TcpListener;
 use tokio::sync::Semaphore;
 use tracing::{debug, info, warn};
 
+use crate::control::server::conn_stream::ConnStream;
 use crate::control::state::SharedState;
 
 use super::codec::RespParser;
@@ -56,8 +57,12 @@ impl RespListener {
         self,
         state: Arc<SharedState>,
         conn_semaphore: Arc<Semaphore>,
+        tls_acceptor: Option<tokio_rustls::TlsAcceptor>,
         mut shutdown: tokio::sync::watch::Receiver<bool>,
     ) -> crate::Result<()> {
+        let tls_label = if tls_acceptor.is_some() { "tls" } else { "plain" };
+        info!(addr = %self.addr, tls = tls_label, "RESP listener accepting connections");
+
         let mut connections = tokio::task::JoinSet::new();
 
         loop {
@@ -74,12 +79,32 @@ impl RespListener {
                             };
 
                             let state = Arc::clone(&state);
-                            connections.spawn(async move {
-                                if let Err(e) = handle_connection(stream, peer, &state).await {
-                                    debug!(%peer, error = %e, "RESP connection error");
-                                }
-                                drop(permit);
-                            });
+
+                            if let Some(ref acceptor) = tls_acceptor {
+                                let acceptor = acceptor.clone();
+                                connections.spawn(async move {
+                                    match acceptor.accept(stream).await {
+                                        Ok(tls_stream) => {
+                                            let cs = ConnStream::tls(tls_stream);
+                                            if let Err(e) = handle_connection(cs, peer, &state).await {
+                                                debug!(%peer, error = %e, "RESP TLS connection error");
+                                            }
+                                        }
+                                        Err(e) => {
+                                            warn!(%peer, error = %e, "RESP TLS handshake failed");
+                                        }
+                                    }
+                                    drop(permit);
+                                });
+                            } else {
+                                connections.spawn(async move {
+                                    let cs = ConnStream::plain(stream);
+                                    if let Err(e) = handle_connection(cs, peer, &state).await {
+                                        debug!(%peer, error = %e, "RESP connection error");
+                                    }
+                                    drop(permit);
+                                });
+                            }
                         }
                         Err(e) => {
                             warn!(error = %e, "RESP accept error");
@@ -115,7 +140,7 @@ impl RespListener {
 
 /// Handle a single RESP connection.
 async fn handle_connection(
-    mut stream: TcpStream,
+    mut stream: ConnStream,
     peer: SocketAddr,
     state: &SharedState,
 ) -> crate::Result<()> {
