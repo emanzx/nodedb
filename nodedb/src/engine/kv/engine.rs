@@ -104,6 +104,34 @@ impl KvEngine {
         self.tables.get(&tkey)?.get(key, now_ms).map(|v| v.to_vec())
     }
 
+    /// GET TTL: Returns the remaining TTL in milliseconds for a key.
+    ///
+    /// - `None` — key does not exist (or is expired)
+    /// - `Some(-1)` — key exists but has no TTL (persistent)
+    /// - `Some(remaining_ms)` — key exists and expires in `remaining_ms` milliseconds
+    pub fn get_ttl_ms(
+        &self,
+        tenant_id: u32,
+        collection: &str,
+        key: &[u8],
+        now_ms: u64,
+    ) -> Option<i64> {
+        let tkey = table_key(tenant_id, collection);
+        let table = self.tables.get(&tkey)?;
+
+        // First check the key exists and isn't expired.
+        table.get(key, now_ms)?;
+
+        // Now get the metadata for TTL info.
+        let meta = table.get_entry_meta(key)?;
+        if !meta.has_ttl {
+            Some(-1)
+        } else {
+            let remaining = meta.expire_at_ms.saturating_sub(now_ms);
+            Some(remaining as i64)
+        }
+    }
+
     /// PUT: insert or update. Returns old value if overwritten.
     ///
     /// If `ttl_ms > 0`, schedules expiry. If the key already had a TTL,

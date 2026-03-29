@@ -130,18 +130,24 @@ async fn handle_ttl(
         ));
     };
 
-    // TTL requires getting the entry metadata — use GET to check existence.
-    // The full TTL query would need the entry's expire_at_ms, which is not
-    // currently returned by KvOp::Get. For now, return -1 (no TTL) if the
-    // key exists, -2 if it doesn't.
-    let plan = PhysicalPlan::Kv(KvOp::Get {
+    let plan = PhysicalPlan::Kv(KvOp::GetTtl {
         collection: session.collection.clone(),
         key: key.to_vec(),
-        rls_filters: Vec::new(),
     });
 
     match dispatch_kv(state, session, plan).await {
-        Ok(resp) if resp.status == Status::Ok && !resp.payload.is_empty() => RespValue::integer(-1),
+        Ok(resp) if resp.status == Status::Ok => {
+            let ttl_ms = parse_json_field_i64(&resp.payload, "ttl_ms").unwrap_or(-2);
+            if ttl_ms < 0 {
+                // -1 (no TTL) or -2 (not found) — same for both TTL and PTTL.
+                RespValue::integer(ttl_ms)
+            } else if is_pttl {
+                RespValue::integer(ttl_ms)
+            } else {
+                // TTL returns seconds, round up to avoid reporting 0 for sub-second TTLs.
+                RespValue::integer((ttl_ms + 999) / 1000)
+            }
+        }
         Ok(_) => RespValue::integer(-2),
         Err(e) => RespValue::err(format!("ERR {e}")),
     }

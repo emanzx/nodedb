@@ -58,6 +58,14 @@ pub enum KvOp {
     /// Remove TTL from an existing key (make it persistent).
     Persist { collection: String, key: Vec<u8> },
 
+    /// Get remaining TTL for a key without fetching the value.
+    ///
+    /// Returns JSON `{"ttl_ms": N}` where N is:
+    /// - `-2` — key does not exist
+    /// - `-1` — key exists but has no TTL (persistent)
+    /// - `>= 0` — remaining milliseconds until expiry
+    GetTtl { collection: String, key: Vec<u8> },
+
     /// Batch get: fetch multiple keys in a single bridge round-trip.
     BatchGet {
         collection: String,

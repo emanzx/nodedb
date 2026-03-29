@@ -88,6 +88,7 @@ impl CoreLoop {
                 key,
                 updates,
             } => self.execute_kv_field_set(task, tid, collection, key, updates),
+            KvOp::GetTtl { collection, key } => self.execute_kv_get_ttl(task, tid, collection, key),
             KvOp::Truncate { collection } => self.execute_kv_truncate(task, tid, collection),
         }
     }
@@ -254,6 +255,25 @@ impl CoreLoop {
         }
     }
 
+    fn execute_kv_get_ttl(
+        &self,
+        task: &ExecutionTask,
+        tid: u32,
+        collection: &str,
+        key: &[u8],
+    ) -> Response {
+        debug!(core = self.core_id, %collection, "kv get_ttl");
+        let now_ms = current_ms();
+        let ttl_ms = match self.kv_engine.get_ttl_ms(tid, collection, key, now_ms) {
+            Some(remaining) => remaining,
+            None => -2, // Key does not exist.
+        };
+        let payload = serde_json::json!({ "ttl_ms": ttl_ms })
+            .to_string()
+            .into_bytes();
+        self.response_with_payload(task, payload)
+    }
+
     fn execute_kv_batch_get(
         &self,
         task: &ExecutionTask,
@@ -403,11 +423,15 @@ impl CoreLoop {
             .and_then(|v: serde_json::Value| v.as_object().cloned())
             .unwrap_or_default();
 
-        // Merge field updates.
+        // Merge field updates, tracking how many fields are new (not previously existing).
+        let mut fields_added = 0u64;
         for (field, value_bytes) in updates {
             let new_value: serde_json::Value = serde_json::from_slice(value_bytes).unwrap_or(
                 serde_json::Value::String(String::from_utf8_lossy(value_bytes).into_owned()),
             );
+            if !doc.contains_key(field) {
+                fields_added += 1;
+            }
             doc.insert(field.clone(), new_value);
         }
 
@@ -426,7 +450,10 @@ impl CoreLoop {
 
         self.kv_engine
             .put(tid, collection, key, &new_value, 0, now_ms);
-        self.response_ok(task)
+        let payload = serde_json::json!({ "fields_added": fields_added })
+            .to_string()
+            .into_bytes();
+        self.response_with_payload(task, payload)
     }
 
     fn execute_kv_truncate(
