@@ -9,13 +9,19 @@
 //! - Returned strings/buffers are Rust-allocated — caller must free via `nodedb_free_*`.
 //! - Error codes: 0 = success, -1 = null pointer, -2 = invalid UTF-8, -3 = operation failed.
 
+pub mod ffi_document;
+pub mod ffi_graph;
+pub mod ffi_vector;
 pub mod jni_bridge;
+
+pub use ffi_document::*;
+pub use ffi_graph::*;
+pub use ffi_vector::*;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::Arc;
 
-use nodedb_client::NodeDb;
 use nodedb_lite::{LiteConfig, NodeDbLite, RedbStorage};
 
 /// Error codes returned by FFI functions.
@@ -29,8 +35,8 @@ pub const NODEDB_ERR_NOT_FOUND: i32 = -4;
 ///
 /// Created by `nodedb_open`, freed by `nodedb_close`.
 pub struct NodeDbHandle {
-    db: Arc<NodeDbLite<RedbStorage>>,
-    rt: tokio::runtime::Runtime,
+    pub(crate) db: Arc<NodeDbLite<RedbStorage>>,
+    pub(crate) rt: tokio::runtime::Runtime,
 }
 
 /// Open or create a NodeDB-Lite database at the given path.
@@ -77,12 +83,6 @@ pub unsafe extern "C" fn nodedb_open(path: *const c_char, peer_id: u64) -> *mut 
 }
 
 /// Open or create a NodeDB-Lite database with an explicit memory budget.
-///
-/// Identical to `nodedb_open` except that `memory_mb` overrides the default
-/// 100 MiB memory budget. Passing `memory_mb = 0` uses the default (100 MiB).
-///
-/// Returns an opaque handle on success, NULL on failure.
-/// The caller must call `nodedb_close` to free the handle.
 ///
 /// # Safety
 /// `path` must be a valid null-terminated UTF-8 string.
@@ -161,323 +161,56 @@ pub unsafe extern "C" fn nodedb_flush(handle: *mut NodeDbHandle) -> i32 {
     }
 }
 
-// ─── Vector Operations ───────────────────────────────────────────────
+// ─── CRDT Sync ─────────────────────────────────────────────────────
 
-/// Insert a vector into a collection.
+/// Start background CRDT sync to an Origin server.
+///
+/// Connects via WebSocket to the given URL, authenticates with the JWT token,
+/// and continuously pushes pending deltas / receives shape updates.
+/// Runs forever in the background with auto-reconnect.
+///
+/// Returns `NODEDB_OK` on successful launch (sync runs asynchronously).
 ///
 /// # Safety
-/// All pointer parameters must be valid. `embedding` must point to `dim` floats.
+/// `url` and `jwt_token` must be valid null-terminated UTF-8 strings.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_vector_insert(
+pub unsafe extern "C" fn nodedb_start_sync(
     handle: *mut NodeDbHandle,
-    collection: *const c_char,
-    id: *const c_char,
-    embedding: *const f32,
-    dim: usize,
+    url: *const c_char,
+    jwt_token: *const c_char,
 ) -> i32 {
     let Some(h) = handle_ref(handle) else {
         return NODEDB_ERR_NULL;
     };
-    let Some(collection) = ptr_to_str(collection) else {
+    let Some(url_str) = ptr_to_str(url) else {
         return NODEDB_ERR_UTF8;
     };
-    let Some(id) = ptr_to_str(id) else {
-        return NODEDB_ERR_UTF8;
-    };
-    if embedding.is_null() || dim == 0 {
-        return NODEDB_ERR_NULL;
-    }
-    let emb = unsafe { std::slice::from_raw_parts(embedding, dim) };
-
-    match h.rt.block_on(h.db.vector_insert(collection, id, emb, None)) {
-        Ok(()) => NODEDB_OK,
-        Err(_) => NODEDB_ERR_FAILED,
-    }
-}
-
-/// Search for the k nearest vectors. Results are written as JSON to `out_json`.
-///
-/// # Safety
-/// `query` must point to `dim` floats. `out_json` receives a malloc'd C string
-/// that the caller must free via `nodedb_free_string`.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_vector_search(
-    handle: *mut NodeDbHandle,
-    collection: *const c_char,
-    query: *const f32,
-    dim: usize,
-    k: usize,
-    out_json: *mut *mut c_char,
-) -> i32 {
-    let Some(h) = handle_ref(handle) else {
-        return NODEDB_ERR_NULL;
-    };
-    let Some(collection) = ptr_to_str(collection) else {
-        return NODEDB_ERR_UTF8;
-    };
-    if query.is_null() || dim == 0 || out_json.is_null() {
-        return NODEDB_ERR_NULL;
-    }
-    let q = unsafe { std::slice::from_raw_parts(query, dim) };
-
-    match h.rt.block_on(h.db.vector_search(collection, q, k, None)) {
-        Ok(results) => {
-            // Serialize results as JSON array.
-            let json_items: Vec<serde_json::Value> = results
-                .iter()
-                .map(|r| {
-                    serde_json::json!({
-                        "id": r.id,
-                        "distance": r.distance,
-                    })
-                })
-                .collect();
-            let json_str = serde_json::to_string(&json_items).unwrap_or_else(|_| "[]".into());
-            match CString::new(json_str) {
-                Ok(cs) => {
-                    unsafe { *out_json = cs.into_raw() };
-                    NODEDB_OK
-                }
-                Err(_) => NODEDB_ERR_FAILED,
-            }
-        }
-        Err(_) => NODEDB_ERR_FAILED,
-    }
-}
-
-/// Delete a vector by ID.
-///
-/// # Safety
-/// All pointer parameters must be valid.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_vector_delete(
-    handle: *mut NodeDbHandle,
-    collection: *const c_char,
-    id: *const c_char,
-) -> i32 {
-    let Some(h) = handle_ref(handle) else {
-        return NODEDB_ERR_NULL;
-    };
-    let Some(collection) = ptr_to_str(collection) else {
-        return NODEDB_ERR_UTF8;
-    };
-    let Some(id) = ptr_to_str(id) else {
-        return NODEDB_ERR_UTF8;
-    };
-    match h.rt.block_on(h.db.vector_delete(collection, id)) {
-        Ok(()) => NODEDB_OK,
-        Err(_) => NODEDB_ERR_FAILED,
-    }
-}
-
-// ─── Graph Operations ────────────────────────────────────────────────
-
-/// Insert a directed graph edge.
-///
-/// # Safety
-/// All pointer parameters must be valid null-terminated UTF-8.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_graph_insert_edge(
-    handle: *mut NodeDbHandle,
-    from: *const c_char,
-    to: *const c_char,
-    edge_type: *const c_char,
-) -> i32 {
-    let Some(h) = handle_ref(handle) else {
-        return NODEDB_ERR_NULL;
-    };
-    let Some(from) = ptr_to_str(from) else {
-        return NODEDB_ERR_UTF8;
-    };
-    let Some(to) = ptr_to_str(to) else {
-        return NODEDB_ERR_UTF8;
-    };
-    let Some(edge_type) = ptr_to_str(edge_type) else {
+    let Some(jwt_str) = ptr_to_str(jwt_token) else {
         return NODEDB_ERR_UTF8;
     };
 
-    let from_id = nodedb_types::id::NodeId::new(from);
-    let to_id = nodedb_types::id::NodeId::new(to);
-
-    match h
-        .rt
-        .block_on(h.db.graph_insert_edge(&from_id, &to_id, edge_type, None))
-    {
-        Ok(_) => NODEDB_OK,
-        Err(_) => NODEDB_ERR_FAILED,
-    }
-}
-
-/// Traverse the graph from a start node. Results written as JSON to `out_json`.
-///
-/// # Safety
-/// `start` must be valid UTF-8. `out_json` receives a malloc'd C string.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_graph_traverse(
-    handle: *mut NodeDbHandle,
-    start: *const c_char,
-    depth: u8,
-    out_json: *mut *mut c_char,
-) -> i32 {
-    let Some(h) = handle_ref(handle) else {
-        return NODEDB_ERR_NULL;
-    };
-    let Some(start) = ptr_to_str(start) else {
-        return NODEDB_ERR_UTF8;
-    };
-    if out_json.is_null() {
-        return NODEDB_ERR_NULL;
-    }
-
-    let start_id = nodedb_types::id::NodeId::new(start);
-
-    match h.rt.block_on(h.db.graph_traverse(&start_id, depth, None)) {
-        Ok(subgraph) => {
-            let json = serde_json::json!({
-                "nodes": subgraph.nodes.iter().map(|n| serde_json::json!({
-                    "id": n.id.as_str(),
-                    "depth": n.depth,
-                })).collect::<Vec<_>>(),
-                "edges": subgraph.edges.iter().map(|e| serde_json::json!({
-                    "from": e.from.as_str(),
-                    "to": e.to.as_str(),
-                    "label": e.label,
-                })).collect::<Vec<_>>(),
-            });
-            let json_str = serde_json::to_string(&json).unwrap_or_else(|_| "{}".into());
-            match CString::new(json_str) {
-                Ok(cs) => {
-                    unsafe { *out_json = cs.into_raw() };
-                    NODEDB_OK
-                }
-                Err(_) => NODEDB_ERR_FAILED,
-            }
-        }
-        Err(_) => NODEDB_ERR_FAILED,
-    }
-}
-
-// ─── Document Operations ─────────────────────────────────────────────
-
-/// Get a document by ID. Result written as JSON to `out_json`.
-///
-/// Returns `NODEDB_ERR_NOT_FOUND` if the document doesn't exist.
-///
-/// # Safety
-/// All pointer parameters must be valid.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_document_get(
-    handle: *mut NodeDbHandle,
-    collection: *const c_char,
-    id: *const c_char,
-    out_json: *mut *mut c_char,
-) -> i32 {
-    let Some(h) = handle_ref(handle) else {
-        return NODEDB_ERR_NULL;
-    };
-    let Some(collection) = ptr_to_str(collection) else {
-        return NODEDB_ERR_UTF8;
-    };
-    let Some(id) = ptr_to_str(id) else {
-        return NODEDB_ERR_UTF8;
-    };
-    if out_json.is_null() {
-        return NODEDB_ERR_NULL;
-    }
-
-    match h.rt.block_on(h.db.document_get(collection, id)) {
-        Ok(Some(doc)) => {
-            let json_str = serde_json::to_string(&doc).unwrap_or_else(|_| "{}".into());
-            match CString::new(json_str) {
-                Ok(cs) => {
-                    unsafe { *out_json = cs.into_raw() };
-                    NODEDB_OK
-                }
-                Err(_) => NODEDB_ERR_FAILED,
-            }
-        }
-        Ok(None) => NODEDB_ERR_NOT_FOUND,
-        Err(_) => NODEDB_ERR_FAILED,
-    }
-}
-
-/// Put (insert or update) a document. Body is a JSON string.
-///
-/// If the JSON has no `"id"` field or it is empty, a UUIDv7 is auto-generated.
-/// If `out_id` is non-NULL, the document ID (auto-generated or provided) is
-/// written as a malloc'd C string that the caller must free via `nodedb_free_string`.
-///
-/// # Safety
-/// All pointer parameters must be valid. `out_id` may be NULL.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_document_put(
-    handle: *mut NodeDbHandle,
-    collection: *const c_char,
-    json_body: *const c_char,
-    out_id: *mut *mut c_char,
-) -> i32 {
-    let Some(h) = handle_ref(handle) else {
-        return NODEDB_ERR_NULL;
-    };
-    let Some(collection) = ptr_to_str(collection) else {
-        return NODEDB_ERR_UTF8;
-    };
-    let Some(json_str) = ptr_to_str(json_body) else {
-        return NODEDB_ERR_UTF8;
+    let config = nodedb_lite::sync::SyncConfig {
+        url: url_str.to_string(),
+        jwt_token: jwt_str.to_string(),
+        client_version: format!("nodedb-lite-ffi/{}", env!("CARGO_PKG_VERSION")),
+        min_backoff: std::time::Duration::from_secs(1),
+        max_backoff: std::time::Duration::from_secs(60),
+        ping_interval: std::time::Duration::from_secs(30),
+        max_batch_size: 100,
+        token_provider: None,
+        token_lifetime_secs: 0,
     };
 
-    let mut doc: nodedb_types::Document = match serde_json::from_str(json_str) {
-        Ok(d) => d,
-        Err(_) => return NODEDB_ERR_FAILED,
-    };
+    // start_sync requires a tokio runtime context for spawning the background task.
+    let _guard = h.rt.enter();
+    let _sync_client = h.db.start_sync(config);
 
-    if doc.id.is_empty() {
-        doc.id = nodedb_types::id_gen::uuid_v7();
-    }
-
-    // Write the document ID to out_id if requested.
-    if !out_id.is_null()
-        && let Ok(cs) = CString::new(doc.id.clone())
-    {
-        unsafe { *out_id = cs.into_raw() };
-    }
-
-    match h.rt.block_on(h.db.document_put(collection, doc)) {
-        Ok(()) => NODEDB_OK,
-        Err(_) => NODEDB_ERR_FAILED,
-    }
-}
-
-/// Delete a document by ID.
-///
-/// # Safety
-/// All pointer parameters must be valid.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn nodedb_document_delete(
-    handle: *mut NodeDbHandle,
-    collection: *const c_char,
-    id: *const c_char,
-) -> i32 {
-    let Some(h) = handle_ref(handle) else {
-        return NODEDB_ERR_NULL;
-    };
-    let Some(collection) = ptr_to_str(collection) else {
-        return NODEDB_ERR_UTF8;
-    };
-    let Some(id) = ptr_to_str(id) else {
-        return NODEDB_ERR_UTF8;
-    };
-    match h.rt.block_on(h.db.document_delete(collection, id)) {
-        Ok(()) => NODEDB_OK,
-        Err(_) => NODEDB_ERR_FAILED,
-    }
+    NODEDB_OK
 }
 
 // ─── ID Generation ──────────────────────────────────────────────────
 
 /// Generate a UUIDv7 (time-sortable, recommended for primary keys).
-///
-/// Returns a malloc'd C string that the caller must free via `nodedb_free_string`.
 ///
 /// # Safety
 /// `out` must be a valid pointer to a `*mut c_char`.
@@ -499,7 +232,6 @@ pub unsafe extern "C" fn nodedb_generate_id(out: *mut *mut c_char) -> i32 {
 /// Generate an ID of the specified type.
 ///
 /// Supported types: "uuidv7", "uuidv4", "ulid", "cuid2", "nanoid".
-/// Returns a malloc'd C string that the caller must free via `nodedb_free_string`.
 ///
 /// # Safety
 /// `id_type` must be a valid null-terminated UTF-8 string. `out` must be a valid pointer.
@@ -544,21 +276,36 @@ pub unsafe extern "C" fn nodedb_free_string(ptr: *mut c_char) {
 
 /// # Safety
 /// `ptr` must be a valid null-terminated C string, or null.
-fn ptr_to_str<'a>(ptr: *const c_char) -> Option<&'a str> {
+pub(crate) fn ptr_to_str<'a>(ptr: *const c_char) -> Option<&'a str> {
     if ptr.is_null() {
         return None;
     }
-    // SAFETY: caller guarantees ptr is a valid null-terminated C string.
     unsafe { CStr::from_ptr(ptr) }.to_str().ok()
 }
 
 /// # Safety
 /// `handle` must be a valid `NodeDbHandle` pointer, or null.
-fn handle_ref<'a>(handle: *mut NodeDbHandle) -> Option<&'a NodeDbHandle> {
+pub(crate) fn handle_ref<'a>(handle: *mut NodeDbHandle) -> Option<&'a NodeDbHandle> {
     if handle.is_null() {
         None
     } else {
-        // SAFETY: caller guarantees handle is valid and not freed.
         Some(unsafe { &*handle })
+    }
+}
+
+/// Marshal a JSON string into a C output pointer.
+///
+/// On success, writes the CString to `*out` and returns `NODEDB_OK`.
+/// On failure (interior null byte), returns `NODEDB_ERR_FAILED`.
+///
+/// # Safety
+/// `out` must be a valid, non-null `*mut *mut c_char`.
+pub(crate) unsafe fn write_c_string(out: *mut *mut c_char, s: String) -> i32 {
+    match CString::new(s) {
+        Ok(cs) => {
+            unsafe { *out = cs.into_raw() };
+            NODEDB_OK
+        }
+        Err(_) => NODEDB_ERR_FAILED,
     }
 }

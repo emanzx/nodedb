@@ -315,6 +315,83 @@ impl NodeDbLiteWasm {
             .map_err(|e| JsError::new(&e.to_string()))
     }
 
+    /// Delete a graph edge by ID.
+    ///
+    /// Edge ID format: "src--label-->dst".
+    #[wasm_bindgen(js_name = "graphDeleteEdge")]
+    pub async fn graph_delete_edge(&self, edge_id: &str) -> Result<(), JsError> {
+        let eid = nodedb_types::id::EdgeId::new(edge_id);
+        self.db
+            .graph_delete_edge(&eid)
+            .await
+            .map_err(|e| JsError::new(&e.to_string()))
+    }
+
+    /// Find the shortest path between two nodes. Returns JSON.
+    #[wasm_bindgen(js_name = "graphShortestPath")]
+    pub async fn graph_shortest_path(
+        &self,
+        from: &str,
+        to: &str,
+        max_depth: u8,
+    ) -> Result<JsValue, JsError> {
+        let from_id = NodeId::new(from);
+        let to_id = NodeId::new(to);
+        let path = self
+            .db
+            .graph_shortest_path(&from_id, &to_id, max_depth, None)
+            .await
+            .map_err(|e| JsError::new(&e.to_string()))?;
+
+        match path {
+            Some(nodes) => {
+                let ids: Vec<&str> = nodes.iter().map(|n| n.as_str()).collect();
+                serde_wasm_bindgen::to_value(&ids).map_err(|e| JsError::new(&e.to_string()))
+            }
+            None => Ok(JsValue::NULL),
+        }
+    }
+
+    /// Full-text search (BM25). Returns JSON array of results.
+    #[wasm_bindgen(js_name = "textSearch")]
+    pub async fn text_search(
+        &self,
+        collection: &str,
+        query: &str,
+        top_k: usize,
+    ) -> Result<JsValue, JsError> {
+        let results = self
+            .db
+            .text_search(collection, query, top_k)
+            .await
+            .map_err(|e| JsError::new(&e.to_string()))?;
+
+        let json: Vec<serde_json::Value> = results
+            .iter()
+            .map(|r| serde_json::json!({"id": r.id, "distance": r.distance}))
+            .collect();
+
+        serde_wasm_bindgen::to_value(&json).map_err(|e| JsError::new(&e.to_string()))
+    }
+
+    /// Execute a SQL query. Returns JSON with columns and rows.
+    #[wasm_bindgen(js_name = "executeSql")]
+    pub async fn execute_sql(&self, sql: &str) -> Result<JsValue, JsError> {
+        let result = self
+            .db
+            .execute_sql(sql, &[])
+            .await
+            .map_err(|e| JsError::new(&e.to_string()))?;
+
+        let json = serde_json::json!({
+            "columns": result.columns,
+            "rows": result.rows,
+            "rows_affected": result.rows_affected,
+        });
+
+        serde_wasm_bindgen::to_value(&json).map_err(|e| JsError::new(&e.to_string()))
+    }
+
     /// Flush all in-memory state to storage.
     #[wasm_bindgen]
     pub async fn flush(&self) -> Result<(), JsError> {

@@ -42,12 +42,6 @@ struct NodeDbNodeDbHandle *nodedb_open(const char *path, uint64_t peer_id);
 /**
  * Open or create a NodeDB-Lite database with an explicit memory budget.
  *
- * Identical to `nodedb_open` except that `memory_mb` overrides the default
- * 100 MiB memory budget. Passing `memory_mb = 0` uses the default (100 MiB).
- *
- * Returns an opaque handle on success, NULL on failure.
- * The caller must call `nodedb_close` to free the handle.
- *
  * # Safety
  * `path` must be a valid null-terminated UTF-8 string.
  */
@@ -72,70 +66,56 @@ void nodedb_close(struct NodeDbNodeDbHandle *handle);
 int32_t nodedb_flush(struct NodeDbNodeDbHandle *handle);
 
 /**
- * Insert a vector into a collection.
+ * Start background CRDT sync to an Origin server.
+ *
+ * Connects via WebSocket to the given URL, authenticates with the JWT token,
+ * and continuously pushes pending deltas / receives shape updates.
+ * Runs forever in the background with auto-reconnect.
+ *
+ * Returns `NODEDB_OK` on successful launch (sync runs asynchronously).
  *
  * # Safety
- * All pointer parameters must be valid. `embedding` must point to `dim` floats.
+ * `url` and `jwt_token` must be valid null-terminated UTF-8 strings.
  */
-int32_t nodedb_vector_insert(struct NodeDbNodeDbHandle *handle,
-                             const char *collection,
-                             const char *id,
-                             const float *embedding,
-                             uintptr_t dim);
+int32_t nodedb_start_sync(struct NodeDbNodeDbHandle *handle,
+                          const char *url,
+                          const char *jwt_token);
 
 /**
- * Search for the k nearest vectors. Results are written as JSON to `out_json`.
+ * Generate a UUIDv7 (time-sortable, recommended for primary keys).
  *
  * # Safety
- * `query` must point to `dim` floats. `out_json` receives a malloc'd C string
- * that the caller must free via `nodedb_free_string`.
+ * `out` must be a valid pointer to a `*mut c_char`.
  */
-int32_t nodedb_vector_search(struct NodeDbNodeDbHandle *handle,
-                             const char *collection,
-                             const float *query,
-                             uintptr_t dim,
-                             uintptr_t k,
-                             char **out_json);
+int32_t nodedb_generate_id(char **out);
 
 /**
- * Delete a vector by ID.
+ * Generate an ID of the specified type.
+ *
+ * Supported types: "uuidv7", "uuidv4", "ulid", "cuid2", "nanoid".
  *
  * # Safety
- * All pointer parameters must be valid.
+ * `id_type` must be a valid null-terminated UTF-8 string. `out` must be a valid pointer.
  */
-int32_t nodedb_vector_delete(struct NodeDbNodeDbHandle *handle,
-                             const char *collection,
-                             const char *id);
+int32_t nodedb_generate_id_typed(const char *id_type, char **out);
 
 /**
- * Insert a directed graph edge.
+ * Free a string returned by nodedb_* functions.
  *
  * # Safety
- * All pointer parameters must be valid null-terminated UTF-8.
+ * `ptr` must be a string previously returned by a nodedb function, or NULL.
  */
-int32_t nodedb_graph_insert_edge(struct NodeDbNodeDbHandle *handle,
-                                 const char *from,
-                                 const char *to,
-                                 const char *edge_type);
-
-/**
- * Traverse the graph from a start node. Results written as JSON to `out_json`.
- *
- * # Safety
- * `start` must be valid UTF-8. `out_json` receives a malloc'd C string.
- */
-int32_t nodedb_graph_traverse(struct NodeDbNodeDbHandle *handle,
-                              const char *start,
-                              uint8_t depth,
-                              char **out_json);
+void nodedb_free_string(char *ptr);
 
 /**
  * Get a document by ID. Result written as JSON to `out_json`.
  *
  * Returns `NODEDB_ERR_NOT_FOUND` if the document doesn't exist.
+ * `*out_json` is only written on success (`NODEDB_OK`). The caller must
+ * free the returned string via `nodedb_free_string`.
  *
  * # Safety
- * All pointer parameters must be valid.
+ * All pointer parameters must be valid. `out_json` must not be null.
  */
 int32_t nodedb_document_get(struct NodeDbNodeDbHandle *handle,
                             const char *collection,
@@ -146,11 +126,11 @@ int32_t nodedb_document_get(struct NodeDbNodeDbHandle *handle,
  * Put (insert or update) a document. Body is a JSON string.
  *
  * If the JSON has no `"id"` field or it is empty, a UUIDv7 is auto-generated.
- * If `out_id` is non-NULL, the document ID (auto-generated or provided) is
- * written as a malloc'd C string that the caller must free via `nodedb_free_string`.
+ * On success, if `out_id` is non-null, the assigned document ID is written to
+ * `*out_id`. The caller must free it via `nodedb_free_string`.
  *
  * # Safety
- * All pointer parameters must be valid. `out_id` may be NULL.
+ * All pointer parameters must be valid. `out_id` may be null (ID not returned).
  */
 int32_t nodedb_document_put(struct NodeDbNodeDbHandle *handle,
                             const char *collection,
@@ -168,32 +148,113 @@ int32_t nodedb_document_delete(struct NodeDbNodeDbHandle *handle,
                                const char *id);
 
 /**
- * Generate a UUIDv7 (time-sortable, recommended for primary keys).
+ * Full-text search (BM25). Results written as JSON array to `out_json`.
  *
- * Returns a malloc'd C string that the caller must free via `nodedb_free_string`.
+ * `*out_json` is only written on success. The caller must free via `nodedb_free_string`.
  *
  * # Safety
- * `out` must be a valid pointer to a `*mut c_char`.
+ * All pointer parameters must be valid. `out_json` must not be null.
  */
-int32_t nodedb_generate_id(char **out);
+int32_t nodedb_text_search(struct NodeDbNodeDbHandle *handle,
+                           const char *collection,
+                           const char *query,
+                           uintptr_t top_k,
+                           char **out_json);
 
 /**
- * Generate an ID of the specified type.
+ * Execute a SQL query. Results written as JSON to `out_json`.
  *
- * Supported types: "uuidv7", "uuidv4", "ulid", "cuid2", "nanoid".
- * Returns a malloc'd C string that the caller must free via `nodedb_free_string`.
+ * `*out_json` is only written on success. The caller must free via `nodedb_free_string`.
  *
  * # Safety
- * `id_type` must be a valid null-terminated UTF-8 string. `out` must be a valid pointer.
+ * All pointer parameters must be valid. `out_json` must not be null.
  */
-int32_t nodedb_generate_id_typed(const char *id_type, char **out);
+int32_t nodedb_execute_sql(struct NodeDbNodeDbHandle *handle, const char *sql, char **out_json);
 
 /**
- * Free a string returned by nodedb_* functions.
+ * Insert a directed graph edge.
  *
  * # Safety
- * `ptr` must be a string previously returned by a nodedb function, or NULL.
+ * All pointer parameters must be valid null-terminated UTF-8.
  */
-void nodedb_free_string(char *ptr);
+int32_t nodedb_graph_insert_edge(struct NodeDbNodeDbHandle *handle,
+                                 const char *from,
+                                 const char *to,
+                                 const char *edge_type);
+
+/**
+ * Delete a graph edge by ID.
+ *
+ * Edge ID format: "src--label-->dst" (as returned by graph_insert_edge).
+ *
+ * # Safety
+ * `edge_id` must be valid null-terminated UTF-8.
+ */
+int32_t nodedb_graph_delete_edge(struct NodeDbNodeDbHandle *handle, const char *edge_id);
+
+/**
+ * Traverse the graph from a start node. Results written as JSON to `out_json`.
+ *
+ * `*out_json` is only written on success. The caller must free via `nodedb_free_string`.
+ *
+ * # Safety
+ * `start` must be valid UTF-8. `out_json` must not be null.
+ */
+int32_t nodedb_graph_traverse(struct NodeDbNodeDbHandle *handle,
+                              const char *start,
+                              uint8_t depth,
+                              char **out_json);
+
+/**
+ * Find the shortest path between two nodes. Results written as JSON to `out_json`.
+ *
+ * Returns `NODEDB_OK` with a JSON array of node IDs, or `"null"` if no path exists.
+ * `*out_json` is only written on success. The caller must free via `nodedb_free_string`.
+ *
+ * # Safety
+ * All pointer parameters must be valid. `out_json` must not be null.
+ */
+int32_t nodedb_graph_shortest_path(struct NodeDbNodeDbHandle *handle,
+                                   const char *from,
+                                   const char *to,
+                                   uint8_t max_depth,
+                                   char **out_json);
+
+/**
+ * Insert a vector into a collection.
+ *
+ * # Safety
+ * All pointer parameters must be valid. `embedding` must point to `dim` floats.
+ */
+int32_t nodedb_vector_insert(struct NodeDbNodeDbHandle *handle,
+                             const char *collection,
+                             const char *id,
+                             const float *embedding,
+                             uintptr_t dim);
+
+/**
+ * Search for the k nearest vectors. Results are written as JSON to `out_json`.
+ *
+ * `*out_json` is only written on success. The caller must free via `nodedb_free_string`.
+ *
+ * # Safety
+ * `query` must point to `dim` valid floats. `out_json` must not be null.
+ */
+int32_t nodedb_vector_search(struct NodeDbNodeDbHandle *handle,
+                             const char *collection,
+                             const float *query,
+                             uintptr_t dim,
+                             uintptr_t k,
+                             char **out_json);
+
+/**
+ * Delete a vector by ID.
+ *
+ * # Safety
+ * All pointer parameters must be valid.
+ */
+int32_t nodedb_vector_delete(struct NodeDbNodeDbHandle *handle,
+                             const char *collection,
+                             const char *id);
 
 #endif  /* NODEDB_LITE_H */
