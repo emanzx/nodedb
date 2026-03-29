@@ -70,10 +70,17 @@ impl CoreLoop {
                 }
             } else if !indices.is_empty() {
                 // Raw row output — emit all columns from the memtable schema.
+                // Hoist column references outside the row loop to avoid
+                // re-fetching per row.
+                let columns: Vec<_> = schema
+                    .columns
+                    .iter()
+                    .enumerate()
+                    .map(|(i, (name, ty))| (i, name, ty, mt.column(i)))
+                    .collect();
                 for &idx in indices.iter().take(limit) {
                     let mut row = serde_json::Map::new();
-                    for (col_idx, (col_name, col_type)) in schema.columns.iter().enumerate() {
-                        let col_data = mt.column(col_idx);
+                    for (col_idx, col_name, col_type, col_data) in &columns {
                         let val = match col_type {
                             ColumnType::Timestamp => serde_json::Value::Number(
                                 serde_json::Number::from(col_data.as_timestamps()[idx as usize]),
@@ -87,7 +94,7 @@ impl CoreLoop {
                             ColumnType::Symbol => {
                                 if let ColumnData::Symbol(ids) = col_data {
                                     let sym_id = ids[idx as usize];
-                                    mt.symbol_dict(col_idx)
+                                    mt.symbol_dict(*col_idx)
                                         .and_then(|dict| dict.get(sym_id))
                                         .map(|s| serde_json::Value::String(s.to_string()))
                                         .unwrap_or(serde_json::Value::Null)
@@ -105,7 +112,7 @@ impl CoreLoop {
                                 }
                             }
                         };
-                        row.insert(col_name.clone(), val);
+                        row.insert(col_name.to_string(), val);
                     }
                     results.push(serde_json::Value::Object(row));
                 }
