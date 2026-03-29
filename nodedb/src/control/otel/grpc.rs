@@ -45,7 +45,7 @@ pub async fn run(listen: SocketAddr, shared: Arc<SharedState>) -> std::io::Resul
     info!(addr = %listen, "OTLP/gRPC receiver started");
     axum::serve(listener, router)
         .await
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+        .map_err(std::io::Error::other)
 }
 
 async fn grpc_metrics(State(shared): State<Arc<SharedState>>, body: Bytes) -> impl IntoResponse {

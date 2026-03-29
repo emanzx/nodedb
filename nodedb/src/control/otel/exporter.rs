@@ -189,40 +189,53 @@ fn build_metrics_request(metrics: &SystemMetrics, node_id: u64) -> ExportMetrics
     }
 }
 
+/// Parameters for exporting a single trace span.
+pub struct SpanExport<'a> {
+    pub endpoint: &'a str,
+    pub trace_id: u64,
+    pub span_name: &'a str,
+    pub start_ns: u64,
+    pub end_ns: u64,
+    pub tenant_id: u32,
+    pub vshard_id: u16,
+    pub status_ok: bool,
+}
+
 /// Export a single trace span to an OTLP collector.
 ///
 /// Call this from the request tracker when a bridge round-trip completes.
-pub async fn export_span(
-    endpoint: &str,
-    trace_id: u64,
-    span_name: &str,
-    start_ns: u64,
-    end_ns: u64,
-    tenant_id: u32,
-    vshard_id: u16,
-    status_ok: bool,
-) {
+pub async fn export_span(params: &SpanExport<'_>) {
+    let SpanExport {
+        endpoint,
+        trace_id,
+        span_name,
+        start_ns,
+        end_ns,
+        tenant_id,
+        vshard_id,
+        status_ok,
+    } = params;
     if endpoint.is_empty() {
         return;
     }
 
     let trace_bytes = trace_id.to_be_bytes().to_vec();
-    let span_id = rand_span_id();
+    let span_id_bytes = rand_span_id();
 
     let span = Span {
         trace_id: [vec![0u8; 8], trace_bytes].concat(),
-        span_id: span_id.to_vec(),
-        name: span_name.into(),
+        span_id: span_id_bytes.to_vec(),
+        name: (*span_name).into(),
         kind: SpanKind::Server as i32,
-        start_time_unix_nano: start_ns,
-        end_time_unix_nano: end_ns,
+        start_time_unix_nano: *start_ns,
+        end_time_unix_nano: *end_ns,
         attributes: vec![
             kv("nodedb.tenant_id", &tenant_id.to_string()),
             kv("nodedb.vshard_id", &vshard_id.to_string()),
         ],
         status: Some(SpanStatus {
             message: String::new(),
-            code: if status_ok {
+            code: if *status_ok {
                 OtelStatusCode::Ok as i32
             } else {
                 OtelStatusCode::Error as i32

@@ -59,7 +59,7 @@ pub async fn run(config: OtelConfig, shared: Arc<SharedState>) -> std::io::Resul
     info!(addr = %config.listen, "OTLP/HTTP receiver started");
     axum::serve(listener, router)
         .await
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+        .map_err(std::io::Error::other)
 }
 
 /// POST `/v1/metrics` — OTLP metrics receiver.

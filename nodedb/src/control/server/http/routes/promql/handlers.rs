@@ -445,7 +445,7 @@ fn parse_iso_ms(s: &str) -> Option<i64> {
     // Accurate for dates 1970-2099 (no leap second correction needed for ms precision).
     let mut days = (year - 1970) * 365 + (year - 1969) / 4;
     let month_days = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-    if month >= 1 && month <= 12 {
+    if (1..=12).contains(&month) {
         days += month_days[(month - 1) as usize];
     }
     // Leap year correction for current year.
