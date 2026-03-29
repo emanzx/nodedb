@@ -56,6 +56,9 @@ pub enum OpCode {
     EdgePut = 0x54,
     EdgeDelete = 0x55,
 
+    // ── Spatial operations (direct Data Plane dispatch) ────────
+    SpatialScan = 0x19,
+
     // ── Search operations (direct Data Plane dispatch) ──────────
     TextSearch = 0x60,
     HybridSearch = 0x61,
@@ -261,6 +264,17 @@ pub struct TextFields {
     pub vectors: Option<Vec<BatchVector>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub documents: Option<Vec<BatchDocument>>,
+
+    // ── Spatial scan ───────────────────────────────────────────
+    /// Query geometry as GeoJSON bytes (for SpatialScan).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_geometry: Option<Vec<u8>>,
+    /// Spatial predicate name: "dwithin", "contains", "intersects", "within".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spatial_predicate: Option<String>,
+    /// Distance threshold in meters (for ST_DWithin).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub distance_meters: Option<f64>,
 
     // ── Collection policy ────────────────────────────────────
     #[serde(skip_serializing_if = "Option::is_none")]

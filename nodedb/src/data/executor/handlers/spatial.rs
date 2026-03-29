@@ -8,6 +8,7 @@ use tracing::debug;
 
 use crate::bridge::envelope::{ErrorCode, Response};
 use crate::bridge::physical_plan::SpatialPredicate;
+use crate::bridge::scan_filter::ScanFilter;
 use crate::data::executor::core_loop::CoreLoop;
 use crate::data::executor::task::ExecutionTask;
 
@@ -29,10 +30,10 @@ impl CoreLoop {
         predicate: &SpatialPredicate,
         query_geometry_bytes: &[u8],
         distance_meters: f64,
-        _attribute_filters: &[u8],
+        attribute_filters: &[u8],
         limit: usize,
         projection: &[String],
-        _rls_filters: &[u8],
+        rls_filters: &[u8],
     ) -> Response {
         debug!(
             core = self.core_id,
@@ -56,7 +57,19 @@ impl CoreLoop {
                 }
             };
 
-        // 2. Compute search bbox (expand by distance for ST_DWithin).
+        // 2. Deserialize attribute and RLS filters.
+        let attr_filters: Vec<ScanFilter> = if attribute_filters.is_empty() {
+            Vec::new()
+        } else {
+            rmp_serde::from_slice(attribute_filters).unwrap_or_default()
+        };
+        let row_level_filters: Vec<ScanFilter> = if rls_filters.is_empty() {
+            Vec::new()
+        } else {
+            rmp_serde::from_slice(rls_filters).unwrap_or_default()
+        };
+
+        // 3. Compute search bbox (expand by distance for ST_DWithin).
         let query_bbox = nodedb_types::bbox::geometry_bbox(&query_geom);
         let search_bbox = if distance_meters > 0.0 {
             expand_bbox(&query_bbox, distance_meters)
@@ -83,6 +96,8 @@ impl CoreLoop {
                 distance_meters,
                 limit,
                 projection,
+                &attr_filters,
+                &row_level_filters,
             );
         }
 
@@ -143,6 +158,14 @@ impl CoreLoop {
                 continue;
             }
 
+            // Apply attribute and RLS post-filters.
+            if !attr_filters.iter().all(|f| f.matches(&doc)) {
+                continue;
+            }
+            if !row_level_filters.iter().all(|f| f.matches(&doc)) {
+                continue;
+            }
+
             results.push(project_doc(&doc, doc_id, projection));
         }
 
@@ -165,6 +188,8 @@ impl CoreLoop {
         distance_meters: f64,
         limit: usize,
         projection: &[String],
+        attr_filters: &[ScanFilter],
+        rls_filters: &[ScanFilter],
     ) -> Response {
         debug!(
             core = self.core_id,
@@ -207,6 +232,14 @@ impl CoreLoop {
                 };
 
             if !apply_predicate(predicate, query_geom, &doc_geom, distance_meters) {
+                continue;
+            }
+
+            // Apply attribute and RLS post-filters.
+            if !attr_filters.iter().all(|f| f.matches(&doc)) {
+                continue;
+            }
+            if !rls_filters.iter().all(|f| f.matches(&doc)) {
                 continue;
             }
 

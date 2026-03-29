@@ -136,6 +136,15 @@ impl PlanConverter {
                     }]);
                 }
 
+                // Check for ST_* spatial predicates → SpatialScan plan.
+                if let Some(task) = super::extract::spatial_expr::try_extract_spatial_scan(
+                    &filter.predicate,
+                    &filter.input,
+                    tenant_id,
+                ) {
+                    return Ok(vec![task]);
+                }
+
                 // Check if the filter predicate can be converted to a point get
                 // before recursing into the input.
                 if let LogicalPlan::TableScan(scan) = filter.input.as_ref() {

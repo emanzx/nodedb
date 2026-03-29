@@ -271,7 +271,8 @@ impl NativeSession {
             | OpCode::EdgePut
             | OpCode::EdgeDelete
             | OpCode::TextSearch
-            | OpCode::HybridSearch => dispatch::handle_direct_op(&ctx, seq, op, fields).await,
+            | OpCode::HybridSearch
+            | OpCode::SpatialScan => dispatch::handle_direct_op(&ctx, seq, op, fields).await,
 
             // Batch ops: direct Data Plane dispatch.
             OpCode::VectorBatchInsert | OpCode::DocumentBatchInsert => {
