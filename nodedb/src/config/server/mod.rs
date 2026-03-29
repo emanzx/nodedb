@@ -15,7 +15,7 @@ pub use observability::{
 };
 pub use tls::{EncryptionSettings, TlsSettings};
 
-use std::net::SocketAddr;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::PathBuf;
 
 use nodedb_types::config::TuningConfig;
@@ -23,19 +23,62 @@ use serde::{Deserialize, Serialize};
 
 use super::EngineConfig;
 
+/// Port configuration for all protocol listeners.
+///
+/// Always-on protocols have a default port. Optional protocols (RESP, ILP)
+/// are disabled by default — set a port to enable them.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PortsConfig {
+    /// Native MessagePack protocol port. Default: 6433.
+    #[serde(default = "default_native_port")]
+    pub native: u16,
+    /// PostgreSQL wire protocol port. Default: 6432.
+    #[serde(default = "default_pgwire_port")]
+    pub pgwire: u16,
+    /// HTTP API port (REST, SSE, WebSocket). Default: 6480.
+    #[serde(default = "default_http_port")]
+    pub http: u16,
+    /// RESP (Redis-compatible) port. Disabled by default. Set to enable.
+    #[serde(default)]
+    pub resp: Option<u16>,
+    /// ILP (InfluxDB Line Protocol) port. Disabled by default. Set to enable.
+    #[serde(default)]
+    pub ilp: Option<u16>,
+}
+
+impl Default for PortsConfig {
+    fn default() -> Self {
+        Self {
+            native: default_native_port(),
+            pgwire: default_pgwire_port(),
+            http: default_http_port(),
+            resp: None,
+            ilp: None,
+        }
+    }
+}
+
+fn default_native_port() -> u16 {
+    6433
+}
+fn default_pgwire_port() -> u16 {
+    6432
+}
+fn default_http_port() -> u16 {
+    6480
+}
+
 /// Top-level server configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerConfig {
-    /// Address to bind the native wire protocol listener.
-    pub listen: SocketAddr,
+    /// Bind address shared by all protocol listeners.
+    /// Default: 127.0.0.1 (localhost only). Use 0.0.0.0 for all interfaces.
+    #[serde(default = "default_host")]
+    pub host: IpAddr,
 
-    /// Address to bind the PostgreSQL wire protocol listener.
-    /// Defaults to 127.0.0.1:5432.
-    pub pg_listen: SocketAddr,
-
-    /// Address to bind the HTTP API (health, metrics, REST).
-    /// Defaults to 127.0.0.1:8080.
-    pub http_listen: SocketAddr,
+    /// Per-protocol port numbers.
+    #[serde(default)]
+    pub ports: PortsConfig,
 
     /// Data directory for WAL, segments, and indexes.
     pub data_dir: PathBuf,
@@ -62,7 +105,8 @@ pub struct ServerConfig {
     #[serde(default)]
     pub auth: super::AuthConfig,
 
-    /// Client TLS configuration. If present, pgwire connections support SSL.
+    /// Client TLS configuration. If present, TLS is available on all protocols.
+    /// Per-protocol flags control which listeners actually use TLS.
     #[serde(default)]
     pub tls: Option<TlsSettings>,
 
@@ -77,18 +121,6 @@ pub struct ServerConfig {
     /// Checkpoint and WAL management settings.
     #[serde(default)]
     pub checkpoint: CheckpointSettings,
-
-    /// Address to bind the RESP (Redis-compatible) KV protocol listener.
-    /// Disabled by default (None). Enable for Redis-compatible key-value access.
-    /// Default port: 6381 (distinct from Redis's 6379).
-    #[serde(default)]
-    pub resp_listen: Option<SocketAddr>,
-
-    /// Address to bind the ILP (InfluxDB Line Protocol) TCP listener.
-    /// Disabled by default (None). Enable for timeseries ingest.
-    /// Standard InfluxDB port: 8086.
-    #[serde(default)]
-    pub ilp_listen: Option<SocketAddr>,
 
     /// Cluster mode settings. When present, the node participates in a
     /// distributed cluster via Multi-Raft consensus over QUIC transport.
@@ -113,6 +145,10 @@ pub struct ServerConfig {
     pub observability: ObservabilityConfig,
 }
 
+fn default_host() -> IpAddr {
+    IpAddr::V4(Ipv4Addr::LOCALHOST)
+}
+
 impl Default for ServerConfig {
     fn default() -> Self {
         let cores = std::thread::available_parallelism()
@@ -120,9 +156,8 @@ impl Default for ServerConfig {
             .unwrap_or(1);
 
         Self {
-            listen: SocketAddr::from(([127, 0, 0, 1], 6433)),
-            pg_listen: SocketAddr::from(([127, 0, 0, 1], 6432)),
-            http_listen: SocketAddr::from(([127, 0, 0, 1], 6480)),
+            host: default_host(),
+            ports: PortsConfig::default(),
             data_dir: default_data_dir(),
             data_plane_cores: cores,
             max_connections: default_max_connections(),
@@ -133,13 +168,43 @@ impl Default for ServerConfig {
             encryption: None,
             log_format: "text".into(),
             checkpoint: CheckpointSettings::default(),
-            resp_listen: None,
-            ilp_listen: None,
             cluster: None,
             cold_storage: None,
             tuning: TuningConfig::default(),
             observability: ObservabilityConfig::default(),
         }
+    }
+}
+
+impl ServerConfig {
+    /// Build a `SocketAddr` from the shared host and a port.
+    pub fn addr(&self, port: u16) -> SocketAddr {
+        SocketAddr::new(self.host, port)
+    }
+
+    /// Native protocol listen address.
+    pub fn native_addr(&self) -> SocketAddr {
+        self.addr(self.ports.native)
+    }
+
+    /// pgwire listen address.
+    pub fn pgwire_addr(&self) -> SocketAddr {
+        self.addr(self.ports.pgwire)
+    }
+
+    /// HTTP API listen address.
+    pub fn http_addr(&self) -> SocketAddr {
+        self.addr(self.ports.http)
+    }
+
+    /// RESP listen address (None if disabled).
+    pub fn resp_addr(&self) -> Option<SocketAddr> {
+        self.ports.resp.map(|p| self.addr(p))
+    }
+
+    /// ILP listen address (None if disabled).
+    pub fn ilp_addr(&self) -> Option<SocketAddr> {
+        self.ports.ilp.map(|p| self.addr(p))
     }
 }
 
@@ -243,9 +308,12 @@ mod tests {
     #[test]
     fn default_config_valid() {
         let cfg = ServerConfig::default();
-        assert_eq!(cfg.listen.port(), 6433);
-        assert_eq!(cfg.pg_listen.port(), 6432);
-        assert_eq!(cfg.http_listen.port(), 6480);
+        assert_eq!(cfg.host, IpAddr::V4(Ipv4Addr::LOCALHOST));
+        assert_eq!(cfg.ports.native, 6433);
+        assert_eq!(cfg.ports.pgwire, 6432);
+        assert_eq!(cfg.ports.http, 6480);
+        assert!(cfg.ports.resp.is_none());
+        assert!(cfg.ports.ilp.is_none());
         assert!(cfg.data_plane_cores >= 1);
         assert_eq!(cfg.memory_limit, 1024 * 1024 * 1024);
     }

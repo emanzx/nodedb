@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 
 use super::ServerConfig;
 
@@ -46,22 +46,119 @@ pub fn parse_memory_size(s: &str) -> Result<usize, String> {
     usize::try_from(bytes).map_err(|_| format!("memory size too large for this platform: {s}"))
 }
 
+/// Parse a u16 port from an env var into a required field.
+fn apply_port_env(var: &str, target: &mut u16) {
+    if let Ok(val) = std::env::var(var) {
+        match val.trim().parse::<u16>() {
+            Ok(port) => {
+                tracing::info!(env_var = var, value = port, "environment variable override applied");
+                *target = port;
+            }
+            Err(_) => {
+                tracing::warn!(
+                    env_var = var,
+                    value = %val,
+                    "ignoring malformed environment variable (expected port number), using config value"
+                );
+            }
+        }
+    }
+}
+
+/// Parse a u16 port from an env var into an optional field (enables the listener).
+fn apply_optional_port_env(var: &str, target: &mut Option<u16>) {
+    if let Ok(val) = std::env::var(var) {
+        match val.trim().parse::<u16>() {
+            Ok(port) => {
+                tracing::info!(env_var = var, value = port, "environment variable override applied");
+                *target = Some(port);
+            }
+            Err(_) => {
+                tracing::warn!(
+                    env_var = var,
+                    value = %val,
+                    "ignoring malformed environment variable (expected port number), using config value"
+                );
+            }
+        }
+    }
+}
+
+/// Parse a boolean env var ("true"/"false") into a bool field.
+fn apply_bool_env(var: &str, target: &mut bool) {
+    if let Ok(val) = std::env::var(var) {
+        match val.trim().to_lowercase().as_str() {
+            "true" | "1" | "yes" => {
+                tracing::info!(env_var = var, value = true, "environment variable override applied");
+                *target = true;
+            }
+            "false" | "0" | "no" => {
+                tracing::info!(env_var = var, value = false, "environment variable override applied");
+                *target = false;
+            }
+            _ => {
+                tracing::warn!(
+                    env_var = var,
+                    value = %val,
+                    "ignoring malformed environment variable (expected true/false), using config value"
+                );
+            }
+        }
+    }
+}
+
 /// Apply environment variable overrides to a loaded `ServerConfig`.
 ///
 /// Priority order: env var > TOML value > compiled default.
 ///
 /// Handled variables:
-/// - `NODEDB_DATA_DIR`     — overrides `config.data_dir`
-/// - `NODEDB_MEMORY_LIMIT` — overrides `config.memory_limit`
-/// - `NODEDB_NODE_ID`      — overrides `config.cluster.node_id` (parse as u64)
-/// - `NODEDB_SEED_NODES`   — overrides `config.cluster.seed_nodes`
+/// - `NODEDB_HOST`             — overrides `config.host` (bind address, e.g., `0.0.0.0`)
+/// - `NODEDB_PORT_NATIVE`      — overrides `config.ports.native` (default 6433)
+/// - `NODEDB_PORT_PGWIRE`      — overrides `config.ports.pgwire` (default 6432)
+/// - `NODEDB_PORT_HTTP`        — overrides `config.ports.http` (default 6480)
+/// - `NODEDB_PORT_RESP`        — overrides `config.ports.resp` (set to enable RESP)
+/// - `NODEDB_PORT_ILP`         — overrides `config.ports.ilp` (set to enable ILP)
+/// - `NODEDB_DATA_DIR`         — overrides `config.data_dir`
+/// - `NODEDB_MEMORY_LIMIT`     — overrides `config.memory_limit`
+/// - `NODEDB_DATA_PLANE_CORES` — overrides `config.data_plane_cores` (parse as usize)
+/// - `NODEDB_MAX_CONNECTIONS`  — overrides `config.max_connections` (parse as usize)
+/// - `NODEDB_LOG_FORMAT`       — overrides `config.log_format` ("text" or "json")
+/// - `NODEDB_TLS_NATIVE`      — enable/disable TLS on native protocol ("true"/"false")
+/// - `NODEDB_TLS_PGWIRE`      — enable/disable TLS on pgwire ("true"/"false")
+/// - `NODEDB_TLS_HTTP`        — enable/disable TLS on HTTP ("true"/"false")
+/// - `NODEDB_TLS_RESP`        — enable/disable TLS on RESP ("true"/"false")
+/// - `NODEDB_TLS_ILP`         — enable/disable TLS on ILP ("true"/"false")
+/// - `NODEDB_NODE_ID`          — overrides `config.cluster.node_id` (parse as u64)
+/// - `NODEDB_SEED_NODES`       — overrides `config.cluster.seed_nodes`
 ///   (comma-separated `SocketAddr` list)
-/// - `NODEDB_RESP_LISTEN`  — overrides `config.resp_listen` (e.g., `127.0.0.1:6381`)
-/// - `NODEDB_ILP_LISTEN`   — overrides `config.ilp_listen` (e.g., `127.0.0.1:8086`)
 ///
 /// `NODEDB_CONFIG` (config file path) is handled upstream in `main.rs`
 /// before this function is called, so it is not processed here.
 pub fn apply_env_overrides(config: &mut ServerConfig) {
+    // ── Host and ports ─────────────────────────────────────────────
+
+    if let Ok(val) = std::env::var("NODEDB_HOST") {
+        match val.trim().parse::<IpAddr>() {
+            Ok(ip) => {
+                tracing::info!(env_var = "NODEDB_HOST", value = %val, "environment variable override applied");
+                config.host = ip;
+            }
+            Err(_) => {
+                tracing::warn!(
+                    env_var = "NODEDB_HOST",
+                    value = %val,
+                    "ignoring malformed environment variable (expected IP address), using config value"
+                );
+            }
+        }
+    }
+
+    apply_port_env("NODEDB_PORT_NATIVE", &mut config.ports.native);
+    apply_port_env("NODEDB_PORT_PGWIRE", &mut config.ports.pgwire);
+    apply_port_env("NODEDB_PORT_HTTP", &mut config.ports.http);
+    apply_optional_port_env("NODEDB_PORT_RESP", &mut config.ports.resp);
+    apply_optional_port_env("NODEDB_PORT_ILP", &mut config.ports.ilp);
+
     if let Ok(val) = std::env::var("NODEDB_DATA_DIR") {
         let path = std::path::PathBuf::from(&val);
         tracing::info!(
@@ -155,48 +252,79 @@ pub fn apply_env_overrides(config: &mut ServerConfig) {
         }
     }
 
-    if let Ok(val) = std::env::var("NODEDB_RESP_LISTEN") {
-        match val.parse::<std::net::SocketAddr>() {
-            Ok(addr) => {
+    // ── Numeric settings ───────────────────────────────────────────
+
+    if let Ok(val) = std::env::var("NODEDB_DATA_PLANE_CORES") {
+        match val.trim().parse::<usize>() {
+            Ok(cores) => {
                 tracing::info!(
-                    env_var = "NODEDB_RESP_LISTEN",
-                    value = %val,
+                    env_var = "NODEDB_DATA_PLANE_CORES",
+                    value = cores,
                     "environment variable override applied"
                 );
-                config.resp_listen = Some(addr);
+                config.data_plane_cores = cores;
             }
             Err(_) => {
                 tracing::warn!(
-                    env_var = "NODEDB_RESP_LISTEN",
+                    env_var = "NODEDB_DATA_PLANE_CORES",
                     value = %val,
-                    "ignoring malformed environment variable (expected SocketAddr), using config value"
+                    "ignoring malformed environment variable (expected usize), using config value"
                 );
             }
         }
     }
 
-    // Observability overrides (PromQL, OTLP).
+    if let Ok(val) = std::env::var("NODEDB_MAX_CONNECTIONS") {
+        match val.trim().parse::<usize>() {
+            Ok(n) => {
+                tracing::info!(
+                    env_var = "NODEDB_MAX_CONNECTIONS",
+                    value = n,
+                    "environment variable override applied"
+                );
+                config.max_connections = n;
+            }
+            Err(_) => {
+                tracing::warn!(
+                    env_var = "NODEDB_MAX_CONNECTIONS",
+                    value = %val,
+                    "ignoring malformed environment variable (expected usize), using config value"
+                );
+            }
+        }
+    }
+
+    if let Ok(val) = std::env::var("NODEDB_LOG_FORMAT") {
+        let val = val.trim().to_lowercase();
+        if val == "text" || val == "json" {
+            tracing::info!(
+                env_var = "NODEDB_LOG_FORMAT",
+                value = %val,
+                "environment variable override applied"
+            );
+            config.log_format = val;
+        } else {
+            tracing::warn!(
+                env_var = "NODEDB_LOG_FORMAT",
+                value = %val,
+                "ignoring malformed environment variable (expected \"text\" or \"json\"), using config value"
+            );
+        }
+    }
+
+    // ── Per-protocol TLS toggles ─────────────────────────────────
+
+    if let Some(ref mut tls) = config.tls {
+        apply_bool_env("NODEDB_TLS_NATIVE", &mut tls.native);
+        apply_bool_env("NODEDB_TLS_PGWIRE", &mut tls.pgwire);
+        apply_bool_env("NODEDB_TLS_HTTP", &mut tls.http);
+        apply_bool_env("NODEDB_TLS_RESP", &mut tls.resp);
+        apply_bool_env("NODEDB_TLS_ILP", &mut tls.ilp);
+    }
+
+    // ── Observability overrides (PromQL, OTLP) ─────────────────────
+
     super::observability::apply_observability_env(&mut config.observability);
-
-    if let Ok(val) = std::env::var("NODEDB_ILP_LISTEN") {
-        match val.parse::<std::net::SocketAddr>() {
-            Ok(addr) => {
-                tracing::info!(
-                    env_var = "NODEDB_ILP_LISTEN",
-                    value = %val,
-                    "environment variable override applied"
-                );
-                config.ilp_listen = Some(addr);
-            }
-            Err(_) => {
-                tracing::warn!(
-                    env_var = "NODEDB_ILP_LISTEN",
-                    value = %val,
-                    "ignoring malformed environment variable (expected SocketAddr), using config value"
-                );
-            }
-        }
-    }
 }
 
 /// Parse a comma-separated list of `SocketAddr` strings.
