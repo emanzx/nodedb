@@ -384,22 +384,44 @@ impl PlanConverter {
                 })
             }
             WriteOp::Update => {
-                // KV UPDATE would require read-modify-write on specific fields.
-                // For now, users can do DELETE + INSERT.
-                Err(crate::Error::PlanError {
-                    detail: "KV UPDATE not yet supported; use DELETE + INSERT".into(),
-                })
+                let updates = extract_update_assignments(&dml.input)?;
+                if updates.is_empty() {
+                    return Err(crate::Error::PlanError {
+                        detail: "KV UPDATE requires at least one SET assignment".into(),
+                    });
+                }
+
+                // Point UPDATE: WHERE key = 'x' (or WHERE id = 'x').
+                let key_ids = extract_point_targets(&dml.input, collection).unwrap_or_default();
+                if key_ids.is_empty() {
+                    return Err(crate::Error::PlanError {
+                        detail: "KV UPDATE requires WHERE with primary key \
+                                 (e.g., WHERE key = 'mykey')"
+                            .into(),
+                    });
+                }
+
+                let mut tasks = Vec::with_capacity(key_ids.len());
+                for key_str in key_ids {
+                    tasks.push(PhysicalTask {
+                        tenant_id,
+                        vshard_id: vshard,
+                        plan: PhysicalPlan::Kv(KvOp::FieldSet {
+                            collection: collection.to_string(),
+                            key: key_str.into_bytes(),
+                            updates: updates.clone(),
+                        }),
+                    });
+                }
+                Ok(tasks)
             }
-            WriteOp::Truncate => {
-                // Route to standard Truncate which works for any collection.
-                Ok(vec![PhysicalTask {
-                    tenant_id,
-                    vshard_id: vshard,
-                    plan: PhysicalPlan::Document(DocumentOp::Truncate {
-                        collection: collection.to_string(),
-                    }),
-                }])
-            }
+            WriteOp::Truncate => Ok(vec![PhysicalTask {
+                tenant_id,
+                vshard_id: vshard,
+                plan: PhysicalPlan::Kv(KvOp::Truncate {
+                    collection: collection.to_string(),
+                }),
+            }]),
         }
     }
 
