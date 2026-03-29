@@ -31,7 +31,8 @@ pub fn infer_schema(lines: &[IlpLine<'_>]) -> ColumnarSchema {
                 let col_type = match val {
                     FieldValue::Float(_) => ColumnType::Float64,
                     FieldValue::Int(_) | FieldValue::UInt(_) => ColumnType::Int64,
-                    FieldValue::Str(_) | FieldValue::Bool(_) => ColumnType::Float64, // coerce to f64
+                    FieldValue::Str(_) => ColumnType::Symbol,
+                    FieldValue::Bool(_) => ColumnType::Float64,
                 };
                 field_keys.push((key.to_string(), col_type));
             }
@@ -97,14 +98,15 @@ pub fn ingest_batch(
                     values.push(ColumnValue::Timestamp(ts_ms));
                 }
                 ColumnType::Symbol => {
-                    // Look up tag value.
-                    let tag_val = line
+                    // Look up tag value first, then string field value.
+                    let val = line
                         .tags
                         .iter()
                         .find(|&&(k, _)| k == col_name)
                         .map(|&(_, v)| v)
+                        .or_else(|| find_field_str(&line.fields, col_name))
                         .unwrap_or("");
-                    values.push(ColumnValue::Symbol(tag_val));
+                    values.push(ColumnValue::Symbol(val));
                 }
                 ColumnType::Float64 => {
                     let val = find_field_f64(&line.fields, col_name);
@@ -125,6 +127,17 @@ pub fn ingest_batch(
     }
 
     (accepted, rejected)
+}
+
+fn find_field_str<'a>(fields: &[(&str, FieldValue<'a>)], name: &str) -> Option<&'a str> {
+    for &(k, ref v) in fields {
+        if k == name
+            && let FieldValue::Str(s) = v
+        {
+            return Some(s);
+        }
+    }
+    None
 }
 
 fn find_field_f64(fields: &[(&str, FieldValue<'_>)], name: &str) -> f64 {
@@ -274,5 +287,41 @@ mod tests {
         let mut series_keys = HashMap::new();
         ingest_batch(&mut mt, &lines, &mut series_keys, 0);
         assert_eq!(mt.row_count(), 1);
+    }
+
+    #[test]
+    fn string_fields_stored_as_symbol() {
+        let input =
+            r#"dns,client=10.0.0.1 qname="bigquery.googleapis.com",elapsed_ms=12.5 1000000000"#;
+        let lines: Vec<_> = parse_batch(input)
+            .into_iter()
+            .filter_map(|r| r.ok())
+            .collect();
+        let schema = infer_schema(&lines);
+
+        // qname should be Symbol, not Float64.
+        let qname_col = schema.columns.iter().find(|(n, _)| n == "qname").unwrap();
+        assert_eq!(qname_col.1, ColumnType::Symbol);
+
+        // Ingest and verify the string value is recoverable.
+        let mut mt = ColumnarMemtable::new(schema.clone(), default_config());
+        let mut series_keys = HashMap::new();
+        ingest_batch(&mut mt, &lines, &mut series_keys, 0);
+        assert_eq!(mt.row_count(), 1);
+
+        // Find qname column index and resolve symbol.
+        let col_idx = schema
+            .columns
+            .iter()
+            .position(|(n, _)| n == "qname")
+            .unwrap();
+        let col_data = mt.column(col_idx);
+        if let crate::engine::timeseries::columnar_memtable::ColumnData::Symbol(ids) = col_data {
+            let dict = mt.symbol_dict(col_idx).unwrap();
+            let resolved = dict.get(ids[0]).unwrap();
+            assert_eq!(resolved, "bigquery.googleapis.com");
+        } else {
+            panic!("expected Symbol column data for qname");
+        }
     }
 }
