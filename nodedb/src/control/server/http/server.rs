@@ -69,6 +69,10 @@ fn build_router(state: AppState) -> Router {
         .route("/obsv/api/v1/metadata", get(routes::promql::metadata))
         .route("/obsv/api/v1/write", post(routes::promql::remote_write))
         .route("/obsv/api/v1/read", post(routes::promql::remote_read))
+        .route(
+            "/obsv/api/v1/annotations",
+            post(routes::promql::annotations),
+        )
         .with_state(state)
 }
 
