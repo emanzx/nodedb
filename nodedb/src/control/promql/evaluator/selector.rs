@@ -16,10 +16,10 @@ pub fn eval_vector_selector(
 
     let mut result = Vec::new();
     for series in &ctx.series {
-        if let Some(n) = name {
-            if series.metric_name() != n {
-                continue;
-            }
+        if let Some(n) = name
+            && series.metric_name() != n
+        {
+            continue;
         }
         if !matches_all(matchers, &series.labels) {
             continue;
@@ -61,10 +61,10 @@ pub fn eval_matrix_selector(
 
     let mut result = Vec::new();
     for series in &ctx.series {
-        if let Some(n) = name {
-            if series.metric_name() != n {
-                continue;
-            }
+        if let Some(n) = name
+            && series.metric_name() != n
+        {
+            continue;
         }
         if !matches_all(matchers, &series.labels) {
             continue;

@@ -138,8 +138,58 @@ pub(crate) fn eval(ctx: &EvalContext, expr: &Expr) -> Result<Value, String> {
             aggregate::eval_aggregation(*op, val, p, grouping, ctx.timestamp_ms)
         }
         Expr::Call { func, args } => call::eval_call(ctx, func, args),
-        Expr::Subquery { .. } => Err("subqueries not yet supported".into()),
+        Expr::Subquery {
+            expr: inner,
+            range,
+            step,
+        } => eval_subquery(ctx, inner, *range, *step),
     }
+}
+
+/// Evaluate a subquery: `expr[range:step]`.
+///
+/// Evaluates the inner expression at each step within the range,
+/// collecting results into a range vector (matrix).
+fn eval_subquery(
+    ctx: &EvalContext,
+    inner: &Expr,
+    range: Duration,
+    step: Option<Duration>,
+) -> Result<Value, String> {
+    let end_ms = ctx.timestamp_ms;
+    let start_ms = end_ms - range.ms();
+    // Default step: evaluation interval, or 1 minute if unset.
+    let step_ms = step.map_or(60_000, |d| d.ms()).max(1);
+
+    let mut result_series: BTreeMap<String, RangeSeries> = BTreeMap::new();
+
+    let mut ts = start_ms;
+    while ts <= end_ms {
+        let step_ctx = EvalContext {
+            series: ctx.series.clone(),
+            timestamp_ms: ts,
+            lookback_ms: ctx.lookback_ms,
+        };
+        let val = eval(&step_ctx, inner)?;
+
+        if let Value::Vector(samples) = val {
+            for s in samples {
+                let key = labels_key(&s.labels);
+                let entry = result_series.entry(key).or_insert_with(|| RangeSeries {
+                    labels: s.labels.clone(),
+                    samples: vec![],
+                });
+                entry.samples.push(Sample {
+                    timestamp_ms: ts,
+                    value: s.value,
+                });
+            }
+        }
+
+        ts += step_ms;
+    }
+
+    Ok(Value::Matrix(result_series.into_values().collect()))
 }
 
 #[cfg(test)]

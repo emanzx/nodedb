@@ -166,6 +166,89 @@ pub fn quantile_over_time(q: f64, samples: &[Sample]) -> Option<f64> {
     Some(vals[lo] * (1.0 - frac) + vals[hi] * frac)
 }
 
+// ── Tier 2 range-vector functions ─────────────────────────────────────
+
+/// `changes(v range-vector)` — number of times the value changed.
+pub fn changes(samples: &[Sample]) -> Option<f64> {
+    if samples.len() < 2 {
+        return Some(0.0);
+    }
+    let count = samples
+        .windows(2)
+        .filter(|w| (w[1].value - w[0].value).abs() > f64::EPSILON)
+        .count();
+    Some(count as f64)
+}
+
+/// `resets(v range-vector)` — number of counter resets (value decreases).
+pub fn resets(samples: &[Sample]) -> Option<f64> {
+    if samples.len() < 2 {
+        return Some(0.0);
+    }
+    let count = samples
+        .windows(2)
+        .filter(|w| w[1].value < w[0].value)
+        .count();
+    Some(count as f64)
+}
+
+/// `absent_over_time(v range-vector)` — returns 1 if no samples, empty otherwise.
+pub fn absent_over_time(samples: &[Sample]) -> Option<f64> {
+    if samples.is_empty() { Some(1.0) } else { None }
+}
+
+/// `stddev_over_time(v range-vector)` — population standard deviation.
+pub fn stddev_over_time(samples: &[Sample]) -> Option<f64> {
+    if samples.len() < 2 {
+        return None;
+    }
+    let mean = samples.iter().map(|s| s.value).sum::<f64>() / samples.len() as f64;
+    let var = samples
+        .iter()
+        .map(|s| (s.value - mean).powi(2))
+        .sum::<f64>()
+        / samples.len() as f64;
+    Some(var.sqrt())
+}
+
+/// `stdvar_over_time(v range-vector)` — population variance.
+pub fn stdvar_over_time(samples: &[Sample]) -> Option<f64> {
+    if samples.len() < 2 {
+        return None;
+    }
+    let mean = samples.iter().map(|s| s.value).sum::<f64>() / samples.len() as f64;
+    Some(
+        samples
+            .iter()
+            .map(|s| (s.value - mean).powi(2))
+            .sum::<f64>()
+            / samples.len() as f64,
+    )
+}
+
+/// `holt_winters(v range-vector, sf scalar, tf scalar)` — double exponential smoothing.
+///
+/// `sf` is the smoothing factor (0 < sf < 1), `tf` is the trend factor (0 < tf < 1).
+pub fn holt_winters(samples: &[Sample], sf: f64, tf: f64) -> Option<f64> {
+    if samples.is_empty() || sf <= 0.0 || sf >= 1.0 || tf <= 0.0 || tf >= 1.0 {
+        return None;
+    }
+    // Initialize level and trend from first two samples.
+    let mut level = samples[0].value;
+    let mut trend = if samples.len() > 1 {
+        samples[1].value - samples[0].value
+    } else {
+        0.0
+    };
+
+    for s in samples.iter().skip(1) {
+        let prev_level = level;
+        level = sf * s.value + (1.0 - sf) * (prev_level + trend);
+        trend = tf * (level - prev_level) + (1.0 - tf) * trend;
+    }
+    Some(level)
+}
+
 /// Dispatch a range-vector function by name.
 pub fn call_range_func(name: &str, samples: &[Sample], scalar_arg: Option<f64>) -> Option<f64> {
     match name {
@@ -182,8 +265,18 @@ pub fn call_range_func(name: &str, samples: &[Sample], scalar_arg: Option<f64>) 
         "max_over_time" => max_over_time(samples),
         "count_over_time" => count_over_time(samples),
         "quantile_over_time" => quantile_over_time(scalar_arg.unwrap_or(0.5), samples),
+        "changes" => changes(samples),
+        "resets" => resets(samples),
+        "absent_over_time" => absent_over_time(samples),
+        "stddev_over_time" => stddev_over_time(samples),
+        "stdvar_over_time" => stdvar_over_time(samples),
         _ => None,
     }
+}
+
+/// Dispatch `holt_winters` separately (needs two scalar args).
+pub fn call_holt_winters(samples: &[Sample], sf: Option<f64>, tf: Option<f64>) -> Option<f64> {
+    holt_winters(samples, sf.unwrap_or(0.5), tf.unwrap_or(0.5))
 }
 
 /// Check if a function name is a known range-vector function.
@@ -203,6 +296,12 @@ pub fn is_range_func(name: &str) -> bool {
             | "max_over_time"
             | "count_over_time"
             | "quantile_over_time"
+            | "changes"
+            | "resets"
+            | "absent_over_time"
+            | "stddev_over_time"
+            | "stdvar_over_time"
+            | "holt_winters"
     )
 }
 

@@ -54,8 +54,7 @@ impl<'a> Parser<'a> {
     fn parse_expr(&mut self, min_prec: u8) -> Result<Expr, String> {
         let mut lhs = self.parse_unary()?;
 
-        loop {
-            let Some(op) = self.peek_binop() else { break };
+        while let Some(op) = self.peek_binop() {
             if op.precedence() < min_prec {
                 break;
             }
