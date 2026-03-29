@@ -4,7 +4,10 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "Distributed hybrid database for multi-modal AI and agentic workloads"
+readme.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Local-first, real-time, edge-to-cloud hybrid database for multi-modal workloads"
 
 [[bin]]
 name = "nodedb"
