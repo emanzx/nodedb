@@ -9,8 +9,10 @@ pub mod event_trigger;
 pub mod forward;
 pub mod lock_utils;
 pub mod metrics;
+#[cfg(feature = "otel")]
 pub mod otel;
 pub mod planner;
+#[cfg(feature = "promql")]
 pub mod promql;
 pub mod pubsub;
 pub mod request_tracker;

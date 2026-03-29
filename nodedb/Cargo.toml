@@ -57,14 +57,12 @@ memmap2 = { workspace = true }
 # CRDTs (needed for LoroValue in engine layer)
 loro = { workspace = true }
 
-# Regex (PromQL label matchers)
-regex = { workspace = true }
-
-# Protobuf + compression (Prometheus remote write/read)
-prost = { workspace = true }
-snap = { workspace = true }
-flate2 = { workspace = true }
-tonic = { workspace = true }
+# Feature-gated dependencies
+regex = { workspace = true, optional = true }
+prost = { workspace = true, optional = true }
+snap = { workspace = true, optional = true }
+flate2 = { workspace = true, optional = true }
+tonic = { workspace = true, optional = true }
 
 # Password hashing & cryptography
 argon2 = { workspace = true }
@@ -127,7 +125,8 @@ tokio-postgres = { workspace = true }
 proptest = "1"
 
 [features]
-default = ["cpu"]
-cpu = []
-datafusion-mem = ["nodedb-mem/datafusion"]
-cluster = []
+default = []
+promql = ["dep:regex", "dep:prost", "dep:snap"]
+otel = ["dep:prost", "dep:flate2", "dep:tonic"]
+grafana = []
+monitoring = ["promql", "otel", "grafana"]

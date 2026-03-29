@@ -21,7 +21,7 @@ use super::routes;
 
 /// Build the axum router with all endpoints.
 fn build_router(state: AppState) -> Router {
-    Router::new()
+    let router = Router::new()
         .route("/health", get(routes::health::health))
         .route("/health/ready", get(routes::health::ready))
         .route("/metrics", get(routes::metrics::metrics))
@@ -46,8 +46,10 @@ fn build_router(state: AppState) -> Router {
         .route("/query/stream", post(routes::query::query_ndjson))
         .route("/ws", get(routes::ws_rpc::ws_handler))
         .route("/cdc/{collection}", get(routes::cdc::sse_stream))
-        .route("/cdc/{collection}/poll", get(routes::cdc::poll_changes))
-        // PromQL-compatible observability API (Grafana data source URL: /obsv/api).
+        .route("/cdc/{collection}/poll", get(routes::cdc::poll_changes));
+
+    #[cfg(feature = "promql")]
+    let router = router
         .route(
             "/obsv/api/v1/query",
             get(routes::promql::instant_query).post(routes::promql::instant_query),
@@ -72,8 +74,9 @@ fn build_router(state: AppState) -> Router {
         .route(
             "/obsv/api/v1/annotations",
             post(routes::promql::annotations),
-        )
-        .with_state(state)
+        );
+
+    router.with_state(state)
 }
 
 /// Start the HTTP API server (plain HTTP or HTTPS).

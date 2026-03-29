@@ -2,12 +2,17 @@ mod checkpoint;
 mod cluster;
 mod cold_storage;
 mod env;
+mod observability;
 mod tls;
 
 pub use checkpoint::CheckpointSettings;
 pub use cluster::ClusterSettings;
 pub use cold_storage::ColdStorageSettings;
 pub use env::{apply_env_overrides, parse_memory_size, parse_seed_nodes};
+pub use observability::{
+    ObservabilityConfig, OtlpConfig, OtlpExportConfig, OtlpReceiverConfig, PromqlConfig,
+    apply_observability_env, validate_feature_availability,
+};
 pub use tls::{EncryptionSettings, TlsSettings};
 
 use std::net::SocketAddr;
@@ -101,6 +106,11 @@ pub struct ServerConfig {
     /// override selectively via the `[tuning]` TOML section.
     #[serde(default)]
     pub tuning: TuningConfig,
+
+    /// Observability integrations: PromQL, OTLP receiver/export.
+    /// Requires corresponding cargo features (`promql`, `otel`) at compile time.
+    #[serde(default)]
+    pub observability: ObservabilityConfig,
 }
 
 impl Default for ServerConfig {
@@ -128,6 +138,7 @@ impl Default for ServerConfig {
             cluster: None,
             cold_storage: None,
             tuning: TuningConfig::default(),
+            observability: ObservabilityConfig::default(),
         }
     }
 }

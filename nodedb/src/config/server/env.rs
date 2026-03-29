@@ -175,6 +175,9 @@ pub fn apply_env_overrides(config: &mut ServerConfig) {
         }
     }
 
+    // Observability overrides (PromQL, OTLP).
+    super::observability::apply_observability_env(&mut config.observability);
+
     if let Ok(val) = std::env::var("NODEDB_ILP_LISTEN") {
         match val.parse::<std::net::SocketAddr>() {
             Ok(addr) => {
