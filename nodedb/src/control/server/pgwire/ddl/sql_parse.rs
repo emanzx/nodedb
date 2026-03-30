@@ -116,7 +116,7 @@ pub(super) fn extract_clause(
 /// Given `sql = "SHOW CHANGES FOR users SINCE ..."` and `marker = " FOR "`,
 /// returns `Some("users")`. Returns `None` if the marker is missing or
 /// the collection name is empty.
-pub(super) fn extract_collection_after(sql: &str, marker: &str) -> Option<String> {
+pub(crate) fn extract_collection_after(sql: &str, marker: &str) -> Option<String> {
     let upper = sql.to_uppercase();
     let pos = upper.find(marker)?;
     let after = sql[pos + marker.len()..].trim();

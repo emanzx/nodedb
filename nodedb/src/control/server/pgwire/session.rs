@@ -60,6 +60,10 @@ pub struct PgSession {
     pub savepoints: Vec<(String, usize)>,
     /// Server-side cursors: name → (cached result rows as JSON strings, current position).
     pub cursors: HashMap<String, CursorState>,
+    /// LIVE SELECT subscriptions: active change stream subscriptions for this connection.
+    /// Each subscription receives filtered change events from the broadcast channel.
+    /// Drained between queries to deliver pgwire NotificationResponse messages.
+    pub live_subscriptions: Vec<(String, crate::control::change_stream::Subscription)>,
 }
 
 impl PgSession {
@@ -89,6 +93,7 @@ impl PgSession {
             tx_read_set: Vec::new(),
             savepoints: Vec::new(),
             cursors: HashMap::new(),
+            live_subscriptions: Vec::new(),
         }
     }
 }
@@ -401,6 +406,80 @@ impl SessionStore {
         let sessions = self.sessions.read().unwrap_or_else(|p| p.into_inner());
         sessions.len()
     }
+
+    // ── LIVE SELECT subscriptions ──────────────────────────────────
+
+    /// Store a LIVE SELECT subscription for a connection.
+    ///
+    /// `channel` is the notification channel name (e.g., "live_orders").
+    pub fn add_live_subscription(
+        &self,
+        addr: &SocketAddr,
+        channel: String,
+        sub: crate::control::change_stream::Subscription,
+    ) {
+        let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
+        if let Some(session) = sessions.get_mut(addr) {
+            session.live_subscriptions.push((channel, sub));
+        }
+    }
+
+    /// Drain pending change events from all LIVE SELECT subscriptions
+    /// for a connection. Returns `(channel, payload)` pairs ready to be
+    /// sent as pgwire `NotificationResponse` messages.
+    ///
+    /// Non-blocking: uses `try_recv` to avoid waiting. Called between
+    /// queries to deliver notifications in the PostgreSQL standard way.
+    pub fn drain_live_notifications(&self, addr: &SocketAddr) -> Vec<(String, String)> {
+        let mut sessions = self.sessions.write().unwrap_or_else(|p| p.into_inner());
+        let Some(session) = sessions.get_mut(addr) else {
+            return Vec::new();
+        };
+
+        let mut notifications = Vec::new();
+        for (channel, sub) in &mut session.live_subscriptions {
+            // Non-blocking drain: collect all pending events.
+            loop {
+                match sub.receiver.try_recv() {
+                    Ok(event) => {
+                        // Apply subscription filters.
+                        if sub
+                            .collection_filter
+                            .as_ref()
+                            .is_some_and(|c| event.collection != *c)
+                        {
+                            continue;
+                        }
+                        if sub.tenant_filter.is_some_and(|t| event.tenant_id != t) {
+                            continue;
+                        }
+                        let payload = format!("{}:{}", event.operation.as_str(), event.document_id);
+                        notifications.push((channel.clone(), payload));
+                    }
+                    Err(tokio::sync::broadcast::error::TryRecvError::Empty) => break,
+                    Err(tokio::sync::broadcast::error::TryRecvError::Lagged(n)) => {
+                        tracing::warn!(
+                            channel,
+                            lagged = n,
+                            "LIVE SELECT subscription lagged — dropped events"
+                        );
+                        break;
+                    }
+                    Err(tokio::sync::broadcast::error::TryRecvError::Closed) => break,
+                }
+            }
+        }
+
+        notifications
+    }
+
+    /// Check if a connection has any active LIVE SELECT subscriptions.
+    pub fn has_live_subscriptions(&self, addr: &SocketAddr) -> bool {
+        let sessions = self.sessions.read().unwrap_or_else(|p| p.into_inner());
+        sessions
+            .get(addr)
+            .is_some_and(|s| !s.live_subscriptions.is_empty())
+    }
 }
 
 /// Parse a SET command: `SET [SESSION|LOCAL] key = value` or `SET key TO value`.
@@ -560,5 +639,97 @@ mod tests {
 
         store.remove(&addr);
         assert_eq!(store.count(), 0);
+    }
+
+    #[test]
+    fn live_subscription_store_and_check() {
+        let store = SessionStore::new();
+        let addr: SocketAddr = "127.0.0.1:5001".parse().unwrap();
+        store.ensure_session(addr);
+
+        assert!(!store.has_live_subscriptions(&addr));
+
+        let stream = crate::control::change_stream::ChangeStream::new(64);
+        let sub = stream.subscribe(Some("orders".into()), None);
+        store.add_live_subscription(&addr, "live_orders".into(), sub);
+
+        assert!(store.has_live_subscriptions(&addr));
+    }
+
+    #[test]
+    fn live_subscription_drain_empty() {
+        let store = SessionStore::new();
+        let addr: SocketAddr = "127.0.0.1:5002".parse().unwrap();
+        store.ensure_session(addr);
+
+        let stream = crate::control::change_stream::ChangeStream::new(64);
+        let sub = stream.subscribe(Some("orders".into()), None);
+        store.add_live_subscription(&addr, "live_orders".into(), sub);
+
+        // No events published — drain returns empty.
+        let notifications = store.drain_live_notifications(&addr);
+        assert!(notifications.is_empty());
+    }
+
+    #[test]
+    fn live_subscription_drain_receives_events() {
+        let store = SessionStore::new();
+        let addr: SocketAddr = "127.0.0.1:5003".parse().unwrap();
+        store.ensure_session(addr);
+
+        let stream = crate::control::change_stream::ChangeStream::new(64);
+        let sub = stream.subscribe(Some("orders".into()), None);
+        store.add_live_subscription(&addr, "live_orders".into(), sub);
+
+        // Publish a matching event.
+        stream.publish(crate::control::change_stream::ChangeEvent {
+            lsn: crate::types::Lsn::new(1),
+            tenant_id: crate::types::TenantId::new(1),
+            collection: "orders".into(),
+            document_id: "o42".into(),
+            operation: crate::control::change_stream::ChangeOperation::Insert,
+            timestamp_ms: 0,
+            after: None,
+        });
+
+        let notifications = store.drain_live_notifications(&addr);
+        assert_eq!(notifications.len(), 1);
+        assert_eq!(notifications[0].0, "live_orders");
+        assert_eq!(notifications[0].1, "INSERT:o42");
+    }
+
+    #[test]
+    fn live_subscription_filters_by_collection() {
+        let store = SessionStore::new();
+        let addr: SocketAddr = "127.0.0.1:5004".parse().unwrap();
+        store.ensure_session(addr);
+
+        let stream = crate::control::change_stream::ChangeStream::new(64);
+        let sub = stream.subscribe(Some("orders".into()), None);
+        store.add_live_subscription(&addr, "live_orders".into(), sub);
+
+        // Publish event for a different collection — should be filtered out.
+        stream.publish(crate::control::change_stream::ChangeEvent {
+            lsn: crate::types::Lsn::new(1),
+            tenant_id: crate::types::TenantId::new(1),
+            collection: "users".into(),
+            document_id: "u1".into(),
+            operation: crate::control::change_stream::ChangeOperation::Update,
+            timestamp_ms: 0,
+            after: None,
+        });
+
+        let notifications = store.drain_live_notifications(&addr);
+        assert!(notifications.is_empty());
+    }
+
+    #[test]
+    fn live_subscription_no_session_returns_empty() {
+        let store = SessionStore::new();
+        let addr: SocketAddr = "127.0.0.1:5005".parse().unwrap();
+        // No session created — should return empty, not panic.
+        let notifications = store.drain_live_notifications(&addr);
+        assert!(notifications.is_empty());
+        assert!(!store.has_live_subscriptions(&addr));
     }
 }

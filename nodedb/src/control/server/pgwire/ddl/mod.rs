@@ -33,7 +33,7 @@ pub mod scope_query_ddl;
 pub mod service_account;
 pub mod session_ddl;
 pub mod spatial;
-mod sql_parse;
+pub(crate) mod sql_parse;
 pub mod sync_dispatch;
 pub mod tenant;
 pub mod timeseries;

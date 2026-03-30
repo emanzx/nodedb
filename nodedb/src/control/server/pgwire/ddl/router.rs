@@ -624,48 +624,7 @@ pub async fn dispatch(
         )));
     }
 
-    // LIVE SELECT ... FROM <collection> [WHERE ...]
-    //
-    // Registers a subscription on the change stream and returns the subscription
-    // ID + LISTEN channel name. Changes are delivered via PostgreSQL async
-    // notifications (same as LISTEN/NOTIFY). The client receives:
-    //   1. A query result with the subscription_id and channel name
-    //   2. Async NOTIFY messages for each matching change event
-    if upper.starts_with("LIVE SELECT ") {
-        if let Some(coll_name) = super::sql_parse::extract_collection_after(sql, " FROM ") {
-            let tenant_id = identity.tenant_id;
-            let sub = state
-                .change_stream
-                .subscribe(Some(coll_name.clone()), Some(tenant_id));
-            let sub_id = sub.id;
-
-            // The channel name for LISTEN/NOTIFY delivery.
-            let channel = format!("live_{coll_name}");
-
-            use futures::stream;
-            use pgwire::api::results::{DataRowEncoder, QueryResponse, Response};
-            let schema = std::sync::Arc::new(vec![
-                super::super::types::text_field("subscription_id"),
-                super::super::types::text_field("channel"),
-                super::super::types::text_field("collection"),
-                super::super::types::text_field("status"),
-            ]);
-            let mut encoder = DataRowEncoder::new(schema.clone());
-            let _ = encoder.encode_field(&sub_id.to_string());
-            let _ = encoder.encode_field(&channel);
-            let _ = encoder.encode_field(&coll_name);
-            let _ = encoder.encode_field(&"active");
-            let row = encoder.take_row();
-            return Some(Ok(vec![Response::Query(QueryResponse::new(
-                schema,
-                stream::iter(vec![Ok(row)]),
-            ))]));
-        }
-        return Some(Err(super::super::types::sqlstate_error(
-            "42601",
-            "syntax: LIVE SELECT [*|fields] FROM <collection> [WHERE ...]",
-        )));
-    }
+    // LIVE SELECT is handled in sql_exec.rs (needs session state for subscription storage).
 
     // DEFINE FIELD <name> ON <collection> [TYPE <type>] [DEFAULT <expr>] [VALUE <expr>] [ASSERT <expr>] [READONLY]
     if upper.starts_with("DEFINE FIELD ") {

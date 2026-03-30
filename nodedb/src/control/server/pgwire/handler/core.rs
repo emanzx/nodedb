@@ -222,7 +222,26 @@ impl SimpleQueryHandler for NodeDbPgHandler {
                 .await;
         }
 
-        self.execute_sql(&identity, &addr, query).await
+        let result = self.execute_sql(&identity, &addr, query).await;
+
+        // Drain pending LIVE SELECT notifications and send as pgwire
+        // async NotificationResponse messages. This is the standard
+        // PostgreSQL notification delivery model: notifications are
+        // delivered between queries.
+        if self.sessions.has_live_subscriptions(&addr) {
+            let notifications = self.sessions.drain_live_notifications(&addr);
+            for (channel, payload) in notifications {
+                let notification = pgwire::messages::response::NotificationResponse::new(
+                    0, // backend PID (not meaningful for NodeDB)
+                    channel, payload,
+                );
+                let _ = client
+                    .send(PgWireBackendMessage::NotificationResponse(notification))
+                    .await;
+            }
+        }
+
+        result
     }
 }
 
