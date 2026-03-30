@@ -1,6 +1,6 @@
 //! Main execute() dispatch: matches on PhysicalPlan and delegates to handlers.
 
-use crate::bridge::envelope::{ErrorCode, Response};
+use crate::bridge::envelope::Response;
 use crate::bridge::physical_plan::{
     ColumnarOp, CrdtOp, DocumentOp, GraphOp, MetaOp, PhysicalPlan, QueryOp, SpatialOp, TextOp,
     TimeseriesOp, VectorOp,
@@ -414,13 +414,24 @@ impl CoreLoop {
                 *limit,
             ),
 
-            PhysicalPlan::Query(QueryOp::ShuffleJoin { .. }) => {
-                // Shuffle join phase 2 (local join on repartitioned data) — not yet wired.
-                self.response_error(
+            PhysicalPlan::Query(QueryOp::ShuffleJoin {
+                left_collection,
+                right_collection,
+                on,
+                join_type,
+                limit,
+                ..
+            }) => {
+                // ShuffleJoin executes as a local hash join on the target core.
+                // Both collections' data is accessible from this core's sparse engine.
+                self.execute_hash_join(
                     task,
-                    ErrorCode::Internal {
-                        detail: "shuffle join not dispatched to this core".into(),
-                    },
+                    tid,
+                    left_collection,
+                    right_collection,
+                    on,
+                    join_type,
+                    *limit,
                 )
             }
 

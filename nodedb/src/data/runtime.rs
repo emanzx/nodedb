@@ -204,8 +204,9 @@ pub fn spawn_core(
             // 2c. Apply query tuning config.
             core.set_query_tuning(compaction_config.query);
 
-            // 3. Load vector checkpoints (fast recovery).
+            // 3. Load vector + spatial checkpoints (fast recovery).
             core.load_vector_checkpoints();
+            core.load_spatial_checkpoints();
 
             // 4. Replay WAL records for crash recovery.
             if !wal_records.is_empty() {

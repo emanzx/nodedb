@@ -33,6 +33,8 @@ pub(super) fn convert_join(join: &Join, tenant_id: TenantId) -> crate::Result<Ve
         JoinType::Left => "left",
         JoinType::Right => "right",
         JoinType::Full => "full",
+        JoinType::LeftSemi | JoinType::RightSemi => "semi",
+        JoinType::LeftAnti | JoinType::RightAnti => "anti",
         other => {
             return Err(crate::Error::PlanError {
                 detail: format!("{other:?} JOIN is not supported"),

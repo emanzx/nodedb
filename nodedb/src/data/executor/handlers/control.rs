@@ -207,15 +207,20 @@ impl CoreLoop {
         // 2. Flush CRDT snapshots to disk.
         let crdts_checkpointed = self.checkpoint_crdt_engines();
 
-        // 3. Compact CSR write buffers into dense arrays for clean state.
+        // 3. Flush spatial R-tree indexes to disk.
+        let spatial_checkpointed = self.checkpoint_spatial_indexes();
+
+        // 4. Compact CSR write buffers into dense arrays for clean state.
         self.csr.compact();
 
-        // 4. Record completed flushes in the checkpoint coordinator
+        // 5. Record completed flushes in the checkpoint coordinator
         //    and advance the checkpoint LSN for WAL truncation safety.
         self.checkpoint_coordinator
             .record_flush("vector", vectors_checkpointed);
         self.checkpoint_coordinator
             .record_flush("crdt", crdts_checkpointed);
+        self.checkpoint_coordinator
+            .record_flush("spatial", spatial_checkpointed);
         self.checkpoint_coordinator
             .complete_checkpoint(checkpoint_lsn);
 
@@ -224,6 +229,7 @@ impl CoreLoop {
             checkpoint_lsn,
             vectors_checkpointed,
             crdts_checkpointed,
+            spatial_checkpointed,
             dirty_pages = self.checkpoint_coordinator.total_dirty_pages(),
             "core checkpoint complete"
         );

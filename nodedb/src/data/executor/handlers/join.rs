@@ -68,6 +68,8 @@ fn probe_hash_index(
 ) -> Vec<serde_json::Value> {
     let is_left = join_type == "left" || join_type == "full";
     let is_right = join_type == "right" || join_type == "full";
+    let is_semi = join_type == "semi";
+    let is_anti = join_type == "anti";
 
     let mut index_matched: std::collections::HashSet<String> = std::collections::HashSet::new();
     let mut results = Vec::new();
@@ -82,20 +84,30 @@ fn probe_hash_index(
         let key = extract_join_key(&probe_doc, probe_keys, doc_id);
 
         if let Some(matches) = index.get(&key) {
-            if is_right {
-                index_matched.insert(key.clone());
-            }
-            for matched_doc in matches {
-                if results.len() >= limit {
-                    break;
+            if is_semi {
+                // Semi: emit probe row (no merge), stop at first match.
+                results.push(probe_doc);
+            } else if is_anti {
+                // Anti: skip — this row HAS a match, so exclude it.
+            } else {
+                if is_right {
+                    index_matched.insert(key.clone());
                 }
-                results.push(merge_join_docs(
-                    &probe_doc,
-                    Some(matched_doc),
-                    probe_collection,
-                    index_collection,
-                ));
+                for matched_doc in matches {
+                    if results.len() >= limit {
+                        break;
+                    }
+                    results.push(merge_join_docs(
+                        &probe_doc,
+                        Some(matched_doc),
+                        probe_collection,
+                        index_collection,
+                    ));
+                }
             }
+        } else if is_anti {
+            // Anti: emit probe row — this row has NO match.
+            results.push(probe_doc);
         } else if is_left {
             results.push(merge_join_docs(
                 &probe_doc,
