@@ -348,7 +348,7 @@ pub fn rewrite_partitions(
                             let meta_path = partition_dir.join("partition.meta");
                             let _ = std::fs::write(
                                 &meta_path,
-                                serde_json::to_vec_pretty(&result.meta).unwrap_or_default(),
+                                sonic_rs::to_vec_pretty(&result.meta).unwrap_or_default(),
                             );
                             rewritten += 1;
                         }

@@ -75,10 +75,10 @@ impl<S: StorageEngine> LiteQueryEngine<S> {
                         .iter()
                         .map(|c| (c.name.clone(), c.column_type.to_string()))
                         .collect(),
-                    config_json: serde_json::to_string(&config_clone).ok(),
+                    config_json: sonic_rs::to_string(&config_clone).ok(),
                 };
                 let key = format!("collection:{name_clone}");
-                let bytes = serde_json::to_vec(&meta)
+                let bytes = sonic_rs::to_vec(&meta)
                     .map_err(|e| LiteError::Query(format!("serialize: {e}")))?;
                 db.put(nodedb_types::Namespace::Meta, key.as_bytes(), &bytes)
                     .await

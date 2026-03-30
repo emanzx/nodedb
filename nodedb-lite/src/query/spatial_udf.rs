@@ -56,11 +56,11 @@ fn make_geo_type_udf() -> ScalarUDF {
         Volatility::Immutable,
         Arc::new(|args: &[ColumnarValue]| {
             let json_str = extract_utf8_scalar(args, 0)?;
-            let geom_type =
-                match serde_json::from_str::<nodedb_types::geometry::Geometry>(&json_str) {
-                    Ok(g) => g.geometry_type().to_string(),
-                    Err(_) => "Unknown".to_string(),
-                };
+            let geom_type = match sonic_rs::from_str::<nodedb_types::geometry::Geometry>(&json_str)
+            {
+                Ok(g) => g.geometry_type().to_string(),
+                Err(_) => "Unknown".to_string(),
+            };
             Ok(ColumnarValue::Scalar(
                 datafusion::common::ScalarValue::Utf8(Some(geom_type)),
             ))
@@ -77,7 +77,7 @@ fn make_geo_is_valid_udf() -> ScalarUDF {
         Volatility::Immutable,
         Arc::new(|args: &[ColumnarValue]| {
             let json_str = extract_utf8_scalar(args, 0)?;
-            let valid = match serde_json::from_str::<nodedb_types::geometry::Geometry>(&json_str) {
+            let valid = match sonic_rs::from_str::<nodedb_types::geometry::Geometry>(&json_str) {
                 Ok(g) => nodedb_spatial::is_valid(&g),
                 Err(_) => false,
             };
@@ -109,7 +109,7 @@ fn make_st_dwithin_point_udf() -> ScalarUDF {
             let query_lat = extract_f64_scalar(args, 2)?;
             let distance = extract_f64_scalar(args, 3)?;
 
-            let result = match serde_json::from_str::<nodedb_types::geometry::Geometry>(&json_str) {
+            let result = match sonic_rs::from_str::<nodedb_types::geometry::Geometry>(&json_str) {
                 Ok(geom) => {
                     let query = nodedb_types::geometry::Geometry::point(query_lng, query_lat);
                     nodedb_spatial::st_dwithin(&geom, &query, distance)

@@ -346,7 +346,7 @@ pub async fn coordinate_cross_shard_hop(
                         if resp.success {
                             for payload in resp.payloads {
                                 if let Ok(nodes) =
-                                    serde_json::from_slice::<Vec<String>>(&payload)
+                                    sonic_rs::from_slice::<Vec<String>>(&payload)
                                 {
                                     shard_results.extend(nodes);
                                 }

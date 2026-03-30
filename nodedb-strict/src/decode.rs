@@ -362,7 +362,7 @@ fn decode_variable_value(col_type: &ColumnType, raw: &[u8]) -> Value {
         ColumnType::Bytes => Value::Bytes(raw.to_vec()),
         ColumnType::Geometry => {
             // Try JSON (native Geometry encoding), fall back to string (WKT passthrough).
-            if let Ok(geom) = serde_json::from_slice::<nodedb_types::geometry::Geometry>(raw) {
+            if let Ok(geom) = sonic_rs::from_slice::<nodedb_types::geometry::Geometry>(raw) {
                 Value::Geometry(geom)
             } else {
                 Value::String(std::str::from_utf8(raw).unwrap_or_default().to_string())

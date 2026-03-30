@@ -120,7 +120,7 @@ impl JwksCache {
             }
         };
 
-        let disk_cache: HashMap<String, Vec<DiskKeyEntry>> = match serde_json::from_str(&data) {
+        let disk_cache: HashMap<String, Vec<DiskKeyEntry>> = match sonic_rs::from_str(&data) {
             Ok(c) => c,
             Err(e) => {
                 tracing::warn!(error = %e, "failed to parse JWKS disk cache");
@@ -174,7 +174,7 @@ impl JwksCache {
             })
             .collect();
 
-        let json = serde_json::to_string_pretty(&disk_cache).map_err(std::io::Error::other)?;
+        let json = sonic_rs::to_string_pretty(&disk_cache).map_err(std::io::Error::other)?;
 
         // Atomic write via temp file + rename.
         let disk_path = Path::new(path);

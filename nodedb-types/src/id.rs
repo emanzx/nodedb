@@ -257,8 +257,8 @@ mod tests {
     #[test]
     fn serde_roundtrip() {
         let tid = TenantId::new(7);
-        let json = serde_json::to_string(&tid).unwrap();
-        let decoded: TenantId = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&tid).unwrap();
+        let decoded: TenantId = sonic_rs::from_str(&json).unwrap();
         assert_eq!(tid, decoded);
     }
 }

@@ -39,6 +39,7 @@ use serde::{Deserialize, Serialize};
 
 use nodedb_codec::ColumnCodec;
 use nodedb_types::timeseries::PartitionMeta;
+use sonic_rs;
 
 /// Magic bytes at the end of a packed partition file.
 const MAGIC: &[u8; 4] = b"NDPK";
@@ -97,7 +98,7 @@ pub fn write_packed(
         meta: meta.clone(),
     };
     let footer_json =
-        serde_json::to_vec(&footer).map_err(|e| PackedError::Io(format!("footer json: {e}")))?;
+        sonic_rs::to_vec(&footer).map_err(|e| PackedError::Io(format!("footer json: {e}")))?;
 
     let footer_offset = buf.len();
     buf.extend_from_slice(&footer_json);
@@ -152,7 +153,7 @@ pub fn read_footer_from_bytes(data: &[u8]) -> Result<PackedFooter, PackedError> 
     }
 
     let footer_bytes = &data[footer_start..footer_start + footer_len];
-    serde_json::from_slice(footer_bytes)
+    sonic_rs::from_slice(footer_bytes)
         .map_err(|e| PackedError::Corrupt(format!("footer json: {e}")))
 }
 

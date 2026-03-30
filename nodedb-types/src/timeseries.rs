@@ -963,8 +963,8 @@ mod tests {
             encoded_block: vec![1, 2, 3, 4],
             sample_count: 100,
         };
-        let json = serde_json::to_string(&delta).unwrap();
-        let back: TimeseriesDelta = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&delta).unwrap();
+        let back: TimeseriesDelta = sonic_rs::from_str(&json).unwrap();
         assert_eq!(back.source_id, "clxyz1234test");
         assert_eq!(back.series_id, 12345);
         assert_eq!(back.sample_count, 100);

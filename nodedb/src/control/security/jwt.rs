@@ -126,12 +126,12 @@ impl JwtValidator {
         // Decode header to determine algorithm.
         let header_bytes = base64_url_decode(parts[0]).ok_or(JwtError::DecodingError)?;
         let header: JwtHeader =
-            serde_json::from_slice(&header_bytes).map_err(|_| JwtError::InvalidClaims)?;
+            sonic_rs::from_slice(&header_bytes).map_err(|_| JwtError::InvalidClaims)?;
 
         // Decode payload (middle part). We verify signature separately.
         let payload_bytes = base64_url_decode(parts[1]).ok_or(JwtError::DecodingError)?;
         let claims: JwtClaims =
-            serde_json::from_slice(&payload_bytes).map_err(|_| JwtError::InvalidClaims)?;
+            sonic_rs::from_slice(&payload_bytes).map_err(|_| JwtError::InvalidClaims)?;
 
         // Verify signature based on algorithm declared in header.
         let signing_input = format!("{}.{}", parts[0], parts[1]);
@@ -313,7 +313,7 @@ mod tests {
         // A minimal JWT payload (base64url encoded).
         let payload =
             r#"{"sub":"alice","tenant_id":1,"roles":["readwrite"],"exp":9999999999,"user_id":42}"#;
-        let claims: JwtClaims = serde_json::from_str(payload).unwrap();
+        let claims: JwtClaims = sonic_rs::from_str(payload).unwrap();
         assert_eq!(claims.sub, "alice");
         assert_eq!(claims.tenant_id, 1);
         assert_eq!(claims.user_id, 42);

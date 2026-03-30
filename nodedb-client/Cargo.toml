@@ -25,6 +25,7 @@ tracing = { workspace = true }
 tokio-postgres = { workspace = true, optional = true, features = ["with-serde_json-1"] }
 tokio = { workspace = true, optional = true, features = ["rt", "sync"] }
 serde_json = { workspace = true, optional = true }
+sonic-rs = { workspace = true }
 
 # Native protocol client dependencies (feature-gated)
 rmp-serde = { workspace = true, optional = true }

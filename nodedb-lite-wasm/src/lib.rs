@@ -285,7 +285,7 @@ impl NodeDbLiteWasm {
         fields_json: &str,
     ) -> Result<String, JsError> {
         let fields: std::collections::HashMap<String, Value> =
-            serde_json::from_str(fields_json).map_err(|e| JsError::new(&e.to_string()))?;
+            sonic_rs::from_str(fields_json).map_err(|e| JsError::new(&e.to_string()))?;
 
         let doc_id = if id.is_empty() {
             nodedb_types::id_gen::uuid_v7()

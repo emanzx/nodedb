@@ -329,8 +329,8 @@ mod tests {
             ColumnCodec::Zstd,
             ColumnCodec::Raw,
         ] {
-            let json = serde_json::to_string(&codec).unwrap();
-            let back: ColumnCodec = serde_json::from_str(&json).unwrap();
+            let json = sonic_rs::to_string(&codec).unwrap();
+            let back: ColumnCodec = sonic_rs::from_str(&json).unwrap();
             assert_eq!(codec, back, "serde roundtrip failed for {codec}");
         }
     }

@@ -114,7 +114,7 @@ impl LiteTableProvider {
         for id in ids {
             if let Some(loro_val) = crdt.read(&self.collection, id) {
                 let doc = crate::nodedb::convert::loro_value_to_document(id, &loro_val);
-                let json = serde_json::to_string(&doc.fields).unwrap_or_else(|e| {
+                let json = sonic_rs::to_string(&doc.fields).unwrap_or_else(|e| {
                     tracing::warn!(id = %id, error = %e, "JSON serialization failed for document");
                     "{}".to_string()
                 });

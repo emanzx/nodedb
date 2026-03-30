@@ -143,7 +143,7 @@ pub async fn show_continuous_aggregates(
     .await
     .unwrap_or_default();
 
-    let infos: Vec<AggregateInfo> = serde_json::from_slice(&payload).unwrap_or_default();
+    let infos: Vec<AggregateInfo> = sonic_rs::from_slice(&payload).unwrap_or_default();
 
     let schema = Arc::new(vec![
         text_field("name"),

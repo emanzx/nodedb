@@ -71,7 +71,7 @@ impl CoreLoop {
         schema_json: &str,
     ) -> Response {
         // Parse the target schema from JSON column definitions.
-        let columns: Vec<ColumnDef> = match serde_json::from_str(schema_json) {
+        let columns: Vec<ColumnDef> = match sonic_rs::from_str(schema_json) {
             Ok(c) => c,
             Err(e) => {
                 return self.response_error(

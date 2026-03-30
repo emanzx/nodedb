@@ -290,8 +290,8 @@ mod tests {
         csr.compact();
 
         let stats = csr.compute_statistics();
-        let json = serde_json::to_string(&stats).unwrap();
-        let parsed: GraphStatistics = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&stats).unwrap();
+        let parsed: GraphStatistics = sonic_rs::from_str(&json).unwrap();
         assert_eq!(parsed.node_count, stats.node_count);
         assert_eq!(parsed.edge_count, stats.edge_count);
     }

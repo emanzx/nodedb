@@ -240,7 +240,7 @@ fn encode_variable(var_data: &mut Vec<u8>, col_type: &ColumnType, value: &Value)
         }
         // Geometry: native Geometry (JSON-serialized) + String (WKT/GeoJSON passthrough).
         (ColumnType::Geometry, Value::Geometry(g)) => {
-            if let Ok(json) = serde_json::to_vec(g) {
+            if let Ok(json) = sonic_rs::to_vec(g) {
                 var_data.extend_from_slice(&json);
             }
         }

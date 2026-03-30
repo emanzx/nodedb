@@ -26,8 +26,8 @@ impl FlushResult {
     /// redb key-value pairs to persist this partition.
     ///
     /// Returns `Err` if metadata serialization fails.
-    pub fn to_redb_entries(&self) -> Result<Vec<RedbEntry>, serde_json::Error> {
-        let meta_bytes = serde_json::to_vec(&self.meta)?;
+    pub fn to_redb_entries(&self) -> Result<Vec<RedbEntry>, sonic_rs::Error> {
+        let meta_bytes = sonic_rs::to_vec(&self.meta)?;
         Ok(vec![
             (
                 format!("{}:ts", self.key_prefix).into_bytes(),

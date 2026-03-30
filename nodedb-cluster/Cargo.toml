@@ -17,6 +17,7 @@ nodedb-types = { workspace = true }
 # Workspace deps
 serde = { workspace = true }
 serde_json = { workspace = true }
+sonic-rs = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }

@@ -20,6 +20,7 @@ use std::path::{Path, PathBuf};
 
 use nodedb_codec::{ColumnCodec, ColumnStatistics, ColumnTypeHint};
 use nodedb_types::timeseries::{PartitionMeta, PartitionState, SymbolDictionary};
+use sonic_rs;
 
 use super::columnar_memtable::{ColumnData, ColumnType, ColumnarDrainResult, ColumnarSchema};
 
@@ -74,7 +75,7 @@ impl ColumnarSegmentWriter {
             if *col_type == ColumnType::Symbol
                 && let Some(dict) = drain.symbol_dicts.get(&i)
             {
-                let dict_json = serde_json::to_vec(dict)
+                let dict_json = sonic_rs::to_vec(dict)
                     .map_err(|e| SegmentError::Io(format!("serialize dict: {e}")))?;
                 let sym_path = partition_dir.join(format!("{col_name}.sym"));
                 std::fs::write(&sym_path, &dict_json)
@@ -91,7 +92,7 @@ impl ColumnarSegmentWriter {
             timestamp_idx: drain.schema.timestamp_idx,
             codecs: resolved_codecs,
         };
-        let schema_json = serde_json::to_vec(&schema_to_json(&schema_with_codecs))
+        let schema_json = sonic_rs::to_vec(&schema_to_json(&schema_with_codecs))
             .map_err(|e| SegmentError::Io(format!("serialize schema: {e}")))?;
         std::fs::write(partition_dir.join("schema.json"), &schema_json)
             .map_err(|e| SegmentError::Io(format!("write schema: {e}")))?;
@@ -121,7 +122,7 @@ impl ColumnarSegmentWriter {
             column_stats,
         };
 
-        let meta_json = serde_json::to_vec(&meta)
+        let meta_json = sonic_rs::to_vec(&meta)
             .map_err(|e| SegmentError::Io(format!("serialize meta: {e}")))?;
         std::fs::write(partition_dir.join("partition.meta"), &meta_json)
             .map_err(|e| SegmentError::Io(format!("write meta: {e}")))?;
@@ -212,7 +213,7 @@ impl ColumnarSegmentReader {
         let meta_path = partition_dir.join("partition.meta");
         let data = std::fs::read(&meta_path)
             .map_err(|e| SegmentError::Io(format!("read {}: {e}", meta_path.display())))?;
-        serde_json::from_slice(&data).map_err(|e| SegmentError::Io(format!("parse meta: {e}")))
+        sonic_rs::from_slice(&data).map_err(|e| SegmentError::Io(format!("parse meta: {e}")))
     }
 
     /// Read the schema from a partition directory.
@@ -220,7 +221,7 @@ impl ColumnarSegmentReader {
         let schema_path = partition_dir.join("schema.json");
         let data = std::fs::read(&schema_path)
             .map_err(|e| SegmentError::Io(format!("read {}: {e}", schema_path.display())))?;
-        let json: SchemaJson = serde_json::from_slice(&data)
+        let json: SchemaJson = sonic_rs::from_slice(&data)
             .map_err(|e| SegmentError::Io(format!("parse schema: {e}")))?;
         schema_from_parsed(&json)
     }
@@ -269,8 +270,7 @@ impl ColumnarSegmentReader {
         let sym_path = partition_dir.join(format!("{col_name}.sym"));
         let data = std::fs::read(&sym_path)
             .map_err(|e| SegmentError::Io(format!("read {}: {e}", sym_path.display())))?;
-        serde_json::from_slice(&data)
-            .map_err(|e| SegmentError::Io(format!("parse symbol dict: {e}")))
+        sonic_rs::from_slice(&data).map_err(|e| SegmentError::Io(format!("parse symbol dict: {e}")))
     }
 
     /// Read specific columns by name (projection pushdown).
@@ -885,8 +885,8 @@ mod tests {
                 ColumnCodec::Raw,
             ],
         };
-        let json = serde_json::to_vec(&schema_to_json(&schema)).unwrap();
-        let parsed: SchemaJson = serde_json::from_slice(&json).unwrap();
+        let json = sonic_rs::to_vec(&schema_to_json(&schema)).unwrap();
+        let parsed: SchemaJson = sonic_rs::from_slice(&json).unwrap();
         let recovered = schema_from_parsed(&parsed).unwrap();
 
         assert_eq!(recovered.columns, schema.columns);
@@ -1084,7 +1084,7 @@ mod tests {
         std::fs::create_dir_all(&part_dir).unwrap();
         std::fs::write(
             part_dir.join("partition.meta"),
-            serde_json::to_vec(&PartitionMeta {
+            sonic_rs::to_vec(&PartitionMeta {
                 min_ts: 0,
                 max_ts: 100,
                 row_count: 10,

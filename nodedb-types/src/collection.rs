@@ -243,24 +243,24 @@ mod tests {
     #[test]
     fn serde_roundtrip_document() {
         let ct = CollectionType::document();
-        let json = serde_json::to_string(&ct).unwrap();
-        let back: CollectionType = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&ct).unwrap();
+        let back: CollectionType = sonic_rs::from_str(&json).unwrap();
         assert_eq!(back, ct);
     }
 
     #[test]
     fn serde_roundtrip_columnar() {
         let ct = CollectionType::columnar();
-        let json = serde_json::to_string(&ct).unwrap();
-        let back: CollectionType = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&ct).unwrap();
+        let back: CollectionType = sonic_rs::from_str(&json).unwrap();
         assert_eq!(back, ct);
     }
 
     #[test]
     fn serde_roundtrip_timeseries() {
         let ct = CollectionType::timeseries("ts", "1h");
-        let json = serde_json::to_string(&ct).unwrap();
-        let back: CollectionType = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&ct).unwrap();
+        let back: CollectionType = sonic_rs::from_str(&json).unwrap();
         assert_eq!(back, ct);
     }
 
@@ -272,8 +272,8 @@ mod tests {
         ])
         .unwrap();
         let ct = CollectionType::kv(schema);
-        let json = serde_json::to_string(&ct).unwrap();
-        let back: CollectionType = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&ct).unwrap();
+        let back: CollectionType = sonic_rs::from_str(&json).unwrap();
         assert_eq!(back, ct);
     }
 
@@ -288,8 +288,8 @@ mod tests {
             duration_ms: 900_000,
         };
         let ct = CollectionType::kv_with_ttl(schema, ttl);
-        let json = serde_json::to_string(&ct).unwrap();
-        let back: CollectionType = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&ct).unwrap();
+        let back: CollectionType = sonic_rs::from_str(&json).unwrap();
         assert_eq!(back, ct);
     }
 
@@ -305,8 +305,8 @@ mod tests {
             offset_ms: 3_600_000,
         };
         let ct = CollectionType::kv_with_ttl(schema, ttl);
-        let json = serde_json::to_string(&ct).unwrap();
-        let back: CollectionType = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&ct).unwrap();
+        let back: CollectionType = sonic_rs::from_str(&json).unwrap();
         assert_eq!(back, ct);
     }
 

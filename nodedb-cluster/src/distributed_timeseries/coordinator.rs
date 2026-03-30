@@ -105,7 +105,7 @@ impl TsCoordinator {
         command: &RetentionCommand,
     ) -> Vec<(u16, VShardEnvelope)> {
         let payload_bytes =
-            serde_json::to_vec(command).expect("RetentionCommand is always serializable");
+            sonic_rs::to_vec(command).expect("RetentionCommand is always serializable");
 
         self.shard_ids
             .iter()

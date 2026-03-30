@@ -45,7 +45,7 @@ impl CoreLoop {
 
         // 1. Parse query geometry.
         let query_geom: nodedb_types::geometry::Geometry =
-            match serde_json::from_slice(query_geometry_bytes) {
+            match sonic_rs::from_slice(query_geometry_bytes) {
                 Ok(g) => g,
                 Err(e) => {
                     return self.response_error(

@@ -94,7 +94,7 @@ fn index_geometry(
         Value::Geometry(g) => g.clone(),
         Value::String(s) => {
             // Try parsing as GeoJSON.
-            match serde_json::from_str::<Geometry>(s) {
+            match sonic_rs::from_str::<Geometry>(s) {
                 Ok(g) => g,
                 Err(_) => return,
             }

@@ -1,4 +1,5 @@
 use loro::LoroValue;
+use sonic_rs;
 
 use nodedb_crdt::constraint::ConstraintSet;
 use nodedb_crdt::policy::CollectionPolicy;
@@ -131,7 +132,7 @@ impl TenantCrdtEngine {
         policy_json: &str,
     ) -> crate::Result<()> {
         let policy: CollectionPolicy =
-            serde_json::from_str(policy_json).map_err(|e| crate::Error::BadRequest {
+            sonic_rs::from_str(policy_json).map_err(|e| crate::Error::BadRequest {
                 detail: format!("invalid collection policy JSON: {e}"),
             })?;
         Self::validate_policy(&policy)?;

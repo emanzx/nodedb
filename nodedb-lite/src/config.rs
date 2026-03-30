@@ -256,8 +256,8 @@ mod tests {
     #[test]
     fn serde_roundtrip() {
         let cfg = LiteConfig::default();
-        let json = serde_json::to_string(&cfg).unwrap();
-        let parsed: LiteConfig = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&cfg).unwrap();
+        let parsed: LiteConfig = sonic_rs::from_str(&json).unwrap();
         assert_eq!(parsed, cfg);
     }
 }

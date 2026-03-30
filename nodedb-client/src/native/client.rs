@@ -144,7 +144,7 @@ impl NodeDb for NativeClient {
         let meta_json = metadata
             .map(|d| {
                 let obj: HashMap<String, Value> = d.fields;
-                serde_json::to_string(&obj).unwrap_or_else(|_| "{}".into())
+                sonic_rs::to_string(&obj).unwrap_or_else(|_| "{}".into())
             })
             .unwrap_or_else(|| "{}".into());
         let arr_str = format_f32_array(embedding);
@@ -280,7 +280,7 @@ impl NodeDb for NativeClient {
     }
 
     async fn document_put(&self, collection: &str, doc: Document) -> NodeDbResult<()> {
-        let data = serde_json::to_vec(&doc.fields)
+        let data = sonic_rs::to_vec(&doc.fields)
             .map_err(|e| NodeDbError::serialization("json", format!("doc serialize: {e}")))?;
         let mut conn = self.pool.acquire().await?;
         conn.send(

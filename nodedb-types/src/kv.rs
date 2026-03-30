@@ -155,8 +155,8 @@ mod tests {
             },
         ];
         for p in policies {
-            let json = serde_json::to_string(&p).unwrap();
-            let back: KvTtlPolicy = serde_json::from_str(&json).unwrap();
+            let json = sonic_rs::to_string(&p).unwrap();
+            let back: KvTtlPolicy = sonic_rs::from_str(&json).unwrap();
             assert_eq!(back, p);
         }
     }

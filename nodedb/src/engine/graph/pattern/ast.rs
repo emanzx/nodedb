@@ -204,6 +204,7 @@ impl MatchQuery {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sonic_rs;
 
     #[test]
     fn edge_binding_fixed_length() {
@@ -310,8 +311,8 @@ mod tests {
             order_by: vec![],
         };
 
-        let json = serde_json::to_string(&query).unwrap();
-        let parsed: MatchQuery = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&query).unwrap();
+        let parsed: MatchQuery = sonic_rs::from_str(&json).unwrap();
         assert_eq!(parsed.clauses.len(), 1);
         assert!(parsed.clauses[0].optional);
         assert_eq!(parsed.limit, Some(10));

@@ -152,7 +152,7 @@ pub unsafe extern "C" fn nodedb_graph_shortest_path(
     {
         Ok(Some(path)) => {
             let node_ids: Vec<&str> = path.iter().map(|n| n.as_str()).collect();
-            let json_str = serde_json::to_string(&node_ids).unwrap_or_else(|_| "[]".into());
+            let json_str = sonic_rs::to_string(&node_ids).unwrap_or_else(|_| "[]".into());
             unsafe { write_c_string(out_json, json_str) }
         }
         Ok(None) => unsafe { write_c_string(out_json, "null".to_string()) },

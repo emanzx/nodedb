@@ -175,7 +175,7 @@ impl NodeDb for NodeDbRemote {
     ) -> NodeDbResult<()> {
         let collection = quote_identifier(collection);
         let meta_json = match metadata {
-            Some(d) => serde_json::to_string(&d)
+            Some(d) => sonic_rs::to_string(&d)
                 .map_err(|e| NodeDbError::storage(format!("metadata serialization: {e}")))?,
             None => "{}".into(),
         };
@@ -263,7 +263,7 @@ impl NodeDb for NodeDbRemote {
         properties: Option<Document>,
     ) -> NodeDbResult<EdgeId> {
         let props_json = match properties {
-            Some(d) => serde_json::to_string(&d)
+            Some(d) => sonic_rs::to_string(&d)
                 .map_err(|e| NodeDbError::storage(format!("properties serialization: {e}")))?,
             None => "{}".into(),
         };
@@ -325,7 +325,7 @@ impl NodeDb for NodeDbRemote {
 
     async fn document_put(&self, collection: &str, doc: Document) -> NodeDbResult<()> {
         let collection = quote_identifier(collection);
-        let data_json = serde_json::to_string(&doc.fields)
+        let data_json = sonic_rs::to_string(&doc.fields)
             .map_err(|e| NodeDbError::storage(format!("document serialization: {e}")))?;
         let sql = format!(
             "INSERT INTO {collection} (id, data) VALUES ($1, $2::jsonb) \

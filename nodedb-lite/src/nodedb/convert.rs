@@ -16,7 +16,7 @@ pub(crate) fn value_to_loro(v: &Value) -> LoroValue {
         Value::Bytes(b) => LoroValue::Binary(b.clone().into()),
         Value::Array(_) | Value::Object(_) | Value::Set(_) => {
             // Serialize complex values as JSON string.
-            let json = serde_json::to_string(v).unwrap_or_default();
+            let json = sonic_rs::to_string(v).unwrap_or_default();
             LoroValue::String(json.into())
         }
         Value::Regex(p) => LoroValue::String(p.clone().into()),
@@ -27,11 +27,11 @@ pub(crate) fn value_to_loro(v: &Value) -> LoroValue {
         } => {
             let s = start
                 .as_deref()
-                .map(|b| serde_json::to_string(b).unwrap_or_default())
+                .map(|b| sonic_rs::to_string(b).unwrap_or_default())
                 .unwrap_or_default();
             let e = end
                 .as_deref()
-                .map(|b| serde_json::to_string(b).unwrap_or_default())
+                .map(|b| sonic_rs::to_string(b).unwrap_or_default())
                 .unwrap_or_default();
             let display = if *inclusive {
                 format!("{s}..={e}")
@@ -45,9 +45,7 @@ pub(crate) fn value_to_loro(v: &Value) -> LoroValue {
         Value::DateTime(dt) => LoroValue::String(dt.to_iso8601().into()),
         Value::Duration(d) => LoroValue::String(d.to_human().into()),
         Value::Decimal(d) => LoroValue::String(d.to_string().into()),
-        Value::Geometry(g) => {
-            LoroValue::String(serde_json::to_string(g).unwrap_or_default().into())
-        }
+        Value::Geometry(g) => LoroValue::String(sonic_rs::to_string(g).unwrap_or_default().into()),
     }
 }
 

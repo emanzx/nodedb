@@ -17,6 +17,7 @@ nodedb-lite = { workspace = true }
 nodedb-client = { workspace = true }
 nodedb-types = { workspace = true }
 serde_json = { workspace = true }
+sonic-rs = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 tracing = { workspace = true }
 jni = "0.21"

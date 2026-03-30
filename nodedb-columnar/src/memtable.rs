@@ -278,7 +278,7 @@ impl ColumnData {
                 },
                 Value::Geometry(g),
             ) => {
-                if let Ok(json) = serde_json::to_vec(g) {
+                if let Ok(json) = sonic_rs::to_vec(g) {
                     data.extend_from_slice(&json);
                 }
                 offsets.push(data.len() as u32);

@@ -39,7 +39,7 @@ pub unsafe extern "C" fn nodedb_document_get(
 
     match h.rt.block_on(h.db.document_get(collection, id)) {
         Ok(Some(doc)) => {
-            let json_str = serde_json::to_string(&doc).unwrap_or_else(|_| "{}".into());
+            let json_str = sonic_rs::to_string(&doc).unwrap_or_else(|_| "{}".into());
             unsafe { write_c_string(out_json, json_str) }
         }
         Ok(None) => NODEDB_ERR_NOT_FOUND,
@@ -72,7 +72,7 @@ pub unsafe extern "C" fn nodedb_document_put(
         return NODEDB_ERR_UTF8;
     };
 
-    let mut doc: nodedb_types::Document = match serde_json::from_str(json_str) {
+    let mut doc: nodedb_types::Document = match sonic_rs::from_str(json_str) {
         Ok(d) => d,
         Err(_) => return NODEDB_ERR_FAILED,
     };

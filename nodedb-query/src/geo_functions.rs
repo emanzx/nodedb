@@ -176,14 +176,14 @@ pub fn eval_geo_function(name: &str, args: &[serde_json::Value]) -> Option<serde
             let Some(geom) = geom_arg(args, 0) else {
                 return Some(serde_json::Value::Null);
             };
-            match serde_json::to_string(&geom) {
+            match sonic_rs::to_string(&geom) {
                 Ok(s) => serde_json::Value::String(s),
                 Err(_) => serde_json::Value::Null,
             }
         }
         "geo_from_geojson" => {
             let s = str_arg(args, 0).unwrap_or_default();
-            match serde_json::from_str::<nodedb_types::geometry::Geometry>(&s) {
+            match sonic_rs::from_str::<nodedb_types::geometry::Geometry>(&s) {
                 Ok(g) => serde_json::to_value(&g).unwrap_or(serde_json::Value::Null),
                 Err(_) => serde_json::Value::Null,
             }

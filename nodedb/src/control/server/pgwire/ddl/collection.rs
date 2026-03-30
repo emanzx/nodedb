@@ -122,9 +122,9 @@ pub fn create_collection(
     // (reused for schema storage until StoredCollection gets a dedicated schema field).
     let schema_json = match &collection_type {
         nodedb_types::CollectionType::Document(nodedb_types::DocumentMode::Strict(schema)) => {
-            serde_json::to_string(schema).ok()
+            sonic_rs::to_string(schema).ok()
         }
-        nodedb_types::CollectionType::KeyValue(config) => serde_json::to_string(config).ok(),
+        nodedb_types::CollectionType::KeyValue(config) => sonic_rs::to_string(config).ok(),
         _ => None,
     };
 
@@ -799,7 +799,7 @@ pub fn alter_table_add_column(
                 if coll.collection_type.is_strict()
                     && let Some(config_json) = &coll.timeseries_config
                     && let Ok(mut schema) =
-                        serde_json::from_str::<nodedb_types::columnar::StrictSchema>(config_json)
+                        sonic_rs::from_str::<nodedb_types::columnar::StrictSchema>(config_json)
                 {
                     if schema.columns.iter().any(|c| c.name == column.name) {
                         return Err(sqlstate_error(
@@ -811,7 +811,7 @@ pub fn alter_table_add_column(
                     schema.version = schema.version.saturating_add(1);
 
                     let mut updated = coll;
-                    updated.timeseries_config = serde_json::to_string(&schema).ok();
+                    updated.timeseries_config = sonic_rs::to_string(&schema).ok();
                     catalog
                         .put_collection(&updated)
                         .map_err(|e| sqlstate_error("XX000", &e.to_string()))?;

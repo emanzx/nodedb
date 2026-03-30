@@ -107,8 +107,8 @@ mod tests {
             },
         ];
         for p in profiles {
-            let json = serde_json::to_string(&p).unwrap();
-            let back: ColumnarProfile = serde_json::from_str(&json).unwrap();
+            let json = sonic_rs::to_string(&p).unwrap();
+            let back: ColumnarProfile = sonic_rs::from_str(&json).unwrap();
             assert_eq!(back, p);
         }
     }
@@ -139,8 +139,8 @@ mod tests {
             ),
         ];
         for m in modes {
-            let json = serde_json::to_string(&m).unwrap();
-            let back: DocumentMode = serde_json::from_str(&json).unwrap();
+            let json = sonic_rs::to_string(&m).unwrap();
+            let back: DocumentMode = sonic_rs::from_str(&json).unwrap();
             assert_eq!(back, m);
         }
     }

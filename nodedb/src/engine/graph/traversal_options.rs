@@ -126,6 +126,7 @@ impl GraphResponseMeta {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sonic_rs;
 
     #[test]
     fn default_options_have_expected_values() {
@@ -193,8 +194,8 @@ mod tests {
             fan_out_partial: true,
             max_visited: 50_000,
         };
-        let json = serde_json::to_string(&opts).unwrap();
-        let deserialized: GraphTraversalOptions = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&opts).unwrap();
+        let deserialized: GraphTraversalOptions = sonic_rs::from_str(&json).unwrap();
         assert_eq!(opts.fan_out_soft, deserialized.fan_out_soft);
         assert_eq!(opts.fan_out_hard, deserialized.fan_out_hard);
         assert_eq!(opts.fan_out_partial, deserialized.fan_out_partial);
@@ -204,8 +205,8 @@ mod tests {
     #[test]
     fn meta_serialization_roundtrip() {
         let meta = GraphResponseMeta::with_warning(15, 1, 16);
-        let json = serde_json::to_string(&meta).unwrap();
-        let deserialized: GraphResponseMeta = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&meta).unwrap();
+        let deserialized: GraphResponseMeta = sonic_rs::from_str(&json).unwrap();
         assert_eq!(meta.shards_reached, deserialized.shards_reached);
         assert_eq!(meta.shards_skipped, deserialized.shards_skipped);
         assert_eq!(meta.truncated, deserialized.truncated);

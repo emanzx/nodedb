@@ -166,7 +166,7 @@ mod tests {
         assert!(dump.timestamp_ms > 0);
 
         // Should serialize to JSON cleanly.
-        let json = serde_json::to_string_pretty(&dump).unwrap();
+        let json = sonic_rs::to_string_pretty(&dump).unwrap();
         assert!(json.contains("\"health\""));
         assert!(json.contains("\"pending_summary\""));
         assert!(json.contains("\"storage_counts\""));

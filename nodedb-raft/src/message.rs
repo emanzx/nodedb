@@ -168,8 +168,8 @@ mod tests {
             index: 42,
             data: b"put key=val".to_vec(),
         };
-        let json = serde_json::to_string(&entry).unwrap();
-        let decoded: LogEntry = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&entry).unwrap();
+        let decoded: LogEntry = sonic_rs::from_str(&json).unwrap();
         assert_eq!(entry, decoded);
     }
 
@@ -196,8 +196,8 @@ mod tests {
             last_log_term: 6,
             group_id: 5,
         };
-        let json = serde_json::to_string(&req).unwrap();
-        let decoded: RequestVoteRequest = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&req).unwrap();
+        let decoded: RequestVoteRequest = sonic_rs::from_str(&json).unwrap();
         assert_eq!(req.term, decoded.term);
         assert_eq!(req.candidate_id, decoded.candidate_id);
     }

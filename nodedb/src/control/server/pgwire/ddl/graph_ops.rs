@@ -178,11 +178,11 @@ pub async fn shortest_path(
             // Check if dst was discovered in the BFS result.
             let json_text =
                 crate::data::executor::response_codec::decode_payload_to_json(&resp.payload);
-            if let Ok(nodes) = serde_json::from_str::<Vec<String>>(&json_text)
+            if let Ok(nodes) = sonic_rs::from_str::<Vec<String>>(&json_text)
                 && nodes.contains(&dst)
             {
                 // Path exists — return the discovered nodes as the path.
-                let payload = serde_json::to_vec(&nodes)
+                let payload = sonic_rs::to_vec(&nodes)
                     .map_err(|e| sqlstate_error("XX000", &format!("serialize path: {e}")))?;
                 let path_resp = crate::bridge::envelope::Response {
                     request_id: crate::types::RequestId::new(0),

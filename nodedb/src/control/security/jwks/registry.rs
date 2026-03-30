@@ -100,7 +100,7 @@ impl JwksRegistry {
         // 2. Decode payload (unverified, for issuer routing).
         let payload_bytes = base64_url_decode(parts[1]).ok_or(JwtError::DecodingError)?;
         let claims: JwtClaims =
-            serde_json::from_slice(&payload_bytes).map_err(|_| JwtError::InvalidClaims)?;
+            sonic_rs::from_slice(&payload_bytes).map_err(|_| JwtError::InvalidClaims)?;
 
         // 3. Find provider by issuer.
         let provider = self.find_provider(&claims.iss)?;
@@ -195,7 +195,7 @@ impl JwksRegistry {
             return Err(JwtError::MalformedToken);
         }
         let payload_bytes = base64_url_decode(parts[1]).ok_or(JwtError::DecodingError)?;
-        serde_json::from_slice(&payload_bytes).map_err(|_| JwtError::InvalidClaims)
+        sonic_rs::from_slice(&payload_bytes).map_err(|_| JwtError::InvalidClaims)
     }
 
     /// Check if any providers are configured.
@@ -261,5 +261,5 @@ struct JwtHeader {
 
 fn decode_jwt_header(encoded: &str) -> Result<JwtHeader, JwtError> {
     let bytes = base64_url_decode(encoded).ok_or(JwtError::DecodingError)?;
-    serde_json::from_slice(&bytes).map_err(|_| JwtError::InvalidClaims)
+    sonic_rs::from_slice(&bytes).map_err(|_| JwtError::InvalidClaims)
 }

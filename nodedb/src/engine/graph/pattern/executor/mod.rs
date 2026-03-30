@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use super::ast::*;
 use crate::engine::graph::csr::CsrIndex;
 use crate::engine::graph::edge_store::EdgeStore;
+use sonic_rs;
 
 /// A single result row: variable bindings.
 pub type BindingRow = HashMap<String, String>;
@@ -65,7 +66,7 @@ fn execute_query(
 
 /// Serialize binding rows to JSON for response.
 pub fn rows_to_json(rows: &[BindingRow]) -> Result<Vec<u8>, crate::Error> {
-    serde_json::to_vec(rows).map_err(|e| crate::Error::Internal {
+    sonic_rs::to_vec(rows).map_err(|e| crate::Error::Internal {
         detail: format!("match result serialization: {e}"),
     })
 }

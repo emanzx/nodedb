@@ -62,9 +62,8 @@ pub async fn convert_collection(
     let new_type = match target_type.as_str() {
         "document" => nodedb_types::CollectionType::document(),
         "strict" | "kv" => {
-            let columns: Vec<nodedb_types::columnar::ColumnDef> =
-                serde_json::from_str(&schema_json)
-                    .map_err(|e| sqlstate_error("XX000", &format!("schema parse error: {e}")))?;
+            let columns: Vec<nodedb_types::columnar::ColumnDef> = sonic_rs::from_str(&schema_json)
+                .map_err(|e| sqlstate_error("XX000", &format!("schema parse error: {e}")))?;
             let schema = nodedb_types::columnar::StrictSchema {
                 columns,
                 version: 1,

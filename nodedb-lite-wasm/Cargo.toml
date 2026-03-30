@@ -21,6 +21,7 @@ js-sys = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sonic-rs = { workspace = true }
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [
     "FileSystemSyncAccessHandle",

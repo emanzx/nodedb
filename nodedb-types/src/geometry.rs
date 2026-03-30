@@ -276,7 +276,7 @@ mod tests {
     #[test]
     fn geojson_serialize() {
         let p = Geometry::point(1.0, 2.0);
-        let json = serde_json::to_string(&p).unwrap();
+        let json = sonic_rs::to_string(&p).unwrap();
         assert!(json.contains("\"type\":\"Point\""));
         assert!(json.contains("\"coordinates\":[1.0,2.0]"));
     }
@@ -290,8 +290,8 @@ mod tests {
             [0.0, 1.0],
             [0.0, 0.0],
         ]]);
-        let json = serde_json::to_string(&original).unwrap();
-        let parsed: Geometry = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&original).unwrap();
+        let parsed: Geometry = sonic_rs::from_str(&json).unwrap();
         assert_eq!(original, parsed);
     }
 }

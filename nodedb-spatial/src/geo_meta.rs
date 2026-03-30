@@ -70,8 +70,8 @@ impl GeoParquetMetadata {
     }
 
     /// Serialize to JSON string for Parquet file metadata.
-    pub fn to_json(&self) -> Result<String, serde_json::Error> {
-        serde_json::to_string(self)
+    pub fn to_json(&self) -> Result<String, sonic_rs::Error> {
+        sonic_rs::to_string(self)
     }
 
     /// The Parquet metadata key for GeoParquet.
@@ -158,7 +158,7 @@ mod tests {
     fn roundtrip_parquet_metadata() {
         let meta = GeoParquetMetadata::single_column("location", vec!["Point".into()], None);
         let json = meta.to_json().unwrap();
-        let parsed: GeoParquetMetadata = serde_json::from_str(&json).unwrap();
+        let parsed: GeoParquetMetadata = sonic_rs::from_str(&json).unwrap();
         assert_eq!(parsed.primary_column, "location");
         assert_eq!(parsed.columns["location"].encoding, "WKB");
     }

@@ -43,7 +43,7 @@ fn csv_value(v: &Value) -> String {
             b.iter().map(|x| format!("{x:02x}")).collect::<String>()
         ),
         Value::Array(_) | Value::Object(_) | Value::Set(_) => {
-            let json = serde_json::to_string(v).unwrap_or_default();
+            let json = sonic_rs::to_string(v).unwrap_or_default();
             format!("\"{}\"", json.replace('"', "\"\""))
         }
         Value::Regex(pattern) => format!("/{pattern}/"),
@@ -66,7 +66,7 @@ fn csv_value(v: &Value) -> String {
         Value::Duration(d) => d.to_human(),
         Value::Decimal(d) => d.to_string(),
         Value::Geometry(g) => {
-            let json = serde_json::to_string(g).unwrap_or_default();
+            let json = sonic_rs::to_string(g).unwrap_or_default();
             format!("\"{}\"", json.replace('"', "\"\""))
         }
     }

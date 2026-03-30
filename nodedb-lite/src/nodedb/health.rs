@@ -235,7 +235,7 @@ mod tests {
     async fn health_serializes_to_json() {
         let db = make_db().await;
         let h = db.health();
-        let json = serde_json::to_string_pretty(&h).unwrap();
+        let json = sonic_rs::to_string_pretty(&h).unwrap();
         assert!(json.contains("\"status\""));
         assert!(json.contains("\"storage\""));
         assert!(json.contains("\"memory\""));

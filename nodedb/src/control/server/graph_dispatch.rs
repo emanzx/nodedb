@@ -156,7 +156,7 @@ pub async fn cross_core_bfs_with_options(
         }
     }
 
-    let payload = match serde_json::to_vec(&all_discovered) {
+    let payload = match sonic_rs::to_vec(&all_discovered) {
         Ok(v) => v,
         Err(e) => {
             return Err(crate::Error::Serialization {

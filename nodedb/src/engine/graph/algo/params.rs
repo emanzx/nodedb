@@ -168,6 +168,7 @@ impl AlgoParams {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sonic_rs;
 
     #[test]
     fn algorithm_names() {
@@ -230,8 +231,8 @@ mod tests {
             source_node: Some("alice".into()),
             ..Default::default()
         };
-        let json = serde_json::to_string(&p).unwrap();
-        let p2: AlgoParams = serde_json::from_str(&json).unwrap();
+        let json = sonic_rs::to_string(&p).unwrap();
+        let p2: AlgoParams = sonic_rs::from_str(&json).unwrap();
         assert_eq!(p2.collection, "users");
         assert_eq!(p2.damping, Some(0.9));
         assert_eq!(p2.max_iterations, Some(30));

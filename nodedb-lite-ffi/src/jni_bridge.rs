@@ -275,7 +275,7 @@ pub extern "system" fn Java_com_nodedb_lite_NodeDbLite_nativeDocumentGet(
     use nodedb_client::NodeDb;
     match h.rt.block_on(h.db.document_get(&collection, &id)) {
         Ok(Some(doc)) => {
-            let json_str = serde_json::to_string(&doc).unwrap_or_else(|_| "{}".into());
+            let json_str = sonic_rs::to_string(&doc).unwrap_or_else(|_| "{}".into());
             match env.new_string(&json_str) {
                 Ok(s) => s.into_raw(),
                 Err(_) => std::ptr::null_mut(),
@@ -305,7 +305,7 @@ pub extern "system" fn Java_com_nodedb_lite_NodeDbLite_nativeDocumentPut(
         Err(_) => return NODEDB_ERR_FAILED,
     };
 
-    let mut doc: nodedb_types::Document = match serde_json::from_str(&json_str) {
+    let mut doc: nodedb_types::Document = match sonic_rs::from_str(&json_str) {
         Ok(d) => d,
         Err(_) => return NODEDB_ERR_FAILED,
     };

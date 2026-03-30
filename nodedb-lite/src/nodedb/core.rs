@@ -512,7 +512,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
                         // Geometry fields are stored as GeoJSON strings.
                         if let nodedb_types::Value::String(s) = value
                             && let Ok(geom) =
-                                serde_json::from_str::<nodedb_types::geometry::Geometry>(s)
+                                sonic_rs::from_str::<nodedb_types::geometry::Geometry>(s)
                         {
                             spatial.index_document(collection, field, id, &geom);
                         }

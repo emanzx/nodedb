@@ -82,11 +82,9 @@ pub async fn write_frame<W: AsyncWrite + Unpin>(
 /// Decode a request payload according to the detected format.
 pub fn decode_request(payload: &[u8], format: FrameFormat) -> crate::Result<NativeRequest> {
     match format {
-        FrameFormat::Json => {
-            serde_json::from_slice(payload).map_err(|e| crate::Error::BadRequest {
-                detail: format!("invalid JSON request: {e}"),
-            })
-        }
+        FrameFormat::Json => sonic_rs::from_slice(payload).map_err(|e| crate::Error::BadRequest {
+            detail: format!("invalid JSON request: {e}"),
+        }),
         FrameFormat::MessagePack => {
             rmp_serde::from_slice(payload).map_err(|e| crate::Error::BadRequest {
                 detail: format!("invalid MessagePack request: {e}"),
@@ -98,7 +96,7 @@ pub fn decode_request(payload: &[u8], format: FrameFormat) -> crate::Result<Nati
 /// Encode a response in the given format.
 pub fn encode_response(resp: &NativeResponse, format: FrameFormat) -> crate::Result<Vec<u8>> {
     match format {
-        FrameFormat::Json => serde_json::to_vec(resp).map_err(|e| crate::Error::Serialization {
+        FrameFormat::Json => sonic_rs::to_vec(resp).map_err(|e| crate::Error::Serialization {
             format: "json".into(),
             detail: format!("response encode: {e}"),
         }),
@@ -140,7 +138,7 @@ mod tests {
             seq: 1,
             fields: RequestFields::Text(TextFields::default()),
         };
-        let json = serde_json::to_vec(&req).unwrap();
+        let json = sonic_rs::to_vec(&req).unwrap();
         assert_eq!(FrameFormat::detect(json[0]), FrameFormat::Json);
 
         let decoded = decode_request(&json, FrameFormat::Json).unwrap();

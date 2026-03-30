@@ -56,7 +56,7 @@ pub fn compute_geohash(geom: &Geometry) -> Option<String> {
 fn value_to_geometry(value: &Value) -> Option<Geometry> {
     match value {
         Value::Geometry(g) => Some(g.clone()),
-        Value::String(s) => serde_json::from_str(s).ok(),
+        Value::String(s) => sonic_rs::from_str(s).ok(),
         _ => None,
     }
 }

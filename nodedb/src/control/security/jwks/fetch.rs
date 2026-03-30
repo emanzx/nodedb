@@ -72,7 +72,7 @@ async fn fetch_jwks(url: &str) -> Result<Vec<VerificationKey>, JwksFetchError> {
         .map_err(|e| JwksFetchError::HttpBody(e.to_string()))?;
 
     let jwks: JwksResponse =
-        serde_json::from_str(&body).map_err(|e| JwksFetchError::JsonParse(e.to_string()))?;
+        sonic_rs::from_str(&body).map_err(|e| JwksFetchError::JsonParse(e.to_string()))?;
 
     let keys: Vec<VerificationKey> = jwks.keys.iter().filter_map(parse_jwk).collect();
 

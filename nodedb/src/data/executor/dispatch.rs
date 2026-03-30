@@ -499,7 +499,7 @@ impl CoreLoop {
 
             PhysicalPlan::Meta(MetaOp::ListContinuousAggregates) => {
                 let infos = self.continuous_agg_mgr.list_aggregates();
-                let json = serde_json::to_vec(&infos).unwrap_or_default();
+                let json = sonic_rs::to_vec(&infos).unwrap_or_default();
                 self.response_with_payload(task, json)
             }
 

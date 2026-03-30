@@ -150,7 +150,7 @@ pub fn encode_row_for_wal(values: &[nodedb_types::value::Value]) -> Vec<u8> {
             _ => {
                 // Geometry and other complex types: serialize as JSON bytes.
                 buf.push(10);
-                let json = serde_json::to_vec(value).unwrap_or_default();
+                let json = sonic_rs::to_vec(value).unwrap_or_default();
                 buf.extend_from_slice(&(json.len() as u32).to_le_bytes());
                 buf.extend_from_slice(&json);
             }

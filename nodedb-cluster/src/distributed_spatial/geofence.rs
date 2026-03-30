@@ -134,12 +134,12 @@ impl GeofenceRegistry {
     /// Serialize the registry for replication to other shards.
     pub fn export(&self) -> Vec<u8> {
         // Safety: Vec<Geofence> with Serialize always serializes successfully.
-        serde_json::to_vec(&self.geofences).expect("Geofence vec is always serializable")
+        sonic_rs::to_vec(&self.geofences).expect("Geofence vec is always serializable")
     }
 
     /// Import geofences from a serialized registry (from another shard).
     pub fn import(&mut self, data: &[u8]) {
-        if let Ok(geofences) = serde_json::from_slice::<Vec<Geofence>>(data) {
+        if let Ok(geofences) = sonic_rs::from_slice::<Vec<Geofence>>(data) {
             self.geofences = geofences;
         }
     }

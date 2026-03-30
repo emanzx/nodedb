@@ -36,7 +36,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             config_json: None,
         };
         let key = format!("collection:{name}");
-        let bytes = serde_json::to_vec(&meta).map_err(|e| NodeDbError::storage(e.to_string()))?;
+        let bytes = sonic_rs::to_vec(&meta).map_err(|e| NodeDbError::storage(e.to_string()))?;
         self.storage
             .put(nodedb_types::Namespace::Meta, key.as_bytes(), &bytes)
             .await?;
@@ -60,7 +60,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             .collect();
 
         let config_json =
-            serde_json::to_string(config).map_err(|e| NodeDbError::storage(e.to_string()))?;
+            sonic_rs::to_string(config).map_err(|e| NodeDbError::storage(e.to_string()))?;
 
         let meta = CollectionMeta {
             name: name.to_string(),
@@ -70,7 +70,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             config_json: Some(config_json),
         };
         let key = format!("collection:{name}");
-        let bytes = serde_json::to_vec(&meta).map_err(|e| NodeDbError::storage(e.to_string()))?;
+        let bytes = sonic_rs::to_vec(&meta).map_err(|e| NodeDbError::storage(e.to_string()))?;
         self.storage
             .put(nodedb_types::Namespace::Meta, key.as_bytes(), &bytes)
             .await?;
@@ -110,7 +110,7 @@ impl<S: StorageEngine> NodeDbLite<S> {
             .await?;
         let mut result = Vec::new();
         for (_, value) in &pairs {
-            if let Ok(meta) = serde_json::from_slice::<CollectionMeta>(value) {
+            if let Ok(meta) = sonic_rs::from_slice::<CollectionMeta>(value) {
                 result.push(meta);
             }
         }

@@ -14,6 +14,7 @@ use std::collections::BTreeMap;
 use nodedb_types::timeseries::{
     PartitionInterval, PartitionMeta, PartitionState, TieredPartitionConfig, TimeRange,
 };
+use sonic_rs;
 
 // ---------------------------------------------------------------------------
 // Rate estimator
@@ -440,7 +441,7 @@ impl PartitionRegistry {
     ///   If crash during rename: atomic — either old or new version visible.
     pub fn persist(&self, path: &std::path::Path) -> Result<(), String> {
         let entries = self.export();
-        let json = serde_json::to_vec_pretty(&entries)
+        let json = sonic_rs::to_vec_pretty(&entries)
             .map_err(|e| format!("serialize partition registry: {e}"))?;
 
         let tmp_path = path.with_extension("tmp");
@@ -459,7 +460,7 @@ impl PartitionRegistry {
     pub fn recover(path: &std::path::Path, config: TieredPartitionConfig) -> Result<Self, String> {
         let data = std::fs::read(path).map_err(|e| format!("read {}: {e}", path.display()))?;
         let entries: Vec<(i64, PartitionEntry)> =
-            serde_json::from_slice(&data).map_err(|e| format!("parse {}: {e}", path.display()))?;
+            sonic_rs::from_slice(&data).map_err(|e| format!("parse {}: {e}", path.display()))?;
 
         let mut registry = Self::new(config);
 

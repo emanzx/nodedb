@@ -114,7 +114,7 @@ pub fn display_value(v: &Value) -> String {
         Value::DateTime(dt) => dt.to_iso8601(),
         Value::Duration(d) => d.to_human(),
         Value::Decimal(d) => d.to_string(),
-        Value::Geometry(g) => serde_json::to_string(g).unwrap_or_default(),
+        Value::Geometry(g) => sonic_rs::to_string(g).unwrap_or_default(),
     }
 }
 
