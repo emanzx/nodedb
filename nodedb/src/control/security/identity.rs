@@ -247,9 +247,13 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
         PhysicalPlan::Meta(MetaOp::Cancel { .. }) => Permission::Admin,
 
         // System-level operations: require admin.
-        PhysicalPlan::Meta(MetaOp::CreateSnapshot | MetaOp::Compact | MetaOp::Checkpoint) => {
-            Permission::Admin
-        }
+        PhysicalPlan::Meta(
+            MetaOp::CreateSnapshot
+            | MetaOp::Compact
+            | MetaOp::Checkpoint
+            | MetaOp::CreateTenantSnapshot { .. }
+            | MetaOp::RestoreTenantSnapshot { .. },
+        ) => Permission::Admin,
 
         // KV engine: read operations.
         PhysicalPlan::Kv(

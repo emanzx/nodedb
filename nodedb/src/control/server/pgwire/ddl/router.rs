@@ -75,7 +75,7 @@ pub async fn dispatch(
 
     // Backup / Restore.
     if upper.starts_with("BACKUP TENANT ") {
-        return Some(super::backup::backup_tenant(state, identity, &parts));
+        return Some(super::backup::backup_tenant(state, identity, &parts).await);
     }
     if upper.starts_with("RESTORE TENANT ") {
         if upper.ends_with(" DRY RUN") || upper.ends_with(" DRYRUN") {
@@ -83,7 +83,7 @@ pub async fn dispatch(
                 state, identity, &parts,
             ));
         }
-        return Some(super::backup::restore_tenant(state, identity, &parts));
+        return Some(super::backup::restore_tenant(state, identity, &parts).await);
     }
 
     // Schema introspection.

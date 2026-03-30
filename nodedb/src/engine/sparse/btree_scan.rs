@@ -215,4 +215,66 @@ impl SparseEngine {
         txn.commit().map_err(|e| redb_err("commit", e))?;
         Ok(())
     }
+
+    // ── Tenant-wide scan (for BACKUP/RESTORE) ──────────────────────
+
+    /// Scan ALL documents for a tenant across all collections.
+    ///
+    /// Returns `(full_key, value_bytes)` pairs. The key includes the tenant
+    /// prefix: `"{tenant_id}:{collection}:{doc_id}"`.
+    pub fn scan_all_for_tenant(&self, tenant_id: u32) -> crate::Result<Vec<(String, Vec<u8>)>> {
+        self.scan_table_for_tenant(DOCUMENTS, tenant_id, "tenant scan")
+    }
+
+    /// Scan ALL index entries for a tenant.
+    ///
+    /// Returns `(full_key, value_bytes)` pairs from the INDEXES table.
+    pub fn scan_indexes_for_tenant(&self, tenant_id: u32) -> crate::Result<Vec<(String, Vec<u8>)>> {
+        self.scan_table_for_tenant(INDEXES, tenant_id, "index scan")
+    }
+
+    /// Shared scan logic for any redb table with tenant-prefixed keys.
+    fn scan_table_for_tenant(
+        &self,
+        table_def: redb::TableDefinition<&str, &[u8]>,
+        tenant_id: u32,
+        label: &str,
+    ) -> crate::Result<Vec<(String, Vec<u8>)>> {
+        let prefix = format!("{tenant_id}:");
+        let end = format!("{tenant_id}:\u{ffff}");
+
+        let read_txn = self.db.begin_read().map_err(|e| redb_err("read txn", e))?;
+        let table = read_txn
+            .open_table(table_def)
+            .map_err(|e| redb_err("open table", e))?;
+
+        let range = table
+            .range(prefix.as_str()..end.as_str())
+            .map_err(|e| redb_err(label, e))?;
+
+        let mut results = Vec::new();
+        for entry in range {
+            let entry = entry.map_err(|e| redb_err("entry", e))?;
+            results.push((entry.0.value().to_string(), entry.1.value().to_vec()));
+        }
+        Ok(results)
+    }
+
+    /// Insert an index entry by raw pre-formed key (snapshot restore).
+    pub fn put_index_raw(&self, key: &str, value: &[u8]) -> crate::Result<()> {
+        let write_txn = self
+            .db
+            .begin_write()
+            .map_err(|e| redb_err("write txn", e))?;
+        {
+            let mut table = write_txn
+                .open_table(INDEXES)
+                .map_err(|e| redb_err("open index table", e))?;
+            table
+                .insert(key, value)
+                .map_err(|e| redb_err("index insert", e))?;
+        }
+        write_txn.commit().map_err(|e| redb_err("commit", e))?;
+        Ok(())
+    }
 }

@@ -474,6 +474,16 @@ impl CoreLoop {
                 self.response_with_payload(task, json)
             }
 
+            PhysicalPlan::Meta(MetaOp::CreateTenantSnapshot { tenant_id }) => {
+                self.execute_create_tenant_snapshot(task, *tenant_id)
+            }
+
+            PhysicalPlan::Meta(MetaOp::RestoreTenantSnapshot {
+                tenant_id,
+                documents,
+                indexes,
+            }) => self.execute_restore_tenant_snapshot(task, *tenant_id, documents, indexes),
+
             PhysicalPlan::Meta(MetaOp::ConvertCollection {
                 collection,
                 target_type,

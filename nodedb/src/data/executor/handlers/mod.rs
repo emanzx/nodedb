@@ -15,6 +15,7 @@ pub mod kv;
 pub mod materialized_view;
 pub mod point;
 pub mod rls_eval;
+pub mod snapshot;
 pub mod spatial;
 pub mod text_search;
 pub mod timeseries;

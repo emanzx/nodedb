@@ -48,6 +48,20 @@ pub enum MetaOp {
         schema_json: String,
     },
 
+    /// Snapshot a tenant's data from the sparse engine.
+    /// Returns serialized `(documents, indexes)` as JSON payload.
+    CreateTenantSnapshot { tenant_id: u32 },
+
+    /// Restore a tenant's data to the sparse engine.
+    /// Writes documents and indexes from the serialized payload.
+    RestoreTenantSnapshot {
+        tenant_id: u32,
+        /// JSON-serialized `Vec<(String, Vec<u8>)>` of (key, value) pairs.
+        documents: Vec<u8>,
+        /// JSON-serialized `Vec<(String, Vec<u8>)>` of index entries.
+        indexes: Vec<u8>,
+    },
+
     /// Refresh a materialized view: scan source collection, write to target.
     RefreshMaterializedView {
         /// View name (also the target collection name).

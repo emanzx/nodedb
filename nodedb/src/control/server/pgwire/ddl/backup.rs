@@ -38,7 +38,7 @@ struct TenantBackup {
 }
 
 /// BACKUP TENANT <id> TO '<path>'
-pub fn backup_tenant(
+pub async fn backup_tenant(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     parts: &[&str],
@@ -74,22 +74,41 @@ pub fn backup_tenant(
         .unwrap_or_default()
         .as_secs();
 
-    // Export catalog metadata (collections, roles, permissions).
-    // Data Plane engine contents (sparse documents, vectors, CRDTs) require
-    // SPSC dispatch to each core and are included via CoreSnapshot when
-    // performing a full vShard migration. BACKUP TENANT exports the Control
-    // Plane metadata that cannot be derived from the Data Plane snapshot.
+    // Dispatch to Data Plane to snapshot all documents + indexes for this tenant.
+    let snapshot_plan = crate::bridge::envelope::PhysicalPlan::Meta(
+        crate::bridge::physical_plan::MetaOp::CreateTenantSnapshot { tenant_id: tid },
+    );
+    let snapshot_bytes = super::sync_dispatch::dispatch_async(
+        state,
+        TenantId::new(tid),
+        "__system",
+        snapshot_plan,
+        std::time::Duration::from_secs(60),
+    )
+    .await
+    .map_err(|e| sqlstate_error("XX000", &format!("snapshot dispatch failed: {e}")))?;
+
+    // Deserialize Data Plane snapshot.
+    let data_snapshot: crate::types::TenantDataSnapshot = rmp_serde::from_slice(&snapshot_bytes)
+        .map_err(|e| sqlstate_error("XX000", &format!("snapshot decode failed: {e}")))?;
+
     let backup = TenantBackup {
         version: 1,
         tenant_id: tid,
         created_at: now,
-        documents: Vec::new(),
-        indexes: Vec::new(),
+        documents: data_snapshot.documents,
+        indexes: data_snapshot.indexes,
         crdt_snapshots: Vec::new(),
         vector_snapshots: Vec::new(),
     };
     let catalog_data = if let Some(catalog) = state.credentials.catalog() {
-        let collections = catalog.load_collections_for_tenant(tid).unwrap_or_default();
+        let collections = match catalog.load_collections_for_tenant(tid) {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::warn!(tenant_id = tid, error = %e, "failed to load collections for audit");
+                Vec::new()
+            }
+        };
         let users = state
             .credentials
             .list_user_details()
@@ -163,7 +182,7 @@ pub fn backup_tenant(
 }
 
 /// RESTORE TENANT <id> FROM '<path>'
-pub fn restore_tenant(
+pub async fn restore_tenant(
     state: &SharedState,
     identity: &AuthenticatedIdentity,
     parts: &[&str],
@@ -193,13 +212,29 @@ pub fn restore_tenant(
     let path = extract_quoted_string(parts, 4)
         .ok_or_else(|| sqlstate_error("42601", "path must be a single-quoted string"))?;
 
-    // Read and deserialize backup.
-    let bytes = std::fs::read(&path).map_err(|e| {
+    // Read backup file.
+    let raw_bytes = std::fs::read(&path).map_err(|e| {
         sqlstate_error(
             "XX000",
             &format!("failed to read backup from '{path}': {e}"),
         )
     })?;
+
+    // Decrypt if encrypted (magic bytes "NENC").
+    let bytes = if raw_bytes.starts_with(b"NENC") {
+        let key = state.wal.encryption_key().ok_or_else(|| {
+            sqlstate_error(
+                "XX000",
+                "backup is encrypted but no encryption key configured",
+            )
+        })?;
+        let mut aad = [0u8; nodedb_wal::record::HEADER_SIZE];
+        aad[..6].copy_from_slice(b"BACKUP");
+        key.decrypt(0, &aad, &raw_bytes[4..])
+            .map_err(|e| sqlstate_error("XX000", &format!("backup decryption failed: {e}")))?
+    } else {
+        raw_bytes
+    };
 
     let backup: TenantBackup = rmp_serde::from_slice(&bytes)
         .map_err(|e| sqlstate_error("XX000", &format!("backup deserialization failed: {e}")))?;
@@ -219,6 +254,66 @@ pub fn restore_tenant(
                 backup.tenant_id, tid
             ),
         ));
+    }
+
+    // Dispatch documents + indexes to Data Plane for restoration.
+    let documents_bytes = rmp_serde::to_vec(&backup.documents)
+        .map_err(|e| sqlstate_error("XX000", &format!("document serialization failed: {e}")))?;
+    let indexes_bytes = rmp_serde::to_vec(&backup.indexes)
+        .map_err(|e| sqlstate_error("XX000", &format!("index serialization failed: {e}")))?;
+
+    let restore_plan = crate::bridge::envelope::PhysicalPlan::Meta(
+        crate::bridge::physical_plan::MetaOp::RestoreTenantSnapshot {
+            tenant_id: tid,
+            documents: documents_bytes,
+            indexes: indexes_bytes,
+        },
+    );
+    super::sync_dispatch::dispatch_async(
+        state,
+        TenantId::new(tid),
+        "__system",
+        restore_plan,
+        std::time::Duration::from_secs(60),
+    )
+    .await
+    .map_err(|e| sqlstate_error("XX000", &format!("restore dispatch failed: {e}")))?;
+
+    // Re-register collections found in backup keys but missing from catalog.
+    // Document keys have the format "tenant_id:collection:doc_id".
+    if let Some(catalog) = state.credentials.catalog() {
+        let existing = match catalog.load_collections_for_tenant(tid) {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::warn!(tenant_id = tid, error = %e, "failed to load collections from catalog");
+                Vec::new()
+            }
+        };
+        let existing_names: std::collections::HashSet<String> =
+            existing.iter().map(|c| c.name.clone()).collect();
+
+        // Extract unique collection names from backup document keys.
+        let mut restored_collections = std::collections::HashSet::new();
+        for (key, _) in &backup.documents {
+            // Key format: "{tenant_id}:{collection}\0{doc_id}" or "{tenant_id}:{collection}:{doc_id}"
+            if let Some(after_tenant) = key.strip_prefix(&format!("{tid}:")) {
+                let collection_name = after_tenant.split(['\0', ':']).next().unwrap_or("");
+                if !collection_name.is_empty() && !existing_names.contains(collection_name) {
+                    restored_collections.insert(collection_name.to_string());
+                }
+            }
+        }
+
+        for name in &restored_collections {
+            let coll = crate::control::security::catalog::types::StoredCollection::new(
+                tid,
+                name,
+                &identity.username,
+            );
+            if let Err(e) = catalog.put_collection(&coll) {
+                tracing::warn!(collection = %name, error = %e, "failed to register restored collection");
+            }
+        }
     }
 
     state.audit_record(

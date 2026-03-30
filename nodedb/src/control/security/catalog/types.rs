@@ -219,6 +219,26 @@ pub struct StoredCollection {
 }
 
 impl StoredCollection {
+    /// Create a minimal collection entry (schemaless document, no fields).
+    pub fn new(tenant_id: u32, name: &str, owner: &str) -> Self {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        Self {
+            tenant_id,
+            name: name.to_string(),
+            owner: owner.to_string(),
+            created_at: now,
+            fields: Vec::new(),
+            field_defs: Vec::new(),
+            event_defs: Vec::new(),
+            collection_type: nodedb_types::CollectionType::document(),
+            timeseries_config: None,
+            is_active: true,
+        }
+    }
+
     /// Parse the timeseries config JSON, if present.
     pub fn get_timeseries_config(&self) -> Option<serde_json::Value> {
         self.timeseries_config
