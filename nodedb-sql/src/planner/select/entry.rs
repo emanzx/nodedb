@@ -1,26 +1,20 @@
-//! Top-level query entry: CTE handling, UNION dispatch, ORDER BY/LIMIT
-//! application, and ORDER-BY search-trigger detection.
+//! Top-level query entry: CTE handling, UNION dispatch, and LIMIT
+//! application. ORDER BY and search-trigger detection live in `order_by.rs`.
 
 use sqlparser::ast::{self, Query, SetExpr};
 
-use super::entry_ann::parse_ann_options;
-use super::helpers::{
-    extract_column_name, extract_float, extract_float_array, extract_func_args,
-    extract_string_literal,
-};
+use super::order_by::{apply_order_by, try_hybrid_from_projection};
 use super::select_stmt::plan_select;
 use crate::error::{Result, SqlError};
-use crate::functions::registry::{FunctionRegistry, SearchTrigger};
+use crate::functions::registry::FunctionRegistry;
 use crate::parser::normalize::normalize_ident;
-use crate::resolver::expr::convert_expr;
 use crate::temporal::TemporalScope;
-use crate::types::{DistanceMetric, Projection, SqlExpr, *};
+use crate::types::{Projection, SqlExpr, *};
 
-/// Default `ef_search` multiplier applied when the user has not supplied
-/// `ef_search_override` in the `vector_distance` options. Wider beams trade
-/// extra distance computations for higher recall; `2 * top_k` is a standard
-/// HNSW heuristic that keeps planning predictable while leaving room for
-/// the executor's own recall-based escalation.
+/// Default `ef_search` multiplier applied when LIMIT is the only signal
+/// available for sizing the HNSW beam (e.g. on a fused VectorSearch that
+/// inherited LIMIT after `apply_order_by`). Wider beams trade extra distance
+/// computations for higher recall; `2 * top_k` is a standard heuristic.
 const DEFAULT_EF_SEARCH_MULTIPLIER: usize = 2;
 
 /// Returns `true` when every projection item is either:
@@ -126,7 +120,18 @@ pub fn plan_query(
                 _ => None,
             };
             if let Some(order_by) = &query.order_by {
-                plan = apply_order_by(&plan, order_by, functions)?;
+                plan = apply_order_by(&plan, order_by, functions, &select.projection)?;
+            }
+            // Fall back to a SELECT-projection scan for hybrid-search triggers.
+            // The `SELECT id, rrf_score(...) AS score FROM c WHERE ... LIMIT N`
+            // shape has no ORDER BY, so `apply_order_by` cannot fire. Without
+            // this second-chance check the rrf_score column resolves through
+            // scalar evaluation (with no implementation) and returns NULL.
+            if matches!(plan, SqlPlan::Scan { .. })
+                && let Some(hybrid_plan) =
+                    try_hybrid_from_projection(&plan, &select.projection, functions)?
+            {
+                plan = hybrid_plan;
             }
             // After ORDER BY: if we now have a VectorSearch, check whether
             // the collection is vector-primary and the projection is
@@ -315,239 +320,6 @@ pub fn plan_query(
     }
 }
 
-/// Apply ORDER BY, detecting search-triggering sort expressions.
-fn apply_order_by(
-    plan: &SqlPlan,
-    order_by: &ast::OrderBy,
-    functions: &FunctionRegistry,
-) -> Result<SqlPlan> {
-    let exprs = match &order_by.kind {
-        ast::OrderByKind::Expressions(exprs) => exprs,
-        ast::OrderByKind::All(_) => return Ok(plan.clone()),
-    };
-
-    if exprs.is_empty() {
-        return Ok(plan.clone());
-    }
-
-    // Check first ORDER BY expression for search triggers.
-    let first = &exprs[0];
-    if let Some(search_plan) = try_extract_sort_search(&first.expr, plan, functions)? {
-        return Ok(search_plan);
-    }
-
-    // Normal sort keys.
-    let sort_keys: Vec<SortKey> = exprs
-        .iter()
-        .map(|o| {
-            Ok(SortKey {
-                expr: convert_expr(&o.expr)?,
-                ascending: o.options.asc.unwrap_or(true),
-                nulls_first: o.options.nulls_first.unwrap_or(false),
-            })
-        })
-        .collect::<Result<_>>()?;
-
-    match plan {
-        SqlPlan::Scan {
-            collection,
-            alias,
-            engine,
-            filters,
-            projection,
-            limit,
-            offset,
-            distinct,
-            window_functions,
-            temporal,
-            ..
-        } => Ok(SqlPlan::Scan {
-            collection: collection.clone(),
-            alias: alias.clone(),
-            engine: *engine,
-            filters: filters.clone(),
-            projection: projection.clone(),
-            sort_keys,
-            limit: *limit,
-            offset: *offset,
-            distinct: *distinct,
-            window_functions: window_functions.clone(),
-            temporal: *temporal,
-        }),
-        _ => Ok(plan.clone()),
-    }
-}
-
-/// Map a vector distance function name to its `DistanceMetric`.
-///
-/// - `vector_distance`        → `L2` (pgvector `<->` convention)
-/// - `vector_cosine_distance` → `Cosine`
-/// - `vector_neg_inner_product` → `InnerProduct`
-/// - anything else (unexpected) → `L2` as safe default
-fn metric_from_func_name(name: &str) -> DistanceMetric {
-    if name.eq_ignore_ascii_case("vector_cosine_distance") {
-        DistanceMetric::Cosine
-    } else if name.eq_ignore_ascii_case("vector_neg_inner_product") {
-        DistanceMetric::InnerProduct
-    } else {
-        DistanceMetric::L2
-    }
-}
-
-/// Try to detect search-triggering ORDER BY expressions.
-fn try_extract_sort_search(
-    expr: &ast::Expr,
-    plan: &SqlPlan,
-    functions: &FunctionRegistry,
-) -> Result<Option<SqlPlan>> {
-    if let ast::Expr::Function(func) = expr {
-        let name = func
-            .name
-            .0
-            .iter()
-            .map(|p| match p {
-                ast::ObjectNamePart::Identifier(ident) => normalize_ident(ident),
-                _ => String::new(),
-            })
-            .collect::<Vec<_>>()
-            .join(".");
-        let (collection, array_prefilter) = match plan {
-            SqlPlan::Scan { collection, .. } => (collection.clone(), None),
-            SqlPlan::Join { left, right, .. } => match extract_vector_join_target(left, right) {
-                Some(t) => (t.vector_collection, t.array_prefilter),
-                None => return Ok(None),
-            },
-            _ => return Ok(None),
-        };
-        let args = extract_func_args(func)?;
-        let raw_func_args: &[ast::FunctionArg] = match &func.args {
-            ast::FunctionArguments::List(list) => &list.args,
-            _ => &[],
-        };
-
-        match functions.search_trigger(&name) {
-            SearchTrigger::VectorSearch => {
-                if args.len() < 2 {
-                    return Ok(None);
-                }
-                let field = extract_column_name(&args[0])?;
-                let vector = extract_float_array(&args[1])?;
-                let ann_options = parse_ann_options(raw_func_args)?;
-                let limit = match plan {
-                    SqlPlan::Scan { limit, .. } => limit.unwrap_or(10),
-                    SqlPlan::Join { limit, .. } => *limit,
-                    _ => 10,
-                };
-                let ef_search = ann_options
-                    .ef_search_override
-                    .unwrap_or(limit * DEFAULT_EF_SEARCH_MULTIPLIER);
-                let metric = metric_from_func_name(&name);
-                return Ok(Some(SqlPlan::VectorSearch {
-                    collection,
-                    field,
-                    query_vector: vector,
-                    top_k: limit,
-                    ef_search,
-                    metric,
-                    filters: match plan {
-                        SqlPlan::Scan { filters, .. } => filters.clone(),
-                        _ => Vec::new(),
-                    },
-                    array_prefilter,
-                    ann_options,
-                    // Projection analysis and payload-filter peeling require
-                    // catalog access; the caller (`plan_query`) fills these
-                    // fields after `apply_order_by` returns.
-                    skip_payload_fetch: false,
-                    payload_filters: Vec::new(),
-                }));
-            }
-            SearchTrigger::TextSearch if args.len() >= 2 => {
-                let query_text = extract_string_literal(&args[1])?;
-                let limit = match plan {
-                    SqlPlan::Scan { limit, .. } => limit.unwrap_or(10),
-                    _ => 10,
-                };
-                return Ok(Some(SqlPlan::TextSearch {
-                    collection,
-                    query: crate::fts_types::FtsQuery::Plain {
-                        text: query_text,
-                        fuzzy: true,
-                    },
-                    top_k: limit,
-                    filters: match plan {
-                        SqlPlan::Scan { filters, .. } => filters.clone(),
-                        _ => Vec::new(),
-                    },
-                }));
-            }
-            SearchTrigger::TextSearch => {}
-            SearchTrigger::HybridSearch => {
-                return plan_hybrid_from_sort(&args, &collection, plan, functions);
-            }
-            _ => {}
-        }
-    }
-    Ok(None)
-}
-
-fn plan_hybrid_from_sort(
-    args: &[ast::Expr],
-    collection: &str,
-    plan: &SqlPlan,
-    _functions: &FunctionRegistry,
-) -> Result<Option<SqlPlan>> {
-    // rrf_score(vector_distance(...), bm25_score(...), k1, k2)
-    if args.len() < 2 {
-        return Ok(None);
-    }
-    let vector = match &args[0] {
-        ast::Expr::Function(f) => {
-            let inner_args = extract_func_args(f)?;
-            if inner_args.len() >= 2 {
-                extract_float_array(&inner_args[1]).unwrap_or_default()
-            } else {
-                Vec::new()
-            }
-        }
-        _ => Vec::new(),
-    };
-    let text = match &args[1] {
-        ast::Expr::Function(f) => {
-            let inner_args = extract_func_args(f)?;
-            if inner_args.len() >= 2 {
-                extract_string_literal(&inner_args[1]).unwrap_or_default()
-            } else {
-                String::new()
-            }
-        }
-        _ => String::new(),
-    };
-    let k1 = args
-        .get(2)
-        .and_then(|e| extract_float(e).ok())
-        .unwrap_or(60.0);
-    let k2 = args
-        .get(3)
-        .and_then(|e| extract_float(e).ok())
-        .unwrap_or(60.0);
-    let limit = match plan {
-        SqlPlan::Scan { limit, .. } => limit.unwrap_or(10),
-        _ => 10,
-    };
-    let vector_weight = k2 as f32 / (k1 as f32 + k2 as f32);
-
-    Ok(Some(SqlPlan::HybridSearch {
-        collection: collection.into(),
-        query_vector: vector,
-        query_text: text,
-        top_k: limit,
-        ef_search: limit * 2,
-        vector_weight,
-        fuzzy: true,
-    }))
-}
-
 /// Apply LIMIT and OFFSET to a plan.
 fn apply_limit(mut plan: SqlPlan, limit_clause: &Option<ast::LimitClause>) -> SqlPlan {
     let (limit_val, offset_val) = match limit_clause {
@@ -633,42 +405,5 @@ impl SqlCatalog for CteCatalog<'_> {
             }));
         }
         self.inner.get_collection(name)
-    }
-}
-
-/// Result of inspecting a `SqlPlan::Join` for the
-/// `ORDER BY vector_distance(...) + JOIN NDARRAY_SLICE(...)` fusion shape.
-struct VectorJoinTarget {
-    /// Vector collection backing the search (left or right of the join).
-    vector_collection: String,
-    /// Array slice that materializes into a surrogate prefilter.
-    array_prefilter: Option<crate::types::NdArrayPrefilter>,
-}
-
-/// If the join has exactly one `SqlPlan::NdArraySlice` side and the other
-/// side is a vector-collection scan, return the fused target. Returns
-/// `None` for any other shape — the caller falls through to non-fused
-/// join planning.
-fn extract_vector_join_target(left: &SqlPlan, right: &SqlPlan) -> Option<VectorJoinTarget> {
-    match (left, right) {
-        (SqlPlan::Scan { collection, .. }, SqlPlan::NdArraySlice { name, slice, .. }) => {
-            Some(VectorJoinTarget {
-                vector_collection: collection.clone(),
-                array_prefilter: Some(crate::types::NdArrayPrefilter {
-                    array_name: name.clone(),
-                    slice: slice.clone(),
-                }),
-            })
-        }
-        (SqlPlan::NdArraySlice { name, slice, .. }, SqlPlan::Scan { collection, .. }) => {
-            Some(VectorJoinTarget {
-                vector_collection: collection.clone(),
-                array_prefilter: Some(crate::types::NdArrayPrefilter {
-                    array_name: name.clone(),
-                    slice: slice.clone(),
-                }),
-            })
-        }
-        _ => None,
     }
 }

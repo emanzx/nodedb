@@ -1,0 +1,123 @@
+//! Timeseries scan and ingest converters.
+
+use nodedb_sql::types::SqlValue;
+
+use crate::bridge::envelope::PhysicalPlan;
+use crate::bridge::physical_plan::*;
+use crate::types::{TenantId, VShardId};
+
+use super::super::super::physical::{PhysicalTask, PostSetOp};
+use super::super::aggregate::{agg_expr_to_pair, extract_projection_names};
+use super::super::filter::serialize_filters;
+use super::super::scan_params::TimeseriesScanParams;
+use super::super::value::{row_to_msgpack, sql_value_to_string, write_msgpack_array_header};
+use super::helpers::valid_at_from_scope;
+
+pub(in crate::control::planner::sql_plan_convert) fn convert_timeseries_scan(
+    p: TimeseriesScanParams<'_>,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let TimeseriesScanParams {
+        collection,
+        time_range,
+        bucket_interval_ms,
+        group_by,
+        aggregates,
+        filters,
+        projection,
+        gap_fill,
+        limit,
+        tiered,
+        tenant_id,
+        ctx,
+        temporal,
+    } = p;
+    let filter_bytes = serialize_filters(filters)?;
+    let agg_pairs: Vec<(String, String)> = aggregates.iter().map(agg_expr_to_pair).collect();
+
+    // AUTO_TIER: split query across retention tiers if enabled.
+    if *tiered
+        && let Some(registry) = &ctx.retention_registry
+        && let Some(policy) = registry.get(tenant_id.as_u64(), collection)
+        && policy.auto_tier
+    {
+        return Ok(super::super::super::auto_tier::plan_tiered_scan(
+            &policy,
+            tenant_id,
+            *time_range,
+            filter_bytes,
+            group_by.to_vec(),
+            agg_pairs,
+            gap_fill.to_string(),
+        ));
+    }
+
+    let proj_names = extract_projection_names(projection, &[]);
+    let vshard = VShardId::from_collection(collection);
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: PhysicalPlan::Timeseries(TimeseriesOp::Scan {
+            collection: collection.into(),
+            time_range: *time_range,
+            projection: proj_names,
+            limit: *limit,
+            filters: filter_bytes,
+            bucket_interval_ms: *bucket_interval_ms,
+            group_by: group_by.to_vec(),
+            aggregates: agg_pairs,
+            gap_fill: gap_fill.to_string(),
+            computed_columns: Vec::new(),
+            rls_filters: Vec::new(),
+            system_as_of_ms: temporal.system_as_of_ms,
+            valid_at_ms: valid_at_from_scope(temporal),
+        }),
+        post_set_op: PostSetOp::None,
+    }])
+}
+
+pub(in crate::control::planner::sql_plan_convert) fn convert_timeseries_ingest(
+    collection: &str,
+    rows: &[Vec<(String, SqlValue)>],
+    tenant_id: TenantId,
+    ctx: &super::super::convert::ConvertContext,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let vshard = VShardId::from_collection(collection);
+    let mut payload = Vec::with_capacity(rows.len() * 128);
+    write_msgpack_array_header(&mut payload, rows.len());
+    let mut surrogates: Vec<nodedb_types::Surrogate> = Vec::with_capacity(rows.len());
+    for row in rows {
+        let row_bytes = row_to_msgpack(row)?;
+        payload.extend_from_slice(&row_bytes);
+        // Timeseries PK is the (timestamp, tag-set) tuple, which is not
+        // canonically named. Use the same (id|document_id|key) heuristic
+        // as the columnar/document path; rows with no PK column receive
+        // `Surrogate::ZERO` (downstream re-derivation owned by the
+        // engine integration once the row's natural identity is known).
+        let pk = row
+            .iter()
+            .find(|(k, _)| k == "id" || k == "document_id" || k == "key")
+            .map(|(_, v)| sql_value_to_string(v))
+            .unwrap_or_default();
+        if pk.is_empty() {
+            surrogates.push(nodedb_types::Surrogate::ZERO);
+        } else {
+            let s = match ctx.surrogate_assigner.as_ref() {
+                Some(a) => a.assign(collection, pk.as_bytes())?,
+                None => nodedb_types::Surrogate::ZERO,
+            };
+            surrogates.push(s);
+        }
+    }
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: PhysicalPlan::Timeseries(TimeseriesOp::Ingest {
+            collection: collection.into(),
+            payload,
+            format: "msgpack".into(),
+            wal_lsn: None,
+            surrogates,
+        }),
+        post_set_op: PostSetOp::None,
+    }])
+}

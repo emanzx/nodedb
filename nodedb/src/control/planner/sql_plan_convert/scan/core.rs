@@ -1,0 +1,251 @@
+//! Generic scan converters: row scan, secondary-index lookup, point get.
+
+use nodedb_sql::types::{EngineType, Filter, SqlValue};
+
+use crate::bridge::envelope::PhysicalPlan;
+use crate::bridge::physical_plan::*;
+use crate::types::{TenantId, VShardId};
+
+use super::super::super::physical::{PhysicalTask, PostSetOp};
+use super::super::aggregate::{
+    extract_computed_columns, extract_projection_names, serialize_window_functions,
+};
+use super::super::expr::convert_sort_keys;
+use super::super::filter::serialize_filters;
+use super::super::scan_params::ScanParams;
+use super::super::value::{
+    extract_time_range, sql_value_to_bytes, sql_value_to_nodedb_value, sql_value_to_string,
+};
+use super::helpers::valid_at_from_scope;
+
+pub(in crate::control::planner::sql_plan_convert) fn convert_scan(
+    p: ScanParams<'_>,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let ScanParams {
+        collection,
+        engine,
+        filters,
+        projection,
+        sort_keys,
+        limit,
+        offset,
+        distinct,
+        window_functions,
+        tenant_id,
+        temporal,
+    } = p;
+    let filter_bytes = serialize_filters(filters)?;
+    let proj_names = extract_projection_names(projection, window_functions);
+    let sort = convert_sort_keys(sort_keys);
+    let vshard = VShardId::from_collection(collection);
+    let computed_bytes = extract_computed_columns(projection, window_functions)?;
+    let window_bytes = serialize_window_functions(window_functions)?;
+
+    let physical = match engine {
+        EngineType::Timeseries => {
+            let time_range = extract_time_range(filters);
+            PhysicalPlan::Timeseries(TimeseriesOp::Scan {
+                collection: collection.into(),
+                time_range,
+                projection: proj_names,
+                limit: limit.unwrap_or(10000),
+                filters: filter_bytes,
+                bucket_interval_ms: 0,
+                group_by: Vec::new(),
+                aggregates: Vec::new(),
+                gap_fill: String::new(),
+                computed_columns: computed_bytes,
+                rls_filters: Vec::new(),
+                system_as_of_ms: None,
+                valid_at_ms: None,
+            })
+        }
+        EngineType::Columnar => PhysicalPlan::Columnar(ColumnarOp::Scan {
+            collection: collection.into(),
+            projection: proj_names,
+            limit: limit.unwrap_or(10000),
+            filters: filter_bytes,
+            rls_filters: Vec::new(),
+            sort_keys: sort.clone(),
+            system_as_of_ms: temporal.system_as_of_ms,
+            valid_at_ms: valid_at_from_scope(temporal),
+            prefilter: None,
+        }),
+        EngineType::Spatial => PhysicalPlan::Columnar(ColumnarOp::Scan {
+            collection: collection.into(),
+            projection: proj_names,
+            limit: limit.unwrap_or(10000),
+            filters: filter_bytes,
+            rls_filters: Vec::new(),
+            sort_keys: sort.clone(),
+            system_as_of_ms: None,
+            valid_at_ms: None,
+            prefilter: None,
+        }),
+        EngineType::KeyValue => PhysicalPlan::Kv(KvOp::Scan {
+            collection: collection.into(),
+            cursor: Vec::new(),
+            count: limit.unwrap_or(10000),
+            filters: filter_bytes,
+            match_pattern: None,
+        }),
+        EngineType::DocumentSchemaless | EngineType::DocumentStrict => {
+            PhysicalPlan::Document(DocumentOp::Scan {
+                collection: collection.into(),
+                limit: limit.unwrap_or(10000),
+                offset: *offset,
+                sort_keys: sort,
+                filters: filter_bytes,
+                distinct: *distinct,
+                projection: proj_names,
+                computed_columns: computed_bytes,
+                window_functions: window_bytes,
+                system_as_of_ms: temporal.system_as_of_ms,
+                valid_at_ms: valid_at_from_scope(temporal),
+                prefilter: None,
+            })
+        }
+        EngineType::Array => {
+            return Err(crate::Error::PlanError {
+                detail: format!(
+                    "scan on '{collection}': array engine has no table-shaped scan; use NDARRAY_SLICE"
+                ),
+            });
+        }
+    };
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: physical,
+        post_set_op: PostSetOp::None,
+    }])
+}
+
+/// Map `SqlPlan::DocumentIndexLookup` to a `DocumentOp::IndexedFetch` task.
+///
+/// The handler resolves doc IDs through the sparse index, fetches each
+/// document, applies any remaining filters + projection, and emits rows
+/// in the same wire format as a document scan.
+#[allow(clippy::too_many_arguments)]
+pub(in crate::control::planner::sql_plan_convert) fn convert_document_index_lookup(
+    collection: &str,
+    field: &str,
+    value: &SqlValue,
+    filters: &[Filter],
+    projection: &[nodedb_sql::types::Projection],
+    limit: Option<usize>,
+    offset: usize,
+    tenant_id: TenantId,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let filter_bytes = serialize_filters(filters)?;
+    let proj_names = extract_projection_names(projection, &[]);
+    let vshard = VShardId::from_collection(collection);
+    let physical = PhysicalPlan::Document(DocumentOp::IndexedFetch {
+        collection: collection.into(),
+        path: field.into(),
+        value: sql_value_to_string(value),
+        filters: filter_bytes,
+        projection: proj_names,
+        limit: limit.unwrap_or(10_000),
+        offset,
+    });
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: physical,
+        post_set_op: PostSetOp::None,
+    }])
+}
+
+pub(in crate::control::planner::sql_plan_convert) fn convert_point_get(
+    collection: &str,
+    engine: &EngineType,
+    key_column: &str,
+    key_value: &SqlValue,
+    tenant_id: TenantId,
+    ctx: &super::super::convert::ConvertContext,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let vshard = VShardId::from_collection(collection);
+    let physical = match engine {
+        EngineType::KeyValue => PhysicalPlan::Kv(KvOp::Get {
+            collection: collection.into(),
+            key: sql_value_to_bytes(key_value),
+            rls_filters: Vec::new(),
+        }),
+        EngineType::DocumentSchemaless | EngineType::DocumentStrict => {
+            let pk_string = sql_value_to_string(key_value);
+            let pk_bytes = pk_string.clone().into_bytes();
+            let surrogate = match ctx.surrogate_assigner.as_ref() {
+                Some(a) => match a.lookup(collection, &pk_bytes)? {
+                    Some(s) => s,
+                    None => {
+                        // Row not bound — return zero tasks; the
+                        // dispatcher emits an empty result set.
+                        return Ok(Vec::new());
+                    }
+                },
+                None => nodedb_types::Surrogate::ZERO,
+            };
+            PhysicalPlan::Document(DocumentOp::PointGet {
+                collection: collection.into(),
+                document_id: pk_string,
+                surrogate,
+                pk_bytes,
+                rls_filters: Vec::new(),
+                system_as_of_ms: None,
+                valid_at_ms: None,
+            })
+        }
+        // Columnar point get: emit a ColumnarOp::Scan with an `Eq` filter
+        // on the PK column and limit=1. Columnar collections have no
+        // document store, so routing to `DocumentOp::PointGet` silently
+        // returns zero rows.
+        EngineType::Columnar | EngineType::Spatial => {
+            use nodedb_query::scan_filter::{FilterOp, ScanFilter};
+            let scan_filter = ScanFilter {
+                field: key_column.to_string(),
+                op: FilterOp::Eq,
+                value: sql_value_to_nodedb_value(key_value),
+                clauses: Vec::new(),
+                expr: None,
+            };
+            let filter_bytes = zerompk::to_msgpack_vec(&vec![scan_filter]).map_err(|e| {
+                crate::Error::Serialization {
+                    format: "msgpack".into(),
+                    detail: format!("columnar point-get filter: {e}"),
+                }
+            })?;
+            PhysicalPlan::Columnar(ColumnarOp::Scan {
+                collection: collection.into(),
+                projection: Vec::new(),
+                limit: 1,
+                filters: filter_bytes,
+                rls_filters: Vec::new(),
+                sort_keys: Vec::new(),
+                system_as_of_ms: None,
+                valid_at_ms: None,
+                prefilter: None,
+            })
+        }
+        // Timeseries should never reach here — nodedb-sql rejects point gets.
+        EngineType::Timeseries => {
+            return Err(crate::Error::PlanError {
+                detail: format!(
+                    "point get on '{collection}': timeseries does not support point lookups"
+                ),
+            });
+        }
+        // Array reads do not have a key column.
+        EngineType::Array => {
+            return Err(crate::Error::PlanError {
+                detail: format!("point get on '{collection}': array engine has no primary key"),
+            });
+        }
+    };
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: physical,
+        post_set_op: PostSetOp::None,
+    }])
+}
