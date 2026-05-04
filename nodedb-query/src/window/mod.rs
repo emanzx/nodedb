@@ -1,0 +1,14 @@
+//! Window function specification and evaluation.
+//!
+//! Evaluated after sort, before projection. Each spec produces a new column
+//! appended to every row (e.g., ROW_NUMBER, RANK, SUM OVER).
+
+pub mod aggregate;
+pub mod eval;
+pub mod helpers;
+pub mod offset;
+pub mod ranking;
+pub mod spec;
+
+pub use eval::evaluate_window_functions;
+pub use spec::{FrameBound, WindowFrame, WindowFuncSpec};

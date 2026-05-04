@@ -3,15 +3,20 @@
 use sqlparser::ast;
 
 use crate::error::{Result, SqlError};
-use crate::functions::registry::FunctionRegistry;
+use crate::functions::registry::{FunctionCategory, FunctionRegistry};
 use crate::parser::normalize::{SCHEMA_QUALIFIED_MSG, normalize_ident};
 use crate::resolver::expr::convert_expr;
 use crate::types::{SortKey, WindowSpec};
 
 /// Extract window function specifications from SELECT items.
+///
+/// Validates each `<func>() OVER (...)` against the function registry.
+/// Names that are neither registered window functions nor aggregates
+/// (PostgreSQL allows aggregates as windows) are rejected here so the
+/// Data-Plane evaluator never receives an unrecognised verb.
 pub fn extract_window_functions(
     items: &[ast::SelectItem],
-    _functions: &FunctionRegistry,
+    functions: &FunctionRegistry,
 ) -> Result<Vec<WindowSpec>> {
     let mut specs = Vec::new();
     for item in items {
@@ -23,13 +28,17 @@ pub fn extract_window_functions(
         if let ast::Expr::Function(func) = expr
             && func.over.is_some()
         {
-            specs.push(convert_window_spec(func, &alias)?);
+            specs.push(convert_window_spec(func, &alias, functions)?);
         }
     }
     Ok(specs)
 }
 
-fn convert_window_spec(func: &ast::Function, alias: &str) -> Result<WindowSpec> {
+fn convert_window_spec(
+    func: &ast::Function,
+    alias: &str,
+    functions: &FunctionRegistry,
+) -> Result<WindowSpec> {
     if func.name.0.len() > 1 {
         let qualified: String = func
             .name
@@ -57,6 +66,25 @@ fn convert_window_spec(func: &ast::Function, alias: &str) -> Result<WindowSpec> 
         })
         .collect::<Vec<_>>()
         .join(".");
+
+    // Reject unknown names at plan time. PostgreSQL permits aggregates as
+    // windows, so accept either Window or Aggregate categories.
+    match functions.lookup(&name).map(|m| m.category) {
+        Some(FunctionCategory::Window) | Some(FunctionCategory::Aggregate) => {}
+        Some(FunctionCategory::Scalar) => {
+            return Err(SqlError::InvalidFunction {
+                detail: format!(
+                    "function '{name}() OVER ()' does not exist as a window function \
+                     (it is a scalar function)"
+                ),
+            });
+        }
+        None => {
+            return Err(SqlError::InvalidFunction {
+                detail: format!("function '{name}() OVER ()' does not exist"),
+            });
+        }
+    }
 
     let args = match &func.args {
         ast::FunctionArguments::List(args) => args

@@ -128,6 +128,33 @@ pub(super) fn aggregate_functions() -> Vec<FunctionMeta> {
             None,
             arg_types::NTH_VALUE_ARGS,
         ),
+        m(
+            "ntile",
+            FunctionCategory::Window,
+            1,
+            1,
+            no_trigger(),
+            Some(ColumnType::Int64),
+            arg_types::NTILE_ARGS,
+        ),
+        m(
+            "percent_rank",
+            FunctionCategory::Window,
+            0,
+            0,
+            no_trigger(),
+            Some(ColumnType::Float64),
+            arg_types::NO_ARGS,
+        ),
+        m(
+            "cume_dist",
+            FunctionCategory::Window,
+            0,
+            0,
+            no_trigger(),
+            Some(ColumnType::Float64),
+            arg_types::NO_ARGS,
+        ),
         // ── Timeseries aggregates ──
         m(
             "ts_percentile",

@@ -94,6 +94,8 @@ pub static FIRST_LAST_VALUE_ARGS: &[ArgTypeSpec] = &[any("expr")];
 
 pub static NTH_VALUE_ARGS: &[ArgTypeSpec] = &[any("expr"), typed("n", INT64_ONLY)];
 
+pub static NTILE_ARGS: &[ArgTypeSpec] = &[typed("buckets", INT64_ONLY)];
+
 // ── Vector search ────────────────────────────────────────────────────────────
 
 pub static VECTOR_DISTANCE_ARGS: &[ArgTypeSpec] = &[
