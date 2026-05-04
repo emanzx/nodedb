@@ -278,6 +278,15 @@ pub enum DocumentOp {
         #[serde(default)]
         #[msgpack(default)]
         returning: Option<ReturningSpec>,
+        /// Optimistic pre-execution predicted matching surrogates (OLLP path).
+        ///
+        /// When `Some`, the executor verifies that the actual set of matching
+        /// surrogates equals this sorted set before applying any write. On
+        /// mismatch the executor returns `ErrorCode::OllpRetryRequired` without
+        /// writing. `None` on the non-OLLP (static-set) path — no verification.
+        #[serde(default)]
+        #[msgpack(default)]
+        ollp_predicted_surrogates: Option<Vec<u32>>,
     },
 
     /// Bulk delete: scan + delete all matches.
@@ -288,5 +297,14 @@ pub enum DocumentOp {
         #[serde(default)]
         #[msgpack(default)]
         returning: Option<ReturningSpec>,
+        /// Optimistic pre-execution predicted matching surrogates (OLLP path).
+        ///
+        /// When `Some`, the executor verifies that the actual set of matching
+        /// surrogates equals this sorted set before applying any write. On
+        /// mismatch the executor returns `ErrorCode::OllpRetryRequired` without
+        /// writing. `None` on the non-OLLP (static-set) path — no verification.
+        #[serde(default)]
+        #[msgpack(default)]
+        ollp_predicted_surrogates: Option<Vec<u32>>,
     },
 }

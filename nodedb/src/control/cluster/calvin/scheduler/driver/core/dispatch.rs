@@ -205,6 +205,8 @@ impl Scheduler {
                 // no-determinism: dispatch_time is scheduler observability, not Calvin WAL data
                 dispatch_time: dispatch_instant,
                 lock_acquired_time,
+                predicate_class_hash: None,
+                retry_count: 0,
             },
         );
     }
@@ -319,6 +321,8 @@ impl Scheduler {
                 // no-determinism: dispatch_time is scheduler observability, not Calvin WAL data
                 dispatch_time: dispatch_instant,
                 lock_acquired_time,
+                predicate_class_hash: None,
+                retry_count: 0,
             },
         );
     }

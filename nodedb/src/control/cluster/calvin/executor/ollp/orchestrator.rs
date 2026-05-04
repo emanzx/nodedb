@@ -171,6 +171,11 @@ impl OllpOrchestrator {
         }
     }
 
+    /// Return the configured maximum retry count for OLLP transactions.
+    pub fn ollp_max_retries(&self) -> u8 {
+        self.config.ollp_max_retries.min(u8::MAX as u32) as u8
+    }
+
     /// Emit OLLP metrics in Prometheus text exposition format.
     ///
     /// Called from the node's Prometheus scrape endpoint to include OLLP

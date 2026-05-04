@@ -242,6 +242,14 @@ pub enum ErrorCode {
     /// fatal error and the operator must restart the shard (WAL replay restores
     /// correct state on startup). Never silently continues.
     RollbackFailed { entry_index: usize, detail: String },
+    /// The active Calvin executor detected that the declared predicate no
+    /// longer matches the engine state at execution time (OLLP mismatch).
+    /// No write was applied. The OLLP orchestrator retries with a fresh
+    /// pre-execution scan.
+    ///
+    /// Numeric value: `OLLP_RETRY_REQUIRED_CODE` (0xCAAD) — single source of
+    /// truth defined in `control/cluster/calvin/executor/ollp/orchestrator.rs`.
+    OllpRetryRequired,
 }
 
 impl From<crate::Error> for ErrorCode {

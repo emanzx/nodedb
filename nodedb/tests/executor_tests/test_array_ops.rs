@@ -111,6 +111,7 @@ fn array_contains_filter() {
             filters: filter_bytes,
             updates: vec![],
             returning: None,
+            ollp_predicted_surrogates: None,
         }),
     );
 
@@ -144,6 +145,7 @@ fn array_contains_all_filter() {
             filters: filter_bytes,
             updates: vec![],
             returning: None,
+            ollp_predicted_surrogates: None,
         }),
     );
 
@@ -177,6 +179,7 @@ fn array_overlap_filter() {
             filters: filter_bytes,
             updates: vec![],
             returning: None,
+            ollp_predicted_surrogates: None,
         }),
     );
 
@@ -294,6 +297,7 @@ fn no_match_returns_zero() {
             filters: filter_bytes,
             updates: vec![],
             returning: None,
+            ollp_predicted_surrogates: None,
         }),
     );
 

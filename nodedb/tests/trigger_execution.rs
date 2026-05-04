@@ -181,6 +181,7 @@ fn classify_bulk_delete() {
         collection: "logs".into(),
         filters: vec![],
         returning: None,
+        ollp_predicted_surrogates: None,
     });
     let info = classify_dml_write(&plan).unwrap();
     assert_eq!(info.collection, "logs");

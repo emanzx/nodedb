@@ -94,6 +94,7 @@ impl CoreLoop {
         filter_bytes: &[u8],
         updates: &[(String, crate::bridge::physical_plan::UpdateValue)],
         returning: Option<&ReturningSpec>,
+        ollp_predicted_surrogates: Option<&[u32]>,
     ) -> Response {
         debug!(core = self.core_id, %collection, has_returning = returning.is_some(), "bulk update");
 
@@ -136,6 +137,19 @@ impl CoreLoop {
                 );
             }
         };
+
+        // OLLP verification: when predicted surrogates are provided, compare
+        // against the actual matching set. On mismatch return OllpRetryRequired
+        // WITHOUT writing. The set comparison is deterministic: both sides are
+        // sorted before comparison.
+        if let Some(predicted) = ollp_predicted_surrogates {
+            let actual = ollp_actual_surrogates(&matching_ids);
+            let mut predicted_sorted: Vec<u32> = predicted.to_vec();
+            predicted_sorted.sort_unstable();
+            if actual != predicted_sorted {
+                return self.response_error(task, ErrorCode::OllpRetryRequired);
+            }
+        }
 
         // Check if this is a strict (Binary Tuple) collection.
         let strict_schema = self.doc_configs.get(&config_key).and_then(|c| {
@@ -292,6 +306,7 @@ impl CoreLoop {
         collection: &str,
         filter_bytes: &[u8],
         returning: Option<&ReturningSpec>,
+        ollp_predicted_surrogates: Option<&[u32]>,
     ) -> Response {
         debug!(core = self.core_id, %collection, has_returning = returning.is_some(), "bulk delete");
 
@@ -323,6 +338,19 @@ impl CoreLoop {
                 );
             }
         };
+
+        // OLLP verification: when predicted surrogates are provided, compare
+        // against the actual matching set. On mismatch return OllpRetryRequired
+        // WITHOUT writing. The set comparison is deterministic: both sides are
+        // sorted before comparison.
+        if let Some(predicted) = ollp_predicted_surrogates {
+            let actual = ollp_actual_surrogates(&matching_ids);
+            let mut predicted_sorted: Vec<u32> = predicted.to_vec();
+            predicted_sorted.sort_unstable();
+            if actual != predicted_sorted {
+                return self.response_error(task, ErrorCode::OllpRetryRequired);
+            }
+        }
 
         // Delete each matching document with full cascade.
         let mut affected = 0u64;
@@ -423,4 +451,29 @@ impl CoreLoop {
             }
         }
     }
+}
+
+/// Compute the sorted list of surrogates from scanned document IDs.
+///
+/// Document storage keys are 8-character hex-encoded u32 surrogates
+/// (see `engine::document::store::key`). Ids that cannot be parsed are
+/// silently skipped — they represent legacy non-surrogate documents that
+/// do not participate in OLLP verification.
+///
+/// The output is sorted ascending, matching the contract expected by the
+/// OLLP verification comparison on both sides (Data Plane and Control
+/// Plane pre-exec).
+fn ollp_actual_surrogates(doc_ids: &[String]) -> Vec<u32> {
+    let mut surrogates: Vec<u32> = doc_ids
+        .iter()
+        .filter_map(|id| {
+            if id.len() == 8 {
+                u32::from_str_radix(id, 16).ok()
+            } else {
+                None
+            }
+        })
+        .collect();
+    surrogates.sort_unstable();
+    surrogates
 }

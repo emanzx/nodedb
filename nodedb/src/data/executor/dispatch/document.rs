@@ -184,6 +184,7 @@ impl CoreLoop {
                 filters,
                 updates,
                 returning,
+                ollp_predicted_surrogates,
             } => self.execute_bulk_update(
                 task,
                 tid,
@@ -191,13 +192,22 @@ impl CoreLoop {
                 filters,
                 updates,
                 returning.as_ref(),
+                ollp_predicted_surrogates.as_deref(),
             ),
 
             DocumentOp::BulkDelete {
                 collection,
                 filters,
                 returning,
-            } => self.execute_bulk_delete(task, tid, collection, filters, returning.as_ref()),
+                ollp_predicted_surrogates,
+            } => self.execute_bulk_delete(
+                task,
+                tid,
+                collection,
+                filters,
+                returning.as_ref(),
+                ollp_predicted_surrogates.as_deref(),
+            ),
 
             DocumentOp::Upsert {
                 collection,
