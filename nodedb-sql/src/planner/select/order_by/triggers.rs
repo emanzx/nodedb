@@ -106,6 +106,7 @@ pub(super) fn try_extract_sort_search(
                     SqlPlan::Scan { filters, .. } => filters.clone(),
                     _ => Vec::new(),
                 },
+                score_alias: score_alias.map(|s| s.to_string()),
             }))
         }
         SearchTrigger::TextSearch => Ok(None),

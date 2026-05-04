@@ -298,8 +298,15 @@ pub(super) fn convert_one(
             collection,
             query,
             top_k,
+            score_alias,
             ..
-        } => super::scan::convert_text_search(collection, query, top_k, tenant_id),
+        } => super::scan::convert_text_search(
+            collection,
+            query,
+            top_k,
+            score_alias.as_deref(),
+            tenant_id,
+        ),
 
         SqlPlan::HybridSearch {
             collection,

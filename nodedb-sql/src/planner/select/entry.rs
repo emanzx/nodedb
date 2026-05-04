@@ -122,16 +122,22 @@ pub fn plan_query(
             if let Some(order_by) = &query.order_by {
                 plan = apply_order_by(&plan, order_by, functions, &select.projection)?;
             }
-            // Fall back to a SELECT-projection scan for hybrid-search triggers.
-            // The `SELECT id, rrf_score(...) AS score FROM c WHERE ... LIMIT N`
-            // shape has no ORDER BY, so `apply_order_by` cannot fire. Without
-            // this second-chance check the rrf_score column resolves through
-            // scalar evaluation (with no implementation) and returns NULL.
-            if matches!(plan, SqlPlan::Scan { .. })
-                && let Some(hybrid_plan) =
+            // Fall back to a SELECT-projection scan for hybrid-search and
+            // text-search triggers. The `SELECT id, rrf_score(...) AS score
+            // FROM c WHERE ... LIMIT N` shape has no ORDER BY, so
+            // `apply_order_by` cannot fire. The same applies to
+            // `SELECT id, bm25_score(field, term) FROM c ORDER BY id` where
+            // ORDER BY does not contain a search trigger.
+            //
+            // Also fires when the plan is already `TextSearch` (set by the
+            // WHERE `text_match(...)` path) and the SELECT list additionally
+            // contains `bm25_score(...)` — in that case we attach the
+            // `score_alias` so the executor knows to inject the score column.
+            if matches!(plan, SqlPlan::Scan { .. } | SqlPlan::TextSearch { .. })
+                && let Some(upgraded_plan) =
                     try_hybrid_from_projection(&plan, &select.projection, functions)?
             {
-                plan = hybrid_plan;
+                plan = upgraded_plan;
             }
             // After ORDER BY: if we now have a VectorSearch, check whether
             // the collection is vector-primary and the projection is

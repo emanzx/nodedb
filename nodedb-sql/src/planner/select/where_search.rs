@@ -158,6 +158,7 @@ fn plan_text_from_where(
         },
         top_k: 1000,
         filters: extra_filter_to_filters(extra_filter)?,
+        score_alias: None,
     }))
 }
 

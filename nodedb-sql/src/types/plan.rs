@@ -347,6 +347,13 @@ pub enum SqlPlan {
         query: FtsQuery,
         top_k: usize,
         filters: Vec<Filter>,
+        /// When set, the SELECT list contains `bm25_score(field, term)` and the
+        /// caller wants a full-collection scan with the score injected under this
+        /// alias. The converter emits `TextOp::BM25ScoreScan` instead of
+        /// `TextOp::Search` so that all documents — including non-matching ones —
+        /// appear in the response with `null` for the score when they do not
+        /// contain the term.
+        score_alias: Option<String>,
     },
     HybridSearch {
         collection: String,

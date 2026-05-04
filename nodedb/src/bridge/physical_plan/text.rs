@@ -29,6 +29,24 @@ pub enum TextOp {
         rls_filters: Vec<u8>,
     },
 
+    /// Full-collection scan with per-row BM25 score injection.
+    ///
+    /// Scans every document in the collection, runs FTS scoring for each
+    /// document against `query`, and returns all documents with a score
+    /// column appended under `score_alias`. Documents that do not match the
+    /// query receive a `null` score. This is the physical plan used when
+    /// `bm25_score(field, term)` appears as a SELECT projection without a
+    /// restricting WHERE clause — all rows must be present in the result set
+    /// so the query planner cannot emit the hit-only `TextOp::Search` shape.
+    BM25ScoreScan {
+        collection: String,
+        query: String,
+        /// Column name under which the BM25 score is injected into each row.
+        score_alias: String,
+        /// Enable fuzzy matching for the scoring pass.
+        fuzzy: bool,
+    },
+
     /// Hybrid search: vector similarity + BM25 text, fused via RRF.
     HybridSearch {
         collection: String,

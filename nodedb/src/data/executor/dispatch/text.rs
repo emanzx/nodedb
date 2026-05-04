@@ -28,6 +28,13 @@ impl CoreLoop {
                 rls_filters,
             ),
 
+            TextOp::BM25ScoreScan {
+                collection,
+                query,
+                score_alias,
+                fuzzy,
+            } => self.execute_bm25_score_scan(task, tid, collection, query, score_alias, *fuzzy),
+
             TextOp::HybridSearch {
                 collection,
                 query_vector,

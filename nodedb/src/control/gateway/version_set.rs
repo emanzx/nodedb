@@ -197,9 +197,9 @@ pub fn touched_collections(plan: &PhysicalPlan) -> Vec<String> {
         PhysicalPlan::Text(op) => {
             use TextOp::*;
             match op {
-                Search { collection, .. } | HybridSearch { collection, .. } => {
-                    out.push(collection.clone())
-                }
+                Search { collection, .. }
+                | BM25ScoreScan { collection, .. }
+                | HybridSearch { collection, .. } => out.push(collection.clone()),
             }
         }
 

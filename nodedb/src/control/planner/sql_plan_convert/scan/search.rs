@@ -146,6 +146,7 @@ pub(in crate::control::planner::sql_plan_convert) fn convert_text_search(
     collection: &str,
     query: &nodedb_sql::fts_types::FtsQuery,
     top_k: &usize,
+    score_alias: Option<&str>,
     tenant_id: TenantId,
 ) -> crate::Result<Vec<PhysicalTask>> {
     let query_str = query
@@ -157,17 +158,33 @@ pub(in crate::control::planner::sql_plan_convert) fn convert_text_search(
         })?;
     let fuzzy = query.is_fuzzy();
     let vshard = VShardId::from_collection(collection);
-    Ok(vec![PhysicalTask {
-        tenant_id,
-        vshard_id: vshard,
-        plan: PhysicalPlan::Text(TextOp::Search {
+
+    // When a score alias is present the caller wants a full-collection scan
+    // with BM25 scores injected per row (all rows appear, non-matching rows
+    // receive a null score). Emit `BM25ScoreScan` for that shape; emit the
+    // hit-only `Search` for the WHERE `text_match(...)` shape.
+    let op = if let Some(alias) = score_alias {
+        TextOp::BM25ScoreScan {
+            collection: collection.into(),
+            query: query_str,
+            score_alias: alias.to_string(),
+            fuzzy,
+        }
+    } else {
+        TextOp::Search {
             collection: collection.into(),
             query: query_str,
             top_k: *top_k,
             fuzzy,
             prefilter: None,
             rls_filters: Vec::new(),
-        }),
+        }
+    };
+
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: PhysicalPlan::Text(op),
         post_set_op: PostSetOp::None,
     }])
 }
