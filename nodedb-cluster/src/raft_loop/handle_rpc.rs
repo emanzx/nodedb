@@ -137,13 +137,34 @@ impl<A: CommitApplier, P: PlanExecutor> RaftRpcHandler for RaftLoop<A, P> {
                     let mut mr = self.multi_raft.lock().unwrap_or_else(|p| p.into_inner());
                     mr.handle_install_snapshot(&req)?
                 };
-                // Snapshot install fast-forwards `last_applied` to
-                // `last_included_index` inside the Raft node without
-                // ever producing committed entries for the apply
-                // loop. Mirror that jump into the per-group apply
-                // watcher here so waiters on this group's apply
-                // watermark wake up promptly.
-                self.group_watchers.bump(group_id, last_included_index);
+                // Watcher contract: `applied_index` means "state visible
+                // on this node up to index N", NOT "raft has advanced to
+                // N". Bumping the watcher must therefore mirror actual
+                // state-machine progress.
+                //
+                // - Metadata group: `mr.handle_install_snapshot` restores
+                //   the metadata state machine synchronously before
+                //   returning, so the watcher can be bumped here — state
+                //   IS visible at `last_included_index`.
+                //
+                // - Data groups: snapshot install fast-forwards raft's
+                //   `last_applied` but does NOT restore the data-plane
+                //   state machine (no committed entries are produced for
+                //   `run_apply_loop`, and there is currently no
+                //   data-group state-machine snapshot restore path).
+                //   Bumping the watcher here would wake waiters that
+                //   then read missing state — silent data-loss-shaped
+                //   bug. The data-group watcher is bumped only by the
+                //   host crate's apply loop after the SPSC round-trip
+                //   completes; that path is the single source of truth
+                //   for "state visible".
+                //
+                // When data-group state-machine snapshots are
+                // implemented, the restore path must bump the watcher
+                // itself — not this handler.
+                if group_id == TOPOLOGY_GROUP_ID {
+                    self.group_watchers.bump(group_id, last_included_index);
+                }
                 Ok(RaftRpc::InstallSnapshotResponse(resp))
             }
             // Cluster join — full orchestration in `super::join`.
