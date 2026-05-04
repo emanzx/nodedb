@@ -3,7 +3,8 @@
 //! Prepends a Calvin-specific preamble row to EXPLAIN output when the task
 //! set spans multiple vShards or when best-effort non-atomic dispatch is active.
 
-use crate::control::planner::calvin_dispatch::{DispatchClass, classify_dispatch};
+use crate::control::planner::calvin::dispatch::classify_dispatch;
+use crate::control::planner::calvin::types::DispatchClass;
 use crate::control::planner::physical::PhysicalTask;
 use crate::control::server::pgwire::session::cross_shard_mode::CrossShardTxnMode;
 
@@ -37,25 +38,18 @@ pub fn calvin_explain_preamble(
                     .join(", ")
             );
 
-            // epoch and position are runtime values assigned by the sequencer
-            // at admission time, after planning. EXPLAIN runs at planning time
-            // and cannot know these values. EXPLAIN ANALYZE (option B) could
-            // thread actual values back from the response path — that is a
-            // future enhancement deferred from this batch.
             let sequencer_note = "epoch: <assigned by sequencer at admission> | \
                                   position: <assigned by sequencer>";
 
             let preamble = match mode {
                 CrossShardTxnMode::Strict => {
                     if let Some(read_set_size) = predicted_read_set_size {
-                        // Dependent-read (OLLP) path
                         format!(
                             "Calvin dependent-read dispatch (OLLP) | vshards: {vshard_list} | \
                              predicted_read_set_size: {read_set_size} | mode: strict | \
                              {sequencer_note}"
                         )
                     } else {
-                        // Static path
                         format!(
                             "Calvin static dispatch | vshards: {vshard_list} | mode: strict | \
                              {sequencer_note}"

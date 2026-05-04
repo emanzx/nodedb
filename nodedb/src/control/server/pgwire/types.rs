@@ -218,6 +218,14 @@ pub fn error_code_to_sqlstate(code: &ErrorCode) -> (&'static str, &'static str, 
                  shard state is unknown — restart required"
             ),
         ),
+        // OllpRetryRequired is an internal scheduler signal and should not
+        // reach the pgwire layer as a user-visible error. If it does, surface
+        // it as a serialization failure so clients retry automatically.
+        ErrorCode::OllpRetryRequired => (
+            "ERROR",
+            sqlstate::SERIALIZATION_FAILURE,
+            "optimistic predicate retry required; transaction will be retried".into(),
+        ),
     }
 }
 

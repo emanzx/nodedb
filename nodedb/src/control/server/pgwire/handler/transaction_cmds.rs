@@ -7,7 +7,7 @@
 use pgwire::api::results::{Response, Tag};
 use pgwire::error::{ErrorInfo, PgWireError, PgWireResult};
 
-use crate::control::planner::calvin_dispatch::{
+use crate::control::planner::calvin::{
     DispatchClass, DispatchOutcome, classify_dispatch, dispatch_calvin_or_fast,
 };
 use crate::control::security::identity::AuthenticatedIdentity;

@@ -11,4 +11,5 @@ mod check_enforcement;
 mod execute;
 mod gateway_dispatch;
 mod kv_wrapping;
+mod ollp_helpers;
 mod set_ops;

@@ -1,6 +1,5 @@
 pub(crate) mod auto_tier;
-pub mod calvin_dispatch;
-pub mod calvin_explain;
+pub mod calvin;
 pub mod catalog_adapter;
 pub mod context;
 pub mod descriptor_set;

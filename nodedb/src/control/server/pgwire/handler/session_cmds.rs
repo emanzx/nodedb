@@ -347,7 +347,7 @@ impl NodeDbPgHandler {
 
         // Prepend Calvin preamble row when tasks span multiple vShards.
         {
-            use crate::control::planner::calvin_explain::calvin_explain_preamble;
+            use crate::control::planner::calvin::calvin_explain_preamble;
             let mode = self.sessions.cross_shard_txn_mode(addr);
             if let Some(preamble) = calvin_explain_preamble(&tasks, mode, None) {
                 encoder.encode_field(&preamble)?;

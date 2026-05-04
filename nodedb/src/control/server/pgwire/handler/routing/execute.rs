@@ -7,8 +7,11 @@ use std::sync::Arc;
 use pgwire::api::results::{Response, Tag};
 use pgwire::error::{ErrorInfo, PgWireError, PgWireResult};
 
-use crate::control::planner::calvin_dispatch::{
-    DispatchClass, DispatchOutcome, classify_dispatch, dispatch_calvin_or_fast,
+use super::ollp_helpers::{extract_bulk_predicate_info, inject_ollp_surrogates};
+use crate::control::planner::calvin::preexec::run_preexec_scan;
+use crate::control::planner::calvin::{
+    DispatchClass, DispatchOutcome, build_dependent_tx_class, classify_dispatch,
+    dispatch_calvin_or_fast, dispatch_dependent_read, is_dependent_predicate, predicate_class,
 };
 use crate::control::planner::physical::{PhysicalTask, PostSetOp};
 use crate::control::security::identity::AuthenticatedIdentity;
@@ -353,34 +356,135 @@ impl NodeDbPgHandler {
                             )))
                         })?;
 
-                    let dispatch = dispatch_calvin_or_fast(
-                        &tasks,
-                        cross_shard_mode,
-                        tx_state,
-                        inbox,
-                        orchestrator,
-                        tenant_id,
-                    )
-                    .await
-                    .map_err(|e| {
-                        let (severity, code, message) = error_to_sqlstate(&e);
-                        PgWireError::UserError(Box::new(ErrorInfo::new(
-                            severity.to_owned(),
-                            code.to_owned(),
-                            message,
-                        )))
-                    })?;
+                    // Determine if any write task has a value-dependent predicate
+                    // (BulkUpdate/BulkDelete). If so, use the OLLP dependent-read
+                    // path; otherwise use the static Calvin path.
+                    let dependent_task = tasks
+                        .iter()
+                        .find(|t| is_dependent_predicate(&t.plan));
 
-                    let inbox_seq = match dispatch {
-                        DispatchOutcome::CalvinStatic { inbox_seq }
-                        | DispatchOutcome::CalvinDependent { inbox_seq } => inbox_seq,
-                        DispatchOutcome::SingleShard | DispatchOutcome::BestEffortNonAtomic => {
-                            return Err(PgWireError::UserError(Box::new(ErrorInfo::new(
-                                "ERROR".to_owned(),
-                                "XX000".to_owned(),
-                                "unexpected non-Calvin dispatch outcome for strict multi-shard query"
-                                    .to_owned(),
-                            ))));
+                    let inbox_seq = if let Some(dep_task) = dependent_task {
+                        // OLLP path: run optimistic pre-execution scan, then submit
+                        // via dispatch_dependent_read with the predicted surrogates
+                        // embedded in the plan.
+                        let orc = orchestrator.ok_or_else(|| {
+                            let (severity, code, message) =
+                                error_to_sqlstate(&crate::Error::SequencerUnavailable);
+                            PgWireError::UserError(Box::new(ErrorInfo::new(
+                                severity.to_owned(),
+                                code.to_owned(),
+                                message,
+                            )))
+                        })?;
+                        let inbox = inbox.ok_or_else(|| {
+                            let (severity, code, message) =
+                                error_to_sqlstate(&crate::Error::SequencerUnavailable);
+                            PgWireError::UserError(Box::new(ErrorInfo::new(
+                                severity.to_owned(),
+                                code.to_owned(),
+                                message,
+                            )))
+                        })?;
+
+                        // Extract collection and filter bytes from the dependent plan.
+                        let (dep_collection, dep_filter_bytes) =
+                            extract_bulk_predicate_info(&dep_task.plan);
+
+                        let pred_class = predicate_class(&dep_collection, &dep_collection);
+
+                        // Run preexec scan to get current matching surrogates.
+                        let predicted = run_preexec_scan(
+                            &self.state,
+                            tenant_id,
+                            &dep_collection,
+                            dep_filter_bytes.clone(),
+                        )
+                        .await
+                        .map_err(|e| {
+                            let (severity, code, message) = error_to_sqlstate(&e);
+                            PgWireError::UserError(Box::new(ErrorInfo::new(
+                                severity.to_owned(),
+                                code.to_owned(),
+                                message,
+                            )))
+                        })?;
+
+                        // Capture for the tx_builder closure (must be Clone-able).
+                        let tasks_snapshot = tasks.clone();
+                        let collection_clone = dep_collection.clone();
+                        let predicted_clone = predicted.clone();
+
+                        dispatch_dependent_read(
+                            orc,
+                            inbox,
+                            pred_class,
+                            tenant_id,
+                            || {
+                                // Inject predicted surrogates into the plans.
+                                let modified_tasks: Vec<PhysicalTask> = tasks_snapshot
+                                    .iter()
+                                    .map(|t| {
+                                        let mut t = t.clone();
+                                        inject_ollp_surrogates(
+                                            &mut t.plan,
+                                            predicted_clone.clone(),
+                                        );
+                                        t
+                                    })
+                                    .collect();
+
+                                build_dependent_tx_class(
+                                    &modified_tasks,
+                                    tenant_id,
+                                    &collection_clone,
+                                    &predicted_clone,
+                                )
+                            },
+                            // Use the orchestrator's configured max retries.
+                            orc.ollp_max_retries(),
+                        )
+                        .await
+                        .map_err(|e| {
+                            let (severity, code, message) = error_to_sqlstate(&e);
+                            PgWireError::UserError(Box::new(ErrorInfo::new(
+                                severity.to_owned(),
+                                code.to_owned(),
+                                message,
+                            )))
+                        })?
+                    } else {
+                        // Static Calvin path: all write keys are statically known.
+                        let dispatch = dispatch_calvin_or_fast(
+                            &tasks,
+                            cross_shard_mode,
+                            tx_state,
+                            inbox,
+                            orchestrator,
+                            tenant_id,
+                        )
+                        .await
+                        .map_err(|e| {
+                            let (severity, code, message) = error_to_sqlstate(&e);
+                            PgWireError::UserError(Box::new(ErrorInfo::new(
+                                severity.to_owned(),
+                                code.to_owned(),
+                                message,
+                            )))
+                        })?;
+
+                        match dispatch {
+                            DispatchOutcome::CalvinStatic { inbox_seq }
+                            | DispatchOutcome::CalvinDependent { inbox_seq } => inbox_seq,
+                            DispatchOutcome::SingleShard
+                            | DispatchOutcome::BestEffortNonAtomic => {
+                                return Err(PgWireError::UserError(Box::new(ErrorInfo::new(
+                                    "ERROR".to_owned(),
+                                    "XX000".to_owned(),
+                                    "unexpected non-Calvin dispatch outcome for strict \
+                                     multi-shard query"
+                                        .to_owned(),
+                                ))));
+                            }
                         }
                     };
 

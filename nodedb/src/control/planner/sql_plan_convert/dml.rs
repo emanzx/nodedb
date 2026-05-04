@@ -443,6 +443,7 @@ pub(super) fn convert_update(
                 filters: filter_bytes,
                 updates,
                 returning: None,
+                ollp_predicted_surrogates: None,
             }),
             post_set_op: PostSetOp::None,
         }])
@@ -508,6 +509,7 @@ pub(super) fn convert_delete(
                 collection: collection.into(),
                 filters: filter_bytes,
                 returning: None,
+                ollp_predicted_surrogates: None,
             }),
             post_set_op: PostSetOp::None,
         }])

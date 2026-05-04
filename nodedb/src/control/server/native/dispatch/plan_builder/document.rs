@@ -309,6 +309,7 @@ pub(crate) fn build_bulk_update(
         filters,
         updates,
         returning: None,
+        ollp_predicted_surrogates: None,
     }))
 }
 
@@ -327,6 +328,7 @@ pub(crate) fn build_bulk_delete(
         collection: collection.to_string(),
         filters,
         returning: None,
+        ollp_predicted_surrogates: None,
     }))
 }
 
