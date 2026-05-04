@@ -13,7 +13,7 @@
 
 use tempfile::TempDir;
 
-use nodedb::control::cluster::calvin::scheduler::read_last_applied_epoch;
+use nodedb::control::cluster::calvin::scheduler::{NOT_YET_APPLIED_EPOCH, read_last_applied_epoch};
 use nodedb::types::VShardId;
 use nodedb::wal::manager::WalManager;
 
@@ -87,13 +87,20 @@ fn scheduler_restart_returns_max_epoch_not_last_written() {
     }
 }
 
-/// Greenfield: a WAL with no CalvinApplied records should return 0.
+/// Greenfield: a WAL with no CalvinApplied records should return the
+/// `NOT_YET_APPLIED_EPOCH` sentinel (`u64::MAX`).  Epoch 0 is a valid real
+/// epoch, so a distinct sentinel is required to distinguish "never applied"
+/// from "applied epoch 0".  The sentinel makes `is_caught_up` trivially true
+/// on a greenfield node (nothing to rebuild).
 #[test]
-fn scheduler_restart_greenfield_returns_zero() {
+fn scheduler_restart_greenfield_returns_sentinel() {
     let dir = TempDir::new().unwrap();
     let wal = open_wal(&dir);
     let last_epoch = read_last_applied_epoch(&wal, 1).unwrap();
-    assert_eq!(last_epoch, 0, "greenfield WAL should return epoch 0");
+    assert_eq!(
+        last_epoch, NOT_YET_APPLIED_EPOCH,
+        "greenfield WAL should return the not-yet-applied sentinel"
+    );
 }
 
 /// Multiple vshards: recovery for one vshard should not see epochs from another.
