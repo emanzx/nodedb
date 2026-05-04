@@ -67,11 +67,11 @@ DROP TRIGGER audit_orders ON orders;
 SHOW TRIGGERS;
 ```
 
-| Mode | Atomicity | Write latency | Rollback on failure |
-| ---- | --------- | ------------- | ------------------- |
-| `ASYNC` (default) | Eventually consistent | None | No |
-| `SYNC` | Same transaction (ACID) | Trigger time added | Yes |
-| `DEFERRED` | Same transaction, batched | At COMMIT time | Yes |
+| Mode              | Atomicity                 | Write latency      | Rollback on failure |
+| ----------------- | ------------------------- | ------------------ | ------------------- |
+| `ASYNC` (default) | Eventually consistent     | None               | No                  |
+| `SYNC`            | Same transaction (ACID)   | Trigger time added | Yes                 |
+| `DEFERRED`        | Same transaction, batched | At COMMIT time     | Yes                 |
 
 **UPSERT and `ON CONFLICT` firing semantics.** The `WriteOp` tag emitted to the Event Plane is derived from storage prior-bytes, not from the surface SQL verb. An `UPSERT` or `INSERT ... ON CONFLICT (pk) DO UPDATE` that finds an existing row fires `AFTER UPDATE`; the same statement against a non-existent key fires `AFTER INSERT`. `ON CONFLICT DO NOTHING` on a conflict emits no event at all.
 
@@ -248,6 +248,20 @@ Pull-based consumption for simple integrations:
 ```
 GET /v1/streams/{stream}/poll?group={group}&limit=100
 ```
+
+The response includes gap-detection fields alongside the events:
+
+```json
+{
+  "events": [...],
+  "evicted_since_last_poll": 0,
+  "oldest_available_lsn": 19240
+}
+```
+
+`evicted_since_last_poll` is non-zero when the consumer fell behind and the stream buffer wrapped — events in that gap are lost for this consumer. `oldest_available_lsn` lets consumers detect gaps without waiting for the next event to arrive by comparing it against their last-seen LSN.
+
+The `nodedb_cdc_events_dropped_total{tenant,stream}` Prometheus counter tracks drops per named stream. Alert on this counter increasing for a stream whose consumer is active.
 
 ## WebSocket RPC
 

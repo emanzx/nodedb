@@ -222,6 +222,22 @@ DELETE FROM orders WHERE status = 'cancelled';
 TRUNCATE users;
 ```
 
+### RETURNING
+
+Both `UPDATE` and `DELETE` support a `RETURNING` clause to read back affected rows in the same statement:
+
+```sql
+-- UPDATE RETURNING: returns the post-update image
+UPDATE users SET role = 'admin' WHERE id = 'u1' RETURNING id, role;
+UPDATE orders SET status = 'shipped' WHERE id = 'o1' RETURNING *;
+
+-- DELETE RETURNING: returns the pre-delete image
+DELETE FROM users WHERE id = 'u1' RETURNING id, name;
+DELETE FROM orders WHERE status = 'cancelled' RETURNING *;
+```
+
+`RETURNING *` expands to all columns. Named columns are returned as bare values — arithmetic expressions in `RETURNING` are not supported. Works in both simple-query and extended-query (prepared statement) protocols.
+
 ## DDL
 
 ### Collections

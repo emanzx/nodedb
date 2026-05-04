@@ -103,27 +103,30 @@ All non-probe routes are under `/v1/`. JSON responses carry `Content-Type: appli
 
 **Additional endpoints:**
 
-| Endpoint                            | Method      | Purpose                          |
-| ----------------------------------- | ----------- | -------------------------------- |
-| `/v1/query`                         | POST        | Execute SQL, return JSON         |
-| `/v1/query/stream`                  | POST        | Stream results as NDJSON         |
-| `/v1/status`                        | GET         | Node status                      |
-| `/v1/cluster/status`                | GET         | Cluster status                   |
-| `/v1/auth/exchange-key`             | POST        | API key → session token          |
-| `/v1/auth/session`                  | POST/DELETE | Create/delete session            |
-| `/v1/collections/{name}/crdt/apply` | POST        | CRDT delta application           |
-| `/v1/cdc/{collection}`              | GET         | Change Data Capture (SSE stream) |
-| `/v1/cdc/{collection}/poll`         | GET         | CDC poll-based                   |
-| `/v1/streams/{stream}/events`       | GET         | Named-stream events (SSE)        |
-| `/v1/streams/{stream}/poll`         | GET         | Named-stream long-poll           |
-| `/v1/ws`                            | GET         | WebSocket upgrade                |
-| `/v1/obsv/api/v1/write`             | POST        | Prometheus remote write          |
-| `/v1/obsv/api/v1/query_range`       | POST        | PromQL range queries             |
-| `/healthz`                          | GET         | k8s readiness probe              |
-| `/health/live`                      | GET         | Liveness                         |
-| `/health/ready`                     | GET         | Readiness                        |
-| `/health/drain`                     | POST        | Cooperative drain                |
-| `/metrics`                          | GET         | Prometheus metrics               |
+| Endpoint                                 | Method      | Purpose                          |
+| ---------------------------------------- | ----------- | -------------------------------- |
+| `/v1/query`                              | POST        | Execute SQL, return JSON         |
+| `/v1/query/stream`                       | POST        | Stream results as NDJSON         |
+| `/v1/status`                             | GET         | Node status                      |
+| `/v1/cluster/status`                     | GET         | Cluster status                   |
+| `/v1/auth/exchange-key`                  | POST        | API key → session token          |
+| `/v1/auth/session`                       | POST/DELETE | Create/delete session            |
+| `/v1/collections/{name}/crdt/apply`      | POST        | CRDT delta application           |
+| `/v1/cdc/{collection}`                   | GET         | Change Data Capture (SSE stream) |
+| `/v1/cdc/{collection}/poll`              | GET         | CDC poll-based                   |
+| `/v1/streams/{stream}/events`            | GET         | Named-stream events (SSE)        |
+| `/v1/streams/{stream}/poll`              | GET         | Named-stream long-poll           |
+| `/v1/cluster/debug/raft/{group_id}`      | GET         | Raft group diagnostics           |
+| `/v1/cluster/debug/transport`            | GET         | QUIC transport diagnostics       |
+| `/v1/cluster/debug/quarantined-segments` | GET         | Segments in CRC quarantine       |
+| `/v1/ws`                                 | GET         | WebSocket upgrade                |
+| `/v1/obsv/api/v1/write`                  | POST        | Prometheus remote write          |
+| `/v1/obsv/api/v1/query_range`            | POST        | PromQL range queries             |
+| `/healthz`                               | GET         | k8s readiness probe              |
+| `/health/live`                           | GET         | Liveness                         |
+| `/health/ready`                          | GET         | Readiness                        |
+| `/health/drain`                          | POST        | Cooperative drain                |
+| `/metrics`                               | GET         | Prometheus metrics               |
 
 ## RESP (Redis Protocol)
 

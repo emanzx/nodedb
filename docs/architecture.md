@@ -122,6 +122,34 @@ NodeDB-Lite (the embedded variant) writes CRDT deltas locally. When connectivity
 
 See [NodeDB-Lite](lite.md) for details on the embedded database.
 
+## Multi-Raft Consensus
+
+NodeDB uses Multi-Raft — each vShard is its own independent Raft group. Three kinds run simultaneously:
+
+| Kind          | Purpose                                                       |
+| ------------- | ------------------------------------------------------------- |
+| **Data**      | One per vShard — replicates WAL entries for that shard's data |
+| **Meta**      | Cluster membership, catalog, schema                           |
+| **Sequencer** | Cross-shard transaction ordering (Calvin epoch log)           |
+
+Each kind has independent leader election. A sequencer leader failure does not affect data-group leaders.
+
+## Cross-Shard Transactions
+
+Write transactions that touch multiple vShards go through the **Calvin sequencer** rather than two-phase commit. The sequencer Raft group produces a globally-ordered log of transaction batches (epochs, default 20 ms). Within each epoch, the scheduler derives a deterministic lock order and the executor runs all writes concurrently without cross-shard coordination.
+
+For value-dependent predicates (e.g., `WHERE balance > 0`), the executor uses **OLLP** (Optimistic Lock Location Prediction): optimistically proceed, then re-validate and retry on mismatch. A circuit breaker opens when the retry ratio exceeds 50% for a predicate class.
+
+```sql
+-- Require atomic cross-shard writes (default)
+SET cross_shard_txn = 'strict';
+
+-- Opt out of atomicity for bulk loads (each shard commits independently)
+SET cross_shard_txn = 'best_effort_non_atomic';
+```
+
+Single-shard writes bypass the sequencer entirely and go directly through the relevant data-group Raft.
+
 ## Cross-Engine Queries
 
 All engines share the same snapshot, transaction context, and memory budget. A query that combines vector similarity, graph traversal, spatial filtering, and document field access executes inside one process — no network hops between engines, no application-level joins.
