@@ -175,6 +175,123 @@ async fn unknown_window_function_is_rejected() {
     );
 }
 
+// ── Window-function aliases must surface as response columns ──
+//
+// The window pass writes its result into the row under the alias, but the
+// projection step (JSON path) silently skips keys that aren't present in the
+// projection list — no NULL emitted, the alias just disappears from the row.
+// The msgpack projection path emits NULL for missing keys; the JSON path must
+// match. Otherwise window-aliased columns vanish from the response with no
+// error or diagnostic.
+
+async fn setup_scored_rows(server: &TestServer) {
+    server
+        .exec(
+            "CREATE COLLECTION s TYPE DOCUMENT STRICT (\
+                id STRING PRIMARY KEY,\
+                score FLOAT\
+             )",
+        )
+        .await
+        .unwrap();
+    server
+        .exec(
+            "INSERT INTO s (id, score) VALUES \
+             ('a', 1.0), ('b', 2.0), ('c', 3.0), ('d', 4.0), ('e', 5.0)",
+        )
+        .await
+        .unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn window_alias_appears_as_response_column() {
+    let server = TestServer::start().await;
+    setup_scored_rows(&server).await;
+
+    let rows = server
+        .query_rows(
+            "SELECT id, score, percent_rank() OVER (ORDER BY score) AS pr_score \
+             FROM s ORDER BY score",
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(rows.len(), 5, "expected 5 rows: {rows:?}");
+    for (i, row) in rows.iter().enumerate() {
+        assert_eq!(
+            row.len(),
+            3,
+            "row {i} must have 3 columns (id, score, pr_score) — \
+             window alias was silently dropped from response: {row:?}"
+        );
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn two_window_aliases_do_not_drop_adjacent_columns() {
+    let server = TestServer::start().await;
+    setup_scored_rows(&server).await;
+
+    let rows = server
+        .query_rows(
+            "SELECT id, score, \
+                    percent_rank() OVER (ORDER BY score DESC) AS pr_desc, \
+                    percent_rank() OVER (ORDER BY score ASC)  AS pr_asc  \
+             FROM s ORDER BY score",
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(rows.len(), 5, "expected 5 rows: {rows:?}");
+    for (i, row) in rows.iter().enumerate() {
+        assert_eq!(
+            row.len(),
+            4,
+            "row {i} must have 4 columns (id, score, pr_desc, pr_asc) — \
+             window aliases plus adjacent score were silently dropped: {row:?}"
+        );
+        let id = row.first().cloned().unwrap_or_default();
+        let score = row.get(1).cloned().unwrap_or_default();
+        assert!(
+            !id.is_empty(),
+            "id column must be present, got empty at row {i}: {row:?}"
+        );
+        assert!(
+            !score.is_empty() && score.to_lowercase() != "null",
+            "non-window column `score` must not be silently dropped/NULL at row {i}: {row:?}"
+        );
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn window_alias_carries_value_not_null() {
+    let server = TestServer::start().await;
+    setup_scored_rows(&server).await;
+
+    let rows = server
+        .query_rows(
+            "SELECT id, percent_rank() OVER (ORDER BY score) AS pr_score \
+             FROM s ORDER BY score",
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(rows.len(), 5, "expected 5 rows: {rows:?}");
+    for (i, row) in rows.iter().enumerate() {
+        assert_eq!(
+            row.len(),
+            2,
+            "row {i} must have 2 columns (id, pr_score) — \
+             window alias dropped from response: {row:?}"
+        );
+        let pr = row.get(1).cloned().unwrap_or_default();
+        assert!(
+            !pr.is_empty() && pr.to_lowercase() != "null",
+            "row {i}: pr_score must carry the window value, got NULL/empty: {row:?}"
+        );
+    }
+}
+
 // ── Regression guard: silent-catch-all must not produce NULL projections ──
 //
 // This is the original symptom from the bug report. It overlaps with the
