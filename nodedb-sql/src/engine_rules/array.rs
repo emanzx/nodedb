@@ -45,6 +45,13 @@ impl EngineRules for ArrayRules {
         ))
     }
 
+    fn plan_update_from(&self, _p: UpdateFromParams) -> Result<Vec<SqlPlan>> {
+        Err(unsupported(
+            "UPDATE ... FROM",
+            "arrays are write-by-coord; re-INSERT to overwrite",
+        ))
+    }
+
     fn plan_delete(&self, _p: DeleteParams) -> Result<Vec<SqlPlan>> {
         Err(unsupported(
             "DELETE",
@@ -56,6 +63,13 @@ impl EngineRules for ArrayRules {
         Err(unsupported(
             "GROUP BY",
             "use ARRAY_AGG for table-valued array aggregates",
+        ))
+    }
+
+    fn plan_merge(&self, _p: MergeParams) -> Result<Vec<SqlPlan>> {
+        Err(unsupported(
+            "MERGE",
+            "use INSERT INTO ARRAY / DELETE FROM ARRAY for array engine mutations",
         ))
     }
 }

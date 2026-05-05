@@ -78,12 +78,38 @@ impl EngineRules for SchemalessRules {
         }])
     }
 
+    fn plan_update_from(&self, p: UpdateFromParams) -> Result<Vec<SqlPlan>> {
+        Ok(vec![SqlPlan::UpdateFrom {
+            collection: p.collection,
+            engine: EngineType::DocumentSchemaless,
+            source: p.source,
+            target_join_col: p.target_join_col,
+            source_join_col: p.source_join_col,
+            assignments: p.assignments,
+            target_filters: p.target_filters,
+            returning: p.returning,
+        }])
+    }
+
     fn plan_delete(&self, p: DeleteParams) -> Result<Vec<SqlPlan>> {
         Ok(vec![SqlPlan::Delete {
             collection: p.collection,
             engine: EngineType::DocumentSchemaless,
             filters: p.filters,
             target_keys: p.target_keys,
+        }])
+    }
+
+    fn plan_merge(&self, p: MergeParams) -> Result<Vec<SqlPlan>> {
+        Ok(vec![SqlPlan::Merge {
+            target: p.collection,
+            engine: EngineType::DocumentSchemaless,
+            source: p.source,
+            target_join_col: p.target_join_col,
+            source_join_col: p.source_join_col,
+            source_alias: p.source_alias,
+            clauses: p.clauses,
+            returning: p.returning,
         }])
     }
 
@@ -107,6 +133,7 @@ impl EngineRules for SchemalessRules {
             aggregates: p.aggregates,
             having: p.having,
             limit: p.limit,
+            grouping_sets: None,
         })
     }
 }

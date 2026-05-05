@@ -8,7 +8,9 @@ pub(super) mod msgpack_write;
 pub(super) mod rows;
 pub(super) mod time_range;
 
-pub(super) use assignments::assignments_to_update_values;
+pub(super) use assignments::{
+    assignments_to_update_values, assignments_to_update_values_qualified,
+};
 pub(super) use convert::{
     sql_value_to_bytes, sql_value_to_msgpack, sql_value_to_nodedb_value, sql_value_to_string,
 };

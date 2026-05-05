@@ -1,4 +1,4 @@
-use nodedb_sql::types::{EngineType, Filter, SqlExpr, SqlValue};
+use nodedb_sql::types::{EngineType, Filter, SqlExpr, SqlPlan, SqlValue};
 use nodedb_types::Surrogate;
 
 use crate::bridge::envelope::PhysicalPlan;
@@ -9,7 +9,8 @@ use super::super::super::physical::{PhysicalTask, PostSetOp};
 use super::super::convert::ConvertContext;
 use super::super::filter::serialize_filters;
 use super::super::value::{
-    assignments_to_update_values, sql_value_to_bytes, sql_value_to_msgpack, sql_value_to_string,
+    assignments_to_update_values, assignments_to_update_values_qualified, sql_value_to_bytes,
+    sql_value_to_msgpack, sql_value_to_string,
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -171,4 +172,62 @@ pub(in super::super) fn convert_delete(
             post_set_op: PostSetOp::None,
         }])
     }
+}
+
+/// Lower a `SqlPlan::UpdateFrom` to a `DocumentOp::UpdateFromJoin` physical task.
+///
+/// The source collection name and alias are extracted from the `source` plan.
+/// Assignments are converted with table-qualified column references so the Data
+/// Plane can resolve `src.col` against the merged `{target + "src.col": ...}` doc.
+#[allow(clippy::too_many_arguments)]
+pub(in super::super) fn convert_update_from(
+    collection: &str,
+    source: &SqlPlan,
+    target_join_col: &str,
+    source_join_col: &str,
+    assignments: &[(String, SqlExpr)],
+    target_filters: &[Filter],
+    _returning: bool,
+    tenant_id: TenantId,
+) -> crate::Result<Vec<PhysicalTask>> {
+    // Extract source collection name and alias from the source scan plan.
+    let (source_collection, source_alias) = match source {
+        SqlPlan::Scan {
+            collection, alias, ..
+        } => {
+            let alias_str = alias.as_deref().unwrap_or(collection.as_str()).to_string();
+            (collection.clone(), alias_str)
+        }
+        SqlPlan::DocumentIndexLookup {
+            collection, alias, ..
+        } => {
+            let alias_str = alias.as_deref().unwrap_or(collection.as_str()).to_string();
+            (collection.clone(), alias_str)
+        }
+        other => {
+            return Err(crate::Error::PlanError {
+                detail: format!("UpdateFrom source must be a Scan plan, got: {other:?}"),
+            });
+        }
+    };
+
+    let updates = assignments_to_update_values_qualified(assignments)?;
+    let target_filter_bytes = serialize_filters(target_filters)?;
+    let vshard = VShardId::from_collection(collection);
+
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: PhysicalPlan::Document(DocumentOp::UpdateFromJoin {
+            target_collection: collection.into(),
+            source_collection,
+            source_alias,
+            target_join_col: target_join_col.into(),
+            source_join_col: source_join_col.into(),
+            updates,
+            target_filters: target_filter_bytes,
+            returning: None,
+        }),
+        post_set_op: PostSetOp::None,
+    }])
 }

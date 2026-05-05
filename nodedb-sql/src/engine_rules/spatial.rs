@@ -78,6 +78,19 @@ impl EngineRules for SpatialRules {
         }])
     }
 
+    fn plan_update_from(&self, p: UpdateFromParams) -> Result<Vec<SqlPlan>> {
+        Ok(vec![SqlPlan::UpdateFrom {
+            collection: p.collection,
+            engine: EngineType::Spatial,
+            source: p.source,
+            target_join_col: p.target_join_col,
+            source_join_col: p.source_join_col,
+            assignments: p.assignments,
+            target_filters: p.target_filters,
+            returning: p.returning,
+        }])
+    }
+
     fn plan_delete(&self, p: DeleteParams) -> Result<Vec<SqlPlan>> {
         Ok(vec![SqlPlan::Delete {
             collection: p.collection,
@@ -107,6 +120,16 @@ impl EngineRules for SpatialRules {
             aggregates: p.aggregates,
             having: p.having,
             limit: p.limit,
+            grouping_sets: None,
+        })
+    }
+
+    fn plan_merge(&self, p: MergeParams) -> Result<Vec<SqlPlan>> {
+        Err(SqlError::Unsupported {
+            detail: format!(
+                "MERGE is not supported on spatial collection '{}'",
+                p.collection
+            ),
         })
     }
 }

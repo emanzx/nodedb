@@ -2,12 +2,15 @@ pub mod aggregate;
 pub mod array_ddl;
 pub mod array_dml;
 pub mod array_fn;
+pub mod ast_helpers;
 pub mod bitmap_emit;
 pub mod const_fold;
 pub mod cte;
 pub mod dml;
 pub mod dml_helpers;
+pub mod grouping_sets;
 pub mod join;
+pub mod merge;
 pub mod select;
 
 pub use select::qualified_name;

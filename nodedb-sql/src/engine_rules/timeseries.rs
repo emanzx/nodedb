@@ -68,6 +68,16 @@ impl EngineRules for TimeseriesRules {
         })
     }
 
+    fn plan_update_from(&self, p: UpdateFromParams) -> Result<Vec<SqlPlan>> {
+        Err(SqlError::Unsupported {
+            detail: format!(
+                "UPDATE ... FROM is not supported on timeseries collection '{}'; \
+                 timeseries data is append-only",
+                p.collection
+            ),
+        })
+    }
+
     fn plan_delete(&self, p: DeleteParams) -> Result<Vec<SqlPlan>> {
         // Timeseries supports range-based deletion (e.g. retention).
         Ok(vec![SqlPlan::Delete {
@@ -100,6 +110,15 @@ impl EngineRules for TimeseriesRules {
             limit: p.limit,
             tiered: p.has_auto_tier,
             temporal: p.temporal,
+        })
+    }
+
+    fn plan_merge(&self, p: MergeParams) -> Result<Vec<SqlPlan>> {
+        Err(SqlError::Unsupported {
+            detail: format!(
+                "MERGE is not supported on timeseries collection '{}'",
+                p.collection
+            ),
         })
     }
 }

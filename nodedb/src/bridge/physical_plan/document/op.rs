@@ -1,5 +1,6 @@
 use nodedb_types::{Surrogate, SurrogateBitmap};
 
+use super::merge_types::MergeClauseOp;
 use super::types::{EnforcementOptions, RegisteredIndex, ReturningSpec, StorageMode, UpdateValue};
 
 /// Document engine physical operations (schemaless + strict + DML).
@@ -269,6 +270,33 @@ pub enum DocumentOp {
         surrogate: Surrogate,
     },
 
+    /// Update target rows matched by a join with a source collection.
+    ///
+    /// Execution is two-phase within one Data Plane core:
+    /// 1. Scan `source_collection` (all rows).
+    /// 2. For each source row, find all target rows where
+    ///    `target[target_join_col] == source_row[source_join_col]`.
+    /// 3. Build a merged document with source fields qualified as
+    ///    `<source_alias>.<field>` and evaluate `updates` against it,
+    ///    then write back to the target row.
+    UpdateFromJoin {
+        target_collection: String,
+        source_collection: String,
+        /// Qualifier used for source columns in assignment expressions.
+        source_alias: String,
+        /// Field in the target used for the equi-join.
+        target_join_col: String,
+        /// Field in the source used for the equi-join.
+        source_join_col: String,
+        /// SET field assignments; RHS expressions reference the merged document.
+        updates: Vec<(String, UpdateValue)>,
+        /// Additional WHERE predicates applying only to the target (msgpack).
+        target_filters: Vec<u8>,
+        #[serde(default)]
+        #[msgpack(default)]
+        returning: Option<ReturningSpec>,
+    },
+
     /// Bulk update: scan + apply field updates to all matches.
     BulkUpdate {
         collection: String,
@@ -306,5 +334,29 @@ pub enum DocumentOp {
         #[serde(default)]
         #[msgpack(default)]
         ollp_predicted_surrogates: Option<Vec<u32>>,
+    },
+
+    /// MERGE: join-based multi-action DML (INSERT / UPDATE / DELETE per WHEN arm).
+    ///
+    /// Execution:
+    /// 1. Build a join map from the source collection keyed by `source_join_col`.
+    /// 2. Walk all target rows; for each with a matching source row, find the
+    ///    first `Matched` arm whose extra_predicate is satisfied and apply its
+    ///    action.
+    /// 3. Walk source rows with no matching target row; find the first `NotMatched`
+    ///    arm whose extra_predicate is satisfied and apply its action (INSERT).
+    /// 4. Optionally, walk target rows with no matching source row; find the first
+    ///    `NotMatchedBySource` arm and apply it (UPDATE or DELETE).
+    Merge {
+        target_collection: String,
+        source_collection: String,
+        /// Qualifier used for source columns in assignment expressions.
+        source_alias: String,
+        target_join_col: String,
+        source_join_col: String,
+        clauses: Vec<MergeClauseOp>,
+        #[serde(default)]
+        #[msgpack(default)]
+        returning: Option<ReturningSpec>,
     },
 }

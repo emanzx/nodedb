@@ -20,9 +20,11 @@ impl CoreLoop {
                 | DocumentOp::BatchInsert { .. }
                 | DocumentOp::BulkUpdate { .. }
                 | DocumentOp::BulkDelete { .. }
+                | DocumentOp::UpdateFromJoin { .. }
                 | DocumentOp::Upsert { .. }
                 | DocumentOp::InsertSelect { .. }
                 | DocumentOp::BackfillIndex { .. }
+                | DocumentOp::Merge { .. }
         );
         if is_write {
             if let Some(r) =
@@ -179,6 +181,30 @@ impl CoreLoop {
                 *limit,
             ),
 
+            DocumentOp::UpdateFromJoin {
+                target_collection,
+                source_collection,
+                source_alias,
+                target_join_col,
+                source_join_col,
+                updates,
+                target_filters,
+                returning,
+            } => self.execute_update_from_join(
+                task,
+                tid,
+                super::super::handlers::update_from_join::UpdateFromJoinParams {
+                    target_collection,
+                    source_collection,
+                    source_alias,
+                    target_join_col,
+                    source_join_col,
+                    updates,
+                    target_filter_bytes: target_filters,
+                    returning: returning.as_ref(),
+                },
+            ),
+
             DocumentOp::BulkUpdate {
                 collection,
                 filters,
@@ -286,6 +312,27 @@ impl CoreLoop {
             DocumentOp::DropIndex { collection, field } => {
                 self.execute_drop_document_index(task, tid, collection, field)
             }
+
+            DocumentOp::Merge {
+                target_collection,
+                source_collection,
+                source_alias,
+                target_join_col,
+                source_join_col,
+                clauses,
+                returning: _,
+            } => self.execute_merge(
+                task,
+                tid,
+                super::super::handlers::merge::MergeParams {
+                    target_collection,
+                    source_collection,
+                    source_alias,
+                    target_join_col,
+                    source_join_col,
+                    clauses,
+                },
+            ),
 
             DocumentOp::BackfillIndex {
                 collection,

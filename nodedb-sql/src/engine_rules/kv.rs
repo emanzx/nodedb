@@ -75,6 +75,16 @@ impl EngineRules for KvRules {
         }])
     }
 
+    fn plan_update_from(&self, p: UpdateFromParams) -> Result<Vec<SqlPlan>> {
+        Err(SqlError::Unsupported {
+            detail: format!(
+                "UPDATE ... FROM is not supported on KV collection '{}'; \
+                 KV keys are opaque and cannot participate in cross-table join updates",
+                p.collection
+            ),
+        })
+    }
+
     fn plan_delete(&self, p: DeleteParams) -> Result<Vec<SqlPlan>> {
         Ok(vec![SqlPlan::Delete {
             collection: p.collection,
@@ -104,6 +114,16 @@ impl EngineRules for KvRules {
             aggregates: p.aggregates,
             having: p.having,
             limit: p.limit,
+            grouping_sets: None,
+        })
+    }
+
+    fn plan_merge(&self, p: MergeParams) -> Result<Vec<SqlPlan>> {
+        Err(SqlError::Unsupported {
+            detail: format!(
+                "MERGE is not supported on key-value collection '{}'",
+                p.collection
+            ),
         })
     }
 }

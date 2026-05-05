@@ -199,6 +199,26 @@ pub(super) fn convert_one(
             ctx,
         ),
 
+        SqlPlan::UpdateFrom {
+            collection,
+            engine: _,
+            source,
+            target_join_col,
+            source_join_col,
+            assignments,
+            target_filters,
+            returning,
+        } => super::dml::convert_update_from(
+            collection,
+            source,
+            target_join_col,
+            source_join_col,
+            assignments,
+            target_filters,
+            *returning,
+            tenant_id,
+        ),
+
         SqlPlan::Delete {
             collection,
             engine,
@@ -239,9 +259,17 @@ pub(super) fn convert_one(
             aggregates,
             having,
             limit,
-        } => super::aggregate::convert_aggregate(
-            input, group_by, aggregates, having, *limit, tenant_id, ctx,
-        ),
+            grouping_sets,
+        } => super::aggregate::convert_aggregate(super::aggregate::ConvertAggregateParams {
+            input,
+            group_by,
+            aggregates,
+            having,
+            limit: *limit,
+            grouping_sets: grouping_sets.as_deref(),
+            tenant_id,
+            ctx,
+        }),
 
         SqlPlan::TimeseriesScan {
             collection,
@@ -412,6 +440,26 @@ pub(super) fn convert_one(
             rows,
             tenant_id,
             ctx,
+        ),
+
+        SqlPlan::Merge {
+            target,
+            engine: _,
+            source,
+            target_join_col,
+            source_join_col,
+            source_alias,
+            clauses,
+            returning,
+        } => super::dml::convert_merge(
+            target,
+            source,
+            target_join_col,
+            source_join_col,
+            source_alias,
+            clauses,
+            *returning,
+            tenant_id,
         ),
 
         SqlPlan::MultiVectorSearch { .. } | SqlPlan::RangeScan { .. } => {

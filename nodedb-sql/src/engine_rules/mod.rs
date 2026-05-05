@@ -64,11 +64,38 @@ pub struct UpdateParams {
     pub returning: bool,
 }
 
+/// Parameters for planning an `UPDATE target SET ... FROM src WHERE ...` operation.
+pub struct UpdateFromParams {
+    pub collection: String,
+    /// The FROM source plan (Scan, Join, …).
+    pub source: Box<SqlPlan>,
+    /// Column in target used as the equi-join key.
+    pub target_join_col: String,
+    /// Column in source used as the equi-join key.
+    pub source_join_col: String,
+    /// SET assignments — RHS may reference source columns.
+    pub assignments: Vec<(String, SqlExpr)>,
+    /// Filters that apply only to the target.
+    pub target_filters: Vec<Filter>,
+    pub returning: bool,
+}
+
 /// Parameters for planning a DELETE operation.
 pub struct DeleteParams {
     pub collection: String,
     pub filters: Vec<Filter>,
     pub target_keys: Vec<SqlValue>,
+}
+
+/// Parameters for planning a MERGE operation.
+pub struct MergeParams {
+    pub collection: String,
+    pub source: Box<SqlPlan>,
+    pub target_join_col: String,
+    pub source_join_col: String,
+    pub source_alias: String,
+    pub clauses: Vec<crate::types::MergePlanClause>,
+    pub returning: bool,
 }
 
 /// Parameters for planning an UPSERT operation.
@@ -128,10 +155,21 @@ pub trait EngineRules {
     fn plan_point_get(&self, params: PointGetParams) -> Result<SqlPlan>;
     /// Plan an UPDATE. Returns `Err` for append-only engines.
     fn plan_update(&self, params: UpdateParams) -> Result<Vec<SqlPlan>>;
+    /// Plan an `UPDATE target SET ... FROM src WHERE ...`.
+    ///
+    /// Returns `Err(SqlError::Unsupported)` for engines that cannot participate
+    /// as an update target in a cross-table update (timeseries, kv-with-opaque-keys).
+    fn plan_update_from(&self, params: UpdateFromParams) -> Result<Vec<SqlPlan>>;
     /// Plan a DELETE (point or bulk).
     fn plan_delete(&self, params: DeleteParams) -> Result<Vec<SqlPlan>>;
     /// Plan a GROUP BY / aggregate query.
     fn plan_aggregate(&self, params: AggregateParams) -> Result<SqlPlan>;
+    /// Plan a MERGE statement.
+    ///
+    /// Returns `Err(SqlError::Unsupported)` for engines that do not support
+    /// MERGE semantics (everything except `document_schemaless` and
+    /// `document_strict`).
+    fn plan_merge(&self, params: MergeParams) -> Result<Vec<SqlPlan>>;
 }
 
 /// Attempt to rewrite `ScanParams` into a [`SqlPlan::DocumentIndexLookup`]
