@@ -93,8 +93,75 @@ impl CoreLoop {
 
         self.checkpoint_coordinator.mark_dirty("sparse", 1);
 
+        self.maybe_register_edge(tid, collection, surrogate, value);
+
         self.emit_put_event(task, tid, collection, row_key, value, None);
 
         self.response_ok(task)
+    }
+
+    /// Cross-engine graph overlay: when a schemaless document carries the
+    /// reserved `_from` / `_to` (and optional `_type`) fields, mirror it as
+    /// an edge in the CSR adjacency index and the edge store. Without this
+    /// hook, `MATCH ...` and `GRAPH ALGO ...` would never see edges that
+    /// were inserted via plain document INSERT.
+    fn maybe_register_edge(
+        &mut self,
+        tid: u64,
+        collection: &str,
+        surrogate: Surrogate,
+        value: &[u8],
+    ) {
+        let doc =
+            match crate::data::executor::handlers::document::read::decode::decode_scanned_document(
+                value, None,
+            ) {
+                serde_json::Value::Object(m) => m,
+                _ => return,
+            };
+        let src = match doc.get("_from").and_then(|v| v.as_str()) {
+            Some(s) => s.to_string(),
+            None => return,
+        };
+        let dst = match doc.get("_to").and_then(|v| v.as_str()) {
+            Some(s) => s.to_string(),
+            None => return,
+        };
+        let label = doc
+            .get("_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("edge")
+            .to_string();
+        let weight = doc.get("weight").and_then(|v| v.as_f64()).unwrap_or(1.0);
+
+        let ord = self.hlc.next_ordinal();
+        let valid_from_ms = nodedb_types::ordinal_to_ms(ord);
+        use crate::engine::graph::edge_store::EdgeRef;
+        if let Err(e) = self.edge_store.put_edge_versioned(
+            EdgeRef::new(
+                crate::types::TenantId::new(tid),
+                collection,
+                &src,
+                &label,
+                &dst,
+            ),
+            &[],
+            ord,
+            valid_from_ms,
+            i64::MAX,
+        ) {
+            tracing::debug!(err = %e, %src, %dst, %label, %collection, "edge store write failed during graph overlay registration");
+        }
+        let partition = self.csr_partition_mut(tid);
+        let csr_result = if (weight - 1.0).abs() > f64::EPSILON {
+            partition.add_edge_weighted(&src, &label, &dst, weight)
+        } else {
+            partition.add_edge(&src, &label, &dst)
+        };
+        if let Err(e) = csr_result {
+            tracing::debug!(err = %e, %src, %dst, %label, %collection, "CSR partition write failed during graph overlay registration");
+        }
+        partition.set_node_surrogate(&src, Surrogate::ZERO);
+        partition.set_node_surrogate(&dst, surrogate);
     }
 }
