@@ -199,7 +199,8 @@ pub fn touched_collections(plan: &PhysicalPlan) -> Vec<String> {
             match op {
                 Search { collection, .. }
                 | BM25ScoreScan { collection, .. }
-                | HybridSearch { collection, .. } => out.push(collection.clone()),
+                | HybridSearch { collection, .. }
+                | PhraseSearch { collection, .. } => out.push(collection.clone()),
             }
         }
 

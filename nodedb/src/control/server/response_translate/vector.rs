@@ -111,25 +111,32 @@ pub fn translate_vector_search_payload(
         .iter()
         .map(|h| {
             let mut obj: BTreeMap<String, serde_json::Value> = BTreeMap::new();
-            obj.insert("id".into(), serde_json::json!(h.id));
             obj.insert("distance".into(), serde_json::json!(h.distance));
-            if let Some(ref doc) = h.doc_id {
-                obj.insert("doc_id".into(), serde_json::json!(doc));
-            }
+            // Flatten body fields first so the document's own `id` field wins
+            // over the internal surrogate integer. Body fields are only present
+            // when the Data Plane performed the slow-path fetch.
             if let Some(ref body) = h.body
                 && let Ok(map) = zerompk::from_msgpack::<
                     std::collections::HashMap<String, nodedb_types::Value>,
                 >(body)
             {
                 for (k, v) in map {
-                    if obj.contains_key(&k) {
-                        continue;
-                    }
                     if let Ok(j) = serde_json::to_value(&v) {
                         obj.insert(k, j);
                     }
                 }
             }
+            // Fall back to catalog-resolved doc_id or raw surrogate when
+            // the body didn't provide an "id" field (e.g. skip_payload_fetch).
+            if !obj.contains_key("id") {
+                if let Some(ref doc) = h.doc_id {
+                    obj.insert("id".into(), serde_json::json!(doc));
+                } else {
+                    obj.insert("id".into(), serde_json::json!(h.id));
+                }
+            }
+            // Always expose internal surrogate for debugging / join use.
+            obj.insert("_surrogate".into(), serde_json::json!(h.id));
             obj
         })
         .collect();

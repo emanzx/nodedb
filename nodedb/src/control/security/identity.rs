@@ -209,7 +209,10 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
         ) => Permission::Read,
 
         PhysicalPlan::Text(
-            TextOp::Search { .. } | TextOp::BM25ScoreScan { .. } | TextOp::HybridSearch { .. },
+            TextOp::Search { .. }
+            | TextOp::BM25ScoreScan { .. }
+            | TextOp::HybridSearch { .. }
+            | TextOp::PhraseSearch { .. },
         ) => Permission::Read,
 
         PhysicalPlan::Spatial(SpatialOp::Scan { .. }) => Permission::Read,

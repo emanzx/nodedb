@@ -168,7 +168,7 @@ pub(super) async fn try_dispatch_async(
 
         NodedbStatement::CreateCollection {
             name,
-            if_not_exists: false,
+            if_not_exists: _,
             engine,
             columns,
             options,
@@ -201,7 +201,10 @@ pub(super) async fn try_dispatch_async(
 
         NodedbStatement::CreateTable {
             name,
-            if_not_exists: false,
+            // Both false (normal create) and true (IF NOT EXISTS — guard
+            // already returned early if the collection existed) fall through
+            // to the same create_table handler.
+            if_not_exists: _,
             engine,
             columns,
             options,

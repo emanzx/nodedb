@@ -105,7 +105,10 @@ fn expr_column_names(expr: &sqlparser::ast::Expr) -> (String, String) {
             (lookup_key, display_name)
         }
         other => {
-            let s = other.to_string();
+            // Normalize to lowercase so that aggregate functions like COUNT(*)
+            // produce lookup keys ("count(*)") that match the canonical aggregate
+            // key format used by the Data Plane response ("count(*)").
+            let s = other.to_string().to_lowercase();
             (s.clone(), s)
         }
     }

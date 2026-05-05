@@ -441,6 +441,7 @@ impl NativeSession {
 mod tests {
     use super::*;
     use nodedb_types::Value;
+    use nodedb_types::protocol::opcodes::ResponseStatus;
 
     #[test]
     fn chunk_large_response_splits_rows() {
