@@ -28,6 +28,10 @@ impl CoreLoop {
                 policy_json,
             } => self.execute_set_collection_policy(task, collection, policy_json),
 
+            CrdtOp::GetPolicy { collection } => {
+                self.execute_get_collection_policy(task, collection)
+            }
+
             CrdtOp::ReadAtVersion {
                 collection,
                 document_id,

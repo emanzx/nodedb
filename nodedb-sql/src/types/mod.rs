@@ -11,8 +11,8 @@ pub mod query;
 pub use collection::{CollectionInfo, ColumnInfo, IndexSpec, IndexState};
 pub use filter::{CompareOp, Filter, FilterExpr};
 pub use plan::{
-    ArrayPrefilter, DistanceMetric, KvInsertIntent, SqlPlan, VectorAnnOptions, VectorPrimaryRow,
-    VectorQuantization,
+    ArrayPrefilter, DistanceMetric, KvInsertIntent, MergeClauseKind, MergePlanAction,
+    MergePlanClause, SqlPlan, VectorAnnOptions, VectorPrimaryRow, VectorQuantization,
 };
 pub use query::{
     AggregateExpr, EngineType, JoinType, Projection, SortKey, SpatialPredicate, WindowSpec,

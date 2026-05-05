@@ -26,6 +26,7 @@ impl CoreLoop {
                 limit,
                 sub_group_by,
                 sub_aggregates,
+                grouping_sets,
             } => self.execute_aggregate(
                 task,
                 tid,
@@ -37,6 +38,7 @@ impl CoreLoop {
                 *limit,
                 sub_group_by,
                 sub_aggregates,
+                grouping_sets,
             ),
 
             QueryOp::HashJoin {
@@ -174,6 +176,7 @@ impl CoreLoop {
                 filters,
                 &[],
                 usize::MAX,
+                &[],
                 &[],
                 &[],
             ),
