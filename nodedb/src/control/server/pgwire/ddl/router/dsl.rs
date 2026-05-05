@@ -50,10 +50,13 @@ pub(super) async fn dispatch(
         return Some(super::helpers::execute_chunk_text(sql));
     }
 
-    // DSL: SEARCH commands (async — dispatches to Data Plane).
-    if upper.starts_with("SEARCH ") && upper.contains("USING VECTOR") {
-        return Some(super::super::dsl::search_vector(state, identity, sql).await);
-    }
+    // DSL: SEARCH commands.
+    //
+    // `SEARCH <coll> USING VECTOR(<field>, ARRAY[...], <k>)` is rewritten to
+    // canonical `SELECT * FROM <coll> ORDER BY vector_distance(...) LIMIT k`
+    // by the SQL preprocessor (`nodedb_sql::parser::preprocess::search_vector`)
+    // so it shares the same response shape as the canonical form. Only the
+    // FUSION variant stays here — it has no canonical SELECT lowering.
     if upper.starts_with("SEARCH ") && upper.contains("USING FUSION") {
         return Some(super::super::dsl::search_fusion(state, identity, sql).await);
     }

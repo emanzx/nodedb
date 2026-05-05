@@ -3,6 +3,7 @@ pub mod lex;
 pub mod literal;
 pub mod object_literal_stmt;
 pub mod pipeline;
+pub mod search_vector;
 pub mod temporal;
 pub mod vector_ops;
 

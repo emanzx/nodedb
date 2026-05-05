@@ -114,3 +114,52 @@ async fn wal_restart_durability() {
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0][0], "persisted");
 }
+
+#[tokio::test]
+async fn search_using_vector_dsl_lowers_to_canonical_form() {
+    // The `SEARCH <coll> USING VECTOR(<field>, ARRAY[...], <k>)` shorthand
+    // must lower to `ORDER BY vector_distance(...) LIMIT k` so users can pick
+    // either surface.
+    let srv = TestServer::start().await;
+    srv.exec("CREATE COLLECTION vec_search_dsl WITH (engine='vector')")
+        .await
+        .unwrap();
+    srv.exec("CREATE INDEX ON vec_search_dsl (embedding)")
+        .await
+        .unwrap();
+
+    let vecs: &[(&str, [f32; 4])] = &[
+        ("a", [1.0, 0.0, 0.0, 0.0]),
+        ("b", [0.0, 1.0, 0.0, 0.0]),
+        ("c", [0.0, 0.0, 1.0, 0.0]),
+        ("d", [0.0, 0.0, 0.0, 1.0]),
+        ("e", [0.7, 0.7, 0.0, 0.0]),
+    ];
+    for (id, emb) in vecs {
+        let arr = format!("[{},{},{},{}]", emb[0], emb[1], emb[2], emb[3]);
+        srv.exec(&format!(
+            "INSERT INTO vec_search_dsl {{ id: '{id}', embedding: {arr} }}"
+        ))
+        .await
+        .unwrap();
+    }
+
+    let canonical = srv
+        .query_rows(
+            "SELECT * FROM vec_search_dsl \
+             ORDER BY vector_distance(embedding, ARRAY[1.0,0.0,0.0,0.0]) LIMIT 3",
+        )
+        .await
+        .unwrap();
+    let rows = srv
+        .query_rows("SEARCH vec_search_dsl USING VECTOR(embedding, ARRAY[1.0,0.0,0.0,0.0], 3)")
+        .await
+        .unwrap();
+    assert_eq!(
+        rows.len(),
+        canonical.len(),
+        "SEARCH USING VECTOR DSL must match canonical form: canonical={}, dsl={}",
+        canonical.len(),
+        rows.len()
+    );
+}

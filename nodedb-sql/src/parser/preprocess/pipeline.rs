@@ -11,6 +11,7 @@
 use super::function_args::rewrite_object_literal_args;
 use super::lex::{first_sql_word, has_brace_outside_literals, has_operator_outside_literals};
 use super::object_literal_stmt::try_rewrite_object_literal;
+use super::search_vector::try_rewrite_search_using_vector;
 use super::temporal::extract as extract_temporal;
 use super::vector_ops::{
     rewrite_arrow_distance, rewrite_cosine_distance, rewrite_neg_inner_product,
@@ -49,6 +50,16 @@ pub fn preprocess(sql: &str) -> Result<Option<PreprocessedSql>, SqlError> {
         };
     let any_temporal = temporal != TemporalScope::default();
 
+    // Rewrite `SEARCH <coll> USING VECTOR(...)` to canonical
+    // `SELECT * FROM <coll> ORDER BY vector_distance(...) LIMIT k` before any
+    // first-word dispatch — the rewritten form re-enters the rest of the
+    // pipeline as a plain SELECT.
+    let (temporal_sql, search_vector_rewritten) =
+        match try_rewrite_search_using_vector(&temporal_sql) {
+            Some(rewritten) => (rewritten, true),
+            None => (temporal_sql, false),
+        };
+
     let first_word = first_sql_word(&temporal_sql)
         .map(|w| w.to_uppercase())
         .unwrap_or_default();
@@ -81,7 +92,7 @@ pub fn preprocess(sql: &str) -> Result<Option<PreprocessedSql>, SqlError> {
     }
 
     let mut sql_buf = temporal_sql;
-    let mut any_rewrite = any_temporal;
+    let mut any_rewrite = any_temporal || search_vector_rewritten;
 
     if has_operator_outside_literals(&sql_buf, "<->")
         && let Some(rewritten) = rewrite_arrow_distance(&sql_buf)
