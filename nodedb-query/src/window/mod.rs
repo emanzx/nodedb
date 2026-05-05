@@ -5,9 +5,11 @@
 
 pub mod aggregate;
 pub mod eval;
+pub mod frame;
 pub mod helpers;
 pub mod offset;
 pub mod ranking;
+pub mod running;
 pub mod spec;
 
 pub use eval::evaluate_window_functions;
