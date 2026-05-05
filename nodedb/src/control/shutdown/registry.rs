@@ -154,13 +154,10 @@ impl LoopRegistry {
                 // Deadline already consumed — treat anything
                 // still outstanding as a laggard without
                 // awaiting.
-                laggards.push(laggard_for(
-                    &mut join,
-                    name,
-                    registered_at,
-                    start,
-                    can_abort,
-                ));
+                laggards.push(
+                    abort_and_report_laggard(&mut join, name, registered_at, start, can_abort)
+                        .await,
+                );
                 continue;
             }
 
@@ -180,13 +177,10 @@ impl LoopRegistry {
                     exited_clean.push(name);
                 }
                 Err(_) => {
-                    laggards.push(laggard_for(
-                        &mut join,
-                        name,
-                        registered_at,
-                        start,
-                        can_abort,
-                    ));
+                    laggards.push(
+                        abort_and_report_laggard(&mut join, name, registered_at, start, can_abort)
+                            .await,
+                    );
                 }
             }
         }
@@ -199,7 +193,7 @@ impl LoopRegistry {
     }
 }
 
-fn laggard_for(
+async fn abort_and_report_laggard(
     handle: &mut JoinHandle<()>,
     name: &'static str,
     registered_at: Instant,
@@ -208,6 +202,7 @@ fn laggard_for(
 ) -> LaggardReport {
     if can_abort {
         handle.abort();
+        let _ = handle.await;
     }
     LaggardReport {
         name,

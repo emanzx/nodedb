@@ -85,7 +85,7 @@ impl EventPlane {
             let budget = Arc::clone(&slab_budget);
             let accounts = slab_accounts.clone();
             let mut shutdown_rx = shutdown.raw_receiver();
-            tokio::spawn(async move {
+            let slab_budget_handle = tokio::spawn(async move {
                 loop {
                     tokio::select! {
                         _ = tokio::time::sleep(std::time::Duration::from_secs(5)) => {
@@ -99,47 +99,71 @@ impl EventPlane {
                     }
                 }
             });
+            let _ = shared_state.loop_registry.register(
+                "event_plane::slab_budget",
+                crate::control::shutdown::LoopHandle::Async(slab_budget_handle),
+            );
         }
 
         // Spawn the cron scheduler loop on the Event Plane.
-        let _scheduler_handle = super::scheduler::executor::spawn_scheduler(
+        let scheduler_handle = super::scheduler::executor::spawn_scheduler(
             Arc::clone(&shared_state),
             Arc::clone(&shared_state.schedule_registry),
             Arc::clone(&shared_state.job_history),
             shutdown.raw_receiver(),
         );
+        let _ = shared_state.loop_registry.register(
+            "event_plane::scheduler",
+            crate::control::shutdown::LoopHandle::Async(scheduler_handle),
+        );
 
         // Spawn the retention policy enforcement loop.
-        let _retention_handle =
+        let retention_handle =
             crate::engine::timeseries::retention_policy::enforcement::spawn_enforcement_loop(
                 Arc::clone(&shared_state),
                 Arc::clone(&shared_state.retention_policy_registry),
                 shutdown.raw_receiver(),
             );
+        let _ = shared_state.loop_registry.register(
+            "event_plane::retention_policy",
+            crate::control::shutdown::LoopHandle::Async(retention_handle),
+        );
 
         // Spawn the bitemporal audit-retention enforcement loop.
         // Tick interval comes from server tuning config so operators
         // control cadence declaratively; no code change needed to adjust.
-        let _bitemporal_retention_handle =
+        let bitemporal_retention_handle =
             crate::engine::bitemporal::spawn_bitemporal_retention_loop(
                 Arc::clone(&shared_state),
                 Arc::clone(&shared_state.bitemporal_retention_registry),
                 shutdown.raw_receiver(),
                 shared_state.tuning.bitemporal_retention_tick(),
             );
+        let _ = shared_state.loop_registry.register(
+            "event_plane::bitemporal_retention",
+            crate::control::shutdown::LoopHandle::Async(bitemporal_retention_handle),
+        );
 
         // Spawn the alert evaluation loop.
-        let _alert_handle = super::alert::executor::spawn_alert_eval_loop(
+        let alert_handle = super::alert::executor::spawn_alert_eval_loop(
             Arc::clone(&shared_state),
             Arc::clone(&shared_state.alert_registry),
             shutdown.raw_receiver(),
         );
+        let _ = shared_state.loop_registry.register(
+            "event_plane::alert_eval",
+            crate::control::shutdown::LoopHandle::Async(alert_handle),
+        );
 
         // Spawn the CDC log compaction background task.
-        let _compaction_handle = super::cdc::compaction::spawn_compaction_task(
+        let compaction_handle = super::cdc::compaction::spawn_compaction_task(
             Arc::clone(&shared_state.stream_registry),
             Arc::clone(&cdc_router),
             shutdown.raw_receiver(),
+        );
+        let _ = shared_state.loop_registry.register(
+            "event_plane::cdc_compaction",
+            crate::control::shutdown::LoopHandle::Async(compaction_handle),
         );
 
         // Restore streaming MV state from redb (from last shutdown).
@@ -148,11 +172,15 @@ impl EventPlane {
             .restore_all(&shared_state.mv_registry);
 
         // Spawn MV state persistence task (flush to redb every 30s).
-        let _mv_persist_handle = super::streaming_mv::persist::spawn_persist_task(
+        let mv_persist_handle = super::streaming_mv::persist::spawn_persist_task(
             Arc::clone(&shared_state.mv_persistence),
             Arc::clone(&shared_state.mv_registry),
             Arc::clone(&shared_state.watermark_tracker),
             shutdown.raw_receiver(),
+        );
+        let _ = shared_state.loop_registry.register(
+            "event_plane::mv_persist",
+            crate::control::shutdown::LoopHandle::Async(mv_persist_handle),
         );
 
         // Spawn cross-shard dispatcher task (cluster mode only).
@@ -162,7 +190,7 @@ impl EventPlane {
             shared_state.cross_shard_metrics.as_ref(),
             shared_state.cross_shard_dlq.as_ref(),
         ) {
-            let _cross_shard_handle = super::cross_shard::dispatcher::spawn_dispatcher_task(
+            let cross_shard_handle = super::cross_shard::dispatcher::spawn_dispatcher_task(
                 Arc::clone(dispatcher),
                 Arc::clone(transport),
                 Arc::clone(metrics),
@@ -170,13 +198,21 @@ impl EventPlane {
                 Arc::clone(&shared_state.event_plane_budget),
                 shutdown.raw_receiver(),
             );
+            let _ = shared_state.loop_registry.register(
+                "event_plane::cross_shard_dispatcher",
+                crate::control::shutdown::LoopHandle::Async(cross_shard_handle),
+            );
             info!("cross-shard dispatcher task started");
         }
 
         // Spawn CRDT sync delivery maintenance task.
-        let _crdt_sync_handle = super::crdt_sync::delivery::spawn_delivery_task(
+        let crdt_sync_handle = super::crdt_sync::delivery::spawn_delivery_task(
             Arc::clone(&shared_state.crdt_sync_delivery),
             shutdown.raw_receiver(),
+        );
+        let _ = shared_state.loop_registry.register(
+            "event_plane::crdt_sync_delivery",
+            crate::control::shutdown::LoopHandle::Async(crdt_sync_handle),
         );
 
         // Set the origin peer ID for CRDT delta packaging.

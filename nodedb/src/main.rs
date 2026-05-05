@@ -11,8 +11,6 @@ use nodedb::bridge::dispatch::Dispatcher;
 use nodedb::config::server::apply_env_overrides;
 use nodedb::control::startup::{StartupPhase, StartupSequencer};
 use nodedb::control::state::SharedState;
-use nodedb::data::runtime::spawn_core;
-use nodedb::wal::WalManager;
 use tracing::info;
 
 use bootstrap::tls::build_tls_acceptor;
@@ -165,11 +163,6 @@ async fn main() -> anyhow::Result<()> {
 
     // Start Data Plane cores on dedicated OS threads (thread-per-core).
     // Each core gets: jemalloc arena pinning + eventfd-driven wake + WAL replay + event producer.
-    let compaction_cfg = nodedb::data::runtime::CoreCompactionConfig {
-        interval: config.checkpoint.compaction_interval(),
-        tombstone_threshold: config.checkpoint.compaction_tombstone_threshold,
-        query: config.tuning.query.clone(),
-    };
     let system_metrics = Arc::new(nodedb::control::metrics::SystemMetrics::new());
 
     // Create the shared scan-quiesce registry up front so every Data
@@ -406,10 +399,6 @@ async fn main() -> anyhow::Result<()> {
         if enabled { base_acceptor.clone() } else { None }
     };
     let tls_flags = config.tls.as_ref();
-    let pgwire_tls_enabled = tls_flags.is_some_and(|t| t.pgwire);
-    let http_tls_enabled = tls_flags.is_some_and(|t| t.http);
-    let resp_tls_enabled = tls_flags.is_some_and(|t| t.resp);
-    let ilp_tls_enabled = tls_flags.is_some_and(|t| t.ilp);
     let native_tls_enabled = tls_flags.is_some_and(|t| t.native);
 
     // Wait for raft readiness, run catalog sanity check, warm peer cache, fire gates.

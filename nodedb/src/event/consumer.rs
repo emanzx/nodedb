@@ -422,6 +422,7 @@ async fn process_retry_queue(
 mod tests {
     use super::*;
     use crate::event::bus::create_event_bus_with_capacity;
+    use crate::event::consumer_helpers::detect_sequence_gap;
     use crate::event::types::{EventSource, RowId, WriteOp};
     use crate::types::{TenantId, VShardId};
 
