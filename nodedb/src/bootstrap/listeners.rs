@@ -1,0 +1,200 @@
+//! Protocol listener spawning for all non-native listeners.
+
+use std::sync::Arc;
+
+use tracing::info;
+
+use crate::ServerConfig;
+use crate::control::cluster::ClusterHandle;
+use crate::control::server::ilp_listener::IlpListener;
+use crate::control::server::listener::Listener;
+use crate::control::server::pgwire::listener::PgListener;
+use crate::control::server::resp::RespListener;
+use crate::control::shutdown::ShutdownBus;
+use crate::control::startup::StartupGate;
+use crate::control::state::SharedState;
+
+/// The three protocol listeners passed to [`spawn_protocol_listeners`].
+pub struct ProtocolListeners {
+    pub pg_listener: PgListener,
+    pub ilp_listener: Option<IlpListener>,
+    pub resp_listener: Option<RespListener>,
+}
+
+/// Shared infrastructure resources for the listener spawner.
+pub struct ListenerInfra {
+    pub conn_semaphore: Arc<tokio::sync::Semaphore>,
+    pub startup_gate: Arc<StartupGate>,
+    pub shutdown_bus: ShutdownBus,
+}
+
+/// Spawn all non-native protocol listeners as background tasks.
+///
+/// The native listener is not spawned here — it is run on the main task
+/// by the caller after this returns.
+pub async fn spawn_protocol_listeners(
+    listeners: ProtocolListeners,
+    shared: Arc<SharedState>,
+    config: &ServerConfig,
+    infra: ListenerInfra,
+    base_acceptor: Option<tokio_rustls::TlsAcceptor>,
+    cluster_handle: &Option<ClusterHandle>,
+) {
+    let ProtocolListeners {
+        pg_listener,
+        ilp_listener,
+        resp_listener,
+    } = listeners;
+    let ListenerInfra {
+        conn_semaphore,
+        startup_gate,
+        shutdown_bus,
+    } = infra;
+    let tls_for = |enabled: bool| -> Option<tokio_rustls::TlsAcceptor> {
+        if enabled { base_acceptor.clone() } else { None }
+    };
+    let tls_flags = config.tls.as_ref();
+    let pgwire_tls_enabled = tls_flags.is_some_and(|t| t.pgwire);
+    let http_tls_enabled = tls_flags.is_some_and(|t| t.http);
+    let resp_tls_enabled = tls_flags.is_some_and(|t| t.resp);
+    let ilp_tls_enabled = tls_flags.is_some_and(|t| t.ilp);
+
+    // pgwire listener.
+    let auth_mode = config.auth.mode.clone();
+    let shared_pg = Arc::clone(&shared);
+    let conn_sem_pg = Arc::clone(&conn_semaphore);
+    let pgwire_tls = tls_for(pgwire_tls_enabled);
+    let startup_gate_pg = Arc::clone(&startup_gate);
+    let bus_pg = shutdown_bus.clone();
+    tokio::spawn(async move {
+        if let Err(e) = pg_listener
+            .run(
+                shared_pg,
+                auth_mode,
+                pgwire_tls,
+                conn_sem_pg,
+                startup_gate_pg,
+                bus_pg,
+            )
+            .await
+        {
+            tracing::error!(error = %e, "pgwire listener failed");
+        }
+    });
+
+    // HTTP API server.
+    let shared_http = Arc::clone(&shared);
+    let http_auth_mode = config.auth.mode.clone();
+    let http_listen = config.http_addr();
+    let http_tls = if http_tls_enabled {
+        config.tls.clone()
+    } else {
+        None
+    };
+    let bus_http = shutdown_bus.clone();
+    tokio::spawn(async move {
+        if let Err(e) = crate::control::server::http::server::run(
+            http_listen,
+            shared_http,
+            http_auth_mode,
+            http_tls.as_ref(),
+            bus_http,
+        )
+        .await
+        {
+            tracing::error!(error = %e, "HTTP API server failed");
+        }
+    });
+
+    // ILP TCP listener (if configured).
+    if let Some(ilp) = ilp_listener {
+        let shared_ilp = Arc::clone(&shared);
+        let conn_sem_ilp = Arc::clone(&conn_semaphore);
+        let ilp_tls = tls_for(ilp_tls_enabled);
+        let startup_gate_ilp = Arc::clone(&startup_gate);
+        let bus_ilp = shutdown_bus.clone();
+        tokio::spawn(async move {
+            if let Err(e) = ilp
+                .run(shared_ilp, conn_sem_ilp, ilp_tls, startup_gate_ilp, bus_ilp)
+                .await
+            {
+                tracing::error!(error = %e, "ILP listener failed");
+            }
+        });
+    }
+
+    // RESP (Redis-compatible) listener (if configured).
+    if let Some(resp) = resp_listener {
+        let shared_resp = Arc::clone(&shared);
+        let conn_sem_resp = Arc::clone(&conn_semaphore);
+        let resp_tls = tls_for(resp_tls_enabled);
+        let startup_gate_resp = Arc::clone(&startup_gate);
+        let bus_resp = shutdown_bus.clone();
+        tokio::spawn(async move {
+            if let Err(e) = resp
+                .run(
+                    shared_resp,
+                    conn_sem_resp,
+                    resp_tls,
+                    startup_gate_resp,
+                    bus_resp,
+                )
+                .await
+            {
+                tracing::error!(error = %e, "RESP listener failed");
+            }
+        });
+    }
+
+    // Sync WebSocket listener for NodeDB-Lite clients.
+    let sync_config = crate::control::server::sync::listener::SyncListenerConfig::default();
+    match crate::control::server::sync::listener::start_sync_listener(
+        sync_config,
+        Some(Arc::clone(&shared)),
+    )
+    .await
+    {
+        Ok(sync_state) => {
+            info!(
+                addr = %sync_state.config.listen_addr,
+                max_sessions = sync_state.config.max_sessions,
+                "sync WebSocket listener started"
+            );
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "sync listener failed to start (non-fatal)");
+        }
+    }
+
+    // Signal readiness to systemd and cluster lifecycle.
+    if let Some(handle) = cluster_handle {
+        let nodes = handle.topology.read().map(|t| t.node_count()).unwrap_or(1);
+        handle.lifecycle.to_ready(nodes);
+    }
+    nodedb_cluster::readiness::notify_ready();
+}
+
+/// Bind all protocol listeners to their configured addresses.
+pub async fn bind_listeners(
+    config: &ServerConfig,
+) -> anyhow::Result<(
+    Listener,
+    PgListener,
+    Option<IlpListener>,
+    Option<RespListener>,
+)> {
+    let native = crate::control::server::listener::Listener::bind(config.native_addr()).await?;
+    let pgwire =
+        crate::control::server::pgwire::listener::PgListener::bind(config.pgwire_addr()).await?;
+    let ilp = if let Some(ilp_addr) = config.ilp_addr() {
+        Some(crate::control::server::ilp_listener::IlpListener::bind(ilp_addr).await?)
+    } else {
+        None
+    };
+    let resp = if let Some(resp_addr) = config.resp_addr() {
+        Some(crate::control::server::resp::RespListener::bind(resp_addr).await?)
+    } else {
+        None
+    };
+    Ok((native, pgwire, ilp, resp))
+}

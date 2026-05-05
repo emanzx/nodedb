@@ -1,0 +1,246 @@
+//! Data types for the columnar timeseries memtable.
+
+use std::collections::HashMap;
+
+use nodedb_types::timeseries::{SeriesId, SymbolDictionary};
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+
+/// Column data type in a columnar memtable.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ColumnType {
+    /// Designated timestamp column (i64 millis).
+    Timestamp,
+    /// Floating-point metric value.
+    Float64,
+    /// Integer metric value.
+    Int64,
+    /// Tag column — stored as u32 symbol IDs.
+    Symbol,
+}
+
+/// Schema for a columnar memtable (column names + types, in order).
+#[derive(Debug, Clone)]
+pub struct ColumnarSchema {
+    pub columns: Vec<(String, ColumnType)>,
+    /// Index of the designated timestamp column.
+    pub timestamp_idx: usize,
+    /// Per-column codec selection. When empty or shorter than `columns`,
+    /// missing entries default to `Auto`.
+    pub codecs: Vec<nodedb_codec::ColumnCodec>,
+}
+
+impl ColumnarSchema {
+    /// Create a schema with a timestamp + one f64 value column (simplest case).
+    pub fn metric_default() -> Self {
+        Self {
+            columns: vec![
+                ("timestamp".into(), ColumnType::Timestamp),
+                ("value".into(), ColumnType::Float64),
+            ],
+            timestamp_idx: 0,
+            codecs: vec![
+                nodedb_codec::ColumnCodec::Auto,
+                nodedb_codec::ColumnCodec::Auto,
+            ],
+        }
+    }
+
+    /// Get the codec for column at index `i`. Returns `Auto` if not specified.
+    pub fn codec(&self, i: usize) -> nodedb_codec::ColumnCodec {
+        self.codecs
+            .get(i)
+            .copied()
+            .unwrap_or(nodedb_codec::ColumnCodec::Auto)
+    }
+
+    /// Index of the reserved `_ts_system` column, or `None` for non-bitemporal.
+    pub fn ts_system_idx(&self) -> Option<usize> {
+        self.columns.iter().position(|(n, _)| n == "_ts_system")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Column storage
+// ---------------------------------------------------------------------------
+
+/// A single column of data in the memtable.
+#[derive(Debug)]
+pub enum ColumnData {
+    Timestamp(Vec<i64>),
+    Float64(Vec<f64>),
+    Int64(Vec<i64>),
+    Symbol(Vec<u32>),
+    /// Dictionary-encoded string column for low-cardinality tags.
+    ///
+    /// Predicates operate on compact integer IDs rather than string bytes —
+    /// an `O(dict_size * string_len + N)` win over `O(N * string_len)`.
+    DictEncoded {
+        /// Row-level symbol IDs (index into `dictionary`).
+        ids: Vec<u32>,
+        /// ID → string value.
+        dictionary: Vec<String>,
+        /// Reverse lookup: string → ID.
+        reverse: std::collections::HashMap<String, u32>,
+        /// Validity bitmap: false = null row.
+        valid: Vec<bool>,
+    },
+}
+
+impl ColumnData {
+    pub(super) fn new(ty: ColumnType) -> Self {
+        match ty {
+            ColumnType::Timestamp => Self::Timestamp(Vec::with_capacity(4096)),
+            ColumnType::Float64 => Self::Float64(Vec::with_capacity(4096)),
+            ColumnType::Int64 => Self::Int64(Vec::with_capacity(4096)),
+            ColumnType::Symbol => Self::Symbol(Vec::with_capacity(4096)),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Timestamp(v) => v.len(),
+            Self::Float64(v) => v.len(),
+            Self::Int64(v) => v.len(),
+            Self::Symbol(v) => v.len(),
+            Self::DictEncoded { ids, .. } => ids.len(),
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Approximate memory usage in bytes.
+    pub(super) fn memory_bytes(&self) -> usize {
+        match self {
+            Self::Timestamp(v) => v.capacity() * 8,
+            Self::Float64(v) => v.capacity() * 8,
+            Self::Int64(v) => v.capacity() * 8,
+            Self::Symbol(v) => v.capacity() * 4,
+            Self::DictEncoded {
+                ids,
+                dictionary,
+                reverse,
+                valid,
+            } => {
+                ids.capacity() * 4
+                    + dictionary.iter().map(|s| s.len() + 24).sum::<usize>()
+                    + reverse.len() * 56 // rough HashMap entry cost
+                    + valid.capacity()
+            }
+        }
+    }
+
+    /// Deep clone the column data.
+    pub fn clone_data(&self) -> Self {
+        match self {
+            Self::Timestamp(v) => Self::Timestamp(v.clone()),
+            Self::Float64(v) => Self::Float64(v.clone()),
+            Self::Int64(v) => Self::Int64(v.clone()),
+            Self::Symbol(v) => Self::Symbol(v.clone()),
+            Self::DictEncoded {
+                ids,
+                dictionary,
+                reverse,
+                valid,
+            } => Self::DictEncoded {
+                ids: ids.clone(),
+                dictionary: dictionary.clone(),
+                reverse: reverse.clone(),
+                valid: valid.clone(),
+            },
+        }
+    }
+
+    /// Get timestamp column as slice. Type mismatch is unreachable in correct usage.
+    pub(crate) fn as_timestamps(&self) -> &[i64] {
+        match self {
+            Self::Timestamp(v) => v,
+            _ => unreachable!(
+                "invariant: ColumnarMemtable columns are constructed by ColumnData::new(ty) keyed to schema; Timestamp type mismatch is impossible"
+            ),
+        }
+    }
+
+    /// Get f64 column as slice. Type mismatch is unreachable in correct usage.
+    pub(crate) fn as_f64(&self) -> &[f64] {
+        match self {
+            Self::Float64(v) => v,
+            _ => unreachable!(
+                "invariant: ColumnarMemtable columns are constructed by ColumnData::new(ty) keyed to schema; Float64 type mismatch is impossible"
+            ),
+        }
+    }
+
+    /// Get i64 column as slice. Type mismatch is unreachable in correct usage.
+    pub(crate) fn as_i64(&self) -> &[i64] {
+        match self {
+            Self::Int64(v) => v,
+            _ => unreachable!(
+                "invariant: ColumnarMemtable columns are constructed by ColumnData::new(ty) keyed to schema; Int64 type mismatch is impossible"
+            ),
+        }
+    }
+
+    /// Get symbol column as slice. Type mismatch is unreachable in correct usage.
+    pub(crate) fn as_symbols(&self) -> &[u32] {
+        match self {
+            Self::Symbol(v) => v,
+            _ => unreachable!(
+                "invariant: ColumnarMemtable columns are constructed by ColumnData::new(ty) keyed to schema; Symbol type mismatch is impossible"
+            ),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Config and drain result
+// ---------------------------------------------------------------------------
+
+/// Configuration for the columnar memtable.
+#[derive(Debug, Clone)]
+pub struct ColumnarMemtableConfig {
+    /// Maximum memory usage before flush is triggered (bytes).
+    pub max_memory_bytes: usize,
+    /// Hard memory ceiling — ingest is rejected above this.
+    pub hard_memory_limit: usize,
+    /// Maximum tag cardinality per symbol column.
+    pub max_tag_cardinality: u32,
+}
+
+impl Default for ColumnarMemtableConfig {
+    fn default() -> Self {
+        Self {
+            max_memory_bytes: crate::engine::timeseries::memtable::DEFAULT_MEMTABLE_BUDGET_BYTES,
+            hard_memory_limit: 80 * 1024 * 1024,
+            max_tag_cardinality: 100_000,
+        }
+    }
+}
+
+/// Value types for `ingest_row()`.
+#[derive(Debug, Clone)]
+pub enum ColumnValue<'a> {
+    Timestamp(i64),
+    Float64(f64),
+    Int64(i64),
+    Symbol(&'a str),
+}
+
+/// Result of draining the columnar memtable.
+pub struct ColumnarDrainResult {
+    pub columns: Vec<ColumnData>,
+    pub schema: ColumnarSchema,
+    pub symbol_dicts: HashMap<usize, SymbolDictionary>,
+    pub row_count: u64,
+    pub min_ts: i64,
+    pub max_ts: i64,
+    /// Maximum `_ts_system` value across rows (bitemporal only; 0 otherwise).
+    /// Populated on drain by scanning the `_ts_system` column so retention
+    /// can evaluate system-time staleness without re-reading the segment.
+    pub max_system_ts: i64,
+    pub series_row_counts: HashMap<SeriesId, u64>,
+}

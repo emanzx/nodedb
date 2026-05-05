@@ -1,0 +1,134 @@
+use nodedb_sql::types::{KvInsertIntent, SqlExpr, SqlValue, VectorPrimaryRow};
+
+use crate::bridge::envelope::PhysicalPlan;
+use crate::bridge::physical_plan::*;
+use crate::types::{TenantId, VShardId};
+
+use super::super::super::physical::{PhysicalTask, PostSetOp};
+use super::super::convert::ConvertContext;
+use super::super::value::{
+    assignments_to_update_values, sql_value_to_bytes, sql_value_to_nodedb_value,
+    write_msgpack_map_header, write_msgpack_str, write_msgpack_value,
+};
+use super::insert::assign_for_pk;
+
+pub(in super::super) fn convert_kv_insert(
+    collection: &str,
+    entries: &[(SqlValue, Vec<(String, SqlValue)>)],
+    ttl_secs: u64,
+    intent: KvInsertIntent,
+    on_conflict_updates: &[(String, SqlExpr)],
+    tenant_id: TenantId,
+    ctx: &ConvertContext,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let update_values = if on_conflict_updates.is_empty() {
+        Vec::new()
+    } else {
+        assignments_to_update_values(on_conflict_updates)?
+    };
+    let vshard = VShardId::from_collection(collection);
+    let ttl_ms = ttl_secs * 1000;
+    let mut tasks = Vec::with_capacity(entries.len());
+    for (key_val, value_cols) in entries {
+        let key = sql_value_to_bytes(key_val);
+        let value = if value_cols.len() == 1 && value_cols[0].0 == "value" {
+            sql_value_to_bytes(&value_cols[0].1)
+        } else {
+            let mut buf = Vec::with_capacity(value_cols.len() * 32);
+            write_msgpack_map_header(&mut buf, value_cols.len());
+            for (col, val) in value_cols {
+                write_msgpack_str(&mut buf, col);
+                write_msgpack_value(&mut buf, val);
+            }
+            buf
+        };
+        let surrogate = assign_for_pk(ctx, collection, &key)?;
+        let op = match intent {
+            KvInsertIntent::Insert => KvOp::Insert {
+                collection: collection.into(),
+                key,
+                value,
+                ttl_ms,
+                surrogate,
+            },
+            KvInsertIntent::InsertIfAbsent => KvOp::InsertIfAbsent {
+                collection: collection.into(),
+                key,
+                value,
+                ttl_ms,
+                surrogate,
+            },
+            KvInsertIntent::Put if !update_values.is_empty() => KvOp::InsertOnConflictUpdate {
+                collection: collection.into(),
+                key,
+                value,
+                ttl_ms,
+                updates: update_values.clone(),
+                surrogate,
+            },
+            KvInsertIntent::Put => KvOp::Put {
+                collection: collection.into(),
+                key,
+                value,
+                ttl_ms,
+                surrogate,
+            },
+        };
+        tasks.push(PhysicalTask {
+            tenant_id,
+            vshard_id: vshard,
+            plan: PhysicalPlan::Kv(op),
+            post_set_op: PostSetOp::None,
+        });
+    }
+    Ok(tasks)
+}
+
+pub(in super::super) fn convert_vector_primary_insert(
+    collection: &str,
+    field: &str,
+    quantization: nodedb_types::VectorQuantization,
+    payload_indexes: &[(String, nodedb_types::PayloadIndexKind)],
+    rows: &[VectorPrimaryRow],
+    tenant_id: TenantId,
+    ctx: &ConvertContext,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let vshard = VShardId::from_collection(collection);
+    let mut tasks = Vec::with_capacity(rows.len());
+    for row in rows {
+        let pk_bytes: Vec<u8> = row
+            .vector
+            .iter()
+            .take(4)
+            .flat_map(|f| f.to_le_bytes())
+            .collect();
+        let surrogate = assign_for_pk(ctx, collection, &pk_bytes)?;
+
+        let payload = if row.payload_fields.is_empty() {
+            Vec::new()
+        } else {
+            let value_map: std::collections::HashMap<String, nodedb_types::Value> = row
+                .payload_fields
+                .iter()
+                .map(|(k, v)| (k.clone(), sql_value_to_nodedb_value(v)))
+                .collect();
+            zerompk::to_msgpack_vec(&value_map).unwrap_or_default()
+        };
+
+        tasks.push(PhysicalTask {
+            tenant_id,
+            vshard_id: vshard,
+            plan: PhysicalPlan::Vector(VectorOp::DirectUpsert {
+                collection: collection.to_string(),
+                field: field.to_string(),
+                surrogate,
+                vector: row.vector.clone(),
+                payload,
+                quantization,
+                payload_indexes: payload_indexes.to_vec(),
+            }),
+            post_set_op: PostSetOp::None,
+        });
+    }
+    Ok(tasks)
+}

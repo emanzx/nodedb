@@ -1,0 +1,245 @@
+//! `INSERT INTO ARRAY` / `DELETE FROM ARRAY` lowering to `PhysicalTask`.
+
+use nodedb_array::coord::encode::encode_hilbert_prefix;
+use nodedb_array::schema::ArraySchema;
+use nodedb_array::types::ArrayId;
+use nodedb_sql::types_array::{ArrayCoordLiteral, ArrayInsertRow};
+
+use crate::bridge::envelope::PhysicalPlan;
+use crate::bridge::physical_plan::{ArrayOp, ClusterArrayOp};
+use crate::engine::array::wal::{ArrayDeleteCell, ArrayPutCell};
+use crate::types::{TenantId, VShardId};
+
+use super::super::super::physical::{PhysicalTask, PostSetOp};
+use super::super::convert::ConvertContext;
+use super::helpers::{coerce_attrs, coerce_coords};
+
+pub(in super::super) fn convert_insert_array(
+    name: &str,
+    rows: &[ArrayInsertRow],
+    tenant_id: TenantId,
+    ctx: &ConvertContext,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let array_catalog = ctx
+        .array_catalog
+        .as_ref()
+        .ok_or_else(|| crate::Error::PlanError {
+            detail: "INSERT INTO ARRAY: no array catalog wired into convert context".into(),
+        })?;
+    let wal = ctx.wal.as_ref().ok_or_else(|| crate::Error::PlanError {
+        detail: "INSERT INTO ARRAY: no WAL wired into convert context".into(),
+    })?;
+    let surrogate_assigner =
+        ctx.surrogate_assigner
+            .as_ref()
+            .ok_or_else(|| crate::Error::PlanError {
+                detail: "INSERT INTO ARRAY: no surrogate assigner wired into convert context"
+                    .into(),
+            })?;
+
+    let entry = {
+        let cat = array_catalog.read().map_err(|_| crate::Error::PlanError {
+            detail: "array catalog lock poisoned".into(),
+        })?;
+        cat.lookup_by_name(name)
+            .ok_or_else(|| crate::Error::PlanError {
+                detail: format!("INSERT INTO ARRAY {name}: not found"),
+            })?
+    };
+    let schema: ArraySchema =
+        zerompk::from_msgpack(&entry.schema_msgpack).map_err(|e| crate::Error::Serialization {
+            format: "msgpack".into(),
+            detail: format!("array schema decode: {e}"),
+        })?;
+
+    let aid = ArrayId::new(tenant_id, name);
+    let wal_lsn = wal.next_lsn().as_u64();
+    let vshard = VShardId::from_collection(name);
+    let system_now_ms = chrono::Utc::now().timestamp_millis();
+
+    if ctx.cluster_enabled {
+        let mut partitioned: Vec<(u64, Vec<u8>)> = Vec::with_capacity(rows.len());
+        for row in rows {
+            let coord = coerce_coords(&row.coords, &schema)?;
+            let attrs = coerce_attrs(&row.attrs, &schema)?;
+            let pk_bytes =
+                zerompk::to_msgpack_vec(&coord).map_err(|e| crate::Error::Serialization {
+                    format: "msgpack".into(),
+                    detail: format!("array coord pk encode: {e}"),
+                })?;
+            let surrogate = surrogate_assigner.assign(name, &pk_bytes)?;
+            let hilbert =
+                encode_hilbert_prefix(&schema, &coord).map_err(|e| crate::Error::PlanError {
+                    detail: format!("INSERT INTO ARRAY {name}: Hilbert prefix: {e}"),
+                })?;
+            let cell = ArrayPutCell {
+                coord,
+                attrs,
+                surrogate,
+                system_from_ms: system_now_ms,
+                valid_from_ms: system_now_ms,
+                valid_until_ms: i64::MAX,
+            };
+            let cell_bytes =
+                zerompk::to_msgpack_vec(&cell).map_err(|e| crate::Error::Serialization {
+                    format: "msgpack".into(),
+                    detail: format!("array put cell encode: {e}"),
+                })?;
+            partitioned.push((hilbert, cell_bytes));
+        }
+        let array_id_msgpack =
+            zerompk::to_msgpack_vec(&aid).map_err(|e| crate::Error::Serialization {
+                format: "msgpack".into(),
+                detail: format!("array id encode: {e}"),
+            })?;
+        return Ok(vec![PhysicalTask {
+            tenant_id,
+            vshard_id: vshard,
+            plan: PhysicalPlan::ClusterArray(ClusterArrayOp::Put {
+                array_id: aid,
+                array_id_msgpack,
+                cells: partitioned,
+                wal_lsn,
+                prefix_bits: entry.prefix_bits,
+            }),
+            post_set_op: PostSetOp::None,
+        }]);
+    }
+
+    // Single-node path: bundle all cells into one msgpack blob.
+    let mut cells: Vec<ArrayPutCell> = Vec::with_capacity(rows.len());
+    for row in rows {
+        let coord = coerce_coords(&row.coords, &schema)?;
+        let attrs = coerce_attrs(&row.attrs, &schema)?;
+        let pk_bytes =
+            zerompk::to_msgpack_vec(&coord).map_err(|e| crate::Error::Serialization {
+                format: "msgpack".into(),
+                detail: format!("array coord pk encode: {e}"),
+            })?;
+        let surrogate = surrogate_assigner.assign(name, &pk_bytes)?;
+        cells.push(ArrayPutCell {
+            coord,
+            attrs,
+            surrogate,
+            system_from_ms: system_now_ms,
+            valid_from_ms: system_now_ms,
+            valid_until_ms: i64::MAX,
+        });
+    }
+    let cells_msgpack =
+        zerompk::to_msgpack_vec(&cells).map_err(|e| crate::Error::Serialization {
+            format: "msgpack".into(),
+            detail: format!("array put cells encode: {e}"),
+        })?;
+
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: PhysicalPlan::Array(ArrayOp::Put {
+            array_id: aid,
+            cells_msgpack,
+            wal_lsn,
+        }),
+        post_set_op: PostSetOp::None,
+    }])
+}
+
+pub(in super::super) fn convert_delete_array(
+    name: &str,
+    coords: &[Vec<ArrayCoordLiteral>],
+    tenant_id: TenantId,
+    ctx: &ConvertContext,
+) -> crate::Result<Vec<PhysicalTask>> {
+    let array_catalog = ctx
+        .array_catalog
+        .as_ref()
+        .ok_or_else(|| crate::Error::PlanError {
+            detail: "DELETE FROM ARRAY: no array catalog wired into convert context".into(),
+        })?;
+    let wal = ctx.wal.as_ref().ok_or_else(|| crate::Error::PlanError {
+        detail: "DELETE FROM ARRAY: no WAL wired into convert context".into(),
+    })?;
+    let entry = {
+        let cat = array_catalog.read().map_err(|_| crate::Error::PlanError {
+            detail: "array catalog lock poisoned".into(),
+        })?;
+        cat.lookup_by_name(name)
+            .ok_or_else(|| crate::Error::PlanError {
+                detail: format!("DELETE FROM ARRAY {name}: not found"),
+            })?
+    };
+    let schema: ArraySchema =
+        zerompk::from_msgpack(&entry.schema_msgpack).map_err(|e| crate::Error::Serialization {
+            format: "msgpack".into(),
+            detail: format!("array schema decode: {e}"),
+        })?;
+
+    let aid = ArrayId::new(tenant_id, name);
+    let wal_lsn = wal.next_lsn().as_u64();
+    let vshard = VShardId::from_collection(name);
+    let system_now_ms = chrono::Utc::now().timestamp_millis();
+
+    if ctx.cluster_enabled {
+        let mut partitioned: Vec<(u64, Vec<u8>)> = Vec::with_capacity(coords.len());
+        for row in coords {
+            let typed = coerce_coords(row, &schema)?;
+            let hilbert =
+                encode_hilbert_prefix(&schema, &typed).map_err(|e| crate::Error::PlanError {
+                    detail: format!("DELETE FROM ARRAY {name}: Hilbert prefix: {e}"),
+                })?;
+            let cell = ArrayDeleteCell {
+                coord: typed,
+                system_from_ms: system_now_ms,
+                erasure: false,
+            };
+            let cell_bytes =
+                zerompk::to_msgpack_vec(&cell).map_err(|e| crate::Error::Serialization {
+                    format: "msgpack".into(),
+                    detail: format!("array delete cell encode: {e}"),
+                })?;
+            partitioned.push((hilbert, cell_bytes));
+        }
+        let array_id_msgpack =
+            zerompk::to_msgpack_vec(&aid).map_err(|e| crate::Error::Serialization {
+                format: "msgpack".into(),
+                detail: format!("array id encode: {e}"),
+            })?;
+        return Ok(vec![PhysicalTask {
+            tenant_id,
+            vshard_id: vshard,
+            plan: PhysicalPlan::ClusterArray(ClusterArrayOp::Delete {
+                array_id: aid,
+                array_id_msgpack,
+                coords: partitioned,
+                wal_lsn,
+                prefix_bits: entry.prefix_bits,
+            }),
+            post_set_op: PostSetOp::None,
+        }]);
+    }
+
+    // Single-node path: bundle all cells into one msgpack blob.
+    let mut cells: Vec<ArrayDeleteCell> = Vec::with_capacity(coords.len());
+    for row in coords {
+        cells.push(ArrayDeleteCell {
+            coord: coerce_coords(row, &schema)?,
+            system_from_ms: system_now_ms,
+            erasure: false,
+        });
+    }
+    let coords_msgpack =
+        zerompk::to_msgpack_vec(&cells).map_err(|e| crate::Error::Serialization {
+            format: "msgpack".into(),
+            detail: format!("array delete cells encode: {e}"),
+        })?;
+    Ok(vec![PhysicalTask {
+        tenant_id,
+        vshard_id: vshard,
+        plan: PhysicalPlan::Array(ArrayOp::Delete {
+            array_id: aid,
+            coords_msgpack,
+            wal_lsn,
+        }),
+        post_set_op: PostSetOp::None,
+    }])
+}

@@ -1,0 +1,625 @@
+//! [`TextFields`] struct definition and field-count helper.
+//!
+//! # Wire format
+//!
+//! TextFields is encoded as a MsgPack **map** whose keys are `u16` numeric
+//! field IDs starting at 1. Fields whose value is `None` are **omitted**
+//! entirely (compact encoding). The decoder ignores unknown keys, so new
+//! fields can be added to newer servers without breaking older clients
+//! (forward compatibility).
+//!
+//! # Field ID table
+//!
+//! ```text
+//!  1  auth
+//!  2  sql
+//!  3  key
+//!  4  value
+//!  5  collection
+//!  6  document_id
+//!  7  data
+//!  8  query_vector
+//!  9  top_k
+//! 10  field
+//! 11  limit
+//! 12  delta
+//! 13  peer_id
+//! 14  vector_top_k
+//! 15  edge_label
+//! 16  direction
+//! 17  expansion_depth
+//! 18  final_top_k
+//! 19  vector_k
+//! 20  graph_k
+//! 21  vector_field
+//! 22  start_node
+//! 23  end_node
+//! 24  depth
+//! 25  from_node
+//! 26  to_node
+//! 27  edge_type
+//! 28  properties
+//! 29  query_text
+//! 30  vector_weight
+//! 31  fuzzy
+//! 32  ef_search
+//! 33  field_name
+//! 34  lower_bound
+//! 35  upper_bound
+//! 36  mutation_id
+//! 37  vectors
+//! 38  documents
+//! 39  query_geometry
+//! 40  spatial_predicate
+//! 41  distance_meters
+//! 42  payload
+//! 43  format
+//! 44  time_range_start
+//! 45  time_range_end
+//! 46  bucket_interval
+//! 47  ttl_ms
+//! 48  cursor
+//! 49  match_pattern
+//! 50  keys
+//! 51  entries
+//! 52  fields
+//! 53  incr_delta
+//! 54  incr_float_delta
+//! 55  expected
+//! 56  new_value
+//! 57  index_name
+//! 58  sort_columns
+//! 59  key_column
+//! 60  window_type
+//! 61  window_timestamp_column
+//! 62  window_start_ms
+//! 63  window_end_ms
+//! 64  top_k_count
+//! 65  score_min
+//! 66  score_max
+//! 67  updates
+//! 68  filters
+//! 69  vector
+//! 70  vector_id
+//! 71  policy
+//! 72  algorithm
+//! 73  match_query
+//! 74  algo_params
+//! 75  index_paths
+//! 76  source_collection
+//! 77  field_position
+//! 78  backfill
+//! 79  m
+//! 80  ef_construction
+//! 81  metric
+//! 82  index_type
+//! ```
+
+use serde::{Deserialize, Serialize};
+
+use crate::protocol::auth::AuthMethod;
+use crate::protocol::batch::{BatchDocument, BatchVector};
+
+/// Catch-all text fields used by most operations.
+///
+/// Each operation uses a subset; unused fields default to `None`/empty.
+///
+/// Wire format: MsgPack map with `u16` numeric field IDs. `None` fields
+/// are omitted. Unknown keys are ignored by the decoder (forward-compat).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TextFields {
+    // ── Auth ─────────────────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auth: Option<AuthMethod>,
+
+    // ── SQL/DDL/Explain/Set/Show/Reset/CopyFrom ─────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sql: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+
+    // ── Collection + document targeting ──────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub collection: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub document_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<Vec<u8>>,
+
+    // ── Vector search ────────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_vector: Option<Vec<f32>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub top_k: Option<u32>,
+
+    // ── Range scan ───────────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub field: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+
+    // ── CRDT ─────────────────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delta: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub peer_id: Option<u64>,
+
+    // ── Graph RAG fusion ─────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vector_top_k: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub edge_label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub direction: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expansion_depth: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_top_k: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vector_k: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub graph_k: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vector_field: Option<String>,
+
+    // ── Graph ops ────────────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub start_node: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_node: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub depth: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from_node: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to_node: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub edge_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub properties: Option<serde_json::Value>,
+
+    // ── Text/Hybrid search ───────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_text: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vector_weight: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fuzzy: Option<bool>,
+
+    // ── Vector search tuning ────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ef_search: Option<u32>,
+    /// Named vector field (for multi-field vector collections).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub field_name: Option<String>,
+
+    // ── Range scan bounds ───────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lower_bound: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upper_bound: Option<Vec<u8>>,
+
+    // ── CRDT dedup ──────────────────────────────────────────
+    /// Monotonic mutation ID for CRDT delta deduplication.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mutation_id: Option<u64>,
+
+    // ── Batch operations ─────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vectors: Option<Vec<BatchVector>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub documents: Option<Vec<BatchDocument>>,
+
+    // ── Spatial scan ───────────────────────────────────────────
+    /// Query geometry as GeoJSON bytes (for SpatialScan).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_geometry: Option<Vec<u8>>,
+    /// Spatial predicate name: "dwithin", "contains", "intersects", "within".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spatial_predicate: Option<String>,
+    /// Distance threshold in meters (for ST_DWithin).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub distance_meters: Option<f64>,
+
+    // ── Timeseries ───────────────────────────────────────────
+    /// ILP payload bytes (for TimeseriesIngest).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payload: Option<Vec<u8>>,
+    /// Ingest format (default: "ilp").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
+    /// Time range start (epoch ms, for TimeseriesScan).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_range_start: Option<i64>,
+    /// Time range end (epoch ms, for TimeseriesScan).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_range_end: Option<i64>,
+    /// Bucket interval string for time_bucket aggregation (e.g., "5m").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bucket_interval: Option<String>,
+
+    // ── KV advanced ─────────────────────────────────────────
+    /// TTL in milliseconds (for KvExpire, KvBatchPut).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ttl_ms: Option<u64>,
+    /// Cursor bytes for KvScan pagination.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<Vec<u8>>,
+    /// Glob pattern for KvScan key matching.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub match_pattern: Option<String>,
+    /// Multiple keys for BatchGet / Delete.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keys: Option<Vec<Vec<u8>>>,
+    /// Key-value entries for BatchPut: [(key, value), ...].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entries: Option<Vec<(Vec<u8>, Vec<u8>)>>,
+    /// Field names for FieldGet.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fields: Option<Vec<String>>,
+
+    // ── KV atomic operations ────────────────────────────────
+    /// Integer delta for KvIncr.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub incr_delta: Option<i64>,
+    /// Float delta for KvIncrFloat.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub incr_float_delta: Option<f64>,
+    /// Expected value for KvCas.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expected: Option<Vec<u8>>,
+    /// New value for KvCas / KvGetSet.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub new_value: Option<Vec<u8>>,
+
+    // ── KV sorted index operations ──────────────────────────
+    /// Sorted index name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index_name: Option<String>,
+    /// Sort columns: [(column_name, direction), ...].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_columns: Option<Vec<(String, String)>>,
+    /// Primary key column for sorted index.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key_column: Option<String>,
+    /// Window type for sorted index: "none", "daily", "weekly", "monthly", "custom".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub window_type: Option<String>,
+    /// Timestamp column for windowed sorted index.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub window_timestamp_column: Option<String>,
+    /// Custom window start (ms since epoch).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub window_start_ms: Option<u64>,
+    /// Custom window end (ms since epoch).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub window_end_ms: Option<u64>,
+    /// Top-K value for SortedIndexTopK.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub top_k_count: Option<u32>,
+    /// Score min for SortedIndexRange (encoded bytes).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub score_min: Option<Vec<u8>>,
+    /// Score max for SortedIndexRange (encoded bytes).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub score_max: Option<Vec<u8>>,
+
+    // ── Document advanced ───────────────────────────────────
+    /// Field-level updates: [(field_name, value_bytes), ...].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updates: Option<Vec<(String, Vec<u8>)>>,
+    /// Serialized filter predicates (MessagePack).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub filters: Option<Vec<u8>>,
+
+    // ── Vector advanced ─────────────────────────────────────
+    /// Single vector embedding (for VectorInsert).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vector: Option<Vec<f32>>,
+    /// Vector ID for deletion. Wire type is u64 to accommodate future range
+    /// expansion; the server narrows to u32 via the surrogate space check.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vector_id: Option<u64>,
+
+    // ── Collection policy ────────────────────────────────────
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub policy: Option<serde_json::Value>,
+
+    // ── Graph algorithm/match ───────────────────────────────
+    /// Algorithm name for GraphAlgo (e.g., "pagerank", "wcc", "sssp").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub algorithm: Option<String>,
+    /// Cypher-subset MATCH query string for GraphMatch.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub match_query: Option<String>,
+    /// Algorithm-specific parameters (JSON object).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub algo_params: Option<serde_json::Value>,
+
+    // ── Document DDL ────────────────────────────────────────
+    /// Index paths for DocumentRegister.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index_paths: Option<Vec<String>>,
+    /// Source collection for InsertSelect.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_collection: Option<String>,
+
+    // ── KV DDL ──────────────────────────────────────────────
+    /// Field position in tuple for KvRegisterIndex.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub field_position: Option<u64>,
+    /// Whether to backfill existing keys on index creation.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backfill: Option<bool>,
+
+    // ── Vector DDL ──────────────────────────────────────────
+    /// HNSW M parameter (max connections per layer).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub m: Option<u16>,
+    /// HNSW ef_construction parameter.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ef_construction: Option<u16>,
+    /// Distance metric name ("cosine", "euclidean", "dot").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metric: Option<String>,
+    /// Index type ("hnsw", "hnsw_pq", "ivf_pq").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index_type: Option<String>,
+}
+
+impl TextFields {
+    /// Count the number of `Some(...)` fields — used by the MsgPack encoder
+    /// to write the correct map length header.
+    pub(super) fn present_field_count(&self) -> usize {
+        let mut n = 0usize;
+        if self.auth.is_some() {
+            n += 1;
+        }
+        if self.sql.is_some() {
+            n += 1;
+        }
+        if self.key.is_some() {
+            n += 1;
+        }
+        if self.value.is_some() {
+            n += 1;
+        }
+        if self.collection.is_some() {
+            n += 1;
+        }
+        if self.document_id.is_some() {
+            n += 1;
+        }
+        if self.data.is_some() {
+            n += 1;
+        }
+        if self.query_vector.is_some() {
+            n += 1;
+        }
+        if self.top_k.is_some() {
+            n += 1;
+        }
+        if self.field.is_some() {
+            n += 1;
+        }
+        if self.limit.is_some() {
+            n += 1;
+        }
+        if self.delta.is_some() {
+            n += 1;
+        }
+        if self.peer_id.is_some() {
+            n += 1;
+        }
+        if self.vector_top_k.is_some() {
+            n += 1;
+        }
+        if self.edge_label.is_some() {
+            n += 1;
+        }
+        if self.direction.is_some() {
+            n += 1;
+        }
+        if self.expansion_depth.is_some() {
+            n += 1;
+        }
+        if self.final_top_k.is_some() {
+            n += 1;
+        }
+        if self.vector_k.is_some() {
+            n += 1;
+        }
+        if self.graph_k.is_some() {
+            n += 1;
+        }
+        if self.vector_field.is_some() {
+            n += 1;
+        }
+        if self.start_node.is_some() {
+            n += 1;
+        }
+        if self.end_node.is_some() {
+            n += 1;
+        }
+        if self.depth.is_some() {
+            n += 1;
+        }
+        if self.from_node.is_some() {
+            n += 1;
+        }
+        if self.to_node.is_some() {
+            n += 1;
+        }
+        if self.edge_type.is_some() {
+            n += 1;
+        }
+        if self.properties.is_some() {
+            n += 1;
+        }
+        if self.query_text.is_some() {
+            n += 1;
+        }
+        if self.vector_weight.is_some() {
+            n += 1;
+        }
+        if self.fuzzy.is_some() {
+            n += 1;
+        }
+        if self.ef_search.is_some() {
+            n += 1;
+        }
+        if self.field_name.is_some() {
+            n += 1;
+        }
+        if self.lower_bound.is_some() {
+            n += 1;
+        }
+        if self.upper_bound.is_some() {
+            n += 1;
+        }
+        if self.mutation_id.is_some() {
+            n += 1;
+        }
+        if self.vectors.is_some() {
+            n += 1;
+        }
+        if self.documents.is_some() {
+            n += 1;
+        }
+        if self.query_geometry.is_some() {
+            n += 1;
+        }
+        if self.spatial_predicate.is_some() {
+            n += 1;
+        }
+        if self.distance_meters.is_some() {
+            n += 1;
+        }
+        if self.payload.is_some() {
+            n += 1;
+        }
+        if self.format.is_some() {
+            n += 1;
+        }
+        if self.time_range_start.is_some() {
+            n += 1;
+        }
+        if self.time_range_end.is_some() {
+            n += 1;
+        }
+        if self.bucket_interval.is_some() {
+            n += 1;
+        }
+        if self.ttl_ms.is_some() {
+            n += 1;
+        }
+        if self.cursor.is_some() {
+            n += 1;
+        }
+        if self.match_pattern.is_some() {
+            n += 1;
+        }
+        if self.keys.is_some() {
+            n += 1;
+        }
+        if self.entries.is_some() {
+            n += 1;
+        }
+        if self.fields.is_some() {
+            n += 1;
+        }
+        if self.incr_delta.is_some() {
+            n += 1;
+        }
+        if self.incr_float_delta.is_some() {
+            n += 1;
+        }
+        if self.expected.is_some() {
+            n += 1;
+        }
+        if self.new_value.is_some() {
+            n += 1;
+        }
+        if self.index_name.is_some() {
+            n += 1;
+        }
+        if self.sort_columns.is_some() {
+            n += 1;
+        }
+        if self.key_column.is_some() {
+            n += 1;
+        }
+        if self.window_type.is_some() {
+            n += 1;
+        }
+        if self.window_timestamp_column.is_some() {
+            n += 1;
+        }
+        if self.window_start_ms.is_some() {
+            n += 1;
+        }
+        if self.window_end_ms.is_some() {
+            n += 1;
+        }
+        if self.top_k_count.is_some() {
+            n += 1;
+        }
+        if self.score_min.is_some() {
+            n += 1;
+        }
+        if self.score_max.is_some() {
+            n += 1;
+        }
+        if self.updates.is_some() {
+            n += 1;
+        }
+        if self.filters.is_some() {
+            n += 1;
+        }
+        if self.vector.is_some() {
+            n += 1;
+        }
+        if self.vector_id.is_some() {
+            n += 1;
+        }
+        if self.policy.is_some() {
+            n += 1;
+        }
+        if self.algorithm.is_some() {
+            n += 1;
+        }
+        if self.match_query.is_some() {
+            n += 1;
+        }
+        if self.algo_params.is_some() {
+            n += 1;
+        }
+        if self.index_paths.is_some() {
+            n += 1;
+        }
+        if self.source_collection.is_some() {
+            n += 1;
+        }
+        if self.field_position.is_some() {
+            n += 1;
+        }
+        if self.backfill.is_some() {
+            n += 1;
+        }
+        if self.m.is_some() {
+            n += 1;
+        }
+        if self.ef_construction.is_some() {
+            n += 1;
+        }
+        if self.metric.is_some() {
+            n += 1;
+        }
+        if self.index_type.is_some() {
+            n += 1;
+        }
+        n
+    }
+}

@@ -1,0 +1,228 @@
+//! SQL planning: converts SQL text into physical task lists.
+
+use std::sync::Arc;
+
+use pgwire::api::results::Tag;
+use pgwire::error::{ErrorInfo, PgWireError, PgWireResult};
+
+use crate::control::planner::physical::PhysicalTask;
+use crate::control::security::identity::AuthenticatedIdentity;
+use crate::types::TenantId;
+
+use super::super::super::types::error_to_sqlstate;
+use super::super::core::NodeDbPgHandler;
+use super::catalog::current_descriptor_version;
+
+impl NodeDbPgHandler {
+    /// Plan a SQL statement to physical tasks, handling session auth, RETURNING
+    /// strip, CHECK constraints, plan cache, and RETURNING injection.
+    ///
+    /// This is the single planning code path shared by both the simple-query
+    /// (`execute_planned_sql_inner`) and any future callers that need typed
+    /// physical plans without driving the dispatch loop. Returns the ready-to-
+    /// dispatch task list and the plan-lease scope that must be kept alive until
+    /// dispatch completes.
+    pub(in crate::control::server::pgwire::handler) async fn plan_statement_to_tasks(
+        &self,
+        identity: &AuthenticatedIdentity,
+        sql: &str,
+        tenant_id: TenantId,
+        addr: &std::net::SocketAddr,
+        params: &[nodedb_sql::ParamValue],
+    ) -> PgWireResult<(Vec<PhysicalTask>, crate::control::lease::QueryLeaseScope)> {
+        // Resolve opaque session handle if SET LOCAL nodedb.auth_session is set.
+        let caller_fp = crate::control::security::session_handle::ClientFingerprint::from_peer(
+            identity.tenant_id,
+            addr,
+        );
+        let conn_key = addr.to_string();
+        let mut auth_ctx =
+            if let Some(handle) = self.sessions.get_parameter(addr, "nodedb.auth_session") {
+                use crate::control::security::session_handle::ResolveOutcome;
+                match self
+                    .state
+                    .session_handles
+                    .resolve(&handle, &conn_key, &caller_fp)
+                {
+                    ResolveOutcome::Resolved(cached) => *cached,
+                    ResolveOutcome::RateLimited => {
+                        return Err(PgWireError::UserError(Box::new(ErrorInfo::new(
+                            "FATAL".to_owned(),
+                            "53300".to_owned(),
+                            "session handle resolve rate limit exceeded on this \
+                         connection — closing"
+                                .to_owned(),
+                        ))));
+                    }
+                    ResolveOutcome::Miss => {
+                        crate::control::server::session_auth::build_auth_context_with_session(
+                            identity,
+                            &self.sessions,
+                            addr,
+                        )
+                    }
+                }
+            } else {
+                crate::control::server::session_auth::build_auth_context_with_session(
+                    identity,
+                    &self.sessions,
+                    addr,
+                )
+            };
+
+        // Extract per-query ON DENY override.
+        let clean_sql =
+            crate::control::server::session_auth::extract_and_apply_on_deny(sql, &mut auth_ctx);
+
+        // Strip RETURNING clause before DataFusion planning.
+        let (clean_sql, returning_spec) = super::super::returning::strip_returning(&clean_sql)
+            .map_err(|e| {
+                use super::super::super::types::error_to_sqlstate;
+                let (severity, code, message) = error_to_sqlstate(&e);
+                pgwire::error::PgWireError::UserError(Box::new(pgwire::error::ErrorInfo::new(
+                    severity.to_owned(),
+                    code.to_owned(),
+                    message,
+                )))
+            })?;
+        let has_returning = returning_spec.is_some();
+
+        // Enforce general CHECK constraints for INSERT/UPDATE before planning.
+        self.enforce_check_constraints_if_needed(&clean_sql, tenant_id)
+            .await?;
+
+        // Check plan cache before full planning.
+        let cached_tasks = {
+            let state = Arc::clone(&self.state);
+            let tenant = tenant_id.as_u64();
+            self.sessions.get_cached_plan(addr, &clean_sql, move |id| {
+                current_descriptor_version(&state, tenant, id)
+            })
+        };
+
+        let (tasks, lease_scope) = if !params.is_empty() {
+            let perm_cache = self.state.permission_cache.read().await;
+            let sec = crate::control::planner::context::PlanSecurityContext {
+                identity,
+                auth: &auth_ctx,
+                rls_store: &self.state.rls,
+                permissions: &self.state.permissions,
+                roles: &self.state.roles,
+                permission_cache: Some(&*perm_cache),
+            };
+            let tasks = self
+                .query_ctx
+                .plan_sql_with_params_and_rls(&clean_sql, params, tenant_id, &sec)
+                .await
+                .map_err(|e| {
+                    let (severity, code, message) = error_to_sqlstate(&e);
+                    PgWireError::UserError(Box::new(ErrorInfo::new(
+                        severity.to_owned(),
+                        code.to_owned(),
+                        message,
+                    )))
+                })?;
+            (tasks, crate::control::lease::QueryLeaseScope::empty())
+        } else if let Some((tasks, versions)) = cached_tasks {
+            let scope = self.state.acquire_plan_lease_scope(&versions);
+            (tasks, scope)
+        } else {
+            let (planned, versions) = super::super::retry::retry_on_schema_change(|| async {
+                let perm_cache = self.state.permission_cache.read().await;
+                let sec = crate::control::planner::context::PlanSecurityContext {
+                    identity,
+                    auth: &auth_ctx,
+                    rls_store: &self.state.rls,
+                    permissions: &self.state.permissions,
+                    roles: &self.state.roles,
+                    permission_cache: Some(&*perm_cache),
+                };
+                self.query_ctx
+                    .plan_sql_with_rls_and_versions(&clean_sql, tenant_id, &sec, has_returning)
+                    .await
+            })
+            .await
+            .map_err(|e| {
+                let (severity, code, message) = error_to_sqlstate(&e);
+                PgWireError::UserError(Box::new(ErrorInfo::new(
+                    severity.to_owned(),
+                    code.to_owned(),
+                    message,
+                )))
+            })?;
+
+            let scope = self.state.acquire_plan_lease_scope(&versions);
+            self.sessions
+                .put_cached_plan(addr, &clean_sql, planned.clone(), versions);
+            (planned, scope)
+        };
+
+        // Inject RETURNING spec into DML plans.
+        let tasks = if let Some(ref spec) = returning_spec {
+            tasks
+                .into_iter()
+                .map(|mut task| {
+                    inject_returning_spec(&mut task.plan, spec.clone());
+                    task
+                })
+                .collect()
+        } else {
+            tasks
+        };
+
+        Ok((tasks, lease_scope))
+    }
+}
+
+/// Determine read consistency for a set of tasks.
+pub(super) fn consistency_for_tasks(tasks: &[PhysicalTask]) -> crate::types::ReadConsistency {
+    let has_writes = tasks.iter().any(|t| {
+        crate::control::wal_replication::to_replicated_entry(t.tenant_id, t.vshard_id, &t.plan)
+            .is_some()
+    });
+
+    if has_writes {
+        crate::types::ReadConsistency::Strong
+    } else {
+        crate::types::ReadConsistency::BoundedStaleness(std::time::Duration::from_secs(5))
+    }
+}
+
+/// Inject a RETURNING spec into a DML physical plan variant.
+///
+/// Only `PointUpdate`, `BulkUpdate`, `PointDelete`, and `BulkDelete` are
+/// affected. All other plan variants are left unchanged.
+pub(super) fn inject_returning_spec(
+    plan: &mut crate::bridge::envelope::PhysicalPlan,
+    spec: crate::bridge::physical_plan::ReturningSpec,
+) {
+    use crate::bridge::envelope::PhysicalPlan;
+    use crate::bridge::physical_plan::DocumentOp;
+
+    match plan {
+        PhysicalPlan::Document(DocumentOp::PointUpdate { returning, .. }) => {
+            *returning = Some(spec);
+        }
+        PhysicalPlan::Document(DocumentOp::BulkUpdate { returning, .. }) => {
+            *returning = Some(spec);
+        }
+        PhysicalPlan::Document(DocumentOp::PointDelete { returning, .. }) => {
+            *returning = Some(spec);
+        }
+        PhysicalPlan::Document(DocumentOp::BulkDelete { returning, .. }) => {
+            *returning = Some(spec);
+        }
+        _ => {}
+    }
+}
+
+/// Synthesise one pgwire `Response::Execution` tag for a Calvin batch result.
+pub(super) fn calvin_execution_response(task: &PhysicalTask) -> pgwire::api::results::Response {
+    use super::super::plan::{calvin_tag_for_plan, is_calvin_foldable};
+    let tag = if is_calvin_foldable(&task.plan) {
+        calvin_tag_for_plan(&task.plan)
+    } else {
+        Tag::new("OK")
+    };
+    pgwire::api::results::Response::Execution(tag)
+}
