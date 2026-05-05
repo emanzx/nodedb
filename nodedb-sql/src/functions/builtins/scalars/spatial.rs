@@ -10,6 +10,42 @@ use super::super::helpers::{m, no_trigger};
 pub(super) fn spatial_functions() -> Vec<FunctionMeta> {
     vec![
         m(
+            "st_geohash",
+            Scalar,
+            2,
+            3,
+            no_trigger(),
+            Some(ColumnType::String),
+            arg_types::ST_GEOHASH_ARGS,
+        ),
+        m(
+            "st_geohashdecode",
+            Scalar,
+            1,
+            1,
+            no_trigger(),
+            None,
+            arg_types::ST_GEOHASHDECODE_ARGS,
+        ),
+        m(
+            "h3_latlngtocell",
+            Scalar,
+            3,
+            3,
+            no_trigger(),
+            Some(ColumnType::String),
+            arg_types::H3_LATLNGTOCELL_ARGS,
+        ),
+        m(
+            "h3_celltolatlng",
+            Scalar,
+            1,
+            1,
+            no_trigger(),
+            None,
+            arg_types::H3_CELLTOLATLNG_ARGS,
+        ),
+        m(
             "st_dwithin",
             Scalar,
             3,

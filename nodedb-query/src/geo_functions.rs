@@ -293,6 +293,52 @@ pub fn eval_geo_function(name: &str, args: &[Value]) -> Option<Value> {
                 None => Value::Null,
             }
         }
+        // ── SQL-aliased geohash/H3 encode/decode ──
+        "st_geohash" => {
+            let lng = num_arg(args, 0).unwrap_or(0.0);
+            let lat = num_arg(args, 1).unwrap_or(0.0);
+            let precision = num_arg(args, 2).unwrap_or(6.0) as u8;
+            Value::String(nodedb_spatial::geohash_encode(lng, lat, precision))
+        }
+        "st_geohashdecode" => {
+            let hash = str_arg(args, 0).unwrap_or_default();
+            match nodedb_spatial::geohash_decode(&hash) {
+                Some(bb) => {
+                    let mut map = std::collections::HashMap::new();
+                    map.insert("min_lng".to_string(), Value::Float(bb.min_lng));
+                    map.insert("min_lat".to_string(), Value::Float(bb.min_lat));
+                    map.insert("max_lng".to_string(), Value::Float(bb.max_lng));
+                    map.insert("max_lat".to_string(), Value::Float(bb.max_lat));
+                    Value::Object(map)
+                }
+                None => Value::Null,
+            }
+        }
+        "h3_latlngtocell" => {
+            let lat = num_arg(args, 0).unwrap_or(0.0);
+            let lng = num_arg(args, 1).unwrap_or(0.0);
+            let resolution = num_arg(args, 2).unwrap_or(7.0) as u8;
+            match nodedb_spatial::h3::h3_encode_string(lng, lat, resolution) {
+                Some(hex) => Value::String(hex),
+                None => Value::Null,
+            }
+        }
+        "h3_celltolatlng" => {
+            let h3_str = str_arg(args, 0).unwrap_or_default();
+            let h3_idx = u64::from_str_radix(&h3_str, 16).unwrap_or(0);
+            if !nodedb_spatial::h3::h3_is_valid(h3_idx) {
+                return Some(Value::Null);
+            }
+            match nodedb_spatial::h3::h3_to_center(h3_idx) {
+                Some((lng, lat)) => {
+                    let mut map = std::collections::HashMap::new();
+                    map.insert("lat".to_string(), Value::Float(lat));
+                    map.insert("lng".to_string(), Value::Float(lng));
+                    Value::Object(map)
+                }
+                None => Value::Null,
+            }
+        }
         "st_intersection" => {
             let (Some(a), Some(b)) = (geom_arg(args, 0), geom_arg(args, 1)) else {
                 return Some(Value::Null);

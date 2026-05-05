@@ -142,6 +142,22 @@ pub static SPATIAL_2_ARGS: &[ArgTypeSpec] =
 
 pub static ST_POINT_ARGS: &[ArgTypeSpec] = &[typed("x", FLOAT64_ONLY), typed("y", FLOAT64_ONLY)];
 
+pub static ST_GEOHASH_ARGS: &[ArgTypeSpec] = &[
+    typed("lng", FLOAT64_ONLY),
+    typed("lat", FLOAT64_ONLY),
+    typed("precision", INT64_ONLY),
+];
+
+pub static ST_GEOHASHDECODE_ARGS: &[ArgTypeSpec] = &[typed("geohash", TEXT)];
+
+pub static H3_LATLNGTOCELL_ARGS: &[ArgTypeSpec] = &[
+    typed("lat", FLOAT64_ONLY),
+    typed("lng", FLOAT64_ONLY),
+    typed("resolution", INT64_ONLY),
+];
+
+pub static H3_CELLTOLATLNG_ARGS: &[ArgTypeSpec] = &[typed("h3_index", TEXT)];
+
 // ── Timeseries ────────────────────────────────────────────────────────────────
 
 pub static TIME_BUCKET_ARGS: &[ArgTypeSpec] = &[any("interval"), typed("ts", TIMESTAMP_TYPES)];
