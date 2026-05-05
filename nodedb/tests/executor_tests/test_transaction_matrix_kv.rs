@@ -411,6 +411,7 @@ fn rollback_matrix_columnar_count_after_rollback() {
             limit: 10,
             sub_group_by: Vec::new(),
             sub_aggregates: Vec::new(),
+            grouping_sets: Vec::new(),
         }),
     );
     let json = crate::helpers::payload_json(&agg_payload);

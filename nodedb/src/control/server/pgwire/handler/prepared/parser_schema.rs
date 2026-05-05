@@ -14,6 +14,13 @@ use pgwire::api::results::FieldInfo;
 /// through the DSL dispatcher at Execute time.
 pub(super) fn is_dsl_statement(sql: &str) -> bool {
     let upper = sql.trim().to_uppercase();
+    // `SEARCH ... USING VECTOR(...)` is preprocessor-rewritten into canonical
+    // SELECT and goes through plan_sql like any other SELECT. Only the FUSION
+    // form (and other SEARCH variants without a SELECT lowering) is a DSL
+    // passthrough.
+    if upper.starts_with("SEARCH ") && upper.contains("USING VECTOR") {
+        return false;
+    }
     upper.starts_with("SEARCH ")
         || upper.starts_with("GRAPH ")
         || upper.starts_with("MATCH ")

@@ -26,6 +26,7 @@ pub enum StatementKind<'a> {
     Update(&'a sqlparser::ast::Statement),
     Delete(&'a sqlparser::ast::Statement),
     Truncate(&'a sqlparser::ast::Statement),
+    Merge(&'a sqlparser::ast::Statement),
     Other,
 }
 
@@ -37,6 +38,7 @@ pub fn classify(stmt: &Statement) -> StatementKind<'_> {
         Statement::Update(_) => StatementKind::Update(stmt),
         Statement::Delete(_) => StatementKind::Delete(stmt),
         Statement::Truncate(_) => StatementKind::Truncate(stmt),
+        Statement::Merge(_) => StatementKind::Merge(stmt),
         _ => StatementKind::Other,
     }
 }

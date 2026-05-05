@@ -154,6 +154,10 @@ fn plan_statements(
                 let mut trunc_plans = planner::dml::plan_truncate_stmt(stmt)?;
                 plans.append(&mut trunc_plans);
             }
+            StatementKind::Merge(stmt) => {
+                let mut merge_plans = planner::merge::plan_merge(stmt, catalog)?;
+                plans.append(&mut merge_plans);
+            }
             StatementKind::Other => {
                 return Err(SqlError::Unsupported {
                     detail: format!("statement type: {stmt}"),

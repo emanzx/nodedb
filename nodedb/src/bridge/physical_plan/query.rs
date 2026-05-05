@@ -58,6 +58,11 @@ pub enum QueryOp {
         limit: usize,
         sub_group_by: Vec<String>,
         sub_aggregates: Vec<AggregateSpec>,
+        /// ROLLUP / CUBE / GROUPING SETS expansion.  Each inner `Vec<u32>` is
+        /// one grouping set — the indices into `group_by` that are *present*
+        /// (non-NULL) for rows in that set.  Empty outer vec = plain single-set
+        /// GROUP BY (no null-filling needed).
+        grouping_sets: Vec<Vec<u32>>,
     },
 
     /// Partial aggregate: each core computes locally, Control Plane merges.

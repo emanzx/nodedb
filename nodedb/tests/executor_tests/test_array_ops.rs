@@ -213,6 +213,7 @@ fn array_agg_aggregate() {
             limit: 100,
             sub_group_by: Vec::new(),
             sub_aggregates: Vec::new(),
+            grouping_sets: Vec::new(),
         }),
     );
 

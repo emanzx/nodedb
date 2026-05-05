@@ -100,6 +100,7 @@ pub fn plan_join_from_select(
             aggregates,
             having,
             limit: 10000,
+            grouping_sets: None,
         }));
     }
 

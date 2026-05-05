@@ -239,6 +239,7 @@ impl NodeDbPgHandler {
             && !upper.starts_with("SHOW INDEXES")
             && !upper.starts_with("SHOW TYPEGUARD")
             && !upper.starts_with("SHOW CONSTRAINTS")
+            && !upper.starts_with("SHOW CONFLICT POLICY")
         {
             return self.handle_show(addr, sql_trimmed);
         }

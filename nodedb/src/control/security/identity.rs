@@ -249,9 +249,11 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
             | DocumentOp::PointUpdate { .. }
             | DocumentOp::BulkUpdate { .. }
             | DocumentOp::BulkDelete { .. }
+            | DocumentOp::UpdateFromJoin { .. }
             | DocumentOp::Upsert { .. }
             | DocumentOp::InsertSelect { .. }
-            | DocumentOp::Truncate { .. },
+            | DocumentOp::Truncate { .. }
+            | DocumentOp::Merge { .. },
         ) => Permission::Write,
 
         PhysicalPlan::Graph(
@@ -284,6 +286,8 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
         PhysicalPlan::Crdt(CrdtOp::SetPolicy { .. } | CrdtOp::CompactAtVersion { .. }) => {
             Permission::Alter
         }
+
+        PhysicalPlan::Crdt(CrdtOp::GetPolicy { .. }) => Permission::Read,
 
         PhysicalPlan::Meta(
             MetaOp::RegisterContinuousAggregate { .. }

@@ -212,6 +212,9 @@ pub(super) fn inject_returning_spec(
         PhysicalPlan::Document(DocumentOp::BulkDelete { returning, .. }) => {
             *returning = Some(spec);
         }
+        PhysicalPlan::Document(DocumentOp::UpdateFromJoin { returning, .. }) => {
+            *returning = Some(spec);
+        }
         _ => {}
     }
 }

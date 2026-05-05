@@ -302,5 +302,20 @@ pub(super) fn aggregate_functions() -> Vec<FunctionMeta> {
             None,
             arg_types::APPROX_COUNT_ARGS,
         ),
+        // ── Grouping set functions ──
+        // `GROUPING(col)` returns 1 when `col` is NULL because it was not selected
+        // in the current grouping set's row (e.g. a ROLLUP grand-total row),
+        // and 0 when `col` carries a real aggregated value.
+        // Registered as Scalar so it is NOT treated as a GROUP-BY aggregate by
+        // aggregate_walk; it is handled specially in plan_aggregate.
+        m(
+            "grouping",
+            FunctionCategory::Scalar,
+            1,
+            255,
+            no_trigger(),
+            Some(ColumnType::Int64),
+            arg_types::GROUPING_ARGS,
+        ),
     ]
 }

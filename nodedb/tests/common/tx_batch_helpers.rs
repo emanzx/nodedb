@@ -239,6 +239,7 @@ pub fn columnar_count(collection: &str) -> PhysicalPlan {
         limit: 10,
         sub_group_by: Vec::new(),
         sub_aggregates: Vec::new(),
+        grouping_sets: Vec::new(),
     })
 }
 

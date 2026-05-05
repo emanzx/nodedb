@@ -140,6 +140,14 @@ pub static SPATIAL_3_ARGS: &[ArgTypeSpec] = &[
 pub static SPATIAL_2_ARGS: &[ArgTypeSpec] =
     &[typed("geom1", GEOMETRY_ONLY), typed("geom2", GEOMETRY_ONLY)];
 
+pub static ST_BUFFER_ARGS: &[ArgTypeSpec] = &[
+    typed("geom", GEOMETRY_ONLY),
+    typed("distance", FLOAT64_ONLY),
+    typed("segments", INT64_ONLY),
+];
+
+pub static ST_ENVELOPE_ARGS: &[ArgTypeSpec] = &[typed("geom", GEOMETRY_ONLY)];
+
 pub static ST_POINT_ARGS: &[ArgTypeSpec] = &[typed("x", FLOAT64_ONLY), typed("y", FLOAT64_ONLY)];
 
 pub static ST_GEOHASH_ARGS: &[ArgTypeSpec] = &[
@@ -187,6 +195,11 @@ pub static APPROX_PERCENTILE_ARGS: &[ArgTypeSpec] =
 pub static APPROX_TOPK_ARGS: &[ArgTypeSpec] = &[any("expr"), typed("k", INT64_ONLY)];
 
 pub static APPROX_COUNT_ARGS: &[ArgTypeSpec] = &[any("expr")];
+
+// ── Grouping set helpers ──────────────────────────────────────────────────────
+
+/// `GROUPING(col [, col2, ...])` — accepts 1 or more column references.
+pub static GROUPING_ARGS: &[ArgTypeSpec] = &[any_variadic("col")];
 
 // ── Document helpers ──────────────────────────────────────────────────────────
 

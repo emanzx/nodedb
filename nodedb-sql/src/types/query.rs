@@ -81,6 +81,11 @@ pub struct AggregateExpr {
     pub args: Vec<SqlExpr>,
     pub alias: String,
     pub distinct: bool,
+    /// For the synthetic `GROUPING(col)` pseudo-aggregate: the index of `col`
+    /// in the canonical group-by key list. The executor uses this index to read
+    /// the grouping-set bitmask and return 0 (present) or 1 (NULL-filled).
+    /// `None` for all ordinary aggregate functions.
+    pub grouping_col_index: Option<usize>,
 }
 
 /// Window function specification.
@@ -91,4 +96,8 @@ pub struct WindowSpec {
     pub partition_by: Vec<SqlExpr>,
     pub order_by: Vec<SortKey>,
     pub alias: String,
+    /// Frame specification (`ROWS`/`RANGE` BETWEEN ... AND ...).
+    /// Defaults to `RANGE UNBOUNDED PRECEDING TO CURRENT ROW`
+    /// when the SQL omits a frame clause.
+    pub frame: nodedb_query::WindowFrame,
 }

@@ -163,6 +163,24 @@ fn classify_document_op(op: &DocumentOp) -> Option<DmlWriteInfo> {
             new_fields: None,
             needs_existence_probe: false,
         }),
+        DocumentOp::UpdateFromJoin {
+            target_collection, ..
+        } => Some(DmlWriteInfo {
+            collection: target_collection.clone(),
+            document_id: None,
+            event: DmlEvent::Update,
+            new_fields: None,
+            needs_existence_probe: false,
+        }),
+        DocumentOp::Merge {
+            target_collection, ..
+        } => Some(DmlWriteInfo {
+            collection: target_collection.clone(),
+            document_id: None,
+            event: DmlEvent::Update,
+            new_fields: None,
+            needs_existence_probe: false,
+        }),
         // Not a write operation.
         DocumentOp::PointGet { .. }
         | DocumentOp::Scan { .. }

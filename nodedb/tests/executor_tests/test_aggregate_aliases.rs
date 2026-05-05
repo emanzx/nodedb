@@ -74,6 +74,7 @@ fn aggregate_output_uses_user_alias_but_having_reads_canonical_key() {
             limit: 10,
             sub_group_by: Vec::new(),
             sub_aggregates: Vec::new(),
+            grouping_sets: Vec::new(),
         }),
     );
 

@@ -43,6 +43,11 @@ pub enum CrdtOp {
         policy_json: String,
     },
 
+    /// Read the current conflict resolution policy for a CRDT collection.
+    /// Returns the JSON-serialized `CollectionPolicy`, falling back to the
+    /// ephemeral default when no explicit policy has been registered.
+    GetPolicy { collection: String },
+
     /// Read a document at a specific historical version.
     /// Returns the document state as JSON bytes.
     ReadAtVersion {

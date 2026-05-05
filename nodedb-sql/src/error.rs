@@ -24,6 +24,9 @@ pub enum SqlError {
     #[error("invalid function call: {detail}")]
     InvalidFunction { detail: String },
 
+    #[error("invalid window frame: {detail}")]
+    InvalidWindowFrame { detail: String },
+
     #[error("missing required field '{field}' for {context}")]
     MissingField { field: String, context: String },
 

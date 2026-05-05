@@ -62,6 +62,7 @@ pub(super) fn extract_collection(plan: &PhysicalPlan) -> Option<&str> {
         })
         | PhysicalPlan::Graph(GraphOp::RagFusion { collection, .. })
         | PhysicalPlan::Crdt(CrdtOp::SetPolicy { collection, .. })
+        | PhysicalPlan::Crdt(CrdtOp::GetPolicy { collection, .. })
         | PhysicalPlan::Vector(VectorOp::SetParams { collection, .. })
         | PhysicalPlan::Text(TextOp::Search { collection, .. })
         | PhysicalPlan::Text(TextOp::PhraseSearch { collection, .. })
@@ -118,7 +119,8 @@ pub(super) fn extract_collection(plan: &PhysicalPlan) -> Option<&str> {
 pub(super) fn describe_plan(plan: &PhysicalPlan) -> PlanKind {
     match plan {
         PhysicalPlan::Document(DocumentOp::PointGet { .. })
-        | PhysicalPlan::Crdt(CrdtOp::Read { .. }) => PlanKind::SingleDocument,
+        | PhysicalPlan::Crdt(CrdtOp::Read { .. })
+        | PhysicalPlan::Crdt(CrdtOp::GetPolicy { .. }) => PlanKind::SingleDocument,
 
         PhysicalPlan::Vector(VectorOp::Search { .. })
         | PhysicalPlan::Document(DocumentOp::RangeScan { .. })
@@ -177,6 +179,11 @@ pub(super) fn describe_plan(plan: &PhysicalPlan) -> PlanKind {
         }) => PlanKind::ReturningRows,
         PhysicalPlan::Document(DocumentOp::PointDelete { .. })
         | PhysicalPlan::Document(DocumentOp::BulkDelete { .. }) => DmlResult("DELETE"),
+
+        PhysicalPlan::Document(DocumentOp::UpdateFromJoin {
+            returning: Some(_), ..
+        }) => PlanKind::ReturningRows,
+        PhysicalPlan::Document(DocumentOp::UpdateFromJoin { .. }) => DmlResult("UPDATE"),
 
         PhysicalPlan::Document(DocumentOp::Truncate { .. }) => DmlResult("TRUNCATE"),
 
