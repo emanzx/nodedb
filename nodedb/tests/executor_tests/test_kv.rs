@@ -180,6 +180,7 @@ fn kv_scan_returns_entries() {
             count: 100,
             filters: Vec::new(),
             match_pattern: None,
+            sort_keys: Vec::new(),
         }),
     );
 
@@ -219,6 +220,7 @@ fn kv_scan_with_match_pattern() {
             count: 100,
             filters: Vec::new(),
             match_pattern: Some("user:*".into()),
+            sort_keys: Vec::new(),
         }),
     );
 

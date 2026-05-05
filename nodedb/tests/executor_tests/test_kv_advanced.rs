@@ -487,6 +487,7 @@ fn kv_index_write_amp_ratio_matches() {
             count: 200,
             filters: Vec::new(),
             match_pattern: None,
+            sort_keys: Vec::new(),
         }),
     );
     let json: serde_json::Value = payload_value(&payload);

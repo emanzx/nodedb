@@ -52,17 +52,19 @@ async fn ndarray_slice_query() {
         }
     }
 
+    // NDARRAY_SLICE bounds are inclusive on both ends (closed range).
+    // See `nodedb-array/src/query/slice.rs` for the documented semantics.
     let rows = srv
         .query_rows(
             "SELECT * FROM NDARRAY_SLICE('arr_slice', \
-             '{\"x\":[0,2],\"y\":[0,2]}', '*', 100)",
+             '{\"x\":[0,1],\"y\":[0,1]}', '*', 100)",
         )
         .await
         .unwrap();
     assert_eq!(
         rows.len(),
         4,
-        "expected 4 cells from slice, got {}",
+        "expected 4 cells from inclusive [0,1] x [0,1] slice, got {}",
         rows.len()
     );
 }
