@@ -58,7 +58,7 @@ pub fn value_to_coord_value(v: &Value, expected: DimType) -> Result<CoordValue, 
             | Value::Regex(_)
             | Value::Range { .. }
             | Value::Record { .. }
-            | Value::NdArrayCell(_),
+            | Value::ArrayCell(_),
             _,
         ) => Err(NodeDbError::codec(format!(
             "coord value {} not convertible to {:?}",
@@ -118,7 +118,7 @@ pub fn value_to_cell_value(v: &Value, expected: AttrType) -> Result<CellValue, N
             | Value::Regex(_)
             | Value::Range { .. }
             | Value::Record { .. }
-            | Value::NdArrayCell(_),
+            | Value::ArrayCell(_),
             _,
         ) => Err(NodeDbError::codec(format!(
             "attr value {} not convertible to {:?}",
@@ -188,7 +188,7 @@ fn value_kind(v: &Value) -> &'static str {
         Value::Regex(_) => "regex",
         Value::Range { .. } => "range",
         Value::Record { .. } => "record",
-        Value::NdArrayCell(_) => "ndarray_cell",
+        Value::ArrayCell(_) => "array_cell",
         // Value is #[non_exhaustive]; future variants report as "unknown".
         _ => "unknown",
     }

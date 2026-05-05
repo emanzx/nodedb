@@ -9,8 +9,8 @@
 //!
 //! `CREATE ARRAY` writes to the local in-memory `ArrayCatalog` on the
 //! executing node only — it is NOT replicated through Raft (unlike
-//! `CREATE COLLECTION`). As a result, all array queries (NDARRAY_SLICE,
-//! NDARRAY_AGG, etc.) must be issued on the same node that executed the
+//! `CREATE COLLECTION`). As a result, all array queries (ARRAY_SLICE,
+//! ARRAY_AGG, etc.) must be issued on the same node that executed the
 //! `CREATE ARRAY` DDL.
 //!
 //! The "distributed" aspect of these tests is that cell data is stored
@@ -19,10 +19,10 @@
 //! path and merges the results.
 //!
 //! Tests:
-//!   1. `cluster_array_slice_spans_multiple_shards` — NDARRAY_SLICE fan-out
+//!   1. `cluster_array_slice_spans_multiple_shards` — ARRAY_SLICE fan-out
 //!      to peer shards returns exactly the expected cells.
-//!   2. `cluster_array_agg_sum_across_shards` — NDARRAY_AGG sum is correct.
-//!   3. `cluster_array_agg_grouped_by_chr` — NDARRAY_AGG group-by-dim returns
+//!   2. `cluster_array_agg_sum_across_shards` — ARRAY_AGG sum is correct.
+//!   3. `cluster_array_agg_grouped_by_chr` — ARRAY_AGG group-by-dim returns
 //!      correct per-group sums.
 //!   4. `cluster_array_vector_prefilter_distributed` — fused vector+slice
 //!      query wires end-to-end without error.
@@ -115,9 +115,9 @@ async fn spawn_cluster_with_genome() -> (TestCluster, usize) {
 
     // Flush so reads exercise the segment-scan path, not just the memtable.
     cluster.nodes[leader_idx]
-        .exec("SELECT NDARRAY_FLUSH('genome')")
+        .exec("SELECT ARRAY_FLUSH('genome')")
         .await
-        .expect("NDARRAY_FLUSH");
+        .expect("ARRAY_FLUSH");
 
     (cluster, leader_idx)
 }
@@ -132,7 +132,7 @@ async fn cluster_array_slice_spans_multiple_shards() {
     // Slice chr=1, pos 0..99 — should return exactly the 3 cells for chr=1.
     let rows = query_col0(
         client,
-        "SELECT * FROM NDARRAY_SLICE('genome', '{chr: [1, 1], pos: [0, 99]}', ['qual'], 100)",
+        "SELECT * FROM ARRAY_SLICE('genome', '{chr: [1, 1], pos: [0, 99]}', ['qual'], 100)",
     )
     .await;
 
@@ -173,7 +173,7 @@ async fn cluster_array_agg_sum_across_shards() {
     let (cluster, node_idx) = spawn_cluster_with_genome().await;
     let client = &cluster.nodes[node_idx].client;
 
-    let rows = query_col0(client, "SELECT * FROM NDARRAY_AGG('genome', 'qual', 'sum')").await;
+    let rows = query_col0(client, "SELECT * FROM ARRAY_AGG('genome', 'qual', 'sum')").await;
 
     assert_eq!(rows.len(), 1, "scalar agg must return exactly one row");
 
@@ -203,7 +203,7 @@ async fn cluster_array_agg_grouped_by_chr() {
 
     let rows = query_col0(
         client,
-        "SELECT * FROM NDARRAY_AGG('genome', 'qual', 'sum', 'chr')",
+        "SELECT * FROM ARRAY_AGG('genome', 'qual', 'sum', 'chr')",
     )
     .await;
 
@@ -273,7 +273,7 @@ async fn cluster_array_vector_prefilter_distributed() {
         .await
         .expect("CREATE VECTOR INDEX");
 
-    // The fused query: ORDER BY vector_distance + JOIN NDARRAY_SLICE.
+    // The fused query: ORDER BY vector_distance + JOIN ARRAY_SLICE.
     // Issued on the DDL node because the array catalog is local there.
     // The vector index is empty — the assertion is that the query wires
     // through every distributed layer without error:
@@ -283,7 +283,7 @@ async fn cluster_array_vector_prefilter_distributed() {
         .client
         .simple_query(
             "SELECT id FROM genes \
-             JOIN NDARRAY_SLICE('genome', '{chr: [1, 1], pos: [0, 99]}') AS s \
+             JOIN ARRAY_SLICE('genome', '{chr: [1, 1], pos: [0, 99]}') AS s \
                ON id = s.qual \
              ORDER BY vector_distance(embedding, [1.0, 0.0, 0.0]) \
              LIMIT 10",

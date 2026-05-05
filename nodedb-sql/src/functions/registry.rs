@@ -59,20 +59,20 @@ pub enum SearchTrigger {
     SpatialIntersects,
     SpatialWithin,
     TimeBucket,
-    /// Array engine table-valued read: `NDARRAY_SLICE(name, slice_obj, attrs?, limit?)`.
-    NdArraySlice,
-    /// Array engine table-valued read: `NDARRAY_PROJECT(name, attrs)`.
-    NdArrayProject,
+    /// Array engine table-valued read: `ARRAY_SLICE(name, slice_obj, attrs?, limit?)`.
+    ArraySlice,
+    /// Array engine table-valued read: `ARRAY_PROJECT(name, attrs)`.
+    ArrayProject,
     /// Array engine table-valued aggregate:
-    /// `NDARRAY_AGG(name, attr, reducer, group_by_dim?)`.
-    NdArrayAgg,
+    /// `ARRAY_AGG(name, attr, reducer, group_by_dim?)`.
+    ArrayAgg,
     /// Array engine table-valued elementwise:
-    /// `NDARRAY_ELEMENTWISE(left, right, op, attr)`.
-    NdArrayElementwise,
-    /// Array engine maintenance scalar (returns BOOL): `NDARRAY_FLUSH(name)`.
-    NdArrayFlush,
-    /// Array engine maintenance scalar (returns BOOL): `NDARRAY_COMPACT(name)`.
-    NdArrayCompact,
+    /// `ARRAY_ELEMENTWISE(left, right, op, attr)`.
+    ArrayElementwise,
+    /// Array engine maintenance scalar (returns BOOL): `ARRAY_FLUSH(name)`.
+    ArrayFlush,
+    /// Array engine maintenance scalar (returns BOOL): `ARRAY_COMPACT(name)`.
+    ArrayCompact,
 }
 
 /// Metadata about a known function.

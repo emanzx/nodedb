@@ -769,20 +769,20 @@ INSERT INTO spatial_grid (x, y, z, temperature, pressure) VALUES
   (10, 20, 10, 22.1, 1013.1);
 
 -- Slice: range query over dimensions
-SELECT x, y, z, temperature FROM NDARRAY_SLICE(
+SELECT x, y, z, temperature FROM ARRAY_SLICE(
   'spatial_grid',
   {x: [0, 100), y: [0, 100), z: [0, 50)},
   ['temperature']
 );
 
 -- Project: select specific attributes
-SELECT * FROM NDARRAY_PROJECT('spatial_grid', ['temperature', 'pressure']);
+SELECT * FROM ARRAY_PROJECT('spatial_grid', ['temperature', 'pressure']);
 
 -- Aggregate: reduce dimensionality via aggregation
-SELECT * FROM NDARRAY_AGG('spatial_grid', 'temperature', 'AVG', 'x');
+SELECT * FROM ARRAY_AGG('spatial_grid', 'temperature', 'AVG', 'x');
 
 -- Element-wise operations
-SELECT * FROM NDARRAY_ELEMENTWISE(
+SELECT * FROM ARRAY_ELEMENTWISE(
   'current',
   'baseline',
   'SUBTRACT',
@@ -790,8 +790,8 @@ SELECT * FROM NDARRAY_ELEMENTWISE(
 );
 
 -- Flush and compact
-SELECT NDARRAY_FLUSH('spatial_grid');
-SELECT NDARRAY_COMPACT('spatial_grid');
+SELECT ARRAY_FLUSH('spatial_grid');
+SELECT ARRAY_COMPACT('spatial_grid');
 ```
 
 ## Temporal Queries (Bitemporal)

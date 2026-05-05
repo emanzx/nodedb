@@ -39,13 +39,13 @@ pub(super) fn convert_alter_array(
         .array_catalog
         .as_ref()
         .ok_or_else(|| crate::Error::PlanError {
-            detail: "ALTER NDARRAY: no array catalog wired into convert context".into(),
+            detail: "ALTER ARRAY: no array catalog wired into convert context".into(),
         })?;
     let credentials = ctx
         .credentials
         .as_ref()
         .ok_or_else(|| crate::Error::PlanError {
-            detail: "ALTER NDARRAY: no credential store wired into convert context".into(),
+            detail: "ALTER ARRAY: no credential store wired into convert context".into(),
         })?;
 
     // 1. Load current entry.
@@ -55,7 +55,7 @@ pub(super) fn convert_alter_array(
         })?;
         cat.lookup_by_name(name)
             .ok_or_else(|| crate::Error::PlanError {
-                detail: format!("ALTER NDARRAY {name}: not found"),
+                detail: format!("ALTER ARRAY {name}: not found"),
             })?
     };
 
@@ -75,7 +75,7 @@ pub(super) fn convert_alter_array(
             minimum_audit_retain_ms: new_min,
         };
         retention.validate().map_err(|e| crate::Error::PlanError {
-            detail: format!("ALTER NDARRAY {name}: {e}"),
+            detail: format!("ALTER ARRAY {name}: {e}"),
         })?;
     }
 
@@ -97,7 +97,7 @@ pub(super) fn convert_alter_array(
         cat.unregister(name);
         cat.register(updated.clone())
             .map_err(|e| crate::Error::PlanError {
-                detail: format!("ALTER NDARRAY {name}: catalog re-register: {e}"),
+                detail: format!("ALTER ARRAY {name}: catalog re-register: {e}"),
             })?;
     }
 
@@ -105,7 +105,7 @@ pub(super) fn convert_alter_array(
     if let Some(catalog) = credentials.catalog().as_ref() {
         crate::control::array_catalog::persist::persist(catalog, &updated).map_err(|e| {
             crate::Error::PlanError {
-                detail: format!("ALTER NDARRAY {name}: catalog persist: {e}"),
+                detail: format!("ALTER ARRAY {name}: catalog persist: {e}"),
             }
         })?;
     }
@@ -126,7 +126,7 @@ pub(super) fn convert_alter_array(
                 registry
                     .register(array_tid, name, BitemporalEngineKind::Array, retention)
                     .map_err(|e| crate::Error::PlanError {
-                        detail: format!("ALTER NDARRAY {name}: registry register: {e}"),
+                        detail: format!("ALTER ARRAY {name}: registry register: {e}"),
                     })?;
             }
             None => {
@@ -140,7 +140,7 @@ pub(super) fn convert_alter_array(
                     registry
                         .register(array_tid, name, BitemporalEngineKind::Array, retention)
                         .map_err(|e| crate::Error::PlanError {
-                            detail: format!("ALTER NDARRAY {name}: registry re-register: {e}"),
+                            detail: format!("ALTER ARRAY {name}: registry re-register: {e}"),
                         })?;
                 }
             }

@@ -12,7 +12,7 @@ use crate::types::query::{
 };
 
 use super::row_types::{KvInsertIntent, VectorPrimaryRow};
-use super::vector_opts::{NdArrayPrefilter, VectorAnnOptions};
+use super::vector_opts::{ArrayPrefilter, VectorAnnOptions};
 
 /// The top-level plan produced by the SQL planner.
 #[derive(Debug, Clone)]
@@ -217,9 +217,9 @@ pub enum SqlPlan {
         /// runs first and its output cells' surrogates form a bitmap that
         /// gates the HNSW candidate set. Set by the planner when an
         /// `ORDER BY vector_distance(...) LIMIT k` query is JOINed against
-        /// `NDARRAY_SLICE(...)`. The convert layer lowers this to
+        /// `ARRAY_SLICE(...)`. The convert layer lowers this to
         /// `VectorOp::Search { inline_prefilter_plan: Some(ArrayOp::SurrogateBitmapScan) }`.
-        array_prefilter: Option<NdArrayPrefilter>,
+        array_prefilter: Option<ArrayPrefilter>,
         /// ANN knobs parsed from the optional third JSON-string argument
         /// to `vector_distance(field, query, '{...}')`.
         ann_options: VectorAnnOptions,
@@ -344,7 +344,7 @@ pub enum SqlPlan {
     /// `DROP ARRAY [IF EXISTS] <name>` — pure Control-Plane catalog
     /// mutation. Per-core array store cleanup happens lazily.
     DropArray { name: String, if_exists: bool },
-    /// `ALTER NDARRAY <name> SET (audit_retain_ms = N, ...)`.
+    /// `ALTER ARRAY <name> SET (audit_retain_ms = N, ...)`.
     ///
     /// Double-`Option` semantics for each diff field:
     /// - `None`          = key was absent from SET clause → field unchanged.
@@ -368,8 +368,8 @@ pub enum SqlPlan {
         name: String,
         coords: Vec<Vec<types_array::ArrayCoordLiteral>>,
     },
-    /// `SELECT * FROM NDARRAY_SLICE(name, {dim:[lo,hi],..}, [attrs], limit)`.
-    NdArraySlice {
+    /// `SELECT * FROM ARRAY_SLICE(name, {dim:[lo,hi],..}, [attrs], limit)`.
+    ArraySlice {
         name: String,
         slice: types_array::ArraySliceAst,
         /// Attribute names. Empty = all attrs.
@@ -381,14 +381,14 @@ pub enum SqlPlan {
         /// Populated from `AS OF SYSTEM TIME` / `AS OF VALID TIME` clauses.
         temporal: TemporalScope,
     },
-    /// `SELECT * FROM NDARRAY_PROJECT(name, [attrs])`.
-    NdArrayProject {
+    /// `SELECT * FROM ARRAY_PROJECT(name, [attrs])`.
+    ArrayProject {
         name: String,
         /// Attribute names. Must be non-empty.
         attr_projection: Vec<String>,
     },
-    /// `SELECT * FROM NDARRAY_AGG(name, attr, reducer [, group_by_dim])`.
-    NdArrayAgg {
+    /// `SELECT * FROM ARRAY_AGG(name, attr, reducer [, group_by_dim])`.
+    ArrayAgg {
         name: String,
         attr: String,
         reducer: types_array::ArrayReducerAst,
@@ -399,17 +399,17 @@ pub enum SqlPlan {
         /// fast path. Populated from `AS OF SYSTEM TIME` / `AS OF VALID TIME`.
         temporal: TemporalScope,
     },
-    /// `SELECT * FROM NDARRAY_ELEMENTWISE(left, right, op, attr)`.
-    NdArrayElementwise {
+    /// `SELECT * FROM ARRAY_ELEMENTWISE(left, right, op, attr)`.
+    ArrayElementwise {
         left: String,
         right: String,
         op: types_array::ArrayBinaryOpAst,
         attr: String,
     },
-    /// `SELECT NDARRAY_FLUSH(name)` — returns one row `{result: BOOL}`.
-    NdArrayFlush { name: String },
-    /// `SELECT NDARRAY_COMPACT(name)` — returns one row `{result: BOOL}`.
-    NdArrayCompact { name: String },
+    /// `SELECT ARRAY_FLUSH(name)` — returns one row `{result: BOOL}`.
+    ArrayFlush { name: String },
+    /// `SELECT ARRAY_COMPACT(name)` — returns one row `{result: BOOL}`.
+    ArrayCompact { name: String },
 
     // ── Vector-primary ──────────────────────────────────────────────────
     /// INSERT into a vector-primary collection.

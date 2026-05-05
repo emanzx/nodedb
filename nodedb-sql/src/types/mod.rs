@@ -11,7 +11,7 @@ pub mod query;
 pub use collection::{CollectionInfo, ColumnInfo, IndexSpec, IndexState};
 pub use filter::{CompareOp, Filter, FilterExpr};
 pub use plan::{
-    DistanceMetric, KvInsertIntent, NdArrayPrefilter, SqlPlan, VectorAnnOptions, VectorPrimaryRow,
+    ArrayPrefilter, DistanceMetric, KvInsertIntent, SqlPlan, VectorAnnOptions, VectorPrimaryRow,
     VectorQuantization,
 };
 pub use query::{

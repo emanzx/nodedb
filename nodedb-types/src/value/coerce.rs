@@ -30,7 +30,7 @@ impl Value {
             (Value::Float(a), Value::String(s)) => s.parse::<f64>().is_ok_and(|n| *a == n),
             (Value::String(s), Value::Float(b)) => s.parse::<f64>().is_ok_and(|n| n == *b),
             // Structural equality on ND cells: same coords and same attrs.
-            (Value::NdArrayCell(a), Value::NdArrayCell(b)) => a == b,
+            (Value::ArrayCell(a), Value::ArrayCell(b)) => a == b,
             _ => false,
         }
     }
@@ -42,7 +42,7 @@ impl Value {
         use std::cmp::Ordering;
         // ND cells: lexicographic on coords, then attrs. Matches array
         // engine cell ordering (coordinate-major).
-        if let (Value::NdArrayCell(a), Value::NdArrayCell(b)) = (self, other) {
+        if let (Value::ArrayCell(a), Value::ArrayCell(b)) = (self, other) {
             for (x, y) in a.coords.iter().zip(b.coords.iter()) {
                 match x.cmp_coerced(y) {
                     Ordering::Equal => continue,

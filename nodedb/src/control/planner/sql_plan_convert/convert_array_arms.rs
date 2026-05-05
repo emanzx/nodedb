@@ -65,7 +65,7 @@ pub(super) fn convert_array_plans(
             super::super::array_convert::convert_delete_array(name, coords, tenant_id, ctx),
         ),
 
-        SqlPlan::NdArraySlice {
+        SqlPlan::ArraySlice {
             name,
             slice,
             attr_projection,
@@ -81,7 +81,7 @@ pub(super) fn convert_array_plans(
             ctx,
         )),
 
-        SqlPlan::NdArrayProject {
+        SqlPlan::ArrayProject {
             name,
             attr_projection,
         } => Some(super::super::array_fn_convert::convert_project(
@@ -91,7 +91,7 @@ pub(super) fn convert_array_plans(
             ctx,
         )),
 
-        SqlPlan::NdArrayAgg {
+        SqlPlan::ArrayAgg {
             name,
             attr,
             reducer,
@@ -107,7 +107,7 @@ pub(super) fn convert_array_plans(
             ctx,
         )),
 
-        SqlPlan::NdArrayElementwise {
+        SqlPlan::ArrayElementwise {
             left,
             right,
             op,
@@ -116,11 +116,11 @@ pub(super) fn convert_array_plans(
             left, right, *op, attr, tenant_id, ctx,
         )),
 
-        SqlPlan::NdArrayFlush { name } => Some(super::super::array_fn_convert::convert_flush(
+        SqlPlan::ArrayFlush { name } => Some(super::super::array_fn_convert::convert_flush(
             name, tenant_id, ctx,
         )),
 
-        SqlPlan::NdArrayCompact { name } => Some(super::super::array_fn_convert::convert_compact(
+        SqlPlan::ArrayCompact { name } => Some(super::super::array_fn_convert::convert_compact(
             name, tenant_id, ctx,
         )),
 

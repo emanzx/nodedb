@@ -15,7 +15,7 @@ pub enum ArrayStatement {
     Alter(AlterArrayAst),
 }
 
-/// `ALTER NDARRAY <name> SET ( key = value [, key = value]* )`
+/// `ALTER ARRAY <name> SET ( key = value [, key = value]* )`
 ///
 /// Supported keys:
 /// - `audit_retain_ms`         — `NULL` or non-negative integer.

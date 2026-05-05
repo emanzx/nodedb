@@ -76,7 +76,7 @@ pub(super) struct VectorSearchParams<'a> {
     /// Per-query distance metric override (from `<->`, `<=>`, or `<#>`).
     pub metric: &'a DistanceMetric,
     pub filters: &'a [Filter],
-    pub array_prefilter: Option<&'a nodedb_sql::types::NdArrayPrefilter>,
+    pub array_prefilter: Option<&'a nodedb_sql::types::ArrayPrefilter>,
     pub ann_options: &'a nodedb_sql::types::VectorAnnOptions,
     pub tenant_id: TenantId,
     pub ctx: &'a ConvertContext,

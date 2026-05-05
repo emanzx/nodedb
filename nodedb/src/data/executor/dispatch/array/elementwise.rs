@@ -131,7 +131,7 @@ impl CoreLoop {
 
         let rows: Vec<Value> = sparse_tile_to_array_cells(&schema, &combined)
             .into_iter()
-            .map(Value::NdArrayCell)
+            .map(Value::ArrayCell)
             .collect();
         encode_value_rows(self, task, &rows)
     }

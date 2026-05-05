@@ -110,7 +110,7 @@ impl zerompk::ToMessagePack for Value {
                 writer.write_string(table)?;
                 writer.write_string(id)
             }
-            Value::NdArrayCell(cell) => {
+            Value::ArrayCell(cell) => {
                 writer.write_array_len(2)?;
                 writer.write_u8(18)?;
                 cell.write(writer)
@@ -179,7 +179,7 @@ impl<'a> zerompk::FromMessagePack<'a> for Value {
                 let id = reader.read_string()?.into_owned();
                 Ok(Value::Record { table, id })
             }
-            18 => Ok(Value::NdArrayCell(ArrayCell::read(reader)?)),
+            18 => Ok(Value::ArrayCell(ArrayCell::read(reader)?)),
             19 => Ok(Value::NaiveDateTime(NdbDateTime::read(reader)?)),
             20 => {
                 let cow = reader.read_binary()?;

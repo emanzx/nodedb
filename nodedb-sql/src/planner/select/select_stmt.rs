@@ -18,7 +18,7 @@ pub(super) fn plan_select(
     temporal: TemporalScope,
 ) -> Result<SqlPlan> {
     // 0. Intercept array table-valued functions before catalog resolution
-    //    so a name like `NDARRAY_SLICE` is not looked up as a collection.
+    //    so a name like `ARRAY_SLICE` is not looked up as a collection.
     if let Some(plan) =
         crate::planner::array_fn::try_plan_array_table_fn(&select.from, catalog, temporal)?
     {
@@ -30,7 +30,7 @@ pub(super) fn plan_select(
 
     // 2. Handle constant queries (no FROM clause): SELECT 1, SELECT 'hello', etc.
     if select.from.is_empty() {
-        // Intercept maintenance functions (NDARRAY_FLUSH / NDARRAY_COMPACT)
+        // Intercept maintenance functions (ARRAY_FLUSH / ARRAY_COMPACT)
         // before falling through to constant evaluation.
         if let Some(plan) =
             crate::planner::array_fn::try_plan_array_maint_fn(&select.projection, catalog)?

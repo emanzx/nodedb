@@ -173,7 +173,7 @@ impl CoreLoop {
                             continue;
                         }
                     }
-                    rows.push(Value::NdArrayCell(cell));
+                    rows.push(Value::ArrayCell(cell));
                     if cap > 0 && rows.len() >= cap {
                         break 'outer;
                     }
@@ -288,7 +288,7 @@ impl CoreLoop {
                 }
             };
             for cell in sparse_tile_to_array_cells(&schema, &projected) {
-                rows.push(Value::NdArrayCell(cell));
+                rows.push(Value::ArrayCell(cell));
             }
         }
 

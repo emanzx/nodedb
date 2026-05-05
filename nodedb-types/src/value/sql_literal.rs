@@ -40,7 +40,7 @@ impl Value {
                 let elements: Vec<String> = v.iter().map(|f| f.to_string()).collect();
                 format!("ARRAY[{}]", elements.join(", "))
             }
-            Value::NdArrayCell(cell) => {
+            Value::ArrayCell(cell) => {
                 let coords: Vec<String> = cell.coords.iter().map(|v| v.to_sql_literal()).collect();
                 let attrs: Vec<String> = cell.attrs.iter().map(|v| v.to_sql_literal()).collect();
                 format!(

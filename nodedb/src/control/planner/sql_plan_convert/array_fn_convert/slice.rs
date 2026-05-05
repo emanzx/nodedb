@@ -1,4 +1,4 @@
-//! NDARRAY_SLICE → PhysicalPlan::Array(ArrayOp::Slice) or ClusterArray(Slice).
+//! ARRAY_SLICE → PhysicalPlan::Array(ArrayOp::Slice) or ClusterArray(Slice).
 
 use nodedb_array::query::slice::{DimRange, Slice};
 use nodedb_array::schema::ArraySchema;
@@ -39,7 +39,7 @@ pub(crate) fn convert_slice(
             .iter()
             .position(|d| d.name == r.dim)
             .ok_or_else(|| crate::Error::PlanError {
-                detail: format!("NDARRAY_SLICE: array '{name}' has no dim '{}'", r.dim),
+                detail: format!("ARRAY_SLICE: array '{name}' has no dim '{}'", r.dim),
             })?;
         let dtype = schema.dims[idx].dtype;
         let lo = coerce_bound(&r.lo, dtype, &r.dim)?;
@@ -54,7 +54,7 @@ pub(crate) fn convert_slice(
         })?;
 
     let (system_as_of, valid_at_ms) =
-        super::helpers::resolve_array_temporal(temporal, "NDARRAY_SLICE")?;
+        super::helpers::resolve_array_temporal(temporal, "ARRAY_SLICE")?;
     let attr_indices = resolve_attr_indices(name, attr_projection, &schema)?;
     let aid = ArrayId::new(tenant_id, name);
     let vshard = VShardId::from_collection(name);

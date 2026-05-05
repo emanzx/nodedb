@@ -72,7 +72,7 @@ impl fmt::Display for Value {
                 Ok(())
             }
             Value::Record { table, id } => write!(f, "{table}:{id}"),
-            Value::NdArrayCell(cell) => write!(f, "<ndarray_cell coords={}>", cell.coords.len()),
+            Value::ArrayCell(cell) => write!(f, "<array_cell coords={}>", cell.coords.len()),
         }
     }
 }

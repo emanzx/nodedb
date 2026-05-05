@@ -1,4 +1,4 @@
-//! Typed payload for `Value::NdArrayCell`.
+//! Typed payload for `Value::ArrayCell`.
 //!
 //! An `ArrayCell` carries a single N-dimensional array cell across the
 //! SQL / wire boundary: its coordinates (one `Value` per dimension) and

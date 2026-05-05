@@ -1,8 +1,8 @@
-//! NDARRAY_* table-valued function as a JOIN source.
+//! ARRAY_* table-valued function as a JOIN source.
 //!
-//! When a JOIN's left or right relation is `NDARRAY_SLICE(...)` (or
+//! When a JOIN's left or right relation is `ARRAY_SLICE(...)` (or
 //! sibling read TVFs), the planner lowers it to the corresponding
-//! `SqlPlan::NdArray*` variant directly — bypassing catalog lookup.
+//! `SqlPlan::Array*` variant directly — bypassing catalog lookup.
 //! The TVF's output rows participate in the join key resolution like
 //! any other relation; the dispatch handler emits `(coords, attrs)`
 //! tuples that include the array's surrogate-equivalent identity
@@ -14,8 +14,8 @@ use crate::error::Result;
 use crate::temporal::TemporalScope;
 use crate::types::{SqlCatalog, SqlPlan};
 
-/// If `rel` is a `NDARRAY_*(...)` TVF call, return the corresponding
-/// `SqlPlan::NdArray*` node. Otherwise return `Ok(None)` so the caller
+/// If `rel` is a `ARRAY_*(...)` TVF call, return the corresponding
+/// `SqlPlan::Array*` node. Otherwise return `Ok(None)` so the caller
 /// falls through to the named-table scan path.
 pub(super) fn try_plan_relation(
     rel: &ast::TableFactor,
@@ -35,7 +35,7 @@ pub(super) fn try_plan_relation(
         return Ok(None);
     }
 
-    // Reuse the SELECT * FROM NDARRAY_*(...) planner by wrapping the
+    // Reuse the SELECT * FROM ARRAY_*(...) planner by wrapping the
     // single relation into a one-element TableWithJoins. Both call
     // sites need exactly the same validation (arg arity, schema
     // resolution, dim/attr name checks) — re-deriving it here would
@@ -50,6 +50,6 @@ pub(super) fn try_plan_relation(
 fn is_array_tvf(name: &str) -> bool {
     matches!(
         name,
-        "ndarray_slice" | "ndarray_project" | "ndarray_agg" | "ndarray_elementwise"
+        "array_slice" | "array_project" | "array_agg" | "array_elementwise"
     )
 }

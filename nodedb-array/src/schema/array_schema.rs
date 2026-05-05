@@ -89,7 +89,7 @@ mod tests {
     fn content_msgpack_excludes_name() {
         // Two distinct-named schemas with identical structural content
         // produce equal content_msgpack — this is the property
-        // NDARRAY_ELEMENTWISE relies on to compare arrays by shape.
+        // ARRAY_ELEMENTWISE relies on to compare arrays by shape.
         let mk = |name: &str| ArraySchema {
             name: name.into(),
             dims: vec![DimSpec::new(

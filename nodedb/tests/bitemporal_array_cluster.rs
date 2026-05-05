@@ -51,9 +51,9 @@ async fn query_col0(client: &tokio_postgres::Client, sql: &str) -> Vec<String> {
         .collect()
 }
 
-/// Parse the `attrs[0]` int64 from a single NDARRAY_SLICE result row.
+/// Parse the `attrs[0]` int64 from a single ARRAY_SLICE result row.
 ///
-/// Each row from NDARRAY_SLICE is JSON: `{"coords": [...], "attrs": [v]}`.
+/// Each row from ARRAY_SLICE is JSON: `{"coords": [...], "attrs": [v]}`.
 fn parse_int_attr(row: &str) -> i64 {
     let v: serde_json::Value =
         serde_json::from_str(row).unwrap_or_else(|e| panic!("row is not JSON: {row}: {e}"));
@@ -108,7 +108,7 @@ async fn cluster_array_as_of_returns_consistent_version_across_shards() {
 
     // Flush so the segment is visible to subsequent reads.
     client
-        .simple_query("SELECT NDARRAY_FLUSH('bt2')")
+        .simple_query("SELECT ARRAY_FLUSH('bt2')")
         .await
         .expect("flush after v1");
 
@@ -128,14 +128,14 @@ async fn cluster_array_as_of_returns_consistent_version_across_shards() {
         .expect("insert v2");
 
     client
-        .simple_query("SELECT NDARRAY_FLUSH('bt2')")
+        .simple_query("SELECT ARRAY_FLUSH('bt2')")
         .await
         .expect("flush after v2");
 
     // Live read (no AS OF) must return v2 = 99.
     let live_rows = query_col0(
         client,
-        "SELECT * FROM NDARRAY_SLICE('bt2', '{x: [0, 0]}', ['v'], 10)",
+        "SELECT * FROM ARRAY_SLICE('bt2', '{x: [0, 0]}', ['v'], 10)",
     )
     .await;
     assert_eq!(
@@ -153,7 +153,7 @@ async fn cluster_array_as_of_returns_consistent_version_across_shards() {
     let as_of_rows = query_col0(
         client,
         &format!(
-            "SELECT * FROM NDARRAY_SLICE('bt2', '{{x: [0, 0]}}', ['v'], 10) \
+            "SELECT * FROM ARRAY_SLICE('bt2', '{{x: [0, 0]}}', ['v'], 10) \
              AS OF SYSTEM TIME {cutoff_ms}"
         ),
     )
@@ -175,7 +175,7 @@ async fn cluster_array_as_of_returns_consistent_version_across_shards() {
     // before the earliest stamp.
     let before_rows = query_col0(
         client,
-        "SELECT * FROM NDARRAY_SLICE('bt2', '{x: [0, 0]}', ['v'], 10) \
+        "SELECT * FROM ARRAY_SLICE('bt2', '{x: [0, 0]}', ['v'], 10) \
          AS OF SYSTEM TIME 1",
     )
     .await;

@@ -19,7 +19,7 @@ pub fn plan_join_from_select(
 ) -> Result<Option<SqlPlan>> {
     let from = &select.from[0];
 
-    // Left side: either an NDARRAY_* TVF or a named table.
+    // Left side: either an ARRAY_* TVF or a named table.
     let left_plan =
         if let Some(plan) = array_arm::try_plan_relation(&from.relation, catalog, temporal)? {
             plan

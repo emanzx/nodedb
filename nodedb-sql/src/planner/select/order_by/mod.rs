@@ -10,7 +10,7 @@
 //! - `aliases` — alias resolution between ORDER BY and SELECT projection.
 //! - `triggers` — generic `SearchTrigger` → `SqlPlan` detection.
 //! - `hybrid` — `rrf_score(...)` → `SqlPlan::HybridSearch` construction.
-//! - `vector_join` — `vector_distance ⋈ NDARRAY_SLICE` fusion target detection.
+//! - `vector_join` — `vector_distance ⋈ ARRAY_SLICE` fusion target detection.
 
 mod aliases;
 mod apply;

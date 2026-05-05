@@ -646,11 +646,11 @@ fn surrogate_round_trip_all_engines() {
         // Filtered: intersection ∩ ARR_SURS = {10}.  Surrogate 10 is at
         // coord [0] with attr value 10.0 (see ARR_SURS insert loop above).
         // Surrogates 13 (coord [1]), 60 (coord [2]), 61 (coord [3]) must not
-        // appear.  The response is zerompk-encoded NdArrayCell values; we
+        // appear.  The response is zerompk-encoded ArrayCell values; we
         // transcode to JSON for inspection.
         // Local DP slice responses are wrapped as `ArraySliceResponse { rows_msgpack:
         // Vec<u8>, truncated_before_horizon: bool }`. The inner `rows_msgpack` is a
-        // separate msgpack array of `NdArrayCell` values.
+        // separate msgpack array of `ArrayCell` values.
         #[derive(serde::Deserialize, zerompk::FromMessagePack)]
         #[msgpack(map)]
         struct SliceEnvelope {

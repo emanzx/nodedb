@@ -123,12 +123,12 @@ fn dispatch_trigger(
         SearchTrigger::HybridSearch
         | SearchTrigger::TextSearch
         | SearchTrigger::TimeBucket
-        | SearchTrigger::NdArraySlice
-        | SearchTrigger::NdArrayProject
-        | SearchTrigger::NdArrayAgg
-        | SearchTrigger::NdArrayElementwise
-        | SearchTrigger::NdArrayFlush
-        | SearchTrigger::NdArrayCompact
+        | SearchTrigger::ArraySlice
+        | SearchTrigger::ArrayProject
+        | SearchTrigger::ArrayAgg
+        | SearchTrigger::ArrayElementwise
+        | SearchTrigger::ArrayFlush
+        | SearchTrigger::ArrayCompact
         | SearchTrigger::None => Ok(None),
     }
 }

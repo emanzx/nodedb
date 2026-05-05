@@ -29,7 +29,7 @@ use crate::geometry::Geometry;
 /// | `Regex(s)`     | `"<s>"`             | decoded as `String` |
 /// | `Range {…}`    | `null`              | decoded as `Null` |
 /// | `Record {…}`   | `null`              | decoded as `Null` |
-/// | `NdArrayCell`  | `{"coords":[…], "attrs":[…]}` | decoded as `Object` without type discriminator |
+/// | `ArrayCell`    | `{"coords":[…], "attrs":[…]}` | decoded as `Object` without type discriminator |
 /// | `Vector(v)`    | `[f32, …]` (JSON number array) | decoded as `Array<Float>` |
 ///
 /// **Round-trip through JSON is NOT preserved for these six variants.**
@@ -103,7 +103,7 @@ pub enum Value {
     },
     /// One N-dimensional array cell (coords + attrs). Used by the array
     /// engine to carry a single cell across the SQL / wire boundary.
-    NdArrayCell(ArrayCell),
+    ArrayCell(ArrayCell),
     /// Dense f32 embedding vector (e.g. HNSW, neural embeddings).
     ///
     /// Stored as a reference-counted slice to allow cheap cloning without
@@ -262,7 +262,7 @@ impl Value {
             Value::Regex(_) => "regex",
             Value::Range { .. } => "range",
             Value::Record { .. } => "record",
-            Value::NdArrayCell(_) => "ndarray_cell",
+            Value::ArrayCell(_) => "array_cell",
             Value::Vector(_) => "vector",
         }
     }
@@ -393,9 +393,9 @@ mod tests {
     }
 
     #[test]
-    fn ndarray_cell_roundtrip_msgpack() {
+    fn array_cell_roundtrip_msgpack() {
         use crate::array_cell::ArrayCell;
-        let v = Value::NdArrayCell(ArrayCell {
+        let v = Value::ArrayCell(ArrayCell {
             coords: vec![Value::Integer(1), Value::Integer(2)],
             attrs: vec![Value::Float(3.5), Value::String("label".into())],
         });

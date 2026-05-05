@@ -1,6 +1,6 @@
 //! Engine surface tests for the Array (ND sparse) engine.
 //!
-//! Covers: CREATE ARRAY DDL, INSERT INTO ARRAY, NDARRAY_SLICE TVF query,
+//! Covers: CREATE ARRAY DDL, INSERT INTO ARRAY, ARRAY_SLICE TVF query,
 //! wrong-DDL rejection (engine='array' must be rejected), and WAL durability.
 
 mod common;
@@ -30,7 +30,7 @@ async fn create_array_and_insert() {
 }
 
 #[tokio::test]
-async fn ndarray_slice_query() {
+async fn array_slice_query() {
     let srv = TestServer::start().await;
     srv.exec(
         "CREATE ARRAY arr_slice \
@@ -52,11 +52,11 @@ async fn ndarray_slice_query() {
         }
     }
 
-    // NDARRAY_SLICE bounds are inclusive on both ends (closed range).
+    // ARRAY_SLICE bounds are inclusive on both ends (closed range).
     // See `nodedb-array/src/query/slice.rs` for the documented semantics.
     let rows = srv
         .query_rows(
-            "SELECT * FROM NDARRAY_SLICE('arr_slice', \
+            "SELECT * FROM ARRAY_SLICE('arr_slice', \
              '{\"x\":[0,1],\"y\":[0,1]}', '*', 100)",
         )
         .await
@@ -104,7 +104,7 @@ async fn wal_restart_durability() {
 
     let (srv2, _dir) = TestServer::open_on_path(dir).await;
     let rows = srv2
-        .query_rows("SELECT * FROM NDARRAY_SLICE('arr_wal', '{\"i\":[5,6]}', '*', 10)")
+        .query_rows("SELECT * FROM ARRAY_SLICE('arr_wal', '{\"i\":[5,6]}', '*', 10)")
         .await
         .unwrap();
     assert!(

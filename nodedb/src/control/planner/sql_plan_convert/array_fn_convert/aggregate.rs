@@ -1,4 +1,4 @@
-//! NDARRAY_AGG → PhysicalPlan::Array(ArrayOp::Aggregate) or ClusterArray(Agg).
+//! ARRAY_AGG → PhysicalPlan::Array(ArrayOp::Aggregate) or ClusterArray(Agg).
 
 use nodedb_array::schema::ArraySchema;
 use nodedb_array::types::ArrayId;
@@ -34,7 +34,7 @@ pub(crate) fn convert_agg(
         .iter()
         .position(|a| a.name == attr)
         .ok_or_else(|| crate::Error::PlanError {
-            detail: format!("NDARRAY_AGG: array '{name}' has no attr '{attr}'"),
+            detail: format!("ARRAY_AGG: array '{name}' has no attr '{attr}'"),
         })? as u32;
 
     let group_by_dim_idx: i32 = match group_by_dim {
@@ -44,12 +44,12 @@ pub(crate) fn convert_agg(
             .iter()
             .position(|d| d.name == dim)
             .ok_or_else(|| crate::Error::PlanError {
-                detail: format!("NDARRAY_AGG: array '{name}' has no dim '{dim}'"),
+                detail: format!("ARRAY_AGG: array '{name}' has no dim '{dim}'"),
             })? as i32,
     };
 
     let (system_as_of, valid_at_ms) =
-        super::helpers::resolve_array_temporal(temporal, "NDARRAY_AGG")?;
+        super::helpers::resolve_array_temporal(temporal, "ARRAY_AGG")?;
     let mapped = map_reducer(reducer);
     let aid = ArrayId::new(tenant_id, name);
     let vshard = VShardId::from_collection(name);

@@ -1,4 +1,4 @@
-//! Integration tests: `ALTER NDARRAY ... SET (...)`.
+//! Integration tests: `ALTER ARRAY ... SET (...)`.
 //!
 //! Verifies the four correctness properties required by Phase B:
 //! 1. Raise retention round-trip — catalog + registry both reflect new value.
@@ -14,7 +14,7 @@ use nodedb_types::TenantId;
 
 // ── test 1 ────────────────────────────────────────────────────────────────────
 
-/// `ALTER NDARRAY` raising `audit_retain_ms` updates both the catalog entry
+/// `ALTER ARRAY` raising `audit_retain_ms` updates both the catalog entry
 /// and the bitemporal retention registry.
 ///
 /// Flow:
@@ -36,9 +36,9 @@ async fn alter_raises_retention_round_trip() {
     .await
     .expect("CREATE ARRAY must succeed");
 
-    srv.exec("ALTER NDARRAY alter_raise SET (audit_retain_ms = 5000)")
+    srv.exec("ALTER ARRAY alter_raise SET (audit_retain_ms = 5000)")
         .await
-        .expect("ALTER NDARRAY must succeed");
+        .expect("ALTER ARRAY must succeed");
 
     // Catalog must reflect new value.
     let cat = srv.shared.array_catalog.read().unwrap();
@@ -103,7 +103,7 @@ async fn alter_raises_retention_round_trip() {
 
 // ── test 2 ────────────────────────────────────────────────────────────────────
 
-/// `ALTER NDARRAY` attempting to lower `audit_retain_ms` below the compliance
+/// `ALTER ARRAY` attempting to lower `audit_retain_ms` below the compliance
 /// floor must be rejected. The catalog entry and registry must remain
 /// unchanged.
 #[tokio::test]
@@ -122,11 +122,11 @@ async fn alter_below_floor_rejected() {
 
     // Try to lower below the floor.
     let result = srv
-        .exec("ALTER NDARRAY alter_floor SET (audit_retain_ms = 1000)")
+        .exec("ALTER ARRAY alter_floor SET (audit_retain_ms = 1000)")
         .await;
     assert!(
         result.is_err(),
-        "ALTER NDARRAY below compliance floor must be rejected"
+        "ALTER ARRAY below compliance floor must be rejected"
     );
 
     // Catalog must be unchanged.
@@ -160,7 +160,7 @@ async fn alter_below_floor_rejected() {
 
 // ── test 3 ────────────────────────────────────────────────────────────────────
 
-/// `ALTER NDARRAY ... SET (audit_retain_ms = NULL)` unregisters the array
+/// `ALTER ARRAY ... SET (audit_retain_ms = NULL)` unregisters the array
 /// from the bitemporal retention registry. The catalog entry must reflect
 /// `audit_retain_ms = None`.
 #[tokio::test]
@@ -184,9 +184,9 @@ async fn alter_set_null_unregisters_from_registry() {
         "registry must contain alter_null before ALTER"
     );
 
-    srv.exec("ALTER NDARRAY alter_null SET (audit_retain_ms = NULL)")
+    srv.exec("ALTER ARRAY alter_null SET (audit_retain_ms = NULL)")
         .await
-        .expect("ALTER NDARRAY SET NULL must succeed");
+        .expect("ALTER ARRAY SET NULL must succeed");
 
     // Registry must no longer contain this entry.
     let after = srv.shared.bitemporal_retention_registry.snapshot();
@@ -208,17 +208,17 @@ async fn alter_set_null_unregisters_from_registry() {
 
 // ── test 4 ────────────────────────────────────────────────────────────────────
 
-/// `ALTER NDARRAY` on a non-existent array must return an error.
+/// `ALTER ARRAY` on a non-existent array must return an error.
 #[tokio::test]
 async fn alter_nonexistent_array_returns_error() {
     let srv = TestServer::start().await;
 
     let result = srv
-        .exec("ALTER NDARRAY does_not_exist SET (audit_retain_ms = 5000)")
+        .exec("ALTER ARRAY does_not_exist SET (audit_retain_ms = 5000)")
         .await;
 
     assert!(
         result.is_err(),
-        "ALTER NDARRAY on non-existent array must return an error"
+        "ALTER ARRAY on non-existent array must return an error"
     );
 }

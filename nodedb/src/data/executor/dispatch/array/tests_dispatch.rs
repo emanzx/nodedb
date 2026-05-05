@@ -209,7 +209,7 @@ fn json_to_value(v: serde_json::Value) -> Value {
                 .cloned()
                 .map(json_to_value)
                 .collect();
-            Value::NdArrayCell(ArrayCell { coords, attrs })
+            Value::ArrayCell(ArrayCell { coords, attrs })
         }
         serde_json::Value::Number(n) => {
             if let Some(i) = n.as_i64() {
@@ -268,11 +268,11 @@ fn slice_returns_only_cells_in_range() {
     let mut sums = 0.0;
     for v in rows {
         match v {
-            Value::NdArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
+            Value::ArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
                 Value::Float(f) => sums += f,
                 other => panic!("attr not Float: {other:?}"),
             },
-            other => panic!("row not NdArrayCell: {other:?}"),
+            other => panic!("row not ArrayCell: {other:?}"),
         }
     }
     assert!((sums - 7.0).abs() < 1e-9);
@@ -380,12 +380,12 @@ fn elementwise_add_two_arrays() {
     let mut total = 0.0;
     for v in rows {
         match v {
-            Value::NdArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
+            Value::ArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
                 Value::Float(f) => total += f,
                 Value::Integer(i) => total += *i as f64,
                 other => panic!("attr not numeric: {other:?}"),
             },
-            other => panic!("row not NdArrayCell: {other:?}"),
+            other => panic!("row not ArrayCell: {other:?}"),
         }
     }
     assert!((total - 33.0).abs() < 1e-9);
@@ -432,11 +432,11 @@ fn slice_cell_filter_excludes_non_member_surrogates() {
     let mut total = 0.0;
     for v in rows {
         match v {
-            Value::NdArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
+            Value::ArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
                 Value::Float(f) => total += f,
                 other => panic!("attr not Float: {other:?}"),
             },
-            other => panic!("row not NdArrayCell: {other:?}"),
+            other => panic!("row not ArrayCell: {other:?}"),
         }
     }
     // 10.0 + 30.0 = 40.0; 20.0 must have been excluded.
@@ -527,12 +527,12 @@ fn elementwise_cell_filter_excludes_non_member_surrogates() {
     // with right yields one matching coord (0,0).
     assert_eq!(rows.len(), 1, "expected 1 cell, got {rows:?}");
     match &rows[0] {
-        Value::NdArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
+        Value::ArrayCell(ArrayCell { attrs, .. }) => match &attrs[0] {
             Value::Float(f) => assert!((*f - 11.0).abs() < 1e-9, "add got {f}"),
             Value::Integer(i) => assert!((*i as f64 - 11.0).abs() < 1e-9, "add got {i}"),
             other => panic!("attr not numeric: {other:?}"),
         },
-        other => panic!("row not NdArrayCell: {other:?}"),
+        other => panic!("row not ArrayCell: {other:?}"),
     }
 }
 

@@ -3,7 +3,7 @@
 //! Emits a top-level msgpack array where each element is a `Value` written
 //! via `value_to_msgpack` — the native (untagged) writer. This is the
 //! shape the pgwire `msgpack_to_json_string` transcoder expects, and it
-//! keeps `Value::NdArrayCell` representable as a clean
+//! keeps `Value::ArrayCell` representable as a clean
 //! `{"coords": [...], "attrs": [...]}` map.
 //!
 //! Using the tagged zerompk codec instead leaks the internal

@@ -373,7 +373,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // ── ALTER NDARRAY ────────────────────────────────────────────
+    // ── ALTER ARRAY ────────────────────────────────────────────
 
     pub(super) fn parse_alter(&mut self) -> Result<AlterArrayAst> {
         let name = self.expect_ident()?;
@@ -437,12 +437,12 @@ impl<'a> Parser<'a> {
         self.expect(&Tok::RParen)?;
         if !self.at_end() {
             return Err(self.err(format!(
-                "trailing tokens after ALTER NDARRAY: {:?}",
+                "trailing tokens after ALTER ARRAY: {:?}",
                 self.peek()
             )));
         }
         if set.is_empty() {
-            return Err(self.err("ALTER NDARRAY SET (): at least one key is required"));
+            return Err(self.err("ALTER ARRAY SET (): at least one key is required"));
         }
         Ok(AlterArrayAst { name, set })
     }

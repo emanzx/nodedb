@@ -1,10 +1,10 @@
 //! Scalar function registrations, split by domain.
 
+mod array_fn;
 mod datetime;
 mod doc;
 mod math;
 mod misc;
-mod ndarray;
 mod pg_fts;
 mod pg_json;
 mod spatial;
@@ -23,7 +23,7 @@ pub(super) fn scalar_functions() -> Vec<FunctionMeta> {
     fns.extend(math::math_functions());
     fns.extend(pg_json::pg_json_functions());
     fns.extend(pg_fts::pg_fts_functions());
-    fns.extend(ndarray::ndarray_functions());
+    fns.extend(array_fn::array_fn_functions());
     fns.extend(misc::misc_functions());
     fns
 }

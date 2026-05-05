@@ -76,7 +76,7 @@ impl CoreLoop {
             oversample,
         } = apply_ann_options(self.core_id, collection, ef_search, ann_options);
 
-        // Materialize cross-engine prefilter sub-plan (e.g. NDARRAY_SLICE
+        // Materialize cross-engine prefilter sub-plan (e.g. ARRAY_SLICE
         // → surrogate bitmap) and intersect with any pre-existing
         // `filter_bitmap`. The sub-plan emits document-shaped rows whose
         // `id` is the cell's surrogate as 8-char zero-padded lowercase

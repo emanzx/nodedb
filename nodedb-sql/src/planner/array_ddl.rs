@@ -116,12 +116,12 @@ pub fn plan_create_array(ast: &CreateArrayAst) -> Result<SqlPlan> {
 pub fn plan_alter_array(ast: &AlterArrayAst) -> Result<SqlPlan> {
     if ast.name.is_empty() {
         return Err(SqlError::Parse {
-            detail: "ALTER NDARRAY: array name must not be empty".into(),
+            detail: "ALTER ARRAY: array name must not be empty".into(),
         });
     }
     if ast.set.is_empty() {
         return Err(SqlError::Parse {
-            detail: format!("ALTER NDARRAY {}: SET clause is empty", ast.name),
+            detail: format!("ALTER ARRAY {}: SET clause is empty", ast.name),
         });
     }
 
@@ -136,7 +136,7 @@ pub fn plan_alter_array(ast: &AlterArrayAst) -> Result<SqlPlan> {
             "minimum_audit_retain_ms" => {
                 let n = value.ok_or_else(|| SqlError::Parse {
                     detail: format!(
-                        "ALTER NDARRAY {}: minimum_audit_retain_ms cannot be NULL",
+                        "ALTER ARRAY {}: minimum_audit_retain_ms cannot be NULL",
                         ast.name
                     ),
                 })?;
@@ -145,7 +145,7 @@ pub fn plan_alter_array(ast: &AlterArrayAst) -> Result<SqlPlan> {
             other => {
                 return Err(SqlError::Parse {
                     detail: format!(
-                        "ALTER NDARRAY {}: unknown SET key `{other}`; \
+                        "ALTER ARRAY {}: unknown SET key `{other}`; \
                          expected `audit_retain_ms` or `minimum_audit_retain_ms`",
                         ast.name
                     ),

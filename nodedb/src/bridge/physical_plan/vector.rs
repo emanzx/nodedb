@@ -37,7 +37,7 @@ pub enum VectorOp {
         /// used as an additional prefilter (intersected with `filter_bitmap`).
         ///
         /// Set by the planner when fusing `Vector ORDER BY ... + JOIN
-        /// NDARRAY_SLICE(...) ON v.id = s.surrogate` into a single op:
+        /// ARRAY_SLICE(...) ON v.id = s.surrogate` into a single op:
         /// the array slice runs first, its surrogate column becomes the
         /// vector engine's pre-filter, then HNSW search runs against the
         /// reduced candidate set. Mirrors `HashJoin`'s `inline_*_bitmap`

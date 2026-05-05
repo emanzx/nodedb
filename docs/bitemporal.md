@@ -122,7 +122,7 @@ CREATE ARRAY climate_grid
   WITH (audit_retain_ms = 7776000000);  -- 90 days
 
 -- Query cells as they were committed yesterday
-SELECT lon, lat, temp_c FROM NDARRAY_SLICE(
+SELECT lon, lat, temp_c FROM ARRAY_SLICE(
     'climate_grid',
     {lon: [-10, 10), lat: [0, 20)},
     ['temp_c']

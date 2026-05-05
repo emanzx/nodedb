@@ -80,10 +80,10 @@ fn write_native_value(buf: &mut Vec<u8>, value: &crate::Value) {
                 buf.extend_from_slice(&(*f as f64).to_be_bytes());
             }
         }
-        // NdArrayCell is encoded as a 2-key map `{coords:[...], attrs:[...]}`
+        // ArrayCell is encoded as a 2-key map `{coords:[...], attrs:[...]}`
         // so the pgwire `msgpack_to_json_string` transcoder produces clean
         // JSON for clients reading slice/project rows.
-        crate::Value::NdArrayCell(cell) => {
+        crate::Value::ArrayCell(cell) => {
             write_native_map_header(buf, 2);
             write_native_str(buf, "coords");
             write_native_array_header(buf, cell.coords.len());

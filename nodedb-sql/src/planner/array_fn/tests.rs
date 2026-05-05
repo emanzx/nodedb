@@ -1,4 +1,4 @@
-//! Unit tests for NDARRAY_* function planning.
+//! Unit tests for ARRAY_* function planning.
 
 use crate::catalog::{ArrayCatalogView, SqlCatalogError};
 use crate::error::Result;
@@ -88,10 +88,10 @@ fn plan_one(sql: &str) -> Result<SqlPlan> {
 #[test]
 fn slice_happy() {
     let p =
-        plan_one("SELECT * FROM NDARRAY_SLICE('g', '{chrom: [1,1], pos: [0, 100]}', ['qual'], 50)")
+        plan_one("SELECT * FROM ARRAY_SLICE('g', '{chrom: [1,1], pos: [0, 100]}', ['qual'], 50)")
             .unwrap();
     match p {
-        SqlPlan::NdArraySlice {
+        SqlPlan::ArraySlice {
             name,
             slice,
             attr_projection,
@@ -103,13 +103,13 @@ fn slice_happy() {
             assert_eq!(attr_projection, vec!["qual".to_string()]);
             assert_eq!(limit, 50);
         }
-        other => panic!("expected NdArraySlice, got {other:?}"),
+        other => panic!("expected ArraySlice, got {other:?}"),
     }
 }
 
 #[test]
 fn slice_unknown_dim_rejected() {
-    let err = plan_one("SELECT * FROM NDARRAY_SLICE('g', '{nope: [1, 2]}')")
+    let err = plan_one("SELECT * FROM ARRAY_SLICE('g', '{nope: [1, 2]}')")
         .err()
         .unwrap();
     assert!(format!("{err}").contains("no dim"));
@@ -117,29 +117,29 @@ fn slice_unknown_dim_rejected() {
 
 #[test]
 fn project_happy() {
-    let p = plan_one("SELECT * FROM NDARRAY_PROJECT('g', ['qual', 'variant'])").unwrap();
+    let p = plan_one("SELECT * FROM ARRAY_PROJECT('g', ['qual', 'variant'])").unwrap();
     match p {
-        SqlPlan::NdArrayProject {
+        SqlPlan::ArrayProject {
             name,
             attr_projection,
         } => {
             assert_eq!(name, "g");
             assert_eq!(attr_projection, vec!["qual".to_string(), "variant".into()]);
         }
-        other => panic!("expected NdArrayProject, got {other:?}"),
+        other => panic!("expected ArrayProject, got {other:?}"),
     }
 }
 
 #[test]
 fn project_empty_rejected() {
-    assert!(plan_one("SELECT * FROM NDARRAY_PROJECT('g', ARRAY[])").is_err());
+    assert!(plan_one("SELECT * FROM ARRAY_PROJECT('g', ARRAY[])").is_err());
 }
 
 #[test]
 fn agg_scalar() {
-    let p = plan_one("SELECT * FROM NDARRAY_AGG('g', 'qual', 'sum')").unwrap();
+    let p = plan_one("SELECT * FROM ARRAY_AGG('g', 'qual', 'sum')").unwrap();
     match p {
-        SqlPlan::NdArrayAgg {
+        SqlPlan::ArrayAgg {
             name,
             attr,
             reducer,
@@ -151,15 +151,15 @@ fn agg_scalar() {
             assert_eq!(reducer, ArrayReducerAst::Sum);
             assert!(group_by_dim.is_none());
         }
-        other => panic!("expected NdArrayAgg, got {other:?}"),
+        other => panic!("expected ArrayAgg, got {other:?}"),
     }
 }
 
 #[test]
 fn agg_grouped() {
-    let p = plan_one("SELECT * FROM NDARRAY_AGG('g', 'qual', 'mean', 'chrom')").unwrap();
+    let p = plan_one("SELECT * FROM ARRAY_AGG('g', 'qual', 'mean', 'chrom')").unwrap();
     match p {
-        SqlPlan::NdArrayAgg {
+        SqlPlan::ArrayAgg {
             reducer,
             group_by_dim,
             ..
@@ -167,39 +167,39 @@ fn agg_grouped() {
             assert_eq!(reducer, ArrayReducerAst::Mean);
             assert_eq!(group_by_dim, Some("chrom".into()));
         }
-        other => panic!("expected NdArrayAgg, got {other:?}"),
+        other => panic!("expected ArrayAgg, got {other:?}"),
     }
 }
 
 #[test]
 fn agg_unknown_reducer_rejected() {
-    assert!(plan_one("SELECT * FROM NDARRAY_AGG('g', 'qual', 'bogus')").is_err());
+    assert!(plan_one("SELECT * FROM ARRAY_AGG('g', 'qual', 'bogus')").is_err());
 }
 
 #[test]
 fn elementwise_happy() {
-    let p = plan_one("SELECT * FROM NDARRAY_ELEMENTWISE('left', 'right', 'add', 'qual')").unwrap();
-    assert!(matches!(p, SqlPlan::NdArrayElementwise { .. }));
+    let p = plan_one("SELECT * FROM ARRAY_ELEMENTWISE('left', 'right', 'add', 'qual')").unwrap();
+    assert!(matches!(p, SqlPlan::ArrayElementwise { .. }));
 }
 
 #[test]
 fn elementwise_unknown_op_rejected() {
-    assert!(plan_one("SELECT * FROM NDARRAY_ELEMENTWISE('left', 'right', 'wat', 'qual')").is_err());
+    assert!(plan_one("SELECT * FROM ARRAY_ELEMENTWISE('left', 'right', 'wat', 'qual')").is_err());
 }
 
 #[test]
 fn flush_happy() {
-    let p = plan_one("SELECT NDARRAY_FLUSH('g')").unwrap();
-    assert!(matches!(p, SqlPlan::NdArrayFlush { .. }));
+    let p = plan_one("SELECT ARRAY_FLUSH('g')").unwrap();
+    assert!(matches!(p, SqlPlan::ArrayFlush { .. }));
 }
 
 #[test]
 fn compact_happy() {
-    let p = plan_one("SELECT NDARRAY_COMPACT('g')").unwrap();
-    assert!(matches!(p, SqlPlan::NdArrayCompact { .. }));
+    let p = plan_one("SELECT ARRAY_COMPACT('g')").unwrap();
+    assert!(matches!(p, SqlPlan::ArrayCompact { .. }));
 }
 
 #[test]
 fn flush_unknown_array_rejected() {
-    assert!(plan_one("SELECT NDARRAY_FLUSH('nope')").is_err());
+    assert!(plan_one("SELECT ARRAY_FLUSH('nope')").is_err());
 }

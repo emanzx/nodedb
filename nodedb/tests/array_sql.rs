@@ -84,7 +84,7 @@ async fn insert_unknown_array_errors() {
         .await;
 }
 
-// ── NDARRAY_* function surface ────────────────────────────────────────
+// ── ARRAY_* function surface ────────────────────────────────────────
 
 /// Helper: spin up a server with a 2-dim array preloaded with cells.
 async fn prepare_genome(srv: &TestServer) {
@@ -106,23 +106,23 @@ async fn prepare_genome(srv: &TestServer) {
     .await
     .expect("INSERT INTO ARRAY");
     // Force a flush so reads exercise the segment scan path.
-    srv.exec("SELECT NDARRAY_FLUSH('genome_variants')")
+    srv.exec("SELECT ARRAY_FLUSH('genome_variants')")
         .await
-        .expect("NDARRAY_FLUSH");
+        .expect("ARRAY_FLUSH");
 }
 
 #[tokio::test]
-async fn ndarray_slice_returns_in_range_cells() {
+async fn array_slice_returns_in_range_cells() {
     let srv = TestServer::start().await;
     prepare_genome(&srv).await;
 
     let rows = srv
         .query_text(
-            "SELECT * FROM NDARRAY_SLICE('genome_variants', \
+            "SELECT * FROM ARRAY_SLICE('genome_variants', \
              '{chrom: [1, 1], pos: [0, 13000]}', ['variant', 'qual'], 100)",
         )
         .await
-        .expect("NDARRAY_SLICE");
+        .expect("ARRAY_SLICE");
     assert_eq!(
         rows.len(),
         2,
@@ -147,14 +147,14 @@ async fn ndarray_slice_returns_in_range_cells() {
 }
 
 #[tokio::test]
-async fn ndarray_project_streams_one_row_per_cell() {
+async fn array_project_streams_one_row_per_cell() {
     let srv = TestServer::start().await;
     prepare_genome(&srv).await;
 
     let rows = srv
-        .query_text("SELECT * FROM NDARRAY_PROJECT('genome_variants', ['qual'])")
+        .query_text("SELECT * FROM ARRAY_PROJECT('genome_variants', ['qual'])")
         .await
-        .expect("NDARRAY_PROJECT");
+        .expect("ARRAY_PROJECT");
     assert_eq!(
         rows.len(),
         3,
@@ -163,14 +163,14 @@ async fn ndarray_project_streams_one_row_per_cell() {
 }
 
 #[tokio::test]
-async fn ndarray_agg_sum_scalar() {
+async fn array_agg_sum_scalar() {
     let srv = TestServer::start().await;
     prepare_genome(&srv).await;
 
     let rows = srv
-        .query_text("SELECT * FROM NDARRAY_AGG('genome_variants', 'qual', 'sum')")
+        .query_text("SELECT * FROM ARRAY_AGG('genome_variants', 'qual', 'sum')")
         .await
-        .expect("NDARRAY_AGG sum");
+        .expect("ARRAY_AGG sum");
     assert_eq!(rows.len(), 1, "scalar agg must return one row");
     let row = &rows[0];
     // The result row is JSON `{"result": <f64>}`. Cheap substring check
@@ -180,14 +180,14 @@ async fn ndarray_agg_sum_scalar() {
 }
 
 #[tokio::test]
-async fn ndarray_agg_group_by_chrom() {
+async fn array_agg_group_by_chrom() {
     let srv = TestServer::start().await;
     prepare_genome(&srv).await;
 
     let rows = srv
-        .query_text("SELECT * FROM NDARRAY_AGG('genome_variants', 'qual', 'sum', 'chrom')")
+        .query_text("SELECT * FROM ARRAY_AGG('genome_variants', 'qual', 'sum', 'chrom')")
         .await
-        .expect("NDARRAY_AGG group");
+        .expect("ARRAY_AGG group");
     assert_eq!(
         rows.len(),
         2,
@@ -201,7 +201,7 @@ async fn ndarray_agg_group_by_chrom() {
     assert!(joined.contains("75"), "chrom=2 sum 75 missing: {joined}");
 }
 
-/// `NDARRAY_ELEMENTWISE` runs across two structurally-identical arrays
+/// `ARRAY_ELEMENTWISE` runs across two structurally-identical arrays
 /// even when their names differ — `schema_hash` is computed over the
 /// array's *content* fields (dims/attrs/tile_extents/orders) only, so
 /// two distinct-named but shape-identical arrays share a hash and pair
@@ -209,7 +209,7 @@ async fn ndarray_agg_group_by_chrom() {
 /// covered by the dispatch-level test
 /// `dispatch::array::tests_dispatch::elementwise_add_two_arrays`.
 #[tokio::test]
-async fn ndarray_elementwise_accepts_distinct_named_same_shape() {
+async fn array_elementwise_accepts_distinct_named_same_shape() {
     let srv = TestServer::start().await;
     srv.exec(
         "CREATE ARRAY arr_a \
@@ -237,29 +237,29 @@ async fn ndarray_elementwise_accepts_distinct_named_same_shape() {
         .unwrap();
     // No error: identical shape ⇒ identical content hash.
     let _ = srv
-        .query_text("SELECT * FROM NDARRAY_ELEMENTWISE('arr_a', 'arr_b', 'add', 'qual')")
+        .query_text("SELECT * FROM ARRAY_ELEMENTWISE('arr_a', 'arr_b', 'add', 'qual')")
         .await
-        .expect("NDARRAY_ELEMENTWISE on identically-shaped arrays");
+        .expect("ARRAY_ELEMENTWISE on identically-shaped arrays");
 }
 
 #[tokio::test]
-async fn ndarray_flush_and_compact_succeed() {
+async fn array_flush_and_compact_succeed() {
     let srv = TestServer::start().await;
     prepare_genome(&srv).await;
 
     let _ = srv
-        .query_text("SELECT NDARRAY_FLUSH('genome_variants')")
+        .query_text("SELECT ARRAY_FLUSH('genome_variants')")
         .await
-        .expect("NDARRAY_FLUSH");
+        .expect("ARRAY_FLUSH");
     let _ = srv
-        .query_text("SELECT NDARRAY_COMPACT('genome_variants')")
+        .query_text("SELECT ARRAY_COMPACT('genome_variants')")
         .await
-        .expect("NDARRAY_COMPACT");
+        .expect("ARRAY_COMPACT");
     // Subsequent read still works → flush/compact didn't break state.
     let rows = srv
-        .query_text("SELECT * FROM NDARRAY_PROJECT('genome_variants', ['qual'])")
+        .query_text("SELECT * FROM ARRAY_PROJECT('genome_variants', ['qual'])")
         .await
-        .expect("NDARRAY_PROJECT after flush+compact");
+        .expect("ARRAY_PROJECT after flush+compact");
     assert_eq!(rows.len(), 3, "post-maintenance reads must still work");
 }
 
@@ -305,16 +305,16 @@ async fn drop_then_recreate_with_different_schema_starts_clean() {
 
     // Project on the v2 schema must return zero rows — no v1 data left.
     let rows = srv
-        .query_text("SELECT * FROM NDARRAY_PROJECT('recyc', ['label'])")
+        .query_text("SELECT * FROM ARRAY_PROJECT('recyc', ['label'])")
         .await
-        .expect("NDARRAY_PROJECT recyc v2");
+        .expect("ARRAY_PROJECT recyc v2");
     assert!(
         rows.is_empty(),
         "fresh array must be empty; got stale rows: {rows:?}"
     );
 }
 
-/// End-to-end fusion: `ORDER BY vector_distance(...) + JOIN NDARRAY_SLICE(...)`
+/// End-to-end fusion: `ORDER BY vector_distance(...) + JOIN ARRAY_SLICE(...)`
 /// must reach the data plane as a single fused `VectorOp::Search` whose
 /// `inline_prefilter_plan` is an `ArrayOp::SurrogateBitmapScan` over the
 /// requested slice. Asserts the wire executes end-to-end without error;
@@ -322,7 +322,7 @@ async fn drop_then_recreate_with_different_schema_starts_clean() {
 /// dispatch level in `data::executor::dispatch::array::tests_dispatch::
 /// vector_search_with_array_surrogate_prefilter`.
 #[tokio::test]
-async fn vector_search_with_ndarray_slice_prefilter_fuses_e2e() {
+async fn vector_search_with_array_slice_prefilter_fuses_e2e() {
     let srv = TestServer::start().await;
 
     // Document collection backing vector embeddings.
@@ -351,11 +351,11 @@ async fn vector_search_with_ndarray_slice_prefilter_fuses_e2e() {
     )
     .await
     .expect("INSERT INTO ARRAY genome");
-    srv.exec("SELECT NDARRAY_FLUSH('genome')")
+    srv.exec("SELECT ARRAY_FLUSH('genome')")
         .await
-        .expect("NDARRAY_FLUSH");
+        .expect("ARRAY_FLUSH");
 
-    // Fused query: ORDER BY vector_distance + JOIN NDARRAY_SLICE.
+    // Fused query: ORDER BY vector_distance + JOIN ARRAY_SLICE.
     // Surrogate alignment between the empty vector index and the array's
     // cells is not arranged here — the assertion is that the query
     // wires through every layer without error (planner fusion → convert
@@ -364,7 +364,7 @@ async fn vector_search_with_ndarray_slice_prefilter_fuses_e2e() {
     let _ = srv
         .query_text(
             "SELECT id FROM genes \
-             JOIN NDARRAY_SLICE('genome', '{chrom: [1, 1], pos: [0, 50000]}') AS s \
+             JOIN ARRAY_SLICE('genome', '{chrom: [1, 1], pos: [0, 50000]}') AS s \
                ON id = s.qual \
              ORDER BY vector_distance(embedding, [1.0, 0.0, 0.0]) \
              LIMIT 10",

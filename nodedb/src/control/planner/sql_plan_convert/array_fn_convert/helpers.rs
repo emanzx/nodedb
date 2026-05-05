@@ -19,14 +19,14 @@ pub(super) fn load_entry(name: &str, ctx: &ConvertContext) -> crate::Result<Arra
         .array_catalog
         .as_ref()
         .ok_or_else(|| crate::Error::PlanError {
-            detail: format!("NDARRAY_*: no array catalog wired into convert context for '{name}'"),
+            detail: format!("ARRAY_*: no array catalog wired into convert context for '{name}'"),
         })?;
     let cat = array_catalog.read().map_err(|_| crate::Error::PlanError {
         detail: "array catalog lock poisoned".into(),
     })?;
     cat.lookup_by_name(name)
         .ok_or_else(|| crate::Error::PlanError {
-            detail: format!("NDARRAY_*: array '{name}' not found"),
+            detail: format!("ARRAY_*: array '{name}' not found"),
         })
 }
 
@@ -50,7 +50,7 @@ pub(super) fn resolve_attr_indices(
             .iter()
             .position(|s| &s.name == a)
             .ok_or_else(|| crate::Error::PlanError {
-                detail: format!("NDARRAY_*: array '{name}' has no attr '{a}'"),
+                detail: format!("ARRAY_*: array '{name}' has no attr '{a}'"),
             })?;
         out.push(idx as u32);
     }
@@ -74,7 +74,7 @@ pub(crate) fn coerce_bound(
         (ArrayCoordLiteral::String(v), EngineDimType::String) => Ok(DomainBound::String(v.clone())),
         (got, want) => Err(crate::Error::PlanError {
             detail: format!(
-                "NDARRAY_SLICE bound for dim `{dim}`: got {got:?}, expected dim type {want:?}"
+                "ARRAY_SLICE bound for dim `{dim}`: got {got:?}, expected dim type {want:?}"
             ),
         }),
     }

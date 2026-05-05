@@ -1,4 +1,4 @@
-//! NDARRAY_FLUSH / NDARRAY_COMPACT → PhysicalPlan::Array(ArrayOp::*).
+//! ARRAY_FLUSH / ARRAY_COMPACT → PhysicalPlan::Array(ArrayOp::*).
 
 use nodedb_array::types::ArrayId;
 
@@ -16,7 +16,7 @@ pub(crate) fn convert_flush(
 ) -> crate::Result<Vec<PhysicalTask>> {
     let _ = super::helpers::load_entry(name, ctx)?;
     let wal = ctx.wal.as_ref().ok_or_else(|| crate::Error::PlanError {
-        detail: "NDARRAY_FLUSH: no WAL wired into convert context".into(),
+        detail: "ARRAY_FLUSH: no WAL wired into convert context".into(),
     })?;
     let aid = ArrayId::new(tenant_id, name);
     let vshard = VShardId::from_collection(name);

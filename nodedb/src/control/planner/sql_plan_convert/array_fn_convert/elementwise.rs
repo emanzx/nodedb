@@ -1,4 +1,4 @@
-//! NDARRAY_ELEMENTWISE → PhysicalPlan::Array(ArrayOp::Elementwise).
+//! ARRAY_ELEMENTWISE → PhysicalPlan::Array(ArrayOp::Elementwise).
 
 use nodedb_array::types::ArrayId;
 use nodedb_sql::types_array::ArrayBinaryOpAst;
@@ -24,7 +24,7 @@ pub(crate) fn convert_elementwise(
     if lschema.dims.len() != rschema.dims.len() || lschema.attrs.len() != rschema.attrs.len() {
         return Err(crate::Error::PlanError {
             detail: format!(
-                "NDARRAY_ELEMENTWISE: arrays '{left_name}' and '{right_name}' have different shapes"
+                "ARRAY_ELEMENTWISE: arrays '{left_name}' and '{right_name}' have different shapes"
             ),
         });
     }
@@ -33,11 +33,11 @@ pub(crate) fn convert_elementwise(
         .iter()
         .position(|a| a.name == attr)
         .ok_or_else(|| crate::Error::PlanError {
-            detail: format!("NDARRAY_ELEMENTWISE: array '{left_name}' has no attr '{attr}'"),
+            detail: format!("ARRAY_ELEMENTWISE: array '{left_name}' has no attr '{attr}'"),
         })? as u32;
     if !rschema.attrs.iter().any(|a| a.name == attr) {
         return Err(crate::Error::PlanError {
-            detail: format!("NDARRAY_ELEMENTWISE: array '{right_name}' has no attr '{attr}'"),
+            detail: format!("ARRAY_ELEMENTWISE: array '{right_name}' has no attr '{attr}'"),
         });
     }
     let left = ArrayId::new(tenant_id, left_name);

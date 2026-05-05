@@ -73,11 +73,11 @@ fn sql_atom_to_value_atom(a: &nodedb_sql::types::SqlPayloadAtom) -> nodedb_types
     }
 }
 
-/// Lower an `NdArrayPrefilter` (array name + slice AST) into the
+/// Lower an `ArrayPrefilter` (array name + slice AST) into the
 /// `ArrayOp::SurrogateBitmapScan` sub-plan that the vector search handler
 /// runs as its `inline_prefilter_plan`.
 fn build_array_prefilter_plan(
-    prefilter: &nodedb_sql::types::NdArrayPrefilter,
+    prefilter: &nodedb_sql::types::ArrayPrefilter,
     tenant_id: TenantId,
     ctx: &super::super::convert::ConvertContext,
 ) -> crate::Result<PhysicalPlan> {

@@ -109,7 +109,7 @@ pub(in crate::control::planner::sql_plan_convert) fn convert_scan(
         EngineType::Array => {
             return Err(crate::Error::PlanError {
                 detail: format!(
-                    "scan on '{collection}': array engine has no table-shaped scan; use NDARRAY_SLICE"
+                    "scan on '{collection}': array engine has no table-shaped scan; use ARRAY_SLICE"
                 ),
             });
         }

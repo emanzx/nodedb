@@ -1,6 +1,6 @@
-//! `SqlPlan::NdArray*` → `PhysicalTask` lowering for the read/maint
-//! function surface (NDARRAY_SLICE, NDARRAY_AGG, NDARRAY_PROJECT,
-//! NDARRAY_ELEMENTWISE, NDARRAY_FLUSH, NDARRAY_COMPACT).
+//! `SqlPlan::Array*` → `PhysicalTask` lowering for the read/maint
+//! function surface (ARRAY_SLICE, ARRAY_AGG, ARRAY_PROJECT,
+//! ARRAY_ELEMENTWISE, ARRAY_FLUSH, ARRAY_COMPACT).
 
 pub mod aggregate;
 pub mod elementwise;

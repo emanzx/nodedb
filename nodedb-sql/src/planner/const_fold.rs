@@ -264,7 +264,7 @@ fn ndb_to_sql_value(v: Value) -> SqlValue {
             .unwrap_or(SqlValue::Null),
         // Structured and opaque types collapse to Null — callers that
         // need these go through the runtime expression path, not folding.
-        Value::Set(_) | Value::Range { .. } | Value::Record { .. } | Value::NdArrayCell(_) => {
+        Value::Set(_) | Value::Range { .. } | Value::Record { .. } | Value::ArrayCell(_) => {
             SqlValue::Null
         }
         // Value is #[non_exhaustive]; future variants collapse to Null in the

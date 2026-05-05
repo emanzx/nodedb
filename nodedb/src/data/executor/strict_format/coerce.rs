@@ -331,7 +331,7 @@ pub fn value_to_json(val: &Value) -> serde_json::Value {
         | Value::Regex(_)
         | Value::Range { .. }
         | Value::Record { .. }
-        | Value::NdArrayCell(_) => serde_json::Value::Null,
+        | Value::ArrayCell(_) => serde_json::Value::Null,
         // Value is #[non_exhaustive]; future variants collapse to JSON null
         // at the pgwire output boundary.
         _ => serde_json::Value::Null,

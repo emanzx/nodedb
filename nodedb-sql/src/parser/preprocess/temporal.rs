@@ -10,9 +10,9 @@
 //! SELECT ... FROM t FOR VALID_TIME FROM 1700000000000 TO 1700001000000 WHERE ...
 //!
 //! -- Array read style (CockroachDB-inspired, two orthogonal clauses):
-//! SELECT ... FROM ndarray_slice(...) AS OF SYSTEM TIME 1700000000000
-//! SELECT ... FROM ndarray_slice(...) AS OF VALID TIME 1700000000000
-//! SELECT ... FROM ndarray_slice(...) AS OF SYSTEM TIME 1700000000000 AS OF VALID TIME 1700000001000
+//! SELECT ... FROM array_slice(...) AS OF SYSTEM TIME 1700000000000
+//! SELECT ... FROM array_slice(...) AS OF VALID TIME 1700000000000
+//! SELECT ... FROM array_slice(...) AS OF SYSTEM TIME 1700000000000 AS OF VALID TIME 1700000001000
 //! ```
 //!
 //! A function-form escape hatch is also accepted, anywhere in the statement,
@@ -488,7 +488,7 @@ mod tests {
 
     #[test]
     fn as_of_system_time_integer() {
-        let ex = extract("SELECT * FROM ndarray_slice('g', '{}') AS OF SYSTEM TIME 1700000000000")
+        let ex = extract("SELECT * FROM array_slice('g', '{}') AS OF SYSTEM TIME 1700000000000")
             .unwrap()
             .unwrap();
         assert_eq!(ex.temporal.system_as_of_ms, Some(1_700_000_000_000));
@@ -497,7 +497,7 @@ mod tests {
 
     #[test]
     fn as_of_valid_time_integer() {
-        let ex = extract("SELECT * FROM ndarray_slice('g', '{}') AS OF VALID TIME 1700000000001")
+        let ex = extract("SELECT * FROM array_slice('g', '{}') AS OF VALID TIME 1700000000001")
             .unwrap()
             .unwrap();
         assert_eq!(ex.temporal.valid_time, ValidTime::At(1_700_000_000_001));
@@ -507,7 +507,7 @@ mod tests {
     #[test]
     fn as_of_system_time_iso8601() {
         let ex = extract(
-            "SELECT * FROM ndarray_slice('g', '{}') AS OF SYSTEM TIME '2024-01-15T00:00:00Z'",
+            "SELECT * FROM array_slice('g', '{}') AS OF SYSTEM TIME '2024-01-15T00:00:00Z'",
         )
         .unwrap()
         .unwrap();
@@ -519,7 +519,7 @@ mod tests {
     #[test]
     fn as_of_both_clauses() {
         let ex = extract(
-            "SELECT * FROM ndarray_slice('g', '{}') AS OF SYSTEM TIME 500 AS OF VALID TIME 250",
+            "SELECT * FROM array_slice('g', '{}') AS OF SYSTEM TIME 500 AS OF VALID TIME 250",
         )
         .unwrap()
         .unwrap();
@@ -533,7 +533,7 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_millis() as i64;
-        let ex = extract("SELECT * FROM ndarray_slice('g', '{}') AS OF SYSTEM TIME NOW()")
+        let ex = extract("SELECT * FROM array_slice('g', '{}') AS OF SYSTEM TIME NOW()")
             .unwrap()
             .unwrap();
         let after = std::time::SystemTime::now()
@@ -550,7 +550,7 @@ mod tests {
     #[test]
     fn as_of_system_time_unsupported_expr_rejected() {
         let err = extract(
-            "SELECT * FROM ndarray_slice('g', '{}') AS OF SYSTEM TIME NOW() - INTERVAL '1 day'",
+            "SELECT * FROM array_slice('g', '{}') AS OF SYSTEM TIME NOW() - INTERVAL '1 day'",
         );
         assert!(err.is_err(), "INTERVAL expression should be rejected");
     }

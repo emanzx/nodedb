@@ -1,4 +1,4 @@
-//! Shared helpers for NDARRAY_* function planners: argument extraction
+//! Shared helpers for ARRAY_* function planners: argument extraction
 //! and validation against the array catalog.
 
 use sqlparser::ast;
@@ -124,7 +124,7 @@ pub(super) fn value_to_coord_literal(v: &Value, dim: &str) -> Result<ArrayCoordL
         Value::Float(f) => Ok(ArrayCoordLiteral::Float64(*f)),
         Value::String(s) => Ok(ArrayCoordLiteral::String(s.clone())),
         other => Err(SqlError::TypeMismatch {
-            detail: format!("NDARRAY_SLICE dim '{dim}' bound: unsupported value kind {other:?}"),
+            detail: format!("ARRAY_SLICE dim '{dim}' bound: unsupported value kind {other:?}"),
         }),
     }
 }

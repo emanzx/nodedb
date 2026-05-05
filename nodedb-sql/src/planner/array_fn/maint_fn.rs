@@ -1,5 +1,5 @@
-//! Maintenance NDARRAY_* functions: bare `SELECT NDARRAY_FLUSH(name)` /
-//! `SELECT NDARRAY_COMPACT(name)` with no FROM clause.
+//! Maintenance ARRAY_* functions: bare `SELECT ARRAY_FLUSH(name)` /
+//! `SELECT ARRAY_COMPACT(name)` with no FROM clause.
 
 use sqlparser::ast;
 
@@ -7,8 +7,8 @@ use super::helpers::{collect_args, require_array_name};
 use crate::error::Result;
 use crate::types::{SqlCatalog, SqlPlan};
 
-/// Try to intercept a no-FROM `SELECT ndarray_flush(name)` /
-/// `SELECT ndarray_compact(name)`. The single projection item must be
+/// Try to intercept a no-FROM `SELECT array_flush(name)` /
+/// `SELECT array_compact(name)`. The single projection item must be
 /// a bare function call carrying one string-literal argument.
 pub fn try_plan_array_maint_fn(
     items: &[ast::SelectItem],
@@ -31,13 +31,13 @@ pub fn try_plan_array_maint_fn(
         _ => Vec::new(),
     };
     match fn_name.as_str() {
-        "ndarray_flush" => {
-            let name = require_array_name(&arg_exprs, 0, "NDARRAY_FLUSH", catalog)?;
-            Ok(Some(SqlPlan::NdArrayFlush { name }))
+        "array_flush" => {
+            let name = require_array_name(&arg_exprs, 0, "ARRAY_FLUSH", catalog)?;
+            Ok(Some(SqlPlan::ArrayFlush { name }))
         }
-        "ndarray_compact" => {
-            let name = require_array_name(&arg_exprs, 0, "NDARRAY_COMPACT", catalog)?;
-            Ok(Some(SqlPlan::NdArrayCompact { name }))
+        "array_compact" => {
+            let name = require_array_name(&arg_exprs, 0, "ARRAY_COMPACT", catalog)?;
+            Ok(Some(SqlPlan::ArrayCompact { name }))
         }
         _ => Ok(None),
     }

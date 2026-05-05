@@ -63,7 +63,7 @@ pub struct QueryContext {
     /// emit `ClusterArray` variants instead of local `Array` variants.
     cluster_enabled: bool,
     /// Bitemporal retention registry — forwarded to `ConvertContext` so
-    /// `ALTER NDARRAY` can update the purge-scheduler's view of the
+    /// `ALTER ARRAY` can update the purge-scheduler's view of the
     /// array's retention policy. `None` for sub-planners.
     bitemporal_retention_registry:
         Option<Arc<crate::engine::bitemporal::BitemporalRetentionRegistry>>,

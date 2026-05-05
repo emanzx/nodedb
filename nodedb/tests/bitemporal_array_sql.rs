@@ -1,7 +1,7 @@
 //! End-to-end SQL tests for bitemporal array reads via pgwire.
 //!
 //! Exercises the `AS OF SYSTEM TIME <ms>` and `AS OF VALID TIME <ms>`
-//! qualifiers on `NDARRAY_SLICE` and `NDARRAY_AGG` queries.
+//! qualifiers on `ARRAY_SLICE` and `ARRAY_AGG` queries.
 
 mod common;
 
@@ -9,7 +9,7 @@ use common::pgwire_harness::TestServer;
 
 /// Parse the `attrs` array from a slice result row's JSON.
 ///
-/// Each row returned by NDARRAY_SLICE is a JSON object:
+/// Each row returned by ARRAY_SLICE is a JSON object:
 /// `{"coords": [...], "attrs": [v1, v2, ...]}`.
 fn parse_attrs(row: &str) -> Vec<serde_json::Value> {
     let cell: serde_json::Value =
@@ -59,7 +59,7 @@ async fn select_from_array_no_as_of_returns_live_state() {
         .expect("insert v1");
 
     // Flush so the segment is visible to the reader.
-    srv.exec("SELECT NDARRAY_FLUSH('bt')")
+    srv.exec("SELECT ARRAY_FLUSH('bt')")
         .await
         .expect("flush after v1");
 
@@ -70,15 +70,15 @@ async fn select_from_array_no_as_of_returns_live_state() {
     srv.exec("INSERT INTO ARRAY bt COORDS (0) VALUES (99)")
         .await
         .expect("insert v2");
-    srv.exec("SELECT NDARRAY_FLUSH('bt')")
+    srv.exec("SELECT ARRAY_FLUSH('bt')")
         .await
         .expect("flush after v2");
 
     // Plain SELECT — no AS OF — must return v2.
     let rows = srv
-        .query_text("SELECT * FROM NDARRAY_SLICE('bt', '{x: [0, 0]}', ['v'], 10)")
+        .query_text("SELECT * FROM ARRAY_SLICE('bt', '{x: [0, 0]}', ['v'], 10)")
         .await
-        .expect("NDARRAY_SLICE live");
+        .expect("ARRAY_SLICE live");
 
     assert_eq!(rows.len(), 1, "expected one cell; got {rows:?}");
     let attrs = parse_attrs(&rows[0]);
@@ -100,7 +100,7 @@ async fn select_from_array_as_of_system_time_returns_old_version() {
     srv.exec("INSERT INTO ARRAY bt COORDS (0) VALUES (10)")
         .await
         .expect("insert v1");
-    srv.exec("SELECT NDARRAY_FLUSH('bt')")
+    srv.exec("SELECT ARRAY_FLUSH('bt')")
         .await
         .expect("flush after v1");
 
@@ -116,18 +116,18 @@ async fn select_from_array_as_of_system_time_returns_old_version() {
     srv.exec("INSERT INTO ARRAY bt COORDS (0) VALUES (99)")
         .await
         .expect("insert v2");
-    srv.exec("SELECT NDARRAY_FLUSH('bt')")
+    srv.exec("SELECT ARRAY_FLUSH('bt')")
         .await
         .expect("flush after v2");
 
     // AS OF SYSTEM TIME ts_between — must return v1.
     let sql = format!(
-        "SELECT * FROM NDARRAY_SLICE('bt', '{{x: [0, 0]}}', ['v'], 10) AS OF SYSTEM TIME {ts_between}",
+        "SELECT * FROM ARRAY_SLICE('bt', '{{x: [0, 0]}}', ['v'], 10) AS OF SYSTEM TIME {ts_between}",
     );
     let rows = srv
         .query_text(&sql)
         .await
-        .expect("NDARRAY_SLICE AS OF SYSTEM TIME");
+        .expect("ARRAY_SLICE AS OF SYSTEM TIME");
 
     assert_eq!(rows.len(), 1, "expected one cell at AS OF; got {rows:?}");
     let attrs = parse_attrs(&rows[0]);
@@ -181,16 +181,15 @@ async fn select_from_array_as_of_valid_time_filters_correctly() {
     srv.exec("INSERT INTO ARRAY vt COORDS (20) VALUES (200)")
         .await
         .expect("insert t=20");
-    srv.exec("SELECT NDARRAY_FLUSH('vt')").await.expect("flush");
+    srv.exec("SELECT ARRAY_FLUSH('vt')").await.expect("flush");
 
     // Use NOW() so the valid_at is >= the cell's HLC-stamped valid_from.
-    let sql =
-        "SELECT * FROM NDARRAY_SLICE('vt', '{t: [0, 100]}', ['v'], 100) AS OF VALID TIME NOW()"
-            .to_string();
+    let sql = "SELECT * FROM ARRAY_SLICE('vt', '{t: [0, 100]}', ['v'], 100) AS OF VALID TIME NOW()"
+        .to_string();
     let rows = srv
         .query_text(&sql)
         .await
-        .expect("NDARRAY_SLICE AS OF VALID TIME");
+        .expect("ARRAY_SLICE AS OF VALID TIME");
 
     // Both cells have open-ended validity ⇒ both qualify at any valid_at.
     assert_eq!(
@@ -213,7 +212,7 @@ async fn select_from_array_as_of_system_and_valid_time_combined() {
     srv.exec("INSERT INTO ARRAY bt COORDS (0) VALUES (42)")
         .await
         .expect("insert v1");
-    srv.exec("SELECT NDARRAY_FLUSH('bt')")
+    srv.exec("SELECT ARRAY_FLUSH('bt')")
         .await
         .expect("flush after v1");
 
@@ -229,19 +228,19 @@ async fn select_from_array_as_of_system_and_valid_time_combined() {
     srv.exec("INSERT INTO ARRAY bt COORDS (0) VALUES (77)")
         .await
         .expect("insert v2");
-    srv.exec("SELECT NDARRAY_FLUSH('bt')")
+    srv.exec("SELECT ARRAY_FLUSH('bt')")
         .await
         .expect("flush after v2");
 
     // valid_at via NOW() is >= the HLC-stamped valid_from of v1 → v1 qualifies.
     let sql = format!(
-        "SELECT * FROM NDARRAY_SLICE('bt', '{{x: [0, 0]}}', ['v'], 10) \
+        "SELECT * FROM ARRAY_SLICE('bt', '{{x: [0, 0]}}', ['v'], 10) \
          AS OF SYSTEM TIME {ts_between} AS OF VALID TIME NOW()",
     );
     let rows = srv
         .query_text(&sql)
         .await
-        .expect("NDARRAY_SLICE AS OF SYSTEM TIME + AS OF VALID TIME");
+        .expect("ARRAY_SLICE AS OF SYSTEM TIME + AS OF VALID TIME");
 
     assert_eq!(rows.len(), 1, "expected one cell; got {rows:?}");
     let attrs = parse_attrs(&rows[0]);

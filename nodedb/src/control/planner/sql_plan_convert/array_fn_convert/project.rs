@@ -1,4 +1,4 @@
-//! NDARRAY_PROJECT → PhysicalPlan::Array(ArrayOp::Project).
+//! ARRAY_PROJECT → PhysicalPlan::Array(ArrayOp::Project).
 
 use nodedb_array::types::ArrayId;
 
@@ -20,7 +20,7 @@ pub(crate) fn convert_project(
     let attr_indices = resolve_attr_indices(name, attr_projection, &schema)?;
     if attr_indices.is_empty() {
         return Err(crate::Error::PlanError {
-            detail: format!("NDARRAY_PROJECT: array '{name}': attr list must not be empty"),
+            detail: format!("ARRAY_PROJECT: array '{name}': attr list must not be empty"),
         });
     }
     let aid = ArrayId::new(tenant_id, name);

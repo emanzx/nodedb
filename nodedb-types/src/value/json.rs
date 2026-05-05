@@ -44,7 +44,7 @@ impl From<Value> for serde_json::Value {
             Value::Vector(v) => {
                 serde_json::Value::Array(v.iter().map(|f| serde_json::json!(*f)).collect())
             }
-            Value::NdArrayCell(cell) => serde_json::json!({
+            Value::ArrayCell(cell) => serde_json::json!({
                 "coords": cell.coords.into_iter().map(serde_json::Value::from).collect::<Vec<_>>(),
                 "attrs": cell.attrs.into_iter().map(serde_json::Value::from).collect::<Vec<_>>(),
             }),
@@ -172,31 +172,31 @@ mod tests {
     }
 
     #[test]
-    fn json_lossy_ndarray_cell_becomes_object_without_discriminator() {
-        let v = Value::NdArrayCell(ArrayCell {
+    fn json_lossy_array_cell_becomes_object_without_discriminator() {
+        let v = Value::ArrayCell(ArrayCell {
             coords: vec![Value::Integer(1), Value::Integer(2)],
             attrs: vec![Value::Float(3.5)],
         });
         let json = serde_json::Value::from(v);
         assert!(
             json.is_object(),
-            "NdArrayCell must serialize as JSON object, got {json:?}"
+            "ArrayCell must serialize as JSON object, got {json:?}"
         );
         // The object has "coords" and "attrs" keys but no type discriminator.
         let obj = json.as_object().unwrap();
         assert!(
             obj.contains_key("coords"),
-            "NdArrayCell JSON must have 'coords' key"
+            "ArrayCell JSON must have 'coords' key"
         );
         assert!(
             obj.contains_key("attrs"),
-            "NdArrayCell JSON must have 'attrs' key"
+            "ArrayCell JSON must have 'attrs' key"
         );
-        // Round-trip comes back as Object, not NdArrayCell.
+        // Round-trip comes back as Object, not ArrayCell.
         let rt = Value::from(json);
         assert!(
             matches!(rt, Value::Object(_)),
-            "NdArrayCell round-trips through JSON as Object, got {rt:?}"
+            "ArrayCell round-trips through JSON as Object, got {rt:?}"
         );
     }
 }

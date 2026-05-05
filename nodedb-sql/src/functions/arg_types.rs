@@ -272,27 +272,27 @@ pub static PG_TS_HEADLINE_ARGS: &[ArgTypeSpec] = &[
 
 // ── Array engine ──────────────────────────────────────────────────────────────
 
-pub static NDARRAY_SLICE_ARGS: &[ArgTypeSpec] = &[
+pub static ARRAY_SLICE_ARGS: &[ArgTypeSpec] = &[
     typed("name", TEXT),
     any("slice_obj"),
     any("attrs"),
     typed("limit", INT64_ONLY),
 ];
 
-pub static NDARRAY_PROJECT_ARGS: &[ArgTypeSpec] = &[typed("name", TEXT), any("attrs")];
+pub static ARRAY_PROJECT_ARGS: &[ArgTypeSpec] = &[typed("name", TEXT), any("attrs")];
 
-pub static NDARRAY_AGG_ARGS: &[ArgTypeSpec] = &[
+pub static ARRAY_AGG_ARGS: &[ArgTypeSpec] = &[
     typed("name", TEXT),
     typed("attr", TEXT),
     typed("reducer", TEXT),
     typed("group_by_dim", INT64_ONLY),
 ];
 
-pub static NDARRAY_ELEMENTWISE_ARGS: &[ArgTypeSpec] = &[
+pub static ARRAY_ELEMENTWISE_ARGS: &[ArgTypeSpec] = &[
     typed("left", TEXT),
     typed("right", TEXT),
     typed("op", TEXT),
     typed("attr", TEXT),
 ];
 
-pub static NDARRAY_MAINT_ARGS: &[ArgTypeSpec] = &[typed("name", TEXT)];
+pub static ARRAY_MAINT_ARGS: &[ArgTypeSpec] = &[typed("name", TEXT)];

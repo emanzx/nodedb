@@ -370,7 +370,7 @@ fn apply_limit(mut plan: SqlPlan, limit_clause: &Option<ast::LimitClause>) -> Sq
             ..
         } => {
             // Fused VectorSearch (e.g. ORDER BY vector_distance + JOIN
-            // NDARRAY_SLICE) inherits its outer LIMIT here. Without this,
+            // ARRAY_SLICE) inherits its outer LIMIT here. Without this,
             // a join-derived VectorSearch carries the join's default
             // 10000 limit instead of the user's `LIMIT N`.
             if let Some(lv) = limit_val {

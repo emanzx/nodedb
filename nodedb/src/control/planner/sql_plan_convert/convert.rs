@@ -44,7 +44,7 @@ pub struct ConvertContext {
     /// topology. Array DML/query converters emit `ClusterArray` variants
     /// when this flag is set; single-node mode emits local `Array` variants.
     pub cluster_enabled: bool,
-    /// Bitemporal retention registry — required by `ALTER NDARRAY` to
+    /// Bitemporal retention registry — required by `ALTER ARRAY` to
     /// update the purge-scheduler's view of the array's retention policy.
     /// `None` for sub-planners that don't own array DDL.
     pub bitemporal_retention_registry: Option<Arc<BitemporalRetentionRegistry>>,

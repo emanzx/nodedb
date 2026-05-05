@@ -6,4 +6,4 @@ mod vector_opts;
 
 pub use row_types::{KvInsertIntent, VectorPrimaryRow};
 pub use variants::{DistanceMetric, SqlPlan};
-pub use vector_opts::{NdArrayPrefilter, VectorAnnOptions, VectorQuantization};
+pub use vector_opts::{ArrayPrefilter, VectorAnnOptions, VectorQuantization};

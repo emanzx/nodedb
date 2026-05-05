@@ -6,7 +6,7 @@
 //! schema changes can be causally ordered with cell ops.
 //!
 //! This is the minimum surface needed for the initial Array sync. ALTER
-//! NDARRAY support (incremental dimension/attribute add, domain expansion)
+//! ARRAY support (incremental dimension/attribute add, domain expansion)
 //! will build on top of the `replace_schema` path exposed here.
 
 use loro::{LoroDoc, LoroMap, LoroValue};
@@ -166,7 +166,7 @@ impl SchemaDoc {
     /// Re-encodes the schema as MessagePack and overwrites `root["content"]`.
     /// Bumps `schema_hlc` via `generator.next()`.
     ///
-    /// This is the stub entry point for Phase F ALTER NDARRAY support.
+    /// This is the stub entry point for Phase F ALTER ARRAY support.
     /// Incremental dim/attr add will build on this path.
     pub fn replace_schema(
         &mut self,

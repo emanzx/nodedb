@@ -82,7 +82,7 @@ impl PayloadKey {
             | Value::Duration(_)
             | Value::Range { .. }
             | Value::Record { .. }
-            | Value::NdArrayCell(_) => None,
+            | Value::ArrayCell(_) => None,
             // Value is #[non_exhaustive]; future variants with no known
             // payload key representation are not indexable.
             _ => None,

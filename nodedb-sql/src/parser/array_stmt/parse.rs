@@ -53,11 +53,11 @@ pub fn try_parse_array_statement(sql: &str) -> Result<Option<ArrayStatement>> {
         p.expect_kw("ARRAY")?;
         return Ok(Some(ArrayStatement::Delete(p.parse_delete()?)));
     }
-    if upper.starts_with("ALTER NDARRAY ") || upper == "ALTER NDARRAY" {
+    if upper.starts_with("ALTER ARRAY ") || upper == "ALTER ARRAY" {
         let toks = tokenize(trimmed)?;
         let mut p = Parser::new(&toks);
         p.expect_kw("ALTER")?;
-        p.expect_kw("NDARRAY")?;
+        p.expect_kw("ARRAY")?;
         return Ok(Some(ArrayStatement::Alter(p.parse_alter()?)));
     }
     Ok(None)
@@ -215,8 +215,8 @@ mod tests {
     }
 
     #[test]
-    fn parse_alter_ndarray_single_key() {
-        let sql = "ALTER NDARRAY my_array SET (audit_retain_ms = 86400000)";
+    fn parse_alter_array_single_key() {
+        let sql = "ALTER ARRAY my_array SET (audit_retain_ms = 86400000)";
         let stmt = try_parse_array_statement(sql).unwrap().unwrap();
         match stmt {
             ArrayStatement::Alter(a) => {
@@ -230,8 +230,8 @@ mod tests {
     }
 
     #[test]
-    fn parse_alter_ndarray_null_value() {
-        let sql = "ALTER NDARRAY my_array SET (audit_retain_ms = NULL)";
+    fn parse_alter_array_null_value() {
+        let sql = "ALTER ARRAY my_array SET (audit_retain_ms = NULL)";
         let stmt = try_parse_array_statement(sql).unwrap().unwrap();
         match stmt {
             ArrayStatement::Alter(a) => {
@@ -243,8 +243,8 @@ mod tests {
     }
 
     #[test]
-    fn parse_alter_ndarray_multi_key() {
-        let sql = "ALTER NDARRAY arr SET (audit_retain_ms = 5000, minimum_audit_retain_ms = 1000)";
+    fn parse_alter_array_multi_key() {
+        let sql = "ALTER ARRAY arr SET (audit_retain_ms = 5000, minimum_audit_retain_ms = 1000)";
         let stmt = try_parse_array_statement(sql).unwrap().unwrap();
         match stmt {
             ArrayStatement::Alter(a) => {
@@ -265,14 +265,14 @@ mod tests {
     }
 
     #[test]
-    fn parse_alter_ndarray_unknown_key_rejected() {
-        let sql = "ALTER NDARRAY arr SET (bogus_key = 42)";
+    fn parse_alter_array_unknown_key_rejected() {
+        let sql = "ALTER ARRAY arr SET (bogus_key = 42)";
         assert!(try_parse_array_statement(sql).is_err());
     }
 
     #[test]
-    fn parse_alter_ndarray_minimum_null_rejected() {
-        let sql = "ALTER NDARRAY arr SET (minimum_audit_retain_ms = NULL)";
+    fn parse_alter_array_minimum_null_rejected() {
+        let sql = "ALTER ARRAY arr SET (minimum_audit_retain_ms = NULL)";
         assert!(try_parse_array_statement(sql).is_err());
     }
 

@@ -227,7 +227,7 @@ fn chained_join_preserves_qualified_on_keys() {
 fn order_by_vector_distance_with_array_join_fuses_into_vector_search() {
     let plan = plan_select_sql(
         "SELECT v.id FROM embeddings v \
-         JOIN NDARRAY_SLICE('genome', '{chrom: [1, 1], pos: [0, 50000]}') AS s \
+         JOIN ARRAY_SLICE('genome', '{chrom: [1, 1], pos: [0, 50000]}') AS s \
            ON v.id = s.qual \
          ORDER BY vector_distance(v.embedding, [1.0, 0.0, 0.0]) \
          LIMIT 10",

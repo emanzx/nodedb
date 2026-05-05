@@ -6,7 +6,7 @@ use crate::types_array;
 /// runs first, its matching cells' surrogates form a bitmap that gates
 /// the HNSW candidate set.
 #[derive(Debug, Clone)]
-pub struct NdArrayPrefilter {
+pub struct ArrayPrefilter {
     /// Array name (resolved against the catalog).
     pub array_name: String,
     /// Slice predicate (per-dim ranges).

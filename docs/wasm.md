@@ -158,7 +158,7 @@ await db.sql(
 
 // Query slice
 const results = await db.sql(
-  `SELECT * FROM NDARRAY_SLICE('spatial_grid', {x: [0, 100), y: [0, 100)}, ['temperature'])`,
+  `SELECT * FROM ARRAY_SLICE('spatial_grid', {x: [0, 100), y: [0, 100)}, ['temperature'])`,
 );
 ```
 

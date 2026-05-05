@@ -166,7 +166,7 @@ impl TableScope {
         catalog: &dyn SqlCatalog,
         factor: &sqlparser::ast::TableFactor,
     ) -> Result<()> {
-        // NDARRAY_*(...) table-valued function: synthesize a ResolvedTable
+        // ARRAY_*(...) table-valued function: synthesize a ResolvedTable
         // from the array's dim+attr schema so equi-join keys against the
         // TVF's output rows resolve.
         if let Some(resolved) = resolve_array_tvf(catalog, factor)? {
@@ -183,7 +183,7 @@ impl TableScope {
     }
 }
 
-/// If `factor` is `NDARRAY_*(name, ...)`, look up the array via the
+/// If `factor` is `ARRAY_*(name, ...)`, look up the array via the
 /// catalog and build a `ResolvedTable` whose columns mirror the array's
 /// dims + attrs. Returns `Ok(None)` for any non-array-TVF factor.
 fn resolve_array_tvf(
@@ -205,7 +205,7 @@ fn resolve_array_tvf(
     };
     if !matches!(
         fn_name.as_str(),
-        "ndarray_slice" | "ndarray_project" | "ndarray_agg" | "ndarray_elementwise"
+        "array_slice" | "array_project" | "array_agg" | "array_elementwise"
     ) {
         return Ok(None);
     }

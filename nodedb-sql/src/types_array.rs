@@ -109,7 +109,7 @@ pub struct NamedDimRange {
     pub hi: ArrayCoordLiteral,
 }
 
-/// `NDARRAY_SLICE(...)` slice predicate: an unordered set of named
+/// `ARRAY_SLICE(...)` slice predicate: an unordered set of named
 /// dim ranges, expanded to per-position `Option<DimRange>` by the
 /// converter (unconstrained dims become `None`).
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -117,7 +117,7 @@ pub struct ArraySliceAst {
     pub dim_ranges: Vec<NamedDimRange>,
 }
 
-/// Reducer carried on `SqlPlan::NdArrayAgg`. Mirrors
+/// Reducer carried on `SqlPlan::ArrayAgg`. Mirrors
 /// `crate::bridge::physical_plan::ArrayReducer` without the bridge dep.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArrayReducerAst {
@@ -144,7 +144,7 @@ impl ArrayReducerAst {
     }
 }
 
-/// Pairwise op carried on `SqlPlan::NdArrayElementwise`. Mirrors
+/// Pairwise op carried on `SqlPlan::ArrayElementwise`. Mirrors
 /// `crate::bridge::physical_plan::ArrayBinaryOp`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArrayBinaryOpAst {

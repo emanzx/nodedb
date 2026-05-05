@@ -79,7 +79,7 @@ INSERT INTO elevation_map (lon, lat, height) VALUES
   (-73.7, 40.6, 8.9);
 
 -- Flush memtable to persistent storage
-SELECT NDARRAY_FLUSH('elevation_map');
+SELECT ARRAY_FLUSH('elevation_map');
 ```
 
 ### Temporal Array (System Time + Valid Time)
@@ -106,7 +106,7 @@ INSERT INTO climate_forecast (lon, lat, altitude_m, temp_c, humidity) VALUES
 
 -- Query at a specific moment in time (system time)
 SELECT lon, lat, altitude_m, temp_c
-FROM NDARRAY_SLICE('climate_forecast', {lon: [10, 15), lat: [20, 25), altitude_m: [5000, 15000)}, ['temp_c'])
+FROM ARRAY_SLICE('climate_forecast', {lon: [10, 15), lat: [20, 25), altitude_m: [5000, 15000)}, ['temp_c'])
 AS OF SYSTEM TIME 1700000000000;
 ```
 
@@ -114,12 +114,12 @@ AS OF SYSTEM TIME 1700000000000;
 
 All array queries use table-valued functions in the `FROM` clause. System time and valid time can be specified via `AS OF` clauses.
 
-### NDARRAY_SLICE — Range Query
+### ARRAY_SLICE — Range Query
 
 Returns cells within a multi-dimensional range:
 
 ```sql
-SELECT * FROM NDARRAY_SLICE(
+SELECT * FROM ARRAY_SLICE(
   'elevation_map',
   {lon: [-74.0, -73.0), lat: [40.0, 41.0)},
   ['height'],  -- projecting only 'height' (optional)
@@ -134,24 +134,24 @@ SELECT * FROM NDARRAY_SLICE(
 | `attrs`   | No       | ARRAY[STRING] | Attributes to project. `NULL` = all attributes                  |
 | `limit`   | No       | INT64         | Max cells returned. `NULL` = no limit                           |
 
-### NDARRAY_PROJECT — Select Attributes
+### ARRAY_PROJECT — Select Attributes
 
 Returns all cells, optionally filtered to specific attributes:
 
 ```sql
-SELECT * FROM NDARRAY_PROJECT(
+SELECT * FROM ARRAY_PROJECT(
   'spatial_grid',
   ['temperature', 'pressure']  -- only these attributes
 );
 ```
 
-### NDARRAY_AGG — Aggregate Over Dimensions
+### ARRAY_AGG — Aggregate Over Dimensions
 
 Aggregates an attribute over a dimension, reducing dimensionality:
 
 ```sql
 -- Sum temperature over the x dimension, keeping y and z
-SELECT * FROM NDARRAY_AGG(
+SELECT * FROM ARRAY_AGG(
   'spatial_grid',
   'temperature',
   'SUM',
@@ -161,13 +161,13 @@ SELECT * FROM NDARRAY_AGG(
 
 Supported reducers: `'SUM'`, `'AVG'`, `'MIN'`, `'MAX'`, `'COUNT'`.
 
-### NDARRAY_ELEMENTWISE — Element-wise Operations
+### ARRAY_ELEMENTWISE — Element-wise Operations
 
 Applies an operation between two arrays (or array and scalar) with the same shape:
 
 ```sql
 -- Subtract a baseline from all cells
-SELECT * FROM NDARRAY_ELEMENTWISE(
+SELECT * FROM ARRAY_ELEMENTWISE(
   'current_grid',
   'baseline_grid',
   'SUBTRACT',
@@ -177,23 +177,23 @@ SELECT * FROM NDARRAY_ELEMENTWISE(
 
 ## Maintenance Functions
 
-### NDARRAY_FLUSH
+### ARRAY_FLUSH
 
 Forces in-memory cells to durable storage:
 
 ```sql
-SELECT NDARRAY_FLUSH('spatial_grid') AS result;
+SELECT ARRAY_FLUSH('spatial_grid') AS result;
 -- Returns: {result: true}
 ```
 
 Returns a single row `{result: BOOL}`. Always returns `true`; failure is fatal and raises an error.
 
-### NDARRAY_COMPACT
+### ARRAY_COMPACT
 
 Merges tile versions and reclaims space:
 
 ```sql
-SELECT NDARRAY_COMPACT('spatial_grid') AS result;
+SELECT ARRAY_COMPACT('spatial_grid') AS result;
 -- Returns: {result: true}
 ```
 
@@ -210,7 +210,7 @@ Query as of either or both:
 
 ```sql
 -- Read cells as they existed at a point in the past
-SELECT * FROM NDARRAY_SLICE(
+SELECT * FROM ARRAY_SLICE(
   'data',
   {x: [0, 100), y: [0, 100)},
   ['value']
@@ -218,7 +218,7 @@ SELECT * FROM NDARRAY_SLICE(
 AS OF SYSTEM TIME 1700000000000;
 
 -- Read cells that were valid at a specific time
-SELECT * FROM NDARRAY_SLICE(
+SELECT * FROM ARRAY_SLICE(
   'forecast',
   {x: [0, 100), y: [0, 100)},
   ['temp']
@@ -226,7 +226,7 @@ SELECT * FROM NDARRAY_SLICE(
 AS OF VALID TIME 1700000000000;
 
 -- Read cells that were valid AND existed at a specific time
-SELECT * FROM NDARRAY_SLICE(
+SELECT * FROM ARRAY_SLICE(
   'forecast',
   {x: [0, 100), y: [0, 100)},
   ['temp']
@@ -241,7 +241,7 @@ Array cells are addressable via surrogate identity alongside other engines. Comb
 ```sql
 -- Find cells near a vector embedding, return array slice
 SELECT *
-FROM NDARRAY_SLICE('spatial_data', slice_bounds, ['attr1', 'attr2'])
+FROM ARRAY_SLICE('spatial_data', slice_bounds, ['attr1', 'attr2'])
 WHERE id IN (
   SEARCH vectors USING VECTOR(embedding, query_vec, 100)
 );
@@ -261,7 +261,7 @@ See [Architecture — Cross-engine identity](architecture.md#cross-engine-identi
 System time–based retention enables GDPR and data minimization compliance:
 
 ```sql
-ALTER NDARRAY spatial_grid SET (audit_retain_ms = 86400000);  -- keep 1 day
+ALTER ARRAY spatial_grid SET (audit_retain_ms = 86400000);  -- keep 1 day
 
 -- Tiles older than now - 1 day are candidates for purge
 -- Purge is automatic during compaction
