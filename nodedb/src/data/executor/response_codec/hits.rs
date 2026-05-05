@@ -122,14 +122,6 @@ pub(crate) struct ArrayAggregateResponse {
     pub truncated_before_horizon: bool,
 }
 
-#[derive(Serialize, zerompk::ToMessagePack)]
-#[msgpack(map)]
-pub(in crate::data::executor) struct TextSearchHit<'a> {
-    pub doc_id: &'a str,
-    pub score: f32,
-    pub fuzzy: bool,
-}
-
 /// Hybrid-search hit row.
 ///
 /// `score_field` is the map key under which `rrf_score` is serialized.

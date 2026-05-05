@@ -38,7 +38,7 @@ pub(crate) use hits::ArrayAggregateResponse;
 pub(crate) use hits::{ArraySliceResponse, RowsPayload};
 pub(in crate::data::executor) use hits::{
     DocumentRow, GraphRagMetadata, GraphRagResponse, GraphRagResult, HybridSearchHit,
-    NeighborEntry, NeighborMultiEntry, SubgraphEdge, TextSearchHit, VectorSearchHit,
+    NeighborEntry, NeighborMultiEntry, SubgraphEdge, VectorSearchHit,
 };
 pub use raw::encode_binary_rows;
 pub(in crate::data::executor) use raw::{decode_raw_scan_to_docs, encode_raw_document_rows};

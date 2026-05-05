@@ -15,6 +15,13 @@ use crate::types::TenantId;
 /// Default hybrid search weight: 0.5 = equal vector + text.
 const DEFAULT_VECTOR_WEIGHT: f32 = 0.5;
 
+/// Upper bound on hits fetched by `BM25ScoreScan` to populate per-row scores.
+/// The downstream BMW scorer pre-allocates `Vec::with_capacity(top_k)`, so
+/// `usize::MAX` would overflow on element-size multiplication. One million is
+/// well above any realistic collection size for in-process score injection
+/// while staying safely allocatable.
+const BM25_SCAN_MAX_HITS: usize = 1_000_000;
+
 impl CoreLoop {
     /// Execute a full-text search using BM25 + optional fuzzy matching.
     #[allow(clippy::too_many_arguments)]
@@ -45,59 +52,36 @@ impl CoreLoop {
             top_k.saturating_mul(2).max(20)
         };
 
-        match self
+        let results = match self
             .inverted
             .search(tenant_id, collection, query, fetch_k, fuzzy, prefilter)
         {
-            Ok(results) => {
-                // RLS post-score filtering: look up each candidate's document.
-                // r.doc_id is Surrogate; convert to hex for the sparse engine key.
-                let hits_data: Vec<(String, f32, bool)> = results
-                    .iter()
-                    .filter(|r| {
-                        if rls_filters.is_empty() {
-                            return true;
-                        }
-                        let hex_key = crate::engine::document::store::surrogate_to_doc_id(r.doc_id);
-                        match self.sparse.get(tid, collection, &hex_key) {
-                            Ok(Some(bytes)) => {
-                                super::rls_eval::rls_check_msgpack_bytes(rls_filters, &bytes)
-                            }
-                            _ => false,
-                        }
-                    })
-                    .take(top_k)
-                    .map(|r| {
-                        (
-                            crate::engine::document::store::surrogate_to_doc_id(r.doc_id),
-                            r.score,
-                            r.fuzzy,
-                        )
-                    })
-                    .collect();
-                let hits: Vec<_> = hits_data
-                    .iter()
-                    .map(
-                        |(hex_key, score, fuzzy)| super::super::response_codec::TextSearchHit {
-                            doc_id: hex_key,
-                            score: *score,
-                            fuzzy: *fuzzy,
-                        },
-                    )
-                    .collect();
-                if let Some(ref m) = self.metrics {
-                    m.record_fts_search(0);
-                }
-                match super::super::response_codec::encode(&hits) {
-                    Ok(payload) => self.response_with_payload(task, payload),
-                    Err(e) => self.response_error(
-                        task,
-                        ErrorCode::Internal {
-                            detail: e.to_string(),
-                        },
-                    ),
-                }
+            Ok(r) => r,
+            Err(e) => {
+                return self.response_error(
+                    task,
+                    ErrorCode::Internal {
+                        detail: e.to_string(),
+                    },
+                );
             }
+        };
+
+        let strict_schema = self.strict_schema_for(tenant_id, collection);
+        let rows = self.hydrate_text_hits(
+            tid,
+            collection,
+            results.iter().map(|r| (r.doc_id, r.score, r.fuzzy)),
+            top_k,
+            rls_filters,
+            strict_schema.as_ref(),
+        );
+
+        if let Some(ref m) = self.metrics {
+            m.record_fts_search(0);
+        }
+        match super::super::response_codec::encode(&rows) {
+            Ok(payload) => self.response_with_payload(task, payload),
             Err(e) => self.response_error(
                 task,
                 ErrorCode::Internal {
@@ -105,6 +89,77 @@ impl CoreLoop {
                 },
             ),
         }
+    }
+
+    fn strict_schema_for(
+        &self,
+        tenant_id: TenantId,
+        collection: &str,
+    ) -> Option<nodedb_types::columnar::StrictSchema> {
+        let key = (tenant_id, collection.to_string());
+        self.doc_configs.get(&key).and_then(|c| {
+            if let crate::bridge::physical_plan::StorageMode::Strict { ref schema } = c.storage_mode
+            {
+                Some(schema.clone())
+            } else {
+                None
+            }
+        })
+    }
+
+    fn hydrate_text_hits<I>(
+        &self,
+        tid: u64,
+        collection: &str,
+        hits: I,
+        top_k: usize,
+        rls_filters: &[u8],
+        strict_schema: Option<&nodedb_types::columnar::StrictSchema>,
+    ) -> Vec<DocumentRow>
+    where
+        I: IntoIterator<Item = (nodedb_types::Surrogate, f32, bool)>,
+    {
+        let mut rows: Vec<DocumentRow> = Vec::new();
+        for (surrogate, score, fuzzy) in hits {
+            if rows.len() >= top_k {
+                break;
+            }
+            let hex_key = crate::engine::document::store::surrogate_to_doc_id(surrogate);
+            let bytes = match self.sparse.get(tid, collection, &hex_key) {
+                Ok(Some(b)) => b,
+                Ok(None) => continue,
+                Err(e) => {
+                    tracing::warn!(
+                        err = %e,
+                        %hex_key,
+                        %collection,
+                        "sparse store error during text hit hydration; skipping row"
+                    );
+                    continue;
+                }
+            };
+            if !rls_filters.is_empty()
+                && !super::rls_eval::rls_check_msgpack_bytes(rls_filters, &bytes)
+            {
+                continue;
+            }
+            let mut value = decode_scanned_document(&bytes, strict_schema);
+            if let serde_json::Value::Object(ref mut map) = value {
+                map.insert(
+                    "score".to_string(),
+                    serde_json::Value::Number(
+                        serde_json::Number::from_f64(score as f64)
+                            .unwrap_or_else(|| serde_json::Number::from(0)),
+                    ),
+                );
+                map.insert("fuzzy".to_string(), serde_json::Value::Bool(fuzzy));
+            }
+            rows.push(DocumentRow {
+                id: hex_key,
+                data: value,
+            });
+        }
+        rows
     }
 
     /// Execute an exact phrase search.
@@ -128,43 +183,35 @@ impl CoreLoop {
             Err(resp) => return resp,
         };
 
-        match self
+        let results = match self
             .inverted
             .phrase_search(tenant_id, collection, terms, top_k, prefilter)
         {
-            Ok(results) => {
-                let hits_data: Vec<(String, f32)> = results
-                    .iter()
-                    .map(|r| {
-                        (
-                            crate::engine::document::store::surrogate_to_doc_id(r.doc_id),
-                            r.score,
-                        )
-                    })
-                    .collect();
-                let hits: Vec<_> = hits_data
-                    .iter()
-                    .map(
-                        |(doc_id, score)| super::super::response_codec::TextSearchHit {
-                            doc_id,
-                            score: *score,
-                            fuzzy: false,
-                        },
-                    )
-                    .collect();
-                if let Some(ref m) = self.metrics {
-                    m.record_fts_search(0);
-                }
-                match super::super::response_codec::encode(&hits) {
-                    Ok(payload) => self.response_with_payload(task, payload),
-                    Err(e) => self.response_error(
-                        task,
-                        ErrorCode::Internal {
-                            detail: e.to_string(),
-                        },
-                    ),
-                }
+            Ok(r) => r,
+            Err(e) => {
+                return self.response_error(
+                    task,
+                    ErrorCode::Internal {
+                        detail: e.to_string(),
+                    },
+                );
             }
+        };
+
+        let strict_schema = self.strict_schema_for(tenant_id, collection);
+        let rows = self.hydrate_text_hits(
+            tid,
+            collection,
+            results.iter().map(|r| (r.doc_id, r.score, false)),
+            top_k,
+            &[],
+            strict_schema.as_ref(),
+        );
+        if let Some(ref m) = self.metrics {
+            m.record_fts_search(0);
+        }
+        match super::super::response_codec::encode(&rows) {
+            Ok(payload) => self.response_with_payload(task, payload),
             Err(e) => self.response_error(
                 task,
                 ErrorCode::Internal {
@@ -197,23 +244,27 @@ impl CoreLoop {
             Err(resp) => return resp,
         };
 
-        // Build a surrogate → score map from FTS hits. Use a generous top_k so
-        // we capture the score for every matching document in the collection.
-        let score_map: HashMap<nodedb_types::Surrogate, f32> =
-            match self
-                .inverted
-                .search(tenant_id, collection, query, usize::MAX, fuzzy, None)
-            {
-                Ok(hits) => hits.into_iter().map(|h| (h.doc_id, h.score)).collect(),
-                Err(e) => {
-                    return self.response_error(
-                        task,
-                        ErrorCode::Internal {
-                            detail: e.to_string(),
-                        },
-                    );
-                }
-            };
+        // Build a surrogate → score map from FTS hits. Bounded top_k: heap
+        // allocation in BMW search is `Vec::with_capacity(top_k)`, so a literal
+        // `usize::MAX` overflows on `top_k * size_of::<Element>()`.
+        let score_map: HashMap<nodedb_types::Surrogate, f32> = match self.inverted.search(
+            tenant_id,
+            collection,
+            query,
+            BM25_SCAN_MAX_HITS,
+            fuzzy,
+            None,
+        ) {
+            Ok(hits) => hits.into_iter().map(|h| (h.doc_id, h.score)).collect(),
+            Err(e) => {
+                return self.response_error(
+                    task,
+                    ErrorCode::Internal {
+                        detail: e.to_string(),
+                    },
+                );
+            }
+        };
 
         // Retrieve the strict schema (if any) so binary-tuple rows decode correctly.
         let config_key = (tenant_id, collection.to_string());
@@ -227,7 +278,9 @@ impl CoreLoop {
         });
 
         // Scan all documents and inject the score field.
-        let scan_result = self.sparse.scan_documents(tid, collection, usize::MAX);
+        let scan_result = self
+            .sparse
+            .scan_documents(tid, collection, BM25_SCAN_MAX_HITS);
         let docs = match scan_result {
             Ok(d) => d,
             Err(e) => {
