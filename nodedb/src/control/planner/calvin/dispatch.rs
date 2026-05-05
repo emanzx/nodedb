@@ -59,6 +59,7 @@ pub fn is_write_plan(plan: &PhysicalPlan) -> bool {
                 | DocumentOp::Upsert { .. }
                 | DocumentOp::BulkUpdate { .. }
                 | DocumentOp::BulkDelete { .. }
+                | DocumentOp::UpdateFromJoin { .. }
         ),
         // KV writes
         PhysicalPlan::Kv(op) => matches!(

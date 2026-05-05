@@ -11,6 +11,7 @@ use crate::control::server::pgwire::ddl::collection::{
     CreateCollectionRequest, CreateIndexRequest, create_collection, create_index, create_table,
     dispatch_register_by_name,
 };
+use crate::control::server::pgwire::ddl::conflict_policy::show_conflict_policy;
 use crate::control::server::pgwire::ddl::continuous_agg::{
     CreateContinuousAggregateRequest, create_continuous_aggregate,
 };
@@ -238,6 +239,10 @@ pub(super) async fn try_dispatch_async(
 
         NodedbStatement::AlterCollection { name, operation } => {
             Some(dispatch_alter_collection(state, identity, name, operation).await)
+        }
+
+        NodedbStatement::ShowConflictPolicy { collection } => {
+            Some(show_conflict_policy(state, identity, collection).await)
         }
 
         NodedbStatement::Reindex {

@@ -166,6 +166,24 @@ pub fn touched_collections(plan: &PhysicalPlan) -> Vec<String> {
                     out.push(target_collection.clone());
                     out.push(source_collection.clone());
                 }
+
+                UpdateFromJoin {
+                    target_collection,
+                    source_collection,
+                    ..
+                } => {
+                    out.push(target_collection.clone());
+                    out.push(source_collection.clone());
+                }
+
+                Merge {
+                    target_collection,
+                    source_collection,
+                    ..
+                } => {
+                    out.push(target_collection.clone());
+                    out.push(source_collection.clone());
+                }
             }
         }
 
@@ -264,6 +282,7 @@ pub fn touched_collections(plan: &PhysicalPlan) -> Vec<String> {
                 Read { collection, .. }
                 | Apply { collection, .. }
                 | SetPolicy { collection, .. }
+                | GetPolicy { collection, .. }
                 | ReadAtVersion { collection, .. }
                 | RestoreToVersion { collection, .. }
                 | ListInsert { collection, .. }

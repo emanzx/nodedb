@@ -388,6 +388,12 @@ pub enum NodedbStatement {
         username: Option<String>,
     },
 
+    // ── CRDT conflict policy ─────────────────────────────────────
+    /// `SHOW CONFLICT POLICY ON <collection>`
+    ShowConflictPolicy {
+        collection: String,
+    },
+
     // ── Miscellaneous ────────────────────────────────────────────
     ShowTenants,
     ShowAuditLog,

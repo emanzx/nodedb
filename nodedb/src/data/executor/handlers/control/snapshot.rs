@@ -1,5 +1,6 @@
 //! Snapshot, checkpoint, WAL append, cancel, range scan, and collection policy handlers.
 
+use sonic_rs;
 use tracing::{debug, info, warn};
 
 use crate::bridge::envelope::{ErrorCode, Response};
@@ -32,6 +33,39 @@ impl CoreLoop {
             self.task_queue.remove(pos);
         }
         self.response_ok(task)
+    }
+
+    /// Read the conflict resolution policy for a collection and return it as JSON.
+    /// Returns the ephemeral default when no explicit policy has been registered.
+    pub(in crate::data::executor) fn execute_get_collection_policy(
+        &mut self,
+        task: &ExecutionTask,
+        collection: &str,
+    ) -> Response {
+        debug!(core = self.core_id, %collection, "get collection policy");
+        let tenant_id = task.request.tenant_id;
+        let engine = match self.get_crdt_engine(tenant_id) {
+            Ok(e) => e,
+            Err(e) => {
+                warn!(core = self.core_id, error = %e, "failed to create CRDT engine for get policy");
+                return self.response_error(
+                    task,
+                    ErrorCode::Internal {
+                        detail: e.to_string(),
+                    },
+                );
+            }
+        };
+        let policy = engine.get_collection_policy(collection);
+        match sonic_rs::to_string(&policy) {
+            Ok(json) => self.response_with_payload(task, json.into_bytes()),
+            Err(e) => self.response_error(
+                task,
+                ErrorCode::Internal {
+                    detail: format!("failed to serialize policy: {e}"),
+                },
+            ),
+        }
     }
 
     pub(in crate::data::executor) fn execute_set_collection_policy(

@@ -3,6 +3,7 @@ mod backup;
 mod change_stream;
 mod cluster_admin;
 mod collection;
+mod conflict_policy;
 mod dispatch;
 mod helpers;
 mod index;

@@ -50,6 +50,33 @@ pub enum AlterCollectionOp {
         /// Value expression (column name or qualified `source.column`, lowercased).
         value_expr: String,
     },
+    /// `SET ON CONFLICT <policy_keyword> FOR <constraint_kind_keyword>`
+    ///
+    /// Sets the per-collection, per-constraint-kind conflict resolution policy.
+    SetOnConflict {
+        /// Parsed conflict policy keyword.
+        policy: ConflictPolicyKind,
+        /// Which constraint kind this policy applies to.
+        constraint_kind: ConstraintKindKeyword,
+    },
+}
+
+/// Keyword representation of a conflict resolution policy for DDL.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConflictPolicyKind {
+    LastWriterWins,
+    RenameSuffix,
+    CascadeDefer,
+    EscalateToDlq,
+}
+
+/// Keyword representation of a constraint kind for DDL.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConstraintKindKeyword {
+    Unique,
+    ForeignKey,
+    NotNull,
+    Check,
 }
 
 /// Typed sub-operation for `ALTER USER <name> ...`.

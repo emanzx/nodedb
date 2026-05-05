@@ -1,8 +1,8 @@
 //! Dispatcher: try each DDL family's `try_parse` in turn.
 
 use super::{
-    alert, backup, change_stream, cluster_admin, collection, index, maintenance, materialized_view,
-    retention, rls, schedule, sequence, trigger, user_auth,
+    alert, backup, change_stream, cluster_admin, collection, conflict_policy, index, maintenance,
+    materialized_view, retention, rls, schedule, sequence, trigger, user_auth,
 };
 use crate::ddl_ast::graph_parse;
 use crate::ddl_ast::statement::NodedbStatement;
@@ -56,6 +56,9 @@ pub fn parse(sql: &str) -> Option<Result<NodedbStatement, SqlError>> {
         }};
     }
 
+    // Conflict policy must be checked before the generic collection parser
+    // so "SET ON CONFLICT" does not fall through to the raw-SQL path.
+    try_family!(conflict_policy::try_parse(&upper, &parts, trimmed));
     try_family!(collection::try_parse(&upper, &parts, trimmed));
     try_family!(index::try_parse(&upper, &parts, trimmed));
     try_family!(trigger::try_parse(&upper, &parts, trimmed));

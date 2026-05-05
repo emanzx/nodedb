@@ -13,6 +13,7 @@ use crate::control::server::pgwire::ddl::collection::{
     alter_collection_set_last_value_cache, alter_collection_set_legal_hold,
     alter_collection_set_retention, alter_table_add_column,
 };
+use crate::control::server::pgwire::ddl::conflict_policy::alter_set_on_conflict;
 use crate::control::server::pgwire::ddl::ownership::alter_collection_owner;
 use crate::control::state::SharedState;
 
@@ -85,5 +86,10 @@ pub(super) async fn dispatch_alter_collection(
             join_column,
             value_expr,
         ),
+
+        AlterCollectionOp::SetOnConflict {
+            policy,
+            constraint_kind,
+        } => alter_set_on_conflict(state, identity, name, policy, constraint_kind).await,
     }
 }

@@ -5,6 +5,13 @@ use nodedb_crdt::policy::CollectionPolicy;
 use super::core::TenantCrdtEngine;
 
 impl TenantCrdtEngine {
+    /// Read the current conflict resolution policy for a collection.
+    /// Returns a cloned `CollectionPolicy`; falls back to `CollectionPolicy::ephemeral()`
+    /// if no explicit policy has been registered for this collection.
+    pub fn get_collection_policy(&self, collection: &str) -> nodedb_crdt::policy::CollectionPolicy {
+        self.validator.policies().get_owned(collection)
+    }
+
     /// Set conflict resolution policy for a collection from JSON.
     ///
     /// Called when the Data Plane receives a `SetCollectionPolicy` physical plan

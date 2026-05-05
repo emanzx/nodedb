@@ -16,7 +16,9 @@ pub mod graph_types;
 pub mod parse;
 pub mod statement;
 
-pub use alter_ops::{AlterCollectionOp, AlterRoleOp, AlterUserOp};
+pub use alter_ops::{
+    AlterCollectionOp, AlterRoleOp, AlterUserOp, ConflictPolicyKind, ConstraintKindKeyword,
+};
 pub use collection_type::build_collection_type;
 pub use graph_parse::{FusionParams, parse_search_using_fusion};
 pub use graph_types::{GraphDirection, GraphProperties};
