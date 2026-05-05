@@ -26,7 +26,7 @@ pub fn convert_projection(items: &[ast::SelectItem]) -> Result<Vec<Projection>> 
                     _ => {
                         result.push(Projection::Computed {
                             expr: sql_expr,
-                            alias: format!("{expr}"),
+                            alias: format!("{expr}").to_lowercase(),
                         });
                     }
                 }

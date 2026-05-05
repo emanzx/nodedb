@@ -9,23 +9,26 @@ use crate::types::{TenantId, VShardId};
 use super::super::physical::{PhysicalTask, PostSetOp};
 use super::convert::{ConvertContext, convert_one};
 use super::expr::inline_cte;
-use super::value::sql_value_to_nodedb_value;
+use super::value::sql_value_to_string;
 
 pub(super) fn convert_constant_result(
     columns: &[String],
     values: &[SqlValue],
     tenant_id: TenantId,
 ) -> crate::Result<Vec<PhysicalTask>> {
-    let mut map = std::collections::HashMap::new();
+    let mut obj = serde_json::Map::new();
     for (col, val) in columns.iter().zip(values.iter()) {
-        map.insert(col.clone(), sql_value_to_nodedb_value(val));
+        let json_val = match val {
+            SqlValue::Null => serde_json::Value::Null,
+            other => serde_json::Value::String(sql_value_to_string(other)),
+        };
+        obj.insert(col.clone(), json_val);
     }
-    let row = nodedb_types::Value::Object(map);
-    let payload =
-        nodedb_types::value_to_msgpack(&row).map_err(|e| crate::Error::Serialization {
-            format: "msgpack".into(),
-            detail: format!("constant result: {e}"),
-        })?;
+    let arr = serde_json::Value::Array(vec![serde_json::Value::Object(obj)]);
+    let payload = nodedb_types::json_to_msgpack(&arr).map_err(|e| crate::Error::Serialization {
+        format: "msgpack".into(),
+        detail: format!("constant result: {e}"),
+    })?;
     Ok(vec![PhysicalTask {
         tenant_id,
         vshard_id: VShardId::from_collection(""),

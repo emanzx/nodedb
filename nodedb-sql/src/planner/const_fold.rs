@@ -20,6 +20,7 @@
 use std::sync::LazyLock;
 
 use nodedb_types::Value;
+use sonic_rs;
 
 use crate::functions::registry::{FunctionCategory, FunctionRegistry};
 use crate::types::{BinaryOp, SqlExpr, SqlValue, UnaryOp};
@@ -216,7 +217,7 @@ pub fn fold_function_call(
         .map(|a| fold_constant(a, registry).map(sql_to_ndb_value))
         .collect::<Option<_>>()?;
 
-    let result = nodedb_query::functions::eval_function(name, &folded_args);
+    let result = nodedb_query::functions::eval_function(&name.to_lowercase(), &folded_args);
     Some(ndb_to_sql_value(result))
 }
 
@@ -250,14 +251,22 @@ fn ndb_to_sql_value(v: Value) -> SqlValue {
         Value::Uuid(s) | Value::Ulid(s) | Value::Regex(s) => SqlValue::String(s),
         Value::Duration(d) => SqlValue::String(d.to_human()),
         Value::Decimal(d) => SqlValue::Decimal(d),
+        // Geometry and Object values are serialized to JSON strings so that
+        // nested function calls like ST_Distance(ST_Point(...), ST_Point(...))
+        // survive the SqlValue round-trip. The geo evaluator's geom_arg helper
+        // recovers Geometry from a GeoJSON string; Object results (e.g. from
+        // ST_GeoHashDecode) reach the client as a JSON-encoded string column.
+        Value::Geometry(g) => sonic_rs::to_string(&g)
+            .map(SqlValue::String)
+            .unwrap_or(SqlValue::Null),
+        Value::Object(map) => sonic_rs::to_string(&map)
+            .map(SqlValue::String)
+            .unwrap_or(SqlValue::Null),
         // Structured and opaque types collapse to Null — callers that
         // need these go through the runtime expression path, not folding.
-        Value::Object(_)
-        | Value::Geometry(_)
-        | Value::Set(_)
-        | Value::Range { .. }
-        | Value::Record { .. }
-        | Value::NdArrayCell(_) => SqlValue::Null,
+        Value::Set(_) | Value::Range { .. } | Value::Record { .. } | Value::NdArrayCell(_) => {
+            SqlValue::Null
+        }
         // Value is #[non_exhaustive]; future variants collapse to Null in the
         // constant-folding path — runtime expression evaluation handles them.
         _ => SqlValue::Null,
@@ -368,6 +377,53 @@ mod tests {
             expr: Box::new(SqlExpr::Literal(SqlValue::Decimal(d))),
         };
         assert_eq!(fold_constant(&expr, &registry), Some(SqlValue::Decimal(-d)));
+    }
+
+    #[test]
+    fn fold_st_geohash() {
+        let registry = FunctionRegistry::new();
+        let expr = SqlExpr::Function {
+            name: "st_geohash".into(),
+            args: vec![
+                SqlExpr::UnaryOp {
+                    op: UnaryOp::Neg,
+                    expr: Box::new(SqlExpr::Literal(SqlValue::Float(122.4))),
+                },
+                SqlExpr::Literal(SqlValue::Float(37.8)),
+                SqlExpr::Literal(SqlValue::Int(6)),
+            ],
+            distinct: false,
+        };
+        let v = fold_constant(&expr, &registry);
+        match v {
+            Some(SqlValue::String(ref s)) if !s.is_empty() => {}
+            other => panic!("expected non-empty SqlValue::String, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn fold_st_distance_nested_st_point() {
+        let registry = FunctionRegistry::new();
+        let make_point = |lng: f64, lat: f64| SqlExpr::Function {
+            name: "st_point".into(),
+            args: vec![
+                SqlExpr::Literal(SqlValue::Float(lng)),
+                SqlExpr::Literal(SqlValue::Float(lat)),
+            ],
+            distinct: false,
+        };
+        let expr = SqlExpr::Function {
+            name: "st_distance".into(),
+            args: vec![make_point(-122.4, 37.8), make_point(-87.6, 41.8)],
+            distinct: false,
+        };
+        let v = fold_constant(&expr, &registry);
+        match v {
+            Some(SqlValue::Float(d)) => {
+                assert!(d > 0.0, "distance should be positive, got {d}");
+            }
+            other => panic!("expected SqlValue::Float, got {other:?}"),
+        }
     }
 
     #[test]

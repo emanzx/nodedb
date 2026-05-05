@@ -148,9 +148,9 @@ pub(super) fn describe_plan(plan: &PhysicalPlan) -> PlanKind {
             PlanKind::SingleDocument
         }
 
-        // Constant-result expressions (SELECT 1, SELECT 'hello', etc.)
-        // are compiled to RawResponse with a msgpack-encoded row. Treat
-        // as a multi-row scan so the payload is decoded and streamed back.
+        // Constant-result expressions (SELECT 1, SELECT 'hello', ST_GeoHash(...), etc.)
+        // are compiled to RawResponse with a msgpack-encoded JSON array of row objects.
+        // Route through MultiRow so each array element streams as its own pgwire row.
         PhysicalPlan::Meta(MetaOp::RawResponse { .. }) => PlanKind::MultiRow,
 
         // DML operations that return affected row count.

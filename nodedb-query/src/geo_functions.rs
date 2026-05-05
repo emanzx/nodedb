@@ -28,7 +28,7 @@ pub fn eval_geo_function(name: &str, args: &[Value]) -> Option<Value> {
                 lng1, lat1, lng2, lat2,
             ))
         }
-        "geo_point" => {
+        "geo_point" | "st_point" => {
             let lng = num_arg(args, 0).unwrap_or(0.0);
             let lat = num_arg(args, 1).unwrap_or(0.0);
             Value::Geometry(nodedb_types::geometry::Geometry::point(lng, lat))
@@ -345,7 +345,6 @@ pub fn eval_geo_function(name: &str, args: &[Value]) -> Option<Value> {
             };
             Value::Geometry(nodedb_spatial::st_intersection(&a, &b))
         }
-
         _ => return None,
     };
     Some(result)
@@ -366,6 +365,9 @@ fn num_arg(args: &[Value], idx: usize) -> Option<f64> {
 fn geom_arg(args: &[Value], idx: usize) -> Option<nodedb_types::geometry::Geometry> {
     match args.get(idx)? {
         Value::Geometry(g) => Some(g.clone()),
+        // GeoJSON string: produced when a Geometry constant was round-tripped
+        // through the const-fold SqlValue path (e.g. ST_Distance(ST_Point(...), ST_Point(...))).
+        Value::String(s) => sonic_rs::from_str::<nodedb_types::geometry::Geometry>(s).ok(),
         other => {
             // Fallback: convert Value → JSON → Geometry for GeoJSON objects.
             let json = serde_json::Value::from(other.clone());
