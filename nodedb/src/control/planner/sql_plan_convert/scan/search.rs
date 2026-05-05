@@ -149,15 +149,54 @@ pub(in crate::control::planner::sql_plan_convert) fn convert_text_search(
     score_alias: Option<&str>,
     tenant_id: TenantId,
 ) -> crate::Result<Vec<PhysicalTask>> {
+    use nodedb_sql::fts_types::FtsQuery;
+
+    let vshard = VShardId::from_collection(collection);
+
+    // Phrase queries emit a dedicated PhraseSearch op rather than going
+    // through the BM25 plain-string path. Score alias is not meaningful
+    // for phrase search (no per-row score injection), so it is ignored.
+    if let FtsQuery::Phrase(terms) = query {
+        let analyzed_terms: Vec<String> =
+            terms.iter().flat_map(|t| nodedb_fts::analyze(t)).collect();
+        if analyzed_terms.is_empty() {
+            // No searchable terms after analysis — return empty result via
+            // a standard search that will match nothing.
+            return Ok(vec![PhysicalTask {
+                tenant_id,
+                vshard_id: vshard,
+                plan: PhysicalPlan::Text(TextOp::Search {
+                    collection: collection.into(),
+                    query: String::new(),
+                    top_k: *top_k,
+                    fuzzy: false,
+                    prefilter: None,
+                    rls_filters: Vec::new(),
+                }),
+                post_set_op: PostSetOp::None,
+            }]);
+        }
+        return Ok(vec![PhysicalTask {
+            tenant_id,
+            vshard_id: vshard,
+            plan: PhysicalPlan::Text(TextOp::PhraseSearch {
+                collection: collection.into(),
+                terms: analyzed_terms,
+                top_k: *top_k,
+                prefilter: None,
+            }),
+            post_set_op: PostSetOp::None,
+        }]);
+    }
+
     let query_str = query
         .to_plain_string()
         .ok_or_else(|| crate::Error::BadRequest {
-            detail: "phrase and exclusion FTS queries are not yet supported by the FTS engine; \
-                     use plainto_tsquery or AND/OR combinations"
+            detail: "unsupported FTS query form; use plain terms, AND/OR combinations, \
+                     or phrase queries with text_match(field, '\"phrase here\"')"
                 .into(),
         })?;
     let fuzzy = query.is_fuzzy();
-    let vshard = VShardId::from_collection(collection);
 
     // When a score alias is present the caller wants a full-collection scan
     // with BM25 scores injected per row (all rows appear, non-matching rows

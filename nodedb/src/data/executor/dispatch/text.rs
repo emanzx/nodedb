@@ -35,6 +35,15 @@ impl CoreLoop {
                 fuzzy,
             } => self.execute_bm25_score_scan(task, tid, collection, query, score_alias, *fuzzy),
 
+            TextOp::PhraseSearch {
+                collection,
+                terms,
+                top_k,
+                prefilter,
+            } => {
+                self.execute_phrase_search(task, tid, collection, terms, *top_k, prefilter.as_ref())
+            }
+
             TextOp::HybridSearch {
                 collection,
                 query_vector,

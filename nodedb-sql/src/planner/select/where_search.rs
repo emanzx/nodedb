@@ -145,17 +145,40 @@ fn plan_text_from_where(
     table: &crate::resolver::columns::ResolvedTable,
     extra_filter: Option<&ast::Expr>,
 ) -> Result<Option<SqlPlan>> {
+    use crate::fts_types::FtsQuery;
+
     let args = extract_func_args(func)?;
     if args.len() < 2 {
         return Ok(None);
     }
     let query_text = extract_string_literal(&args[1])?;
+
+    // Detect a phrase query: query_text surrounded by double-quotes.
+    // SQL form: `text_match(body, '"quick brown fox"')`.
+    // The outer SQL single-quotes are stripped by the SQL parser; the
+    // inner double-quotes are literal characters in the string value.
+    let fts_query =
+        if query_text.starts_with('"') && query_text.ends_with('"') && query_text.len() > 2 {
+            let inner = &query_text[1..query_text.len() - 1];
+            let terms: Vec<String> = inner.split_whitespace().map(|s| s.to_string()).collect();
+            if terms.len() > 1 {
+                FtsQuery::Phrase(terms)
+            } else {
+                FtsQuery::Plain {
+                    text: inner.to_string(),
+                    fuzzy: true,
+                }
+            }
+        } else {
+            FtsQuery::Plain {
+                text: query_text,
+                fuzzy: true,
+            }
+        };
+
     Ok(Some(SqlPlan::TextSearch {
         collection: table.name.clone(),
-        query: crate::fts_types::FtsQuery::Plain {
-            text: query_text,
-            fuzzy: true,
-        },
+        query: fts_query,
         top_k: 1000,
         filters: extra_filter_to_filters(extra_filter)?,
         score_alias: None,

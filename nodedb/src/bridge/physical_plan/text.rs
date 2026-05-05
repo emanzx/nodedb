@@ -47,6 +47,20 @@ pub enum TextOp {
         fuzzy: bool,
     },
 
+    /// Exact phrase search: all terms must appear consecutively in the document.
+    ///
+    /// Unlike `Search` (BM25 scoring), phrase search returns only documents
+    /// where the query terms appear as an exact contiguous sequence. Scoring
+    /// is positional: documents with the phrase closer to the start rank higher.
+    PhraseSearch {
+        collection: String,
+        /// Ordered sequence of terms to match as a phrase.
+        terms: Vec<String>,
+        top_k: usize,
+        /// Pre-computed bitmap of eligible surrogates (from prefilter evaluation).
+        prefilter: Option<nodedb_types::SurrogateBitmap>,
+    },
+
     /// Hybrid search: vector similarity + BM25 text, fused via RRF.
     HybridSearch {
         collection: String,

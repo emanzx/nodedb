@@ -107,6 +107,73 @@ impl CoreLoop {
         }
     }
 
+    /// Execute an exact phrase search.
+    ///
+    /// Returns only documents where `terms` appear as a contiguous sequence.
+    /// Scoring is positional: documents with the phrase nearer the start rank higher.
+    pub(in crate::data::executor) fn execute_phrase_search(
+        &self,
+        task: &ExecutionTask,
+        tid: u64,
+        collection: &str,
+        terms: &[String],
+        top_k: usize,
+        prefilter: Option<&nodedb_types::SurrogateBitmap>,
+    ) -> Response {
+        let tenant_id = TenantId::new(tid);
+        debug!(core = self.core_id, tid, %collection, term_count = terms.len(), top_k, "phrase search");
+
+        let _scan_guard = match self.acquire_scan_guard(task, tid, collection) {
+            Ok(g) => g,
+            Err(resp) => return resp,
+        };
+
+        match self
+            .inverted
+            .phrase_search(tenant_id, collection, terms, top_k, prefilter)
+        {
+            Ok(results) => {
+                let hits_data: Vec<(String, f32)> = results
+                    .iter()
+                    .map(|r| {
+                        (
+                            crate::engine::document::store::surrogate_to_doc_id(r.doc_id),
+                            r.score,
+                        )
+                    })
+                    .collect();
+                let hits: Vec<_> = hits_data
+                    .iter()
+                    .map(
+                        |(doc_id, score)| super::super::response_codec::TextSearchHit {
+                            doc_id,
+                            score: *score,
+                            fuzzy: false,
+                        },
+                    )
+                    .collect();
+                if let Some(ref m) = self.metrics {
+                    m.record_fts_search(0);
+                }
+                match super::super::response_codec::encode(&hits) {
+                    Ok(payload) => self.response_with_payload(task, payload),
+                    Err(e) => self.response_error(
+                        task,
+                        ErrorCode::Internal {
+                            detail: e.to_string(),
+                        },
+                    ),
+                }
+            }
+            Err(e) => self.response_error(
+                task,
+                ErrorCode::Internal {
+                    detail: e.to_string(),
+                },
+            ),
+        }
+    }
+
     /// Execute a full-collection scan with BM25 score injected per row.
     ///
     /// Runs an FTS search to build a surrogate → score map, then scans every
