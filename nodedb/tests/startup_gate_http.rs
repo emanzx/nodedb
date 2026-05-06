@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: HTTP middleware gates non-health routes on GatewayEnable.
 //!
 //! The test:

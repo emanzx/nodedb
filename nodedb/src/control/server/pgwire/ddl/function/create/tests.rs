@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parser tests for `CREATE [OR REPLACE] FUNCTION`.
 
 use crate::control::security::catalog::FunctionVolatility;

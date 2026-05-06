@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod cell_payload;
 pub mod dense_tile;
 pub mod layout;

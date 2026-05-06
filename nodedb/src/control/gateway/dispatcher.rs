@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-route dispatch: local SPSC or remote `ExecuteRequest` RPC.
 //!
 //! The dispatcher takes a single [`TaskRoute`] and executes it:

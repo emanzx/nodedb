@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Change-stream enumeration for `PurgeCollection` cascade.
 //!
 //! Every change stream targets a specific collection via its

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ALP (Adaptive Lossless floating-Point) codec for f64 columns.
 //!
 //! Most real-world float metrics originate as fixed-point decimals (e.g.,

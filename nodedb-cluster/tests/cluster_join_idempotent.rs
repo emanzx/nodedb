@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: a restart in place from an existing catalog
 //! is idempotent — the node re-registers with the same topology
 //! entry, Raft groups come back with the same membership, and the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ANN tuning helpers shared by the vector search handler.
 //!
 //! Carved out of `vector_search.rs` so the hot-path body can stay focused

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Enum representing the detected or assigned format of a string-based ID.
 
 /// The format of a detected or generated string-based identifier.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-level permission grants and ownership tracking.
 //!
 //! Grants: `GRANT READ ON collection TO user/role`

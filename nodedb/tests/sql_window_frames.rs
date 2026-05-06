@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for SQL window frame semantics.
 //!
 //! Covers ROWS, RANGE, and GROUPS frame variants, including peer-aware

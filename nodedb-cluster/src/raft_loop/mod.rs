@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft event loop — drives MultiRaft ticks and dispatches messages over the transport.
 //!
 //! Split across files:

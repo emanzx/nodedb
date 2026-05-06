@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Reachability driver — the active half of circuit-breaker recovery.
 //!
 //! `CircuitBreaker` transitions `Open → HalfOpen` only on the next

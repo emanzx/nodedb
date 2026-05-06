@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard auxiliary types for GSI forwarding and edge validation.
 //!
 //! This module retains the supporting types that are still active under

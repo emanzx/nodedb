@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// SQL placeholder scanning and rewriting utilities.
 ///
 /// Provides context-aware `$N` placeholder detection that correctly skips

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! N-1 rolling upgrade compatibility.
 //!
 //! The on-disk and in-flight wire format is versioned so a node

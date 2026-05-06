@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query streaming MV results as Arrow RecordBatch.
 //!
 //! Converts the in-memory aggregate state to a RecordBatch that

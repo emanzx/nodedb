@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `LAST_VALUE` and `LAST_VALUES` query handlers.
 //!
 //! Syntax:

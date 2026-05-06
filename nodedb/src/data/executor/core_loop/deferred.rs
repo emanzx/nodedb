@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Deferred trigger event collection during transaction batches.
 //!
 //! Accumulates write metadata during `execute_transaction_batch()`.

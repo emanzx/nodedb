@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard k-NN merge for distributed vector search.
 //!
 //! Each shard runs local HNSW search and returns its top-K hits with

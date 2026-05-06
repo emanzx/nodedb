@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL initialization, validation, replay, and tombstone loading.
 
 use std::sync::Arc;

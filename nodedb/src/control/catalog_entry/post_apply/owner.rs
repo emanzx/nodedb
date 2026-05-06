@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-apply side effects for ownership `CatalogEntry` variants
 //! (orphan path — see `apply::owner`) plus the shared helper used
 //! by every sibling post_apply file that replicates ownership as a

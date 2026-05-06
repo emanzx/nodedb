@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 mod batch;
 mod sub_plan;
 mod sub_plan_doc;

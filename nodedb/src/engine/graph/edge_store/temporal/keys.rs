@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Versioned-key builders, parsers, sentinel constants, and `EdgeRef`.
 
 use nodedb_types::TenantId;

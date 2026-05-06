@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL throughput benchmarks.
 //!
 //! Risk 4: Validate 100K writes/sec WAL target.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Type definitions for trigger catalog storage.
 
 /// When the trigger fires relative to the DML operation.

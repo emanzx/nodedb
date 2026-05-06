@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CTE (WITH clause) and WITH RECURSIVE planning.
 
 use sqlparser::ast::{self, Query, SetExpr};

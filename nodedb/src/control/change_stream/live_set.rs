@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-connection set of live CDC subscription forwarder tasks.
 //!
 //! WS `LIVE SELECT` subscriptions spawn a Tokio task per subscription that

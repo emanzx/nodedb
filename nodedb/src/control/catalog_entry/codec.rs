@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Zerompk encode / decode helpers for [`CatalogEntry`].
 //!
 //! Kept in its own file so the rest of `catalog_entry/` never has to

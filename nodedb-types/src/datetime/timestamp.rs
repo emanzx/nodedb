@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Microseconds-precision UTC timestamp type.
 
 use serde::{Deserialize, Serialize};

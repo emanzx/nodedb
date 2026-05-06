@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_types::columnar::{ColumnDef, ColumnType, ColumnarSchema};
 use nodedb_types::surrogate::Surrogate;
 use nodedb_types::surrogate_bitmap::SurrogateBitmap;

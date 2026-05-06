@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Checkpoint metadata operations for the system catalog.
 
 use super::types::{CHECKPOINTS, CheckpointRecord, SystemCatalog, catalog_err};

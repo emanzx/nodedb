@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! 3-node scheduler-shard-kill integration test.
 //!
 //! Validates that the Raft log-replay catch-up path produces consistent

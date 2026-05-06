@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Extract and strip NodeDB-specific bitemporal clauses before sqlparser
 //! sees the statement.
 //!

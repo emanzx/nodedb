@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BSP coordinator for distributed graph algorithms.
 //!
 //! Runs on the Control Plane. Tracks which shards have completed each

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Version-history operations: read at version, export delta, restore, compact.
 
 use super::core::TenantCrdtEngine;

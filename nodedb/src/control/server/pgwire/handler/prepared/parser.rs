@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NodeDbQueryParser — pgwire `QueryParser` implementation.
 //!
 //! Converts incoming SQL (from a Parse message) into a `ParsedStatement`

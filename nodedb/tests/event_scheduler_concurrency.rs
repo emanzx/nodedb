@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage: scheduler must observe shutdown, cap concurrency,
 //! and reject jobs when budget is exceeded.
 //!

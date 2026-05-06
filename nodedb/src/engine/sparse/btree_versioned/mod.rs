@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Versioned document storage — bitemporal key layout backed by redb.
 //!
 //! Key: `"{tenant}:{coll}:{doc_id}\x00{system_from_ms:020}"`.

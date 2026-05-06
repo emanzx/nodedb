@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unit tests for [`CatalogEntry`] — split per DDL family so the
 //! file never grows unboundedly as new variants land.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries scan and ingest converters.
 
 use nodedb_sql::types::SqlValue;

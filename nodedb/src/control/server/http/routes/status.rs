@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster/node status endpoint.
 //!
 //! GET /v1/status — returns node and cluster health information.

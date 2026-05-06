@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory registry of streaming materialized views.
 
 use std::collections::HashMap;

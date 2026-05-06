@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Event Plane CDC / change streams.
 //!
 //! Tests: stream buffer, consumer group offsets, partitioned consumption,

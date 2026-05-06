@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tree operations: `CREATE GRAPH INDEX`, `TREE_SUM`, `TREE_CHILDREN`.
 //!
 //! These build on the existing CSR graph engine for hierarchical aggregation

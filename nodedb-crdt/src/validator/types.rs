@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Validator input/output types.
 
 use crate::dead_letter::CompensationHint;

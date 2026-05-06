@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! D-δ integration test 3: double SIGTERM is idempotent.
 //!
 //! Send two SIGTERM signals in quick succession. Assert: exit code == 0,

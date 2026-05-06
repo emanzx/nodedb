@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector engine operations dispatched to the Data Plane.
 
 use nodedb_types::{Surrogate, SurrogateBitmap, vector_distance::DistanceMetric};

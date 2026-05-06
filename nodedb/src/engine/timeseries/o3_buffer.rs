@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Out-of-order (O3) buffer for late-arriving timeseries data.
 //!
 //! When a row arrives with a timestamp older than the current partition's

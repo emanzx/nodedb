@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Orphan partial-snapshot cleanup.
 //!
 //! Scans `<data_dir>/recv_snapshots/` for `.partial` files whose last

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Startup error types for the gate-based [`StartupSequencer`].
 //!
 //! [`StartupError`] is the runtime error produced when a subsystem fails,

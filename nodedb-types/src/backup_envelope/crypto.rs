@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-backup DEK + KEK wrapping for encrypted backup envelopes.
 //!
 //! ## Wire layout after the 52-byte HEADER (version byte = 1):

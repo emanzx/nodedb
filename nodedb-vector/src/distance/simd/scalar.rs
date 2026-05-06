@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scalar fallback kernels for L2, cosine, and inner product.
 
 pub fn scalar_l2(a: &[f32], b: &[f32]) -> f32 {

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Arrow conversion utilities for the Control Plane.
 //!
 //! Converts MessagePack-encoded Data Plane response payloads into Arrow

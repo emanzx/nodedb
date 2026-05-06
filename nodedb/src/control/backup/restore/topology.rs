@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Topology-aware snapshot bucketing for RESTORE TENANT.
 
 use std::collections::BTreeMap;

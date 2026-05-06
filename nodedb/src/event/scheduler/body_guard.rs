@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pre-execution SQL guard for scheduled job bodies.
 //!
 //! Scheduled jobs run non-interactively on a cron cadence — a careless

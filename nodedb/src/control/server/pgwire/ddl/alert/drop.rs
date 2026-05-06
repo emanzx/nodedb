@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DROP ALERT` DDL handler.
 //!
 //! Syntax: `DROP ALERT <name>`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Loro-backed CRDT schema document for arrays.
 //!
 //! [`SchemaDoc`] wraps a [`LoroDoc`] to give each array a CRDT-replicated

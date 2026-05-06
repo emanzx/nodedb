@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! cuVS-based Vamana index build.
 //!
 //! Offloads the brute-force k-NN portion of the randomized→pruned pipeline

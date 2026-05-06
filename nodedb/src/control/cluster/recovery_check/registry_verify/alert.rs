@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `AlertRegistry` verifier.
 //!
 //! Checks that the in-memory `AlertRegistry` is consistent with

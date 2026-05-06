@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Leading-axis run-length compression for DimDict index streams.
 //
 // When the leading axis has long runs of the same dict index (common in

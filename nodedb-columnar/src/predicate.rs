@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scan predicates for block-level predicate pushdown.
 //!
 //! A `ScanPredicate` describes a filter on a single column that can be

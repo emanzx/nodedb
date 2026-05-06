@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level array schema.
 //!
 //! `ArraySchema` is the canonical descriptor every layer of the engine

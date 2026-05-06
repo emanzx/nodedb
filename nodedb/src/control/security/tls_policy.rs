@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TLS enforcement policy: minimum version, reject cleartext.
 
 use serde::{Deserialize, Serialize};

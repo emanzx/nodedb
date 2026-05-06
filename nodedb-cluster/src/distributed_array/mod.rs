@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod coordinator;
 pub mod handler;
 pub mod local_executor;

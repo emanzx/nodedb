@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authentication and authorization type definitions for redb catalog storage.
 
 /// Serializable user record for redb storage.

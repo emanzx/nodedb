@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-vShard QPS + latency histograms.
 //!
 //! Every dispatched request crosses [`dispatch_to_data_plane_with_source`]

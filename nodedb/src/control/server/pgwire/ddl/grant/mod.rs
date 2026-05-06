@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GRANT` / `REVOKE` DDL handlers.
 //!
 //! Three sub-handlers, all driven through the metadata raft path:

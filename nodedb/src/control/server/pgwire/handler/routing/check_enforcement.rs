@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Control Plane CHECK constraint enforcement for the standard SQL path.
 //!
 //! Intercepts INSERT and UPDATE statements before planning to evaluate

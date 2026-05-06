@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL expression text → SqlExpr AST parser.
 //!
 //! Parses the subset of SQL expressions used in `GENERATED ALWAYS AS (expr)`

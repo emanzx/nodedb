@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Online standard deviation (Welford's algorithm).
 
 /// Online standard deviation accumulator.

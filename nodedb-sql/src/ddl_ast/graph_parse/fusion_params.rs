@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared parameter extraction for graph-vector fusion SQL surfaces.
 //!
 //! Two syntaxes reach the same `GraphOp::RagFusion` executor today:

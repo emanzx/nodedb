@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Core types for the full-text search engine.
 //!
 //! These types are shared between Origin (redb-backed) and Lite (in-memory)

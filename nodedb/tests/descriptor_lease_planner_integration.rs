@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end tests for planner-side descriptor lease integration
 //! and shutdown lease release.
 //!

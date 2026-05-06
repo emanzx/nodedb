@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single-event trigger dispatch: one `WriteEvent` → matching AFTER triggers.
 //!
 //! For each incoming `WriteEvent` with a triggerable source, this path:

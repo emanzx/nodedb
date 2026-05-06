@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Operator subcommands for the `nodedb` binary (L.4).
 //!
 //! Dispatched from `main.rs` before the server startup path: if the

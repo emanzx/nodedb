@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DML planning helpers extracted from `dml.rs` to keep both files under
 //! the 500-line limit. Visibility is `pub(super)` so only `planner::dml`
 //! can reach these.

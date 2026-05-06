@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end cluster tests for descriptor versioning.
 //!
 //! Asserts that every `Stored*` descriptor written through the

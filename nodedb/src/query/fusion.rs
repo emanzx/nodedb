@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RRF fusion — re-exported from the shared `nodedb-query` crate.
 //!
 //! Origin's internal code continues to use `crate::query::fusion::*` paths;

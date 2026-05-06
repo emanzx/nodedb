@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT TEMPORAL_LOOKUP('table', 'key_value', 'as_of', 'key_column', 'time_column')`
 //!
 //! Returns the row with latest `time_column <= as_of` for the given key.

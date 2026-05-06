@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! High-level coordinate-prefix encoding.
 //!
 //! Combines [`super::normalize`] with [`super::hilbert`] /

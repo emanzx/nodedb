@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared SIMD Hamming-distance kernel with runtime CPU-feature dispatch.
 //!
 //! Used by 1-bit quantizers ([`bbq`](super::bbq), [`rabitq`](super::rabitq))

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Integration tests for the structural sparse-tile codec introduced in segment
 // format version 4. Tests cover: large roundtrip, legacy payload compatibility,
 // compression ratio, and mixed sparse+dense segment decoding.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cooperative spill controller for per-core arena overflow.
 //!
 //! When a Data Plane core's arena utilization exceeds 90%, the spill

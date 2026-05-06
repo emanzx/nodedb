@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sort-merge join execution.
 
 use tracing::debug;

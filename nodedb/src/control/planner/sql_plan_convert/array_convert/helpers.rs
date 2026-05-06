@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared coercion helpers for array coordinate and attribute literals.
 
 use nodedb_array::schema::{ArraySchema, AttrType as EngineAttrType, DimType as EngineDimType};

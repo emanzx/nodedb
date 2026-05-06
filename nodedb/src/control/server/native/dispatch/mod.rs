@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-opcode dispatch handlers for the native protocol.
 
 mod auth;

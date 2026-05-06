@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL parsing helpers shared across DDL handlers.
 
 /// Split VALUES content respecting quoted strings and brackets.

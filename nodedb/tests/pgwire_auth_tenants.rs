@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CREATE/DROP TENANT over the pgwire DDL path, plus the readonly /
 //! non-superuser guards on the tenant surface.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Streaming materialized view type definitions.
 
 /// Persistent definition of a streaming materialized view.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared fixtures for `pgwire_auth_*` integration tests.
 //!
 //! Each split test file needs: a minimal `SharedState`, two canonical

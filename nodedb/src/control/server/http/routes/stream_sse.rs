@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SSE streaming endpoint for change stream consumption.
 //!
 //! `GET /v1/streams/{stream}/events?group={group}&partition=3`

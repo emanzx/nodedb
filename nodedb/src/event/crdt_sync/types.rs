@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT sync coordination types.
 //!
 //! Types for the Event Plane's role as intermediary between Origin writes

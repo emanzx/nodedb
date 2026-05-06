@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph pattern matching handler — executes MATCH queries on the Data Plane.
 
 use tracing::{debug, warn};

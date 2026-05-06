@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scheduler tuning — caps on concurrent jobs, per-job wall-clock
 //! budget, and outbound HTTP timeouts applied by Event-Plane emitters.
 

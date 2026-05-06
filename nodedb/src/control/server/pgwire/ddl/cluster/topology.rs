@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster topology DDL commands: SHOW NODES, SHOW NODE, REMOVE NODE, SHOW CLUSTER.
 
 use std::sync::Arc;

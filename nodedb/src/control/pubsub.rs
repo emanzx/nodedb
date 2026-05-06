@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pub/Sub topic registry with bounded in-memory message retention.
 //!
 //! Topics are named channels. Publishers push messages, subscribers consume

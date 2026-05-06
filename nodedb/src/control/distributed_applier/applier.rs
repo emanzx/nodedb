@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DistributedApplier` — `CommitApplier` impl that queues committed Raft
 //! entries onto a bounded mpsc channel for the background apply loop.
 

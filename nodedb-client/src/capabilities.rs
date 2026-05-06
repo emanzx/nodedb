@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `Capabilities` newtype for typed capability bit-test accessors.
 //!
 //! Wraps the raw `u64` bitfield advertised by the server in `HelloAckFrame`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Binary group key construction for GROUP BY on raw MessagePack documents.
 //!
 //! Builds a deterministic string key from field values extracted directly

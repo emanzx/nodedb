@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER COLLECTION ... SET {RETENTION,LEGAL_HOLD,APPEND_ONLY,LAST_VALUE_CACHE}`
 //! — non-schema enforcement knobs propagated through `CatalogEntry::PutCollection`.
 

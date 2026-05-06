@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end tombstone pipeline: write records, write tombstone,
 //! replay, assert shadowed writes are filtered.
 //!

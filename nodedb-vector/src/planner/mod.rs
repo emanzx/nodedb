@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod cost;
 pub mod query_options;
 pub mod routing;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin determinism contract: identical inputs must produce identical outputs.
 //!
 //! ## WAL comparison note

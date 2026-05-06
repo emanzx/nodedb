@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transaction rollback matrix tests for KV, Columnar, and Timeseries engines.
 //!
 //! Each test follows the same pattern as `test_transaction_matrix`:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DROP RETENTION POLICY` DDL handler.
 //!
 //! Syntax:

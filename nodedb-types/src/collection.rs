@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection type enum shared between Origin and Lite.
 //!
 //! Determines routing, storage format, and query execution strategy.

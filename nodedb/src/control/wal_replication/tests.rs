@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use super::*;
 use crate::bridge::envelope::PhysicalPlan;
 use crate::bridge::physical_plan::DocumentOp;

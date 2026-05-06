@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Axis-aligned bounding box for 2D geometries (WGS-84).
 //!
 //! Handles the anti-meridian (±180° date line) correctly: when a geometry

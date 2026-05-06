@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-core slab allocator for zero-copy cross-plane payload transport.
 //!
 //!

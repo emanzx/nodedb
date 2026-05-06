@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL replay for timeseries records.
 //!
 //! On startup, replays `TimeseriesBatch` records into the per-core

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`NodeDbError`] struct + accessors + category predicates + `From<io::Error>`.
 
 use std::fmt;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Chunked `InstallSnapshot` transport — leader-side sender and follower-side receiver.
 //!
 //! # Module layout

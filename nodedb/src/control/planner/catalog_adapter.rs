@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Implements `nodedb_sql::SqlCatalog` for Origin.
 //!
 //! The adapter acquires a descriptor lease at plan time. The

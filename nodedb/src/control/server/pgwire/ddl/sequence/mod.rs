@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequence DDL — CREATE / DROP / ALTER / SHOW / DESCRIBE.
 //!
 //! Split by concern so no single file grows unboundedly:

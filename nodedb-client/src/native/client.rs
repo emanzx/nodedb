@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! High-level native protocol client implementing the `NodeDb` trait.
 //!
 //! Wraps a connection pool and translates trait calls into native protocol

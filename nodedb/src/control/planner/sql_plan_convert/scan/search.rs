@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector / text / hybrid search converters and the array-prefilter plan
 //! builder shared across them.
 

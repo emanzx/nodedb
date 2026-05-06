@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal audit-retention: per-collection configuration registry and
 //! background enforcement loop that purges superseded versions older than
 //! each collection's `audit_retain_ms` window, while preserving the single

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for UTF-8 correctness in expression parsing.
 //!
 //! The expression tokenizer in `nodedb-query` iterates byte-by-byte but

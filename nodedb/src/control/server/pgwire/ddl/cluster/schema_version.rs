@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW SCHEMA VERSION` — current descriptor version visible on
 //! this node.
 

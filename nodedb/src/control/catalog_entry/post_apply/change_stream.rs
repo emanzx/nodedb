@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ChangeStream post-apply side effects — sync the in-memory
 //! `stream_registry`, tear down the CDC router buffer on drop, and
 //! cascade consumer-group state cleanup.

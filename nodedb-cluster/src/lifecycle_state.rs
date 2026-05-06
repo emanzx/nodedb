@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster lifecycle state tracking for observability.
 //!
 //! `ClusterLifecycleTracker` is the single source of truth for "what

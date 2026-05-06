@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Retention / temporal-purge / last-value Meta dispatch.
 //!
 //! Split off from `dispatch/other.rs` to respect the per-file size budget.

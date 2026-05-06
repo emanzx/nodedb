@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory permission cache: parent hierarchy + grant lookups.
 //!
 //! Loaded from the resource graph and permission collection on startup.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SqlCatalog` trait + descriptor-resolution error type.
 //!
 //! The SQL planner resolves collection metadata through the

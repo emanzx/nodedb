@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-column encoding and decoding with codec selection.
 
 use nodedb_codec::{ColumnCodec, ColumnStatistics, ColumnTypeHint, ResolvedColumnCodec};

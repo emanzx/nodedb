@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Minimal feature-gated fail-point framework for crash-injection tests.
 //!
 //! When the `failpoints` Cargo feature is OFF (the default and what release

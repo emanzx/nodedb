@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DocumentEngine` — MessagePack document storage with secondary indexing.
 //!
 //! Documents stored as MessagePack blobs keyed by `(collection, doc_id)`;

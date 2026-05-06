@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Flushed-segment PK lookup for ON CONFLICT DO UPDATE prior-row reads.
 
 use nodedb_types::value::Value;

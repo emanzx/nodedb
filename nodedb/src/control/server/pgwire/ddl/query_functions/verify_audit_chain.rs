@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT VERIFY_AUDIT_CHAIN(from_seq, to_seq)`
 //!
 //! Validates the SHA-256 hash chain integrity of audit entries over a sequence range.

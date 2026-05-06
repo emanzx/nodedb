@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Inline hash join test: two pre-computed payloads joined with qualified left-side keys.
 
 use crate::helpers::{make_ctx, send_ok};

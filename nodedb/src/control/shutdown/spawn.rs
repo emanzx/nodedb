@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Loop-spawning helpers that atomically (1) subscribe to the
 //! shutdown watch, (2) spawn the body, and (3) register the
 //! join handle in the loop registry.

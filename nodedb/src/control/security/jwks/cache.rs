@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JWKS key cache: in-memory by `kid` with optional disk persistence.
 //!
 //! Keys are stored per-provider. Cache supports:

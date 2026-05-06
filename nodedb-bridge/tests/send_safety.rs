@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compile-time safety tests for Send/!Send invariants.
 //!
 //! These tests verify that the type system enforces the plane separation:

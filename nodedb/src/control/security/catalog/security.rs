@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! API key, role, permission, and ownership operations for the system catalog.
 
 use super::types::{

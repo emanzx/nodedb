@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DESCRIBE COLLECTION and SHOW COLLECTIONS DDL.
 
 use std::sync::Arc;

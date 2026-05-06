@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL replay → memtable rehydration.
 //!
 //! Recovery is driven by the engine on `open`: the caller streams

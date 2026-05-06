@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `PUBLISH TO` pgwire adapter — thin wrapper over the unified SQL dispatcher.
 //!
 //! Syntax: `PUBLISH TO <topic> '<payload>'`

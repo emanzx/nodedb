@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! # nodedb-wal
 //!
 //! Deterministic, O_DIRECT write-ahead log with group commit.

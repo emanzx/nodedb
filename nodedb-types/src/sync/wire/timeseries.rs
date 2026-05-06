@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries ingest + definition-sync messages.
 
 use std::collections::HashMap;

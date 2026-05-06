@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! zerompk (MessagePack) codec for [`SwimMessage`].
 //!
 //! Thin wrapper over `zerompk::to_msgpack_vec` / `zerompk::from_msgpack`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single tick of the Raft event loop.
 //!
 //! Ordering (each phase uses a short-lived `MultiRaft` lock acquisition —

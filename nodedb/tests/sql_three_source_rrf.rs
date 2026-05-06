@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for three-source RRF fusion: vector + BM25 text + graph BFS.
 //!
 //! Two surfaces are tested:

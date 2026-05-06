@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helpers for the `sql_index_naming` test binary.
 
 #![allow(dead_code)] // Not every sub-file uses every helper.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GET /v1/cluster/debug/quarantined-segments` — list segments quarantined
 //! due to repeated CRC failures.
 

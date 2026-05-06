@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `REFRESH MATERIALIZED VIEW` must execute the stored SELECT plan
 //! (project, filter, aggregate, join) and write the computed rows to
 //! the view's target collection — never copy raw source documents.

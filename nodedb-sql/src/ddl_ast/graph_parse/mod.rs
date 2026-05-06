@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed parsing for the graph DSL (`GRAPH ...`, `MATCH ...`).
 //!
 //! The handler layer historically parsed graph statements with

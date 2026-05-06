@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar segment binary format definitions.
 //!
 //! All multi-byte integers are little-endian. The segment is self-describing:

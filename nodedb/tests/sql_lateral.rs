@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for LATERAL subquery execution.
 //!
 //! Covers: comma-LATERAL syntax, JOIN LATERAL syntax, LateralTopK (ORDER BY + LIMIT),

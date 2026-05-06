@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `_system.dropped_collections` virtual view.
 //!
 //! Surfaces every soft-deleted collection that is still within its

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage for the `GRAPH RAG FUSION` DSL and the `SEARCH ... USING
 //! FUSION` handler's RRF_K handling.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod ack_registry;
 pub mod apply;
 pub mod catchup;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-session SQL-level prepared statement cache.
 //!
 //! Stores statements created via `PREPARE name(types) AS query`.

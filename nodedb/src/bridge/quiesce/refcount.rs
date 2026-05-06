@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scan refcount + `ScanGuard` RAII wrapper.
 
 use std::collections::HashMap;

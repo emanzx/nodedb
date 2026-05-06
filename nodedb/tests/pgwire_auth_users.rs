@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CREATE/DROP/ALTER USER over the pgwire DDL path, plus the two
 //! readonly-permission guards that live on user-mgmt surfaces.
 

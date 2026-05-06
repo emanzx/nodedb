@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Document (schemaless) engine.
 //!
 //! Covers: insert/query, secondary index, WAL-durability restart,

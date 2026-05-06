@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Order-statistic tree: augmented AVL tree with subtree counts.
 //!
 //! Provides O(log N) rank, insert, update, remove, and O(log N + K) top_k / range.

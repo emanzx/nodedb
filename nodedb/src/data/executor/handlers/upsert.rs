@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Upsert handler: insert if absent, merge fields if present.
 //!
 //! Works for schemaless and strict collections. All internal transport

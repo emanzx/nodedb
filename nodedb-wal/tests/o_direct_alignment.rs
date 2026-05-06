@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! O_DIRECT alignment invariants for the WAL write path.
 //!
 //! The WAL contract: when a writer is configured with `use_direct_io = true`,

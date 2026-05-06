@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER SCHEDULE` DDL handler.
 //!
 //! Supports: ENABLE, DISABLE, SET CRON 'expr'.

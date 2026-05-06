@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal filter predicates used by SQL planner and scan operators.
 
 use serde::{Deserialize, Serialize};

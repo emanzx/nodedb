@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BALANCED constraint: at commit time, for each distinct group_key value,
 //! `SUM(amount WHERE entry_type = debit_value)` must equal
 //! `SUM(amount WHERE entry_type = credit_value)`.

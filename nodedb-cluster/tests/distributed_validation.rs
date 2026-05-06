@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Phase 3 validation gate tests.
 
 use nodedb_cluster::ghost::{GhostStub, GhostTable, SweepVerdict};

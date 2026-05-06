@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal neighbor queries — prefix scan with Ceiling per base.
 //!
 //! `neighbors_out_as_of` / `neighbors_in_as_of` mirror the current-state

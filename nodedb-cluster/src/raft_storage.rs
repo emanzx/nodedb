@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Persistent Raft log storage backed by redb.
 //!
 //! Implements `nodedb_raft::LogStorage` with ACID durability via redb.

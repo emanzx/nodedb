@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage: DEFINE FIELD on an existing field must update the type
 //! in both `fields` (the schema-structure list) and `field_defs` (the behavior
 //! list). Previously only `field_defs` was updated — `fields` kept the old type.

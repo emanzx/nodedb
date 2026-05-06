@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NodeDB Array Engine — shared ND sparse array primitives.
 //!
 //! This crate provides the type substrate, schema definitions, coordinate

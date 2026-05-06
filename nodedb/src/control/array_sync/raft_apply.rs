@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array CRDT apply helpers invoked by the distributed Raft apply loop.
 //!
 //! These run on the Control Plane after Raft commit. They decode the replicated

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RLS filter injection into physical plans.
 //!
 //! After the planner converts a logical plan into physical tasks, this module

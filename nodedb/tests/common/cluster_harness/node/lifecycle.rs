@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spawn and shutdown lifecycle for [`TestClusterNode`].
 //!
 //! A `TestClusterNode` owns one full NodeDB server instance configured

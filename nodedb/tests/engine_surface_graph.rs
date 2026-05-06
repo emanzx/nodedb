@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Graph engine overlay.
 //!
 //! Graph is a cross-engine overlay — edges and nodes live inside any collection.

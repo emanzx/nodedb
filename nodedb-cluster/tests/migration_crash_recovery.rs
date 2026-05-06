@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests: migration crash recovery.
 //!
 //! Simulates coordinator crashes at every phase boundary and verifies:

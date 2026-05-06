@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE FUNCTION ... LANGUAGE WASM AS <base64>` DDL handler.
 //!
 //! Parses WASM function DDL, decodes the base64 binary, validates it,

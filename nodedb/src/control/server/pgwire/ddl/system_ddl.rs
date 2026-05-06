@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER SYSTEM SET <field> = <value>` handler.
 //!
 //! System-level settings that change at runtime without a node

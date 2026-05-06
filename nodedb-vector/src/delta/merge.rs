@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query-time merge of main HNSW and delta result sets.
 //!
 //! Filters tombstones from both lists, tags each result with its origin,

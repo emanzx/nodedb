@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for `CREATE TYPE` / `DROP TYPE` / `ALTER TYPE` / `SHOW TYPES`.
 //!
 //! Scenarios covered:

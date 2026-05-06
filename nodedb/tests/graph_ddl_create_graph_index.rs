@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE GRAPH INDEX` DDL correctness contracts.
 //!
 //! The tree-index builder (`nodedb/src/control/server/pgwire/ddl/tree_ops.rs`)

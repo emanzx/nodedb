@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stop word lists for Western European languages.
 //! Source: Snowball project official lists + NLTK corpora.
 //! All lists are sorted for binary search.

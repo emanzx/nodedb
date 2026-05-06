@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Plan-cache freshness lookup against the local `SystemCatalog`.
 
 use crate::control::state::SharedState;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authenticated UDP transport for SWIM.
 //!
 //! Binds a single `tokio::net::UdpSocket` and implements [`super::Transport`]

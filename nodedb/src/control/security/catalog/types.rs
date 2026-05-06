@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! System catalog type definitions: table constants, collection metadata,
 //! checkpoint records, and helpers.
 //!

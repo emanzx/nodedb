@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use super::{
     super::statement::{GraphDirection, GraphProperties},
     tokenizer::Tok,

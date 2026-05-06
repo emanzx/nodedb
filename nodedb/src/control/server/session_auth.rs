@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authentication helpers shared across protocol handlers.
 //!
 //! **Native protocol** (JSON frames): the first frame MUST be an auth request.

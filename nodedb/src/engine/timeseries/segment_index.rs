@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read-only index over flushed L1 segments for time-range queries.
 
 use std::collections::{BTreeMap, HashMap};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL parsing via sqlparser-rs.
 
 use sqlparser::ast::Statement;

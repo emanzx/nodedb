@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Trigger post-apply side effects — sync the in-memory
 //! `trigger_registry`.
 

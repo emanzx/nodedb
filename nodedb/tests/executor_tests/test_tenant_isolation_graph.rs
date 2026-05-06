@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-tenant isolation: Graph engine.
 //!
 //! Tenant A inserts edges. Tenant B queries neighbors — must get zero results.

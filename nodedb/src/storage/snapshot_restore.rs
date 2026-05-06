@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PITR/restore utilities: timestamp parsing, dry-run validation, and restore planning.
 //!
 //! Extracted from `snapshot.rs` — contains standalone functions and types

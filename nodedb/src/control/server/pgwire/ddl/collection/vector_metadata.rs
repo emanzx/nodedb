@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL handler for vector model metadata.
 //!
 //! - `ALTER COLLECTION x SET VECTOR METADATA ON column (model = '...', dimensions = N, ...)`

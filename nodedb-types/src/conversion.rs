@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Conversions between `serde_json::Value` and `nodedb_types::Value`.
 //!
 //! Shared across crates to avoid duplicating JSON-to-Value logic.

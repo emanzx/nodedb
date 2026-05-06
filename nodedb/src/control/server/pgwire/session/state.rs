@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-connection session state types.
 
 use std::collections::HashMap;

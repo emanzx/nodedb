@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end integration tests for bitemporal EdgeStore.
 //!
 //! Covers the write → update → soft-delete → GDPR-erase lifecycle through

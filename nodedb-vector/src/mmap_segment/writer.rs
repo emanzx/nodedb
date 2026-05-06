@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Writer for the NDVS v2 on-disk vector segment format.
 
 use std::path::Path;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Catalog format migration runner.
 //!
 //! Stamps fresh catalogs at `CATALOG_FORMAT_VERSION = 1` and rejects older

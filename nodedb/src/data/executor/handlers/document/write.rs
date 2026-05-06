@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document write handlers: PointPut, BatchInsert, Upsert, Register, IndexLookup, DropIndex.
 
 use sonic_rs;

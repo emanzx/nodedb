@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequence post-apply side effects — sync the in-memory
 //! `sequence_registry` so `NEXTVAL` / `CURRVAL` on followers sees
 //! the replicated definition immediately.

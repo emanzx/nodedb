@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Binary-operator evaluation on `Value` operands.
 
 use rust_decimal::Decimal;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Minimal descriptor identity + lease types used by the replicated
 //! metadata group. All per-DDL-object descriptor structs (Collection,
 //! Index, Sequence, ...) live on the host side inside

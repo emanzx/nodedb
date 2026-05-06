@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LSN ↔ wall-clock anchor payload.
 //!
 //! Anchors are written periodically to the WAL so that, during replay, the

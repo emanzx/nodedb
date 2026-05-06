@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for procedure/trigger body cache correctness.
 //!
 //! The ProcedureBlockCache keys on a 64-bit hash of the body SQL without

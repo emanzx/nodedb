@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event Plane metrics: per-core atomic counters for observability.
 //!
 //! All counters use `Relaxed` ordering — they are informational metrics,

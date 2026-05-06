@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregate functions used as windows: sum, count, avg, min, max,
 //! first_value, last_value.
 //!

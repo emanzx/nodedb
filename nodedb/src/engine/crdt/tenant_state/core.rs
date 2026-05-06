@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TenantCrdtEngine core: construction, state access, delta apply, DLQ, row purge.
 
 use loro::LoroValue;

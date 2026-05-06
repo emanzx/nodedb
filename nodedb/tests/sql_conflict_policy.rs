@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the CRDT conflict-policy SQL DDL surface:
 //!
 //! - `ALTER COLLECTION <name> SET ON CONFLICT <policy> FOR <kind>`

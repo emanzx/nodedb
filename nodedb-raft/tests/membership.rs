@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Membership-change state-machine paths.
 //!
 //! Inline tests in `node/membership.rs` cover the basic shape (add /

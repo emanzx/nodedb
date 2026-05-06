@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Trigger metadata operations for the system catalog.
 
 use super::trigger_types::StoredTrigger;

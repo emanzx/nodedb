@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Index path declaration for secondary indexes.
 
 use crate::bridge::physical_plan::RegisteredIndexState;

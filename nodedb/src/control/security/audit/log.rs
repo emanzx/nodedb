@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Append-only in-memory `AuditLog`.
 
 use std::collections::VecDeque;

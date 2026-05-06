@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Credential store — one concern per file.
 //!
 //! `CredentialStore` lives in `core.rs` alongside its constructors

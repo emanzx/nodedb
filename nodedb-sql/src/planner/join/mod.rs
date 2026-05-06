@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JOIN planning: extract left/right tables, equi-join keys, join type.
 
 pub mod array_arm;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate allocator high-watermark payload.
 //!
 //! Emitted by `nodedb::control::surrogate::SurrogateRegistry::flush` to make

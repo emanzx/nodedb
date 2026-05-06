@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // WASM SIMD128 path for u32 filtering.
 //
 // `core::arch::wasm32::u32x4_extract_lane` requires a const-generic lane

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authenticated join bundle: wraps the raw cred bytes sent to a joiner
 //! with an HMAC-SHA256 MAC so a MitM cannot substitute their own CA even
 //! if they intercept the token.

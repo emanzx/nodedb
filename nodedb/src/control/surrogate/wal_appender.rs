@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL appender for surrogate hwm flushes.
 //!
 //! Decouples the registry's flush path from a concrete `WalManager`

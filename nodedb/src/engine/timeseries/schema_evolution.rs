@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schema evolution for columnar timeseries partitions.
 //!
 //! Each partition stores its own schema independently. When querying across

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `Scheduler` struct definition, constructor, and main run loop.
 
 use std::collections::BTreeMap;

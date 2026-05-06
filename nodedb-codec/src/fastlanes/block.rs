@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Block-level encode and decode for the FastLanes FOR + bit-packing codec.
 
 use super::bits::{pack_bits, unpack_bits};

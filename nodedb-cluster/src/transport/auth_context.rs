@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-transport authentication state shared across inbound and outbound
 //! paths.
 //!

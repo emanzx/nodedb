@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Flat neighbor storage for zero-copy HNSW checkpoint restore.
 //!
 //! After cold start from an rkyv checkpoint, neighbor lists are stored in a

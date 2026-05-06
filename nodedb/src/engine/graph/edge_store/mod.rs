@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod cascade;
 pub mod purge;
 pub mod query;

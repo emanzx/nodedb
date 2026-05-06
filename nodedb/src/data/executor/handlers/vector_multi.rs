@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-vector document handlers: insert N vectors per doc, delete all,
 //! and aggregated scoring search (MaxSim / AvgSim / SumSim).
 

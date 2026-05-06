@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Report returned by [`super::warm_known_peers`].
 //!
 //! Logged at INFO regardless of outcome so operators see

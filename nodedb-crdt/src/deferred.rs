@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Deferred retry queue for CASCADE_DEFER policy.
 //!
 //! When a foreign key violation occurs and CASCADE_DEFER is the configured policy,

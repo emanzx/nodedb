@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! High-water-mark dedup for cross-shard event delivery.
 //!
 //! Tracks the highest contiguous processed LSN per source vShard.

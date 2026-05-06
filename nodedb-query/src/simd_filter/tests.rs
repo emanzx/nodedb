@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use super::{
     bitmask_all, bitmask_and, bitmask_not, bitmask_or, bitmask_to_indices, filter_runtime, popcount,
 };

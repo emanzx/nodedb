@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SpaceSaving — approximate top-K heavy hitters (bounded memory).
 
 use std::collections::HashMap;

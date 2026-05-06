@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_crdt::constraint::ConstraintSet;
 
 use crate::bridge::envelope::{ErrorCode, Payload, Response, Status};

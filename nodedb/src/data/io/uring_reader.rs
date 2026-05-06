@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Batched io_uring reader for columnar segment files.
 //!
 //! Submits multiple file reads as io_uring SQEs in a single batch, then

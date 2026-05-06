@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parsed request struct shared by `CREATE COLLECTION` and `CREATE TABLE`.
 
 /// Pre-parsed fields from the `nodedb-sql` AST for a `CREATE COLLECTION` /

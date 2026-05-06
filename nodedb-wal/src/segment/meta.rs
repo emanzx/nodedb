@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment filename conventions and on-disk metadata.
 
 use std::path::{Path, PathBuf};

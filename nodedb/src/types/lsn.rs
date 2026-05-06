@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use std::sync::atomic::{AtomicU64, Ordering};
 
 // ── Re-export shared Lsn from nodedb-types ──

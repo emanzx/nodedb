@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: 3 nodes, one bootstraps, two join over QUIC.
 //!
 //! Drives the production server-side code path: joining nodes send

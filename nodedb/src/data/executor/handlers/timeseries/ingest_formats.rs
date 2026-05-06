@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MessagePack + JSON ingest formats for timeseries.
 //!
 //! Both paths normalize their payload into ILP text and delegate to

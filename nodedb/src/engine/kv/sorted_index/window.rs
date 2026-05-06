@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Time-windowed leaderboard filtering.
 //!
 //! A sorted index can optionally have a `WindowConfig` that restricts which

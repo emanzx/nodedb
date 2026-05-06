@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT VERIFY_BALANCE('collection', 'column')`
 //!
 //! Full integrity check: recomputes each materialized balance from source rows,

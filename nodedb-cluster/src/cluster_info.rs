@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Observability view of the cluster — snapshot types, trait for
 //! querying per-group Raft status, and the `ClusterObserver` handle
 //! bundled into `SharedState` for HTTP / metrics readers.

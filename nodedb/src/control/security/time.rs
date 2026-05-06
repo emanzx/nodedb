@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared time utilities for the security subsystem.
 
 /// Current wall-clock time in seconds since Unix epoch.

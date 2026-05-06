@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GRAPH ALGO handler and result-schema rendering.
 
 use std::sync::Arc;

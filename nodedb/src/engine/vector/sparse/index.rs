@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory inverted index for sparse vectors.
 //!
 //! Maps each dimension to a posting list of `(doc_id, weight)` pairs.

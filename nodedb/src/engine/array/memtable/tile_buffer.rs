@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory write buffer for a single array.
 //!
 //! Cells are bucketed into [`TileBuffer`]s keyed by [`TileId`]

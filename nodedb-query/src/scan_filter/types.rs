@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ScanFilter` record, its wire codec, and per-row evaluation against a
 //! `nodedb_types::Value` document.
 

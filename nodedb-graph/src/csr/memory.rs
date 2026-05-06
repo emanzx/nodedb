@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Memory estimation, access tracking, and prefetching for the CSR index.
 //!
 //! Provides RAM usage estimation for SpillController integration,

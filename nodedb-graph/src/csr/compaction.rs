@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CSR compaction: merges the mutable write buffer into dense arrays.
 
 use super::index::CsrIndex;

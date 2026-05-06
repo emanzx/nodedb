@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array catchup request wire message.
 
 use serde::{Deserialize, Serialize};

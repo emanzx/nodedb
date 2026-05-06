@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Test-only tokio-mpsc fabric implementing [`super::Transport`].
 
 use std::collections::{HashMap, HashSet};

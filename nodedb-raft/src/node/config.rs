@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Configuration for a single Raft group on this node.
 //!
 //! A Raft group has two kinds of peer membership:

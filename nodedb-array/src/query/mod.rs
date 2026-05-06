@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query operators over tiles.
 //!
 //! Pure, tile-local primitives: slice (coord-range filter), project

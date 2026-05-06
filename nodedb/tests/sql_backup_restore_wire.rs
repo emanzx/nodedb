@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end wire-streaming BACKUP / RESTORE tests against the
 //! single-node pgwire harness. Bytes flow over the pgwire COPY framing
 //! (`COPY (BACKUP TENANT n) TO STDOUT` / `COPY tenant_restore(n) FROM

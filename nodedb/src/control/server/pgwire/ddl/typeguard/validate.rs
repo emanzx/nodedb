@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `VALIDATE TYPEGUARD ON <collection>` — scan existing documents and report violations.
 //!
 //! Scans all documents in the collection, evaluates each against the active

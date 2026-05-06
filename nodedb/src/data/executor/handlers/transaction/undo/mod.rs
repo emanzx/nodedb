@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Undo log types and rollback logic for transaction batches.
 
 pub(super) mod apply;

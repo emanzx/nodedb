@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL/JSON standard functions: JSON_VALUE, JSON_QUERY, JSON_EXISTS.
 
 use nodedb_types::Value;

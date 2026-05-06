@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE TABLE` DDL handler — strict-default Postgres-style syntax.
 //!
 //! `CREATE TABLE foo (col_list)` creates a strict relational collection by

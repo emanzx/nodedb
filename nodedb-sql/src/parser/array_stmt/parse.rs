@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Recursive-descent parser for the four `ARRAY` statements.
 //!
 //! `try_parse_array_statement` returns `Ok(None)` for any SQL that does

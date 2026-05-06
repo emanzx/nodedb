@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Join execution handlers — hash, sort-merge, broadcast, nested-loop, and lateral.
 
 pub mod hash;

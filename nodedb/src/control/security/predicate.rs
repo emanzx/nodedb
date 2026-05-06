@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compiled RLS predicate AST with `$auth.*` session variable support.
 //!
 //! Predicates are parsed and validated at policy creation time, stored as

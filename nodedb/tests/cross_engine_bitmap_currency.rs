@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-engine integration tests for the surrogate bitmap currency.
 //!
 //! Two test functions verify that `SurrogateBitmap` prefilters flow correctly

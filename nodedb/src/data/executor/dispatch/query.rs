@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatch for QueryOp variants (aggregates, joins, recursive scans, facets).
 
 use crate::bridge::envelope::Response;

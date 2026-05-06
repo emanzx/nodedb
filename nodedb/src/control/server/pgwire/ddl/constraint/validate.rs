@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL-time validation for CHECK constraint expressions.
 
 use pgwire::error::PgWireResult;

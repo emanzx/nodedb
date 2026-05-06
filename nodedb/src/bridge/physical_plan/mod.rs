@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Physical plan types dispatched from Control Plane to Data Plane.
 //!
 //! The top-level [`PhysicalPlan`] enum delegates to per-engine sub-enums,

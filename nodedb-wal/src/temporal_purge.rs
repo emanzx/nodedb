@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `TemporalPurge` record payload codec.
 //!
 //! Emitted when the Control Plane's bitemporal-retention scheduler runs

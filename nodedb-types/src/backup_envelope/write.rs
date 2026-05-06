@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `EnvelopeWriter` — builds a plaintext backup envelope byte-by-byte.
 
 use super::types::{

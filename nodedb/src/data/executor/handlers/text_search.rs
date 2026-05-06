@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Text search, hybrid search, and BM25-score-scan handlers for the Data Plane CoreLoop.
 
 use std::collections::HashMap;

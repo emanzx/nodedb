@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query filter types for vector search and graph traversal.
 //!
 //! Filters constrain which results are returned. `MetadataFilter` is used

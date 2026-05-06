@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Helpers for proposing object ownership through the metadata
 //! raft group.
 //!

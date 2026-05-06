@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL invalidation hook for the gateway plan cache.
 //!
 //! `PlanCacheInvalidator` is stored on `SharedState` and called from the

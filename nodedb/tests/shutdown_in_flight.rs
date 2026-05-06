@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! D-δ integration test 2: SIGTERM during an in-flight query.
 //!
 //! Start the binary, open a real pgwire connection and issue a query, send

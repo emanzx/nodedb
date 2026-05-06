@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Alert rule type definitions.
 
 use serde::{Deserialize, Serialize};

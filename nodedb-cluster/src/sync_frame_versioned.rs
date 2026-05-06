@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Versioned encode/decode wrappers for [`nodedb_types::SyncFrame`].
 //!
 //! `SyncFrame` lives in `nodedb-types` and cannot reference `nodedb-cluster`,

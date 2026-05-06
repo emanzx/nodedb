@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Constraint definition types for collections.
 //!
 //! These are the per-collection constraint descriptors stored inline

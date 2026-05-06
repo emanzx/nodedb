@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Liveness drives routing invalidation.
 //!
 //! Three UDP-backed SWIM nodes form a full mesh. A shared

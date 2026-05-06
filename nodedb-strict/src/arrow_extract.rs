@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vectorized Arrow extraction from Binary Tuples.
 //!
 //! Batch-extracts a single column from N tuples into an Arrow array.

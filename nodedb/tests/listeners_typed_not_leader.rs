@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Real-listener NotLeader retry tests — C-δ.8 rewrite of the old mock-closure tests.
 //!
 //! ## Design rationale

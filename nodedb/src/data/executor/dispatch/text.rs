@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Text (FTS) operation dispatch.
 
 use crate::bridge::envelope::Response;

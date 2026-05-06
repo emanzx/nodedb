@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-vector type for ColBERT-style late interaction retrieval.
 //!
 //! Stores N vectors per document (one per token/passage), all same dimension.

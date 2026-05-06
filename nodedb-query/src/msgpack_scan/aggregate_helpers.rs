@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Public helpers for streaming aggregate accumulators.
 //!
 //! These thin wrappers expose field-extraction primitives used by the

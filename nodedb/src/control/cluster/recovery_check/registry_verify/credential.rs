@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CredentialStore` verifier.
 //!
 //! Checks that the in-memory `CredentialStore` is consistent with

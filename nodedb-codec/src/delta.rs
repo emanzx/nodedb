@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Delta codec for monotonic counter columns.
 //!
 //! Monotonic counters (bytes_sent, request_count) have small positive deltas

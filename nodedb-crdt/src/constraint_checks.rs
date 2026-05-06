@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Constraint-checking methods for the [`Validator`].
 //!
 //! All methods are `impl Validator` blocks and belong logically to the

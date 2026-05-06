@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SurrogateBitmap` — a roaring bitmap of `Surrogate` values used as the
 //! universal cross-engine prefilter currency.
 //!

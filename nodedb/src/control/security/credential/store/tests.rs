@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unit tests for `CredentialStore` — in-memory + persistent +
 //! reload-after-mutation coverage.
 

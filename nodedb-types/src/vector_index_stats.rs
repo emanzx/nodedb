@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector index statistics returned by `SHOW VECTOR INDEX status ON collection.column`.
 //!
 //! Serialized as MessagePack for transport through the SPSC bridge (Data → Control).

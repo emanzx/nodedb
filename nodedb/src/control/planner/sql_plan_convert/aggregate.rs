@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregate plan conversion and projection/window helpers.
 
 use nodedb_sql::types::{

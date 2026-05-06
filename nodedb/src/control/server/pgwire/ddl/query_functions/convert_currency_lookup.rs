@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT CONVERT_CURRENCY_LOOKUP(amount, from, to, rate_table, as_of, key_column, rate_column, time_column, precision)`
 //!
 //! Convenience overload: performs TEMPORAL_LOOKUP internally to find the rate,

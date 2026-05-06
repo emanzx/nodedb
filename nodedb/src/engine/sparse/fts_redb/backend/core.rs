@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RedbFtsBackend` struct, lifecycle, and the `FtsBackend` trait impl.
 //!
 //! Every trait method delegates to a topic-specific module

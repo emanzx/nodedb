@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Document (strict) engine.
 //!
 //! Uses CREATE TABLE which defaults to document_strict mode (Binary Tuple

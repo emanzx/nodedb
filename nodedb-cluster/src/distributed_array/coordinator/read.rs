@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read-path coordinator for distributed array operations.
 //!
 //! [`ArrayCoordinator`] drives fan-out reads (`coord_slice`, `coord_agg`,

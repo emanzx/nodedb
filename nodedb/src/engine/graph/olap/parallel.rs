@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parallel algorithm execution — range-partition nodes across threads.
 //!
 //! Each thread processes its range independently (no locks, no atomics on the

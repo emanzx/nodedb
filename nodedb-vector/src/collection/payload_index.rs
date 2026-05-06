@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory payload bitmap indexes for vector-primary collections.
 //!
 //! Each indexed field stores a `HashMap<PayloadKey, RoaringBitmap>` mapping

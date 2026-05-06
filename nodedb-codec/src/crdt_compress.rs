@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT state compression for Loro deltas.
 //!
 //! CRDT operations have a specific data signature:

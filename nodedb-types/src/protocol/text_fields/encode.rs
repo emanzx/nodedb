@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MsgPack encoding for [`TextFields`].
 
 use crate::json_msgpack::JsonValue;

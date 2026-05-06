@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scheduler configuration — cron timezone offset and related settings.
 //!
 //! The scheduler evaluates cron expressions using a fixed UTC offset rather

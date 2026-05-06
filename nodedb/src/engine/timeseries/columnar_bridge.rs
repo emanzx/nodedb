@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bridge between the timeseries-specific columnar types and the shared
 //! `nodedb-columnar` crate types.
 //!

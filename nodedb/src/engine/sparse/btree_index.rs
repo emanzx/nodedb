@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Secondary index operations for the sparse engine.
 //!
 //! Index key format: `"{tenant_id}:{collection}:{field}:{value}:{document_id}"`.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Set operations on [`SurrogateBitmap`].
 //!
 //! All operations are pure roaring bitmap delegations. Consuming variants

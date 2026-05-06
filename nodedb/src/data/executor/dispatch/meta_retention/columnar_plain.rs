@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Plain columnar profile temporal-purge.
 //!
 //! Row-level audit purge on bitemporal plain-columnar collections.

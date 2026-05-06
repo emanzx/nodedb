@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-session token bucket rate limiter for sync mutations.
 //!
 //! Each sync session gets an independent rate limiter that controls

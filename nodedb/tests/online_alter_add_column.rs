@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Online ALTER ADD COLUMN on strict collections must not stall concurrent writes.
 //!
 //! Verifies that executing ALTER COLLECTION ... ADD COLUMN while a concurrent

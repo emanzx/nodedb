@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL append logic: delegates to shared dispatch utilities.
 
 use crate::types::{TenantId, VShardId};

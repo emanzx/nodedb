@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raw-msgpack passthrough encoders and the inverse decoder.
 //!
 //! The "raw" pattern eliminates the decode→re-encode cycle on document reads

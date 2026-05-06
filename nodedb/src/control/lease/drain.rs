@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Descriptor lease drain state.
 //!
 //! While a descriptor is being drained, any new lease acquire at

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub(crate) mod auto_tier;
 pub mod calvin;
 pub mod catalog_adapter;

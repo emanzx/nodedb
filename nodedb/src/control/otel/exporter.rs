@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! OTLP exporter: pushes NodeDB's own traces and metrics to an OTLP collector.
 //!
 //! - Trace export: propagates existing trace_id spans (Control → Bridge → Data)

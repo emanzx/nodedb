@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Double-write buffer for torn write protection.
 //!
 //! NVMe drives guarantee atomic 4 KiB sector writes but NOT atomic writes

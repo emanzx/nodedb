@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query routing: consistency selection, and the execute_planned_sql entry
 //! point for DML/query dispatch.
 //!

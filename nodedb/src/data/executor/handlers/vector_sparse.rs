@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sparse vector index handlers: insert, search, delete.
 //!
 //! Operates on `SparseInvertedIndex` instances owned by the CoreLoop.

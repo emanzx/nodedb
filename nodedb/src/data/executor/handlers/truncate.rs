@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TRUNCATE and ESTIMATE_COUNT handlers.
 
 use tracing::{debug, warn};

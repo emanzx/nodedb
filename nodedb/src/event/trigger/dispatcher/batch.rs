@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Batch trigger dispatch: a `TriggerBatch` (multiple rows) → matching
 //! AFTER triggers, with WHEN-clause pre-filtering across the whole batch.
 //!

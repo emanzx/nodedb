@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CONVERT COLLECTION handler: re-encode documents for a new storage mode.
 //!
 //! Scans all documents in the collection and re-encodes them in-place.

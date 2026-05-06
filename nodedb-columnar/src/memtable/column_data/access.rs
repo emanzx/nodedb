@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read-only access methods on `ColumnData`: validity checks, value extraction.
 
 use nodedb_types::value::Value;

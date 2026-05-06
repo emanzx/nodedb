@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use argon2::password_hash::{
     PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng,
 };

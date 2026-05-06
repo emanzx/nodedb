@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! L2 cold storage: Parquet encoding + S3-compatible object store.
 //!
 //! Cold L1 data is encoded as Parquet files and uploaded to any

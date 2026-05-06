@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequence type definitions for catalog storage.
 
 /// Persisted sequence definition in the system catalog.

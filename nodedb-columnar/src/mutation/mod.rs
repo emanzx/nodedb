@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar mutation engine: coordinates PK index, delete bitmaps,
 //! memtable, and WAL records for full INSERT/UPDATE/DELETE.
 //!

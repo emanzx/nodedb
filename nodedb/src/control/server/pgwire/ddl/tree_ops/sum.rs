@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT TREE_SUM(column, graph_index, root_id [, collection]) [MAX_DEPTH n]`
 //!
 //! BFS traversal from `root_id`, summing column values over all descendants

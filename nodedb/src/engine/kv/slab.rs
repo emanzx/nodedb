@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fixed-size slab allocator for KV overflow values.
 //!
 //! Each tier holds fixed-size slots — zero internal fragmentation, O(1) alloc/free.

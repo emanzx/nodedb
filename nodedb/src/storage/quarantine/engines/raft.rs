@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Quarantine wrapper for Raft snapshot chunk decoding.
 //!
 //! Snapshot chunks are in-memory (no on-disk file path), so the rename step

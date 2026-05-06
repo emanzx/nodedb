@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar base scan handler.
 //!
 //! Reads rows from the `MutationEngine` memtable, applies projection,

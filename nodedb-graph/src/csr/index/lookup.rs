@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read-side queries: neighbor lookup, counters, degree, iterators,
 //! dense-array helpers, and the `add_node` / `build_dense` utilities.
 //!

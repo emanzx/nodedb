@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Immutable segment file format for the FTS LSM engine.
 //!
 //! Layout:

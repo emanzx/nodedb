@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LSN ↔ wall-clock milliseconds interpolator.
 //!
 //! Bitemporal reads need a `system_from_ms` value for every LSN, but storing

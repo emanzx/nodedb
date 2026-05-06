@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ORDER BY entry point.
 //!
 //! Maps an ORDER BY clause to either sort keys on the existing scan plan or

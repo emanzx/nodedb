@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Background loop and subsystem spawning after SharedState is ready.
 
 use std::sync::Arc;

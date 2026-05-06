@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER COLLECTION <name> ALTER COLUMN <col> TYPE <type>` — change a
 //! column's declared type in a strict-document collection's schema.
 //!

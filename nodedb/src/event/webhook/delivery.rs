@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Webhook delivery task: background Tokio task per webhook-enabled stream.
 //!
 //! Consumes events from the stream's buffer using an internal consumer group

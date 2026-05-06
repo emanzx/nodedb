@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// Storage tier classification.
 ///
 /// Data flows downward: L0 → L1 → L2 as it ages and cools.

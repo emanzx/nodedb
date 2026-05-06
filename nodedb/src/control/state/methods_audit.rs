@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit recording and memory-estimate update methods for `SharedState`.
 
 use tracing::{error, warn};

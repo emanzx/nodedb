@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Search-trigger detection in WHERE clauses.
 //!
 //! Recognises every `SearchTrigger` shape that has a docs-advertised WHERE

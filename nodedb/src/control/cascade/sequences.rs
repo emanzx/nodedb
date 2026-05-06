@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Implicit-sequence enumeration for `PurgeCollection` cascade.
 //!
 //! `SERIAL` / `BIGSERIAL` columns transparently create a sequence

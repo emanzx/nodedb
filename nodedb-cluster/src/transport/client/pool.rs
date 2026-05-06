@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-peer QUIC connection pool: registration, dialling, eviction, warm-up.
 
 use std::net::SocketAddr;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hash field RESP command handlers: HGET, HMGET, HSET, FLUSHDB.
 
 use sonic_rs;

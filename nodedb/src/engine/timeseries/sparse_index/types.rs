@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data types for the sparse primary index.
 
 /// Default block size: 1024 rows, aligned with FastLanes block size.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SELECT * FROM collection AT VERSION 'checkpoint' WHERE id = 'doc-id'
 
 use std::sync::Arc;

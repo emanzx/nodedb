@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The durable `AuditEntry` record + SHA-256 hash-chain linking.
 
 use std::time::SystemTime;

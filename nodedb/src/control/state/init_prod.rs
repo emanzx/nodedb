@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SharedState::open — production constructor loading from disk.
 
 use std::sync::atomic::AtomicU64;

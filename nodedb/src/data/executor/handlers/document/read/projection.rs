@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Projection and computed-column application for document scans.
 //!
 //! Two parallel paths must agree on missing-key semantics:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSERT INTO dispatch for schemaless, KV, and columnar collections.
 
 use pgwire::api::results::{Response, Tag};

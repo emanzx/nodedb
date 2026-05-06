@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Row variable bindings for trigger execution.
 //!
 //! Provides NEW/OLD row references and statement-level variables (TG_OP, etc.)

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shard-side RPC handler for incoming array operations.
 //!
 //! `handle_array_shard_rpc` is called by the vshard dispatch table

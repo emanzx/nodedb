@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Restart path: reload topology/routing from catalog after a clean shutdown or crash.
 
 use std::sync::{Arc, Mutex, RwLock};

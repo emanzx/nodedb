@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP command parsing: extract command name + args from RESP arrays.
 
 use super::codec::RespValue;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Session methods for LISTEN/NOTIFY/UNLISTEN state management.
 
 use std::net::SocketAddr;

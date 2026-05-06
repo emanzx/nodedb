@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for WAL catch-up: verifies that timeseries records
 //! written to WAL but not dispatched to the Data Plane become queryable
 //! after the catch-up task re-dispatches them.

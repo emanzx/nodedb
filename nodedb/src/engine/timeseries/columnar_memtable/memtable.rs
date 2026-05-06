@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ColumnarMemtable` — per-column ingest buffer for timeseries data.
 //!
 //! NOT thread-safe — lives on a single Data Plane core (!Send by design).

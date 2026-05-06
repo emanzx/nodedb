@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rolling percentile via sliding-window exact computation.
 //!
 //! For each position, collects all values in the window and computes the

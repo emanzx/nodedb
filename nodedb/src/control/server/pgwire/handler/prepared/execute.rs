@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Execute a prepared statement from an extended query portal.
 //!
 //! Binds parameter values from the portal into the SQL, then executes

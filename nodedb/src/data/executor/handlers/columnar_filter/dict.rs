@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DictEncoded-specific filter paths.
 
 use crate::bridge::scan_filter::ScanFilter;

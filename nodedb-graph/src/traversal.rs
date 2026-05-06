@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph traversal algorithms on the CSR index.
 //!
 //! BFS, bidirectional shortest path, and subgraph materialization.

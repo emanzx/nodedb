@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Global Secondary Indexes (GSI) for cross-shard index lookups.
 //!
 //! A GSI is a hidden redb table sharded by the indexed column's value.

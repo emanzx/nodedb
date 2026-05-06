@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIMD ternary dot product with runtime CPU-feature dispatch.
 
 #![allow(unsafe_op_in_unsafe_fn)]

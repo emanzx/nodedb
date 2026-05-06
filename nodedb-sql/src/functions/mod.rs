@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod arg_types;
 pub mod builtins;
 pub mod fts_ops;

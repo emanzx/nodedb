@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `PermissionStore` — in-memory grants + ownership maps with
 //! redb persistence. Boot replay (`load_from`) and the legacy
 //! `grant` / `revoke` / `grants_on` / `grants_for` CRUD live

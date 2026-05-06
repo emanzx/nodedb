@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Batched BEFORE trigger execution.
 //!
 //! Processes a batch of rows through BEFORE triggers with:

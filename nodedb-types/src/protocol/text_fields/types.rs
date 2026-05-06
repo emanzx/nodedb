@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`TextFields`] struct definition and field-count helper.
 //!
 //! # Wire format

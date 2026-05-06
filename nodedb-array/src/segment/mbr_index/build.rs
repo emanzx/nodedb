@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hilbert-packed R-tree bulk loader + read-only tree.
 //!
 //! Tiles in a NodeDB array segment are already written in Hilbert order

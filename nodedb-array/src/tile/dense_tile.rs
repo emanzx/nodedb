@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dense tile payload — flat row-major attribute arrays.
 //!
 //! Used when a tile's fill ratio crosses

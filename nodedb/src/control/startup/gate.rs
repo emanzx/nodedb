@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gate handles for the [`StartupSequencer`].
 //!
 //! Two complementary types:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HTTP poll endpoint for change stream consumption.
 //!
 //! `GET /v1/streams/{stream}/poll?group={group}&limit=100&partition=3`

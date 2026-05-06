@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dead-Letter Queue for failed async trigger events.
 //!
 //! When an async trigger's DML fails after max retries, the failed event

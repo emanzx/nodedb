@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Statement executor for procedural SQL blocks with DML.
 //!
 //! Split into sub-modules:

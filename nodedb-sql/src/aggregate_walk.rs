@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! AST traversal for aggregate detection and extraction.
 //!
 //! Uses sqlparser's own `Visitor` so aggregates nested inside any

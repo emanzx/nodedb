@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-engine transaction rollback matrix tests.
 //!
 //! For every pair of write-trackable engines that can legally appear in one

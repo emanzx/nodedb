@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ORDER BY processing and search-trigger detection.
 //!
 //! Splits responsibilities into focused modules:

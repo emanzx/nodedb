@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Backfill operation on `ColumnData`: fill existing rows with null/default values.
 
 use super::types::ColumnData;

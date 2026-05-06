@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compaction trigger for `ArrayEngine`.
 
 use nodedb_array::types::ArrayId;

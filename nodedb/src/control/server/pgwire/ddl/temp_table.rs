@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE TEMPORARY TABLE` / `CREATE TEMP TABLE` DDL handler.
 //!
 //! Temporary tables are session-local DataFusion MemTables. They shadow

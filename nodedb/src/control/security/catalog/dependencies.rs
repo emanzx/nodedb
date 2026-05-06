@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Object dependency tracking for the system catalog.
 //!
 //! Stores edges: source (function/trigger/procedure) → targets (functions, collections).

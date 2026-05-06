@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single SELECT statement planning (no UNION, no CTE wrapper).
 
 use sqlparser::ast::{self, Select};

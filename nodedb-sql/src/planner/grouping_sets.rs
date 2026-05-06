@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ROLLUP / CUBE / GROUPING SETS expansion and canonical key extraction.
 //!
 //! The public entry point is `expand_group_by`, which inspects the raw AST

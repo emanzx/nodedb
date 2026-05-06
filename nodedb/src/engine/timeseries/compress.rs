@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Zstd dictionary compression for structured log ingestion.
 //!
 //! NodeDB supports pre-trained static dictionaries for common logging

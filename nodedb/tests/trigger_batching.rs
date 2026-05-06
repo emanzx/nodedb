@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for trigger batching infrastructure:
 //! collector, classify, WHEN filter, batch config.
 

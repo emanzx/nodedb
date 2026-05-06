@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scalar (non-SIMD) bitpack unpacking. Always available on all platforms.
 
 /// Unpack `num_values` from bitpacked `data` at `bit_width` bits per value.

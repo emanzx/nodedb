@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER COLLECTION <name> DROP COLUMN <col>` — remove a column from a
 //! strict-document collection's schema.
 //!

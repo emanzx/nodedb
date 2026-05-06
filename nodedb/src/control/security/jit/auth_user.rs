@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JIT-provisioned auth user store: in-memory cache + redb persistence.
 //!
 //! Manages `_system.auth_users` records for externally-authenticated users.

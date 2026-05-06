@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helper: materialize a row value from a DecodedColumn.
 
 use crate::reader::DecodedColumn;

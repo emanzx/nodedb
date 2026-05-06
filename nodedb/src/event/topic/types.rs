@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Durable topic type definitions.
 
 use crate::event::cdc::stream_def::RetentionConfig;

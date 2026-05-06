@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod consistency;
 pub mod id;
 pub mod lsn;

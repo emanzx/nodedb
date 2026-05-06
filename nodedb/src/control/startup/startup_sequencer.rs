@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gate-based startup sequencer.
 //!
 //! [`StartupSequencer`] is the coordination hub for deterministic node

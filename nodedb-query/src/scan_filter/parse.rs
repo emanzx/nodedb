@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use super::ScanFilter;
 
 /// Parse simple SQL predicates into `ScanFilter` values.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! AES-256-GCM SEGT envelope for timeseries columnar segment files.
 //!
 //! Plaintext segment files (`.col`, `.sym`, `schema.json`, `sparse_index.bin`,

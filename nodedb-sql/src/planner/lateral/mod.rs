@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LATERAL subquery planning.
 //!
 //! Handles `FROM t, LATERAL (SELECT ...) x` and `JOIN LATERAL (...) ON true`

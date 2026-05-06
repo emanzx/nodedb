@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Core KV RESP command handlers: GET, SET, DEL, EXISTS, MGET, MSET, INCR, DECR, GETSET.
 
 use sonic_rs;

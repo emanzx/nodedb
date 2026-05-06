@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL writer with O_DIRECT and group commit.
 //!
 //! The writer accumulates records into an aligned buffer and flushes to disk

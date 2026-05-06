@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph analytical snapshot — frozen read-optimized CSR copy.
 //!
 //! Creates an immutable snapshot of the CSR index for long-running analytics.

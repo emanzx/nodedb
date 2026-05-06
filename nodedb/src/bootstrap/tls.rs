@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TLS acceptor construction for server listeners.
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Filter serialization: SqlPlan filters → ScanFilter msgpack bytes.
 //!
 //! This is the boundary between the Control Plane planner and the Data Plane

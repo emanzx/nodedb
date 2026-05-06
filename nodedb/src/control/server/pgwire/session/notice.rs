@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-session NOTICE queue.
 //!
 //! Response shapers (e.g. `payload_to_response`) push warnings here while

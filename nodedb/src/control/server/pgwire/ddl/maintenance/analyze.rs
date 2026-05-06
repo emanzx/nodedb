@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ANALYZE collection [(col1, col2)]` — collect column statistics.
 //!
 //! Dispatches a scan query to the Data Plane, collects all rows as JSON,

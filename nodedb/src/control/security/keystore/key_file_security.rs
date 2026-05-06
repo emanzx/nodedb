@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared key-file security checks applied before any key material is read.
 //!
 //! All key-file loaders (File provider, Vault token/ciphertext, AWS KMS

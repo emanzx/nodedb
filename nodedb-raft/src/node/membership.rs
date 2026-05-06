@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dynamic group membership mutation.
 //!
 //! Split out from [`super::core`] so the struct/constructor file stays

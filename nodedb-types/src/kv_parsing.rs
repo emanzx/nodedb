@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared KV DDL parsing helpers used by both Origin (pgwire) and Lite.
 //!
 //! Extracts interval parsing, storage-mode detection, and WITH-clause

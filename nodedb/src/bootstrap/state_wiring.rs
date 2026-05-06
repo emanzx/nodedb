@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wiring of optional subsystems and cluster handles into SharedState.
 
 use std::sync::Arc;

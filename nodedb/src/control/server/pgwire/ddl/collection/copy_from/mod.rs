@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Handler for `COPY <collection> FROM '<path>'` bulk import.
 //!
 //! Supports NDJSON, JSON array, and CSV formats. Format is auto-detected from

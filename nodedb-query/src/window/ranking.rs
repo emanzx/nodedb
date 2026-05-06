@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Ranking and distribution window functions: row_number, rank, dense_rank,
 //! ntile, percent_rank, cume_dist.
 

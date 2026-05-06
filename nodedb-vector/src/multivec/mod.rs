@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod meta_embed;
 pub mod plaid;
 pub mod scoring;

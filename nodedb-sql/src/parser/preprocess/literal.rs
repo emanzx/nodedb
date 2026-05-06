@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL literal canonicalization for `nodedb_types::Value`.
 
 /// Convert a `nodedb_types::Value` to a SQL literal string.

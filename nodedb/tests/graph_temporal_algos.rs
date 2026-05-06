@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration: bitemporal `CsrSnapshot::from_edge_store_as_of` +
 //! algorithm correctness at different system-time ordinals.
 

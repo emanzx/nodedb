@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition-tagged node identifier for cross-partition safety.
 //!
 //! Each `CsrIndex` is assigned a unique `partition_tag` at construction

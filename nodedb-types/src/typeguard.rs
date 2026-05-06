@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Type guard definitions for schemaless collection write-time validation.
 //!
 //! Type guards are per-field type + value constraints on schemaless collections.

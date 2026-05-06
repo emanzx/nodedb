@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-dimension coordinate normalization.
 //!
 //! Space-filling curves (Hilbert, Z-order) operate on equal-width

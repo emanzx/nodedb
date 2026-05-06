@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed compensation hints for rejected sync deltas.
 //!
 //! When the Origin rejects a CRDT delta (constraint violation, RLS, rate limit),

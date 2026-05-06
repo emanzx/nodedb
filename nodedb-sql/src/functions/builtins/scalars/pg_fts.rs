@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PostgreSQL full-text search operator scalar function registrations.
 
 use nodedb_types::columnar::ColumnType;

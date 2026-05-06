@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: 5 nodes start simultaneously, all with the
 //! full 5-address seed list. Thanks to the deterministic
 //! elected-bootstrapper rule (lexicographically smallest seed →

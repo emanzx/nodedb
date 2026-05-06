@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Registry of every background loop on this node.
 //!
 //! Holds the join handles so `shutdown_all` can actually

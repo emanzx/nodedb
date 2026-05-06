@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Secure memory utilities for key material.
 //!
 //! Wraps `libc::mlock`/`munlock` to prevent key bytes from being swapped

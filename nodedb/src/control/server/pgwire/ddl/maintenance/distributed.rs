@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed maintenance operations: ANALYZE/COMPACT/REINDEX across shards.
 //!
 //! In cluster mode, these operations are dispatched to each shard leader

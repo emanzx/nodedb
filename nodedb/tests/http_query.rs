@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Smoke tests for POST /v1/query and POST /v1/query/stream.
 //!
 //! Contracts asserted:

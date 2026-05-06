@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bulk data import.
 //!
 //! Document bytes flow over the pgwire COPY framing — the client

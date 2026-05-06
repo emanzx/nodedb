@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use crate::types::TenantId;
 
 use super::super::catalog::StoredUser;

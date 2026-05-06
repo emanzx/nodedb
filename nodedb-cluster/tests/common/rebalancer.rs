@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared test doubles for rebalancer integration tests.
 //!
 //! Used by `elastic_scaling.rs` and `elastic_scaling_churn.rs` to avoid

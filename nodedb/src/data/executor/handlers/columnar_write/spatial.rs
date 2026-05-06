@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial-side columnar ingest: build a row from a JSON object (first-row
 //! schema inference on engine creation).
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `INSERT INTO ARRAY` / `DELETE FROM ARRAY` lowering to `PhysicalTask`.
 
 use nodedb_array::coord::encode::encode_hilbert_prefix;

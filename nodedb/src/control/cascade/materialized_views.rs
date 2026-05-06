@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Materialized-view enumeration for `PurgeCollection` cascade.
 //!
 //! An MV's `source` points at the collection whose CDC stream feeds

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scope query DDL commands: ALTER SCOPE, SHOW MY SCOPES, SHOW SCOPES FOR.
 
 use std::sync::Arc;

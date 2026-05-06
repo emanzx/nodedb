@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant backup / restore DDL.
 //!
 //! Backup bytes flow over the pgwire COPY framing — the database

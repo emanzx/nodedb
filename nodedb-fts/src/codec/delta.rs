@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Delta encoding/decoding for sorted `u32` sequences.
 //!
 //! Posting lists are sorted by doc ID. Delta encoding stores the first ID

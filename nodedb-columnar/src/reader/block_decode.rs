@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Block-level decode helpers: type inference, null-fill, and compressed-block decoding.
 
 use nodedb_codec::{ColumnCodec, ResolvedColumnCodec};

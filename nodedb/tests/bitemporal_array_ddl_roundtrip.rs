@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL roundtrip tests for array bitemporal retention fields.
 //!
 //! Verifies that `CREATE ARRAY ... WITH (audit_retain_ms = N,

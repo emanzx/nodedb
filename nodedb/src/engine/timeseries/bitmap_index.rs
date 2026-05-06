@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitmap index for symbol (tag) columns.
 //!
 //! For each unique symbol value in a partition, stores a bitmap of row

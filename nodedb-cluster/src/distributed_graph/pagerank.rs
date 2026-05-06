@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-shard PageRank execution state for distributed BSP.
 
 use std::collections::HashMap;

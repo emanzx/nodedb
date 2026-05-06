@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GatewayVersionSet` — deterministic ordered set of (collection, version)
 //! pairs used as a plan cache key and as the payload for
 //! `DescriptorVersionEntry` in `ExecuteRequest`.

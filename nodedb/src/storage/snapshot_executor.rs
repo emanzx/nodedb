@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot restore execution: loads a snapshot and replays WAL to a target LSN.
 //!
 //! ## Restore flow

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helpers for the FTS backend: error construction and the
 //! inclusive upper bound for `(tid, collection, subkey)` range scans.
 

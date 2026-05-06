@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SWIM protocol configuration.
 //!
 //! Tunable parameters that govern failure-detection latency, bandwidth, and

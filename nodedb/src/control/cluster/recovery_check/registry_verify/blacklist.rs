@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `BlacklistStore` verifier.
 //!
 //! Checks that the in-memory `BlacklistStore` is consistent with

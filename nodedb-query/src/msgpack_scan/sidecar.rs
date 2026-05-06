@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Persistent structural index (sidecar) for MessagePack documents.
 //!
 //! Appends a compact field-offset table directly after the raw msgpack bytes.

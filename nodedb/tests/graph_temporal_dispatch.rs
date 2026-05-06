@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end bitemporal graph read path.
 //!
 //! Exercises the edge-store methods that the Data Plane's

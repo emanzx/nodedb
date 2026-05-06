@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ND Z-order (Morton) encode/decode.
 //!
 //! Bit-interleaving fallback for non-uniform dim sizes — cheap to

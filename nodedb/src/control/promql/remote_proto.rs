@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Prometheus remote write/read protobuf message types.
 //!
 //! Hand-coded prost types matching the Prometheus remote storage protocol:

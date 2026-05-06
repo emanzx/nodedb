@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hybrid Logical Clock.
 //!
 //! Canonical timestamp for replicated metadata entries, descriptor

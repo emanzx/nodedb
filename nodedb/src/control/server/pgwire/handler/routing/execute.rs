@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Plan-and-dispatch entry points for SQL queries on the simple-query and
 //! extended-query (prepared-statement) paths.
 

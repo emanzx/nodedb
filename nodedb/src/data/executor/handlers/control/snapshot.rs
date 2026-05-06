@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot, checkpoint, WAL append, cancel, range scan, and collection policy handlers.
 
 use sonic_rs;

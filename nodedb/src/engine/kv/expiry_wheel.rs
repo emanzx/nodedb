@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hierarchical timing wheel for deterministic KV key expiry.
 //!
 //! O(1) insert and cancel. One wheel per TPC core — no cross-core coordination.

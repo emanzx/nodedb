@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Standard PostgreSQL SQLSTATE code constants.
 //!
 //! A single source of truth for every five-character SQLSTATE string used

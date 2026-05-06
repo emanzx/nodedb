@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CSV import for `COPY FROM`.
 
 use pgwire::error::PgWireResult;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW PROCEDURES` DDL handler.
 
 use std::sync::Arc;

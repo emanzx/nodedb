@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Row-Level Security policy enumeration for `PurgeCollection` cascade.
 //!
 //! RLS policies are scoped to a single collection. When the collection

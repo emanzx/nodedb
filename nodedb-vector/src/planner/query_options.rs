@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `VectorQueryOptions` — all knobs the vector planner exposes to callers.
 //!
 //! Mirrors the SQL syntax:

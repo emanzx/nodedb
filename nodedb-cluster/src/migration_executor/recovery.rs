@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use std::sync::{Arc, RwLock};
 
 use crate::decommission::MetadataProposer;

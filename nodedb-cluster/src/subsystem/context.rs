@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `BootstrapCtx` — shared context passed to every subsystem at start time.
 //!
 //! This struct is a plain value-bag of `Arc`-wrapped cluster components.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT state management backed by loro.
 //!
 //! Each `CrdtState` wraps a `LoroDoc` representing one tenant/namespace's

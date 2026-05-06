@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sync delta and WAL payload types.
 
 use serde::{Deserialize, Serialize};

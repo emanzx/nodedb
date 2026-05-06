@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lloyd's k-means for OPQ codebook training.
 
 use super::opq_rotation::Xorshift64;

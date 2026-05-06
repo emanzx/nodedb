@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT TREE_CHILDREN(graph_index, root_id)`
 //!
 //! BFS traversal from `root_id`, returns all descendant IDs.

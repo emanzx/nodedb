@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft propose / single-node dispatch helpers for [`OriginArrayInbound`].
 //!
 //! Split out of `inbound.rs` to keep that file under the 500-line limit.

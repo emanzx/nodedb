@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Trit packing/unpacking and FP32→ternary quantization.
 //!
 //! Cold (5 trits/byte, base-3) is the disk-friendly format.

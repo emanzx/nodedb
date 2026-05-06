@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`RebalancerSubsystem`] — wraps the [`RebalancerLoop`] lifecycle.
 //!
 //! Depends on both `swim` (needs cluster membership to be established

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DROP RLS POLICY` handler. Migrated to `CatalogEntry::DeleteRlsPolicy`
 //! in phase 1k.6.
 

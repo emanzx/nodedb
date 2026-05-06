@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Matchstick tests for `invalidate_gateway_cache_for_entry`.
 //!
 //! The primary correctness guarantee is **compile-time exhaustiveness**: the

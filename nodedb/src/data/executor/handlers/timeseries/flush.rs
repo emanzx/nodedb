@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries flush and partition registry management.
 
 use crate::data::executor::core_loop::CoreLoop;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sub-plan execution → `SurrogateBitmap` materialization.
 //!
 //! The executor calls `collect_surrogates` after running a bitmap-producer

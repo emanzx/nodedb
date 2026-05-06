@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar base insert handler.
 //!
 //! Writes rows to `nodedb-columnar`'s `MutationEngine`. Accepts msgpack payload

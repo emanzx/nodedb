@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compaction policy — chooses which segments to merge.
 //!
 //! Uses size-tiered compaction for L0: when the L0 segment count crosses

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Atomic transfer handlers: Transfer (fungible) and TransferItem (non-fungible).
 //!
 //! These execute entirely within a single TPC core pass — no TOCTOU race.

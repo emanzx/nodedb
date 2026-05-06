@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HNSW `random_layer` must be capped at a reasonable maximum.
 //!
 //! Spec: standard HNSW caps the assigned layer at ~16. The current

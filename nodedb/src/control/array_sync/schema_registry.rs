@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`OriginSchemaRegistry`] — per-array `SchemaDoc` cache with redb persistence.
 //!
 //! Mirrors the API of Lite's `SchemaRegistry<S>` but stores snapshots in a

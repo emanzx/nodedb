@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dependent-read barrier for Calvin scheduler.
 //!
 //! When a dependent-read Calvin txn arrives at an active vshard (one with

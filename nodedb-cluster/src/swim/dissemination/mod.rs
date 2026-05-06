@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Piggyback dissemination queue.
 //!
 //! SWIM spreads membership deltas by attaching a small number of recent

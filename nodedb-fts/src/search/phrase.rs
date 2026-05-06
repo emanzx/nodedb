@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Phrase proximity boost for BM25 search results.
 //!
 //! Uses the existing `Posting.positions` data to detect consecutive query

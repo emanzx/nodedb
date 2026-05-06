@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar engine plan builders.
 
 use nodedb_types::Surrogate;

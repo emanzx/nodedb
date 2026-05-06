@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hangul syllable decomposition into Jamo (consonant/vowel components).
 //!
 //! Korean Hangul syllables (U+AC00-U+D7AF) are composed of:

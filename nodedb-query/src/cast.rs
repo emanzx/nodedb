@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CAST evaluation for SqlExpr.
 
 use crate::value_ops::{is_truthy, value_to_display_string};

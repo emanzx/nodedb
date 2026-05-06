@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rate gate / cooldown SQL functions.
 //!
 //! `SELECT RATE_CHECK(gate_name, key, max_count, window_secs)`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed GROUP BY for document queries.
 //!
 //! Each shard computes local partial aggregates per group key. The

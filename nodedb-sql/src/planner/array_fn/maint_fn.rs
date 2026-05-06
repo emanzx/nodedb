@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Maintenance ARRAY_* functions: bare `SELECT ARRAY_FLUSH(name)` /
 //! `SELECT ARRAY_COMPACT(name)` with no FROM clause.
 

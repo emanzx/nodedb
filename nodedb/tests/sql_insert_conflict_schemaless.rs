@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSERT conflict semantics for schemaless document engine.
 //!
 //! Shares the same spec as the strict engine — the schemaless path also

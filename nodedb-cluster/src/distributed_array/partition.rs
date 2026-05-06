@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cell-to-tile partitioning for distributed array writes.
 //!
 //! Both `coord_put` and `coord_delete` receive a flat list of cells (or

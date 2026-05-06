@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Write-path methods for `ArrayEngine`: put/delete cells with shared
 //! memtable-stamping core. Recovery routes through `stamp_*` directly so
 //! ordering matches the live dispatch path.

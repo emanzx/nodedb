@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Classify trigger body at CREATE TRIGGER time for batch eligibility.
 //!
 //! Analyzes the procedural AST to determine whether the trigger can safely

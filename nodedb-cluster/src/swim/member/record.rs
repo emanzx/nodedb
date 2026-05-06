@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! A single membership entry — the (state, incarnation, addr) record the
 //! failure detector keeps for every peer it has ever heard of, including
 //! itself.

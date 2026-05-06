@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Quarantine wrapper for columnar segment reads.
 //!
 //! All production `nodedb_columnar::SegmentReader::open` call sites that can

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Discovery of WAL segment files in a directory.
 
 use std::fs;

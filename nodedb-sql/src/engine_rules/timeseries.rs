@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine rules for timeseries collections.
 //!
 //! Timeseries is append-only. INSERT, UPDATE, and UPSERT are not supported.

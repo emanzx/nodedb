@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Selective-predicate analysis for bitmap-producer emission.
 //!
 //! Inspects a `SqlPlan` scan or index-lookup node and returns a `BitmapHint`

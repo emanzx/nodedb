@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parallel peer-cache warm-up.
 //!
 //! Dials every node in the live topology except `self_id`,

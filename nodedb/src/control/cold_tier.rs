@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Periodic cold tiering task: promotes old L1 data segments to L2 cold storage.
 //!
 //! Each cycle scans `{data_dir}/segments/` for segment files whose modification

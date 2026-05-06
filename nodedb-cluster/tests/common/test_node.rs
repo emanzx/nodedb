@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-process `TestNode` — owns a transport, catalog, topology,
 //! lifecycle tracker, and the two background tasks (`serve`, `run`)
 //! that a production-shaped node needs.

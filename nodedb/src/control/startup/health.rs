@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared health-state formatter consumed by HTTP `/healthz` and the
 //! native `STATUS` command.
 //!

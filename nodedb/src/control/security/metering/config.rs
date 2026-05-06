@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Usage metering configuration: cost definitions, dimensions, units.
 
 use std::collections::HashMap;

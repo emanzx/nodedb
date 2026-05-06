@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Background HNSW index builder thread.
 //!
 //! Each Data Plane core has one builder thread that processes HNSW

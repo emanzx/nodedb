@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DROP TENANT <id>` handler. Migrated to `CatalogEntry::DeleteTenant`
 //! in phase 1k.6.
 

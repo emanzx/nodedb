@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Full-Text Search engine overlay.
 //!
 //! FTS is a cross-engine overlay created via CREATE FULLTEXT INDEX.

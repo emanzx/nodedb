@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Thin wrapper around Linux `eventfd` for TPC core wake signaling.
 //!
 //! When the Control Plane pushes a request into the SPSC ring buffer, it

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end test for the `CREATE / DROP / INSERT INTO / DELETE FROM`
 //! ARRAY SQL surface.
 //!

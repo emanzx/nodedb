@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: replicated metadata group commits + cache apply.
 //!
 //! The `nodedb-cluster` crate does not understand per-DDL-object

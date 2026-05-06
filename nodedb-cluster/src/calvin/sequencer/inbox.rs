@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bounded inbox for Calvin sequencer submissions.
 //!
 //! The [`Inbox`] is the admission point for cross-shard transactions. Only the

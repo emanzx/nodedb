@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequencer output types: [`SequencedTxn`] and [`EpochBatch`].
 //!
 //! These are the Raft-replicated entries produced by the Calvin sequencer.

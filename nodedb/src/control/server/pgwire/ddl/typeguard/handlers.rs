@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL handlers for type guard field constraints on schemaless collections.
 //!
 //! Syntax:

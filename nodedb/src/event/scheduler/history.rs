@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Job execution history: redb-persisted log of recent runs.
 
 use std::collections::VecDeque;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CSPRNG-backed identifier generation for security-bearing tokens.
 //!
 //! Used for session handles (`nds_…`), session IDs (`s_…`), and any other

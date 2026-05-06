@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ID generation and detection scalar functions.
 
 use super::shared::{bool_id_check, num_arg};

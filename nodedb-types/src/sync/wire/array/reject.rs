@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array CRDT rejection wire message and reason codes.
 
 use serde::{Deserialize, Serialize};

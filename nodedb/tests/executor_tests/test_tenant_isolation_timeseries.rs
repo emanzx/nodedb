@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-tenant isolation: Timeseries engine.
 //!
 //! Tenant A ingests metrics. Tenant B scans — must get zero rows.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! R*-tree node splitting (axis split strategy).
 
 use super::node::{ChildRef, MIN_FILL_INTERNAL, MIN_FILL_LEAF, Node, NodeKind, RTreeEntry};

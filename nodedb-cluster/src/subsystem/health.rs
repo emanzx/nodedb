@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Subsystem health tracking — per-subsystem state and cluster-wide aggregation.
 
 use std::collections::HashMap;

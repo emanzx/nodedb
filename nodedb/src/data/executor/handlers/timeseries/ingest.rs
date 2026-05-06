@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries ILP ingest handler.
 //!
 //! msgpack / JSON row ingests that normalize into ILP text live in the

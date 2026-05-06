@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Token utility functions for the procedural SQL parser.
 
 use super::super::error::ProceduralError;

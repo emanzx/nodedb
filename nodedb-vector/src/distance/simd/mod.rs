@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Runtime SIMD dispatch for vector distance and bitmap operations.
 
 pub mod hamming;

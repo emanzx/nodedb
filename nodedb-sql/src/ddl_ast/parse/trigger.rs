@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse CREATE/DROP/ALTER/SHOW TRIGGER.
 
 use super::helpers::{extract_after_keyword, extract_name_after_if_exists};

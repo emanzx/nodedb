@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Joiner-side fetch: connect to a seed's bootstrap listener, present
 //! a token, receive the creds bundle.
 

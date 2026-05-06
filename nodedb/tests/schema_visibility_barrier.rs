@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the cross-core schema visibility barrier.
 //!
 //! These tests verify that ALTER DDL does not return success until every

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface routing tests.
 //!
 //! Verifies that all seven `WITH (engine=...)` names are accepted,

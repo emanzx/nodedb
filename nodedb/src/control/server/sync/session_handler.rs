@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WebSocket session handler for NodeDB-Lite sync connections.
 
 use std::net::SocketAddr;

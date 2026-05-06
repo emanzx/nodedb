@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schema object replication tests: functions, tenants, RLS, grants, ownership, materialized views.
 
 use std::time::Duration;

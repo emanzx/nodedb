@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DocumentEngine` struct, constructor, registration, and index lookups.
 
 use std::collections::HashMap;

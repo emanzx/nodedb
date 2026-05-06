@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// Write a msgpack string header + bytes into `buf`.
 pub(super) fn write_str(buf: &mut Vec<u8>, s: &str) {
     let len = s.len();

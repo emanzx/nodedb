@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod bm25_search;
 pub mod bmw;
 pub mod field_scoring;

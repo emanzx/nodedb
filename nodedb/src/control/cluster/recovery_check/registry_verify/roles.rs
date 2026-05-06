@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RoleStore` verifier.
 //!
 //! `RoleStore::load_from` converts `StoredRole` into

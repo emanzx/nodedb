@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-group registry of [`AppliedIndexWatcher`]s.
 //!
 //! A node hosts one or more Raft groups. Each gets its own watcher.

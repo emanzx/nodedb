@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Follower-side chunk accumulator for `InstallSnapshot` RPCs.
 //!
 //! Each incoming `InstallSnapshotRequest` chunk is:

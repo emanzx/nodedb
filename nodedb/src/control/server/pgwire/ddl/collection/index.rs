@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Index DDL: CREATE INDEX, DROP INDEX, SHOW INDEXES.
 //!
 //! CREATE/DROP INDEX mutate the owning [`StoredCollection`]'s `indexes`

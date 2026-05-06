@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod analyzer_config;
 pub mod error;
 pub mod fieldnorm;

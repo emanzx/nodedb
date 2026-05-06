@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Binary filter evaluation on raw MessagePack documents.
 //!
 //! `ScanFilter::matches_binary(doc: &[u8])` evaluates a filter predicate

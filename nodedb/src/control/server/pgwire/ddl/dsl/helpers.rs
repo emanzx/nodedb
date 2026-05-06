@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared parameter-extraction helpers for DSL handlers.
 
 pub(super) fn find_param_str(upper_parts: &[String], name: &str) -> Option<String> {

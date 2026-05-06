@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER COLLECTION <name> RENAME COLUMN <old> TO <new>` — rename a
 //! column in a strict-document collection's schema.
 //!

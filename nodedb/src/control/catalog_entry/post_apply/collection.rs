@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection post-apply side effects.
 
 use std::sync::Arc;

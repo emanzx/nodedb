@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-facet aggregation handler.
 //!
 //! Computes facet counts for multiple fields in a single query execution.

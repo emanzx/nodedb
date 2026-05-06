@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the OLLP orchestrator: retry, exhaustion,
 //! circuit-breaker, tenant budget.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Origin-specific CSR rebuild from EdgeStore.
 
 #[cfg(test)]

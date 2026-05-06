@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIMD bitmask filter evaluation for columnar data.
 //!
 //! Evaluates `ScanFilter` predicates directly on typed column vectors,

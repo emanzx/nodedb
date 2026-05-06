@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW CONSUMER GROUPS ON <stream>` and `SHOW PARTITIONS ON <stream>` handlers.
 
 use std::sync::Arc;

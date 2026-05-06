@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Descriptor cache-miss recovery.
 //!
 //! When the planner returns `Error::RetryableSchemaChanged { descriptor }`,

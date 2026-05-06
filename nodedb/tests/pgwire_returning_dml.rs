@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for UPDATE RETURNING and DELETE RETURNING via the pgwire
 //! simple-query and extended-query protocols.
 //!

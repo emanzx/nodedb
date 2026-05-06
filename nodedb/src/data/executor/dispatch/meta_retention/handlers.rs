@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Retention-related Meta dispatch handlers.
 //!
 //! Houses the dispatch bodies for the retention, purge, and retention-adjacent

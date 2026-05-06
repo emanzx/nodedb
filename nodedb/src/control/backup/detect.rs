@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pre-sqlparser detection of the wire-streaming COPY shapes used by
 //! BACKUP and RESTORE. These shapes don't fit the plain `COPY <table>`
 //! grammar sqlparser supports, so we recognise them with a tight

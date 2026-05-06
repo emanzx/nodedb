@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial-aware shard routing.
 //!
 //! Maintains per-shard bounding box metadata — the spatial extent of all

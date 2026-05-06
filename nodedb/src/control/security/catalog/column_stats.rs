@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column statistics for query optimizer (ANALYZE).
 
 use super::types::{COLUMN_STATS, SystemCatalog, catalog_err};

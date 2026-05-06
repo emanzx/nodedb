@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! OTLP protobuf message types (subset for ingest).
 //!
 //! Covers: ExportMetricsServiceRequest, ExportTraceServiceRequest,

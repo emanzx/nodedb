@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fixed-capacity min-heap for top-k scoring in BMW.
 //!
 //! Maintains the k best `(score, surrogate)` pairs. The threshold (minimum

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL segment management.
 //!
 //! The WAL is split into fixed-size segment files for efficient truncation.

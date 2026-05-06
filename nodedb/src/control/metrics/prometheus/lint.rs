@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Convention lint tests for Prometheus metric output.
 //!
 //! These tests parse the text output of `to_prometheus()` and assert

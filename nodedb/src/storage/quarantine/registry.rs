@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-process quarantine registry and startup-scan rebuild.
 //!
 //! # Persistent state

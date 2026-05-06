@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the chunked `InstallSnapshot` transport.
 //!
 //! Tests exercise the chunk accumulator code path directly via

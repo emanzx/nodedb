@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster generation/epoch — a monotonic, leader-bumped fence token
 //! stamped on every Raft RPC frame.
 //!

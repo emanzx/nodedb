@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Event Plane durable topics.
 //!
 //! Tests: topic registry, publish+consume, retention eviction.

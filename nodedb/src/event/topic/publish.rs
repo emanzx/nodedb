@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Publish a message to a durable topic.
 //!
 //! Creates a CdcEvent from the user payload and pushes it into the

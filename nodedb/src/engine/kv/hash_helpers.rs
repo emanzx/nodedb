@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hash table helpers: FxHash hasher and value storage operations.
 
 use std::hash::{BuildHasher, Hasher};

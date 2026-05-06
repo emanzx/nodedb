@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Broadcast dispatch: fan a plan to all Data Plane cores and merge results.
 
 use std::sync::atomic::{AtomicU64, Ordering};

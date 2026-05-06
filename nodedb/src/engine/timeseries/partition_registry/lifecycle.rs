@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition state transitions: delete, merge begin/commit/rollback, purge.
 
 use nodedb_types::timeseries::{PartitionMeta, PartitionState};

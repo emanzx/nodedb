@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! systemd readiness signalling for `Type=notify` units.
 //!
 //! Every function in this module is **infallible at the API layer**.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_codec::{ColumnCodec, ResolvedColumnCodec};
 use nodedb_types::timeseries::{MetricSample, PartitionMeta, PartitionState};
 use nodedb_wal::crypto::WalEncryptionKey;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KvEngine methods for sorted index lifecycle and query.
 //!
 //! Extends `KvEngine` with:

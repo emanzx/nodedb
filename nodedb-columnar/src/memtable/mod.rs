@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar memtable: in-memory row buffer with typed column vectors.
 //!
 //! Each column is stored as a typed vector (Vec<i64>, Vec<f64>, etc.) rather

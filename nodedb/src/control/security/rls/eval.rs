@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RLS predicate evaluation and `$auth.*` substitution.
 //!
 //! **Read path**: `combined_read_predicate_with_auth` merges all

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Robin Hood probing primitives and incremental rehash implementation.
 
 use super::super::entry::KvEntry;

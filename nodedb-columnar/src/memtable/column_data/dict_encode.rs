@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dictionary encoding conversion for `ColumnData`.
 
 use super::types::ColumnData;

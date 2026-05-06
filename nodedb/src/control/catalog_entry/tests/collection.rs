@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-family tests: roundtrip + apply semantics.
 
 use crate::control::catalog_entry::apply::apply_to;

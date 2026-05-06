@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for typeguard DEFAULT/VALUE expressions and VALIDATE TYPEGUARD.
 //!
 //! Verifies that:

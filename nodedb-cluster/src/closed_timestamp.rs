@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-group closed-timestamp tracker with HLC skew bounding.
 //!
 //! Every time a Raft group applies a committed entry, the applier

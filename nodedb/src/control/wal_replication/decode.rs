@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Convert committed ReplicatedWrite entries back to PhysicalPlan for Data Plane execution.
 
 use super::types::{ReplicatedEntry, ReplicatedWrite};

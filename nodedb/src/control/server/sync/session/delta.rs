@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Delta push: rate limit, CRC32C integrity, RLS, replay dedup.
 
 use std::time::Instant;

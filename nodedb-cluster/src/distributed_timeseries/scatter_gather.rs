@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scatter-gather timeseries aggregation across shards.
 //!
 //! For sharded deployments, `metrics` is spread across multiple vShards.

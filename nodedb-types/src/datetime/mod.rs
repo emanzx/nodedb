@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! First-class DateTime and Duration types.
 //!
 //! `NdbDateTime` stores microseconds since Unix epoch (1970-01-01T00:00:00Z).

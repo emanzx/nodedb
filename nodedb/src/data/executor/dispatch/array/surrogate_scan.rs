@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ArrayOp::SurrogateBitmapScan` handler.
 //!
 //! Scans the array's tiles, applies the slice predicate, and emits one

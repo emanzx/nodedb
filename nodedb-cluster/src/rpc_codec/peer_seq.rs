@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-peer monotonic sequence counters and a 64-entry sliding-window
 //! replay detector.
 //!

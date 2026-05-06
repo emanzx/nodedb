@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ReachabilityDriver`] — periodic open-breaker probe loop.
 //!
 //! Every `interval`, the driver asks the shared [`CircuitBreaker`]

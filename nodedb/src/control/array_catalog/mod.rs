@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Control-Plane catalog for ND-array metadata.
 //!
 //! Persists schema digests for every array created via DDL, loaded at

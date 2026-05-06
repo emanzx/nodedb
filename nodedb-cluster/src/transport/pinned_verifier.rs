@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TLS-layer SPKI/SPIFFE pinning verifiers for inbound and outbound mTLS.
 //!
 //! Both [`PinnedClientVerifier`] (server-side, inbound) and

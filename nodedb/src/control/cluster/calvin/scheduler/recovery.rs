@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin scheduler WAL recovery.
 //!
 //! Provides [`read_last_applied_epoch`] which scans the WAL for

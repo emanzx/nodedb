@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE AGGREGATE FUNCTION ... LANGUAGE WASM AS <base64>` DDL handler.
 
 use pgwire::api::results::{Response, Tag};

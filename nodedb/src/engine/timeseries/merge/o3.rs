@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Out-of-order buffer merge into an existing sealed partition.
 
 use std::path::Path;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Client fingerprint captured at session create-time and matched on resolve.
 //!
 //! A fingerprint is `(tenant_id, ip_bucket)`. The IP bucket normalizes the

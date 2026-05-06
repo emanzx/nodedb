@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GraphRAG fusion handler: vector search, graph expansion, RRF scoring.
 //!
 //! Pipeline:

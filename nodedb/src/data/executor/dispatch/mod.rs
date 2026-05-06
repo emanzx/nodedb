@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Main execute() dispatch: matches on PhysicalPlan variant and delegates
 //! to the appropriate per-engine sub-dispatcher.
 

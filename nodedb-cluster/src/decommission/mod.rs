@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Decommission flow — graceful removal of a node from the cluster.
 //!
 //! Decommission is a multi-step, metadata-raft-replicated process:

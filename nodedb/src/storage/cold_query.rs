@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cold storage query operations: download and list Parquet files.
 //!
 //! Extracted from `cold.rs` — contains the download, list, and Parquet

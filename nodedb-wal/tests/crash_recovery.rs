@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Crash recovery integration tests.
 //!
 //! These simulate various crash scenarios and verify that:

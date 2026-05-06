@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segmented WAL: manages a directory of segment files with automatic rollover
 //! and truncation.
 //!

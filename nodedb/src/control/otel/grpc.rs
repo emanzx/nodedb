@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! OTLP/gRPC receiver on dedicated port 4317.
 //!
 //! Uses axum with HTTP/2 to handle gRPC-encoded protobuf requests.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raw scan mode: emit rows from memtable + disk partitions.
 //!
 //! No aggregation — returns individual rows as MessagePack.

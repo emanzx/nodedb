@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Variable-length multi-vector document storage with Meta Token mode.
 //!
 //! `MultiVectorStore` holds a collection of `MultiVectorDoc` entries where

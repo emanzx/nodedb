@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `From` conversions for [`Value`].
 
 use std::sync::Arc;

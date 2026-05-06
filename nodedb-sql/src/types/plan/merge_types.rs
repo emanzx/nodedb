@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Types shared between the SQL planner and converters for MERGE plans.
 
 use crate::types::filter::Filter;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire version constants + static compatibility checks.
 //!
 //! See `view::ClusterVersionView` for the live-topology-derived

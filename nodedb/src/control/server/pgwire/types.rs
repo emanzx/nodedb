@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_types::columnar::ColumnType;
 use nodedb_types::error::sqlstate;
 use pgwire::api::Type;

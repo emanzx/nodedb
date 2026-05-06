@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Branch partitioning for RowAtATime triggers.
 //!
 //! When a trigger has row-dependent control flow (different DML targets per

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The `create_function` pgwire handler.
 
 use pgwire::api::results::{Response, Tag};

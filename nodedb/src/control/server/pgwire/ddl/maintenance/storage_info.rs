@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW STORAGE FOR collection` and `SHOW COMPACTION STATUS` handlers.
 
 use std::sync::Arc;

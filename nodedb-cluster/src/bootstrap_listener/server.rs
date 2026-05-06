@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bootstrap-listener server loop and handler trait.
 //!
 //! The nodedb crate provides a concrete `BootstrapHandler` impl that

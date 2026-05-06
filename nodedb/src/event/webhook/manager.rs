@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Webhook manager: spawns and stops delivery tasks per stream.
 //!
 //! On startup, scans all change streams with webhook config and spawns

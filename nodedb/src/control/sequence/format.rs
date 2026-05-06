@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Format template engine for formatted sequences.
 //!
 //! Parses templates like `'INV-{YY}-{MM}-{SEQ:05}'` into a token list and

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Exact percentile and streaming accumulator.
 
 /// Exact percentile via sorting with linear interpolation between ranks.

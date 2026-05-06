@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSERT conflict semantics for key-value engine.
 //!
 //! Same structural flaw as the document engines: the SQL planner collapses

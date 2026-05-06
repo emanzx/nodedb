@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Health check endpoints.
 //!
 //! | Endpoint          | Method | Purpose                     | k8s probe     |

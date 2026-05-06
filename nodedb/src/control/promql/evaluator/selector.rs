@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector and matrix selector evaluation.
 
 use super::super::ast::*;

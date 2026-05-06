@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate registry — global, monotonic, WAL-durable allocator for
 //! every row's stable cross-engine identity.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: spatial query from SQL planner (CP) through to Data Plane.
 //!
 //! Inserts a document with a known GeoJSON point, then issues a

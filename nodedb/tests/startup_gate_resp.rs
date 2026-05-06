@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: RESP listener is gated on GatewayEnable.
 //!
 //! The test:

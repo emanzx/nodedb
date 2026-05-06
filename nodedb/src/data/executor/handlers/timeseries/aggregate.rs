@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregate mode: GROUP BY / time-bucket across memtable + partitions.
 //!
 //! Uses the grouped_scan engine with SIMD bitmask filters, direct-index Vec

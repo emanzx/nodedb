@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `serde::Serialize` / `Deserialize` for [`SurrogateBitmap`].
 //!
 //! Wire shape: the portable roaring byte buffer wrapped in serde `bytes`,

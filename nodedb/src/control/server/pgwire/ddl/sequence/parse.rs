@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parsing helpers shared by `drop_sequence` and `show`.
 
 /// Parse a DROP target from parts: extracts the name and `IF EXISTS` flag.

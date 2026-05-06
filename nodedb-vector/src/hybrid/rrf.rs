@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Reciprocal Rank Fusion (RRF) for hybrid vector + FTS / vector + graph.
 //!
 //! Each ranked list contributes `1 / (k + rank)` per document ID, where `k`

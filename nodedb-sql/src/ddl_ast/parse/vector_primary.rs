@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse `WITH (primary='vector', ...)` options for CREATE COLLECTION DDL.
 //!
 //! This module is concerned only with extracting and validating the

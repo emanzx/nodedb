@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gap-fill for bucketed timeseries aggregation results.
 //!
 //! After time-bucket GROUP BY, some buckets may be missing (no data for that

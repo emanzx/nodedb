@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Catalog schema evolution: a previously-written catalog row must decode
 //! into a current-binary struct that has added, removed, reordered, or
 //! renamed `#[serde(default)]` fields.

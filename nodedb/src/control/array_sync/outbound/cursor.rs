@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-subscriber HLC cursor helpers.
 //!
 //! Thin decision functions over [`super::subscriber_state::SubscriberMap`]

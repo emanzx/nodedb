@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection DDL: CREATE COLLECTION, DROP COLLECTION, SHOW COLLECTIONS,
 //! DESCRIBE, indexes, and ALTER commands.
 

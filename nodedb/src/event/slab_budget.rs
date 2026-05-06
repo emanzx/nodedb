@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL slab pinning budget: per-core memory limit for frozen WAL slabs.
 //!
 //! WriteEvent payloads (`new_value` / `old_value`) are `Arc<[u8]>` references

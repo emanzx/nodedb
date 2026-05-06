@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document read and scan handlers: Scan, PointGet, RangeScan, IndexLookup.
 
 pub mod decode;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data Plane core spawning and array catalog initialization.
 
 use std::sync::Arc;

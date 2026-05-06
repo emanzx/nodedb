@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Applier-side helpers for replicated permissions and ownership.
 //!
 //! All `install_replicated_*` methods mutate only the in-memory

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lifecycle state of a schema descriptor.
 //!
 //! The `DescriptorState` enum is the one-step-at-a-time state machine that

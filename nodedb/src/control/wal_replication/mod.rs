@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed WAL write path — propose writes through Raft, apply after commit.
 //!
 //! Split into:

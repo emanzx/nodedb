@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine-agnostic AST shapes for array DDL/DML carried on `SqlPlan`.
 //!
 //! Kept free of any dependency on `nodedb-array` so the SQL crate stays

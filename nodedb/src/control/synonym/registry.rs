@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory registry of synonym groups.
 //!
 //! Loaded from the system catalog on startup. Updated by DDL handlers.

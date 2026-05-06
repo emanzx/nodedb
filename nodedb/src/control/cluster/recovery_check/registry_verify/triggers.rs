@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `TriggerRegistry` verifier.
 
 use crate::control::security::catalog::SystemCatalog;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared response encoder for array dispatch handlers.
 //!
 //! Emits a top-level msgpack array where each element is a `Value` written

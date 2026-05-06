@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `/v1/cluster/debug/*` authenticated dev-ops endpoints (J.5).
 //!
 //! Each handler dumps a different slice of in-memory cluster state:

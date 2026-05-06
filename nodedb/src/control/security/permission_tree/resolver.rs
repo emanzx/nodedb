@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Permission resolution: walk the resource hierarchy to determine effective access.
 //!
 //! The resolver walks the parent chain from a resource toward the root,

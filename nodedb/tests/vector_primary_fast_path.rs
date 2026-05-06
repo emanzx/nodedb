@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the vector-primary pure-vector projection fast path
 //! and per-collection memory arena assignment.
 //!

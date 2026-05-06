@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for `CREATE VECTOR INDEX` / `ALTER VECTOR INDEX` DDL
 //! quantization parameters: INDEX_TYPE, PQ_M, IVF_CELLS, IVF_NPROBE.
 //!

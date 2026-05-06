@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed cross-shard `system_as_of` consistency test for the array engine.
 //!
 //! ## Architecture context

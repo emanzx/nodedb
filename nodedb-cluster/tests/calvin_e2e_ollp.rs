@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end Calvin OLLP sequencer test.
 //!
 //! Verifies that the sequencer path correctly handles multi-shard Calvin

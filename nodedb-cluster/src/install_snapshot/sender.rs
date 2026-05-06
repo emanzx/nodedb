@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Leader-side chunked `InstallSnapshot` sender.
 //!
 //! Slices `snapshot_bytes` into chunks of at most `chunk_bytes`, wraps each

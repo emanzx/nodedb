@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! User-defined function metadata operations for the system catalog.
 
 use super::function_types::StoredFunction;

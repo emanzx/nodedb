@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Metrics for the Calvin sequencer service.
 //!
 //! [`SequencerMetrics`] tracks epoch and admission counters plus a per-conflict

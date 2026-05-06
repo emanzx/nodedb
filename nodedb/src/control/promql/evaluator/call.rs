@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Function call evaluation.
 
 use super::super::ast::Expr;

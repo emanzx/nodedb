@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! User blacklist store: in-memory cache + redb persistence.
 //!
 //! Provides O(1) lookup for blacklisted user IDs with optional TTL

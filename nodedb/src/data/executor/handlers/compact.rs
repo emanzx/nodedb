@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compaction handler: periodic and on-demand engine compaction.
 //!
 //! Compaction removes tombstoned vectors from HNSW indexes, compacts CSR

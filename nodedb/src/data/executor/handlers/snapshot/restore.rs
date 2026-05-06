@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant snapshot restoration: import Data Plane state for all engines.
 
 use tracing::{info, warn};

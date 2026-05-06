@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LSM segment blobs against `SEGMENTS`
 //! keyed by `(tenant_id, collection, segment_id)`.
 

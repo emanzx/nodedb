@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Central memory governor.
 //!
 //! The governor owns all engine budgets and enforces the global ceiling.

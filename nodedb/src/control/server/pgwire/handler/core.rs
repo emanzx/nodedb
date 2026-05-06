@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NodeDB pgwire handler: struct definition, identity resolution,
 //! permission checks, and pgwire trait impls (SimpleQueryHandler,
 //! ExtendedQueryHandler, NoopStartupHandler).

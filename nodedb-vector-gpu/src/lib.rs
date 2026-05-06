@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GPU-accelerated vector index build (NVIDIA cuVS / CAGRA).
 //!
 //! This crate is feature-gated: enable `cuvs` to compile against the CUDA

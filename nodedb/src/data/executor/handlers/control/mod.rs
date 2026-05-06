@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Control operation handlers — module root.
 //! Submodules: snapshot (WAL, cancel, range scan, checkpoint),
 //! crdt (all CRDT operations), convert (JSON→LoroValue).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Core data types for PromQL evaluation.
 //!
 //! These mirror the Prometheus data model: samples, series, instant/range

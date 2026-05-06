@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Planner for `INSERT INTO ARRAY` and `DELETE FROM ARRAY`.
 //!
 //! Validation against the catalog: array exists, coord arity matches

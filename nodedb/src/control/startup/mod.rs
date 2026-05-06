@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Deterministic startup phase sequencer.
 //!
 //! Every node advances through a fixed sequence of [`StartupPhase`] values.

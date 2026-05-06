@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE SEQUENCE` handler.
 
 use pgwire::api::results::{Response, Tag};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard Dead Letter Queue.
 //!
 //! Failed cross-shard writes (after max retries) are persisted here.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod aggregate;
 pub mod array_ddl;
 pub mod array_dml;

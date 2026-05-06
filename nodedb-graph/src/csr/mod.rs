@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 mod compaction;
 pub(crate) mod dense_array;
 pub mod index;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array-catalog redb ops for the `_system.arrays` table.
 //!
 //! Mirrors the `triggers.rs` shape: typed put/get/delete plus a bulk

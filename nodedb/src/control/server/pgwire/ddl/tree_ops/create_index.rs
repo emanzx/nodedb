@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE GRAPH INDEX name ON collection (parent_col -> id_col)`
 //!
 //! Scans every document in the collection and materialises each

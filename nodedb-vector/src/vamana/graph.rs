@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vamana graph structure — adjacency-only, no vector data stored here.
 //!
 //! Vectors are held in the codec layer (RAM, compressed) and on SSD

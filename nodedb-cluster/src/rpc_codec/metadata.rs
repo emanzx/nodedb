@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MetadataProposeRequest / MetadataProposeResponse wire types and codecs.
 
 use super::discriminants::*;

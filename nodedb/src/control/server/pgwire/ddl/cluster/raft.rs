@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft group DDL commands: SHOW RAFT GROUPS, SHOW RAFT GROUP, ALTER RAFT GROUP.
 
 use std::sync::Arc;

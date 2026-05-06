@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HyperLogLog — approximate count distinct (12 KB memory, ~0.8% error).
 
 /// HyperLogLog cardinality estimator.

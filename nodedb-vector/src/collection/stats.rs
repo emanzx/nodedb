@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Live statistics aggregation for `VectorCollection`.
 
 use crate::index_config::IndexType;

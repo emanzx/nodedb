@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod archiver;
 pub mod audit_archive;
 pub mod audit_segment;

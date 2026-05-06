@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for `COPY <collection> FROM '<path>'` bulk import.
 //!
 //! Spins up a full NodeDB server via the pgwire harness and exercises

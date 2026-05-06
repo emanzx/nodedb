@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stop word lists for Semitic languages (Arabic, Hebrew).
 
 pub static ARABIC: &[&str] = &[

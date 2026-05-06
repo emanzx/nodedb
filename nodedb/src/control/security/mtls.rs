@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! mTLS configuration for inter-node and client transport.
 //!
 //! Keys MUST be rotatable without full-cluster downtime.

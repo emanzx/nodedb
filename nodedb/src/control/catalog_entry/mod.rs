@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed catalog-entry enum carried by every committed `CatalogDdl`
 //! raft entry on the metadata group.
 //!

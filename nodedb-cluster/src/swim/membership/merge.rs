@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pure state-merge rule for SWIM rumours.
 //!
 //! `merge_update` compares a stored [`Member`] against an incoming

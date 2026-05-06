@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`MultiShardMerger`] — per-session buffer that merges array ops from
 //! multiple vShards into a single HLC-ordered delivery stream.
 //!

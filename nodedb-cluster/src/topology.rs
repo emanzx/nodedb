@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster topology — tracks which nodes exist and their state.
 
 use std::collections::HashMap;

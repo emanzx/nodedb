@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Coordinated checkpoint manager.
 //!
 //! Periodically dispatches `PhysicalPlan::Checkpoint` to all Data Plane cores,

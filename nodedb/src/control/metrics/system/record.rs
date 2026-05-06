@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SystemMetrics` record/update methods.
 
 use std::sync::atomic::Ordering;

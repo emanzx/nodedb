@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 mod core;
 mod doc_lengths;
 mod meta;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bundle of everything needed to run the cluster after startup.
 
 use std::sync::{Arc, Mutex, RwLock};

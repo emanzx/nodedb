@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the native binary protocol (port 6433).
 //!
 //! Covers:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use sonic_rs;
 use std::net::SocketAddr;
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse `CREATE TYPE`, `DROP TYPE`, `ALTER TYPE`, and `SHOW TYPES`.
 //!
 //! Syntax:

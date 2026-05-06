@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: native protocol STATUS command returns "OK" after
 //! GatewayEnable fires and returns "Starting" before it fires.
 //!

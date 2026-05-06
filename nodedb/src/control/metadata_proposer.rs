@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Synchronous `propose-and-wait-for-local-apply` helper for
 //! replicated catalog DDL.
 //!

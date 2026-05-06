@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column projection for pgwire SELECT responses.
 //!
 //! Both the simple-query path and the extended-query path share this logic:

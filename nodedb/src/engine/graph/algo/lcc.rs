@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Local Clustering Coefficient — per-node triangle density on the CSR index.
 //!
 //! For each node v with degree k:

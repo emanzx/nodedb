@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression guard: `OriginCatalog::get_collection` must read
 //! purely from the local `SystemCatalog` redb — never dispatch a
 //! cluster RPC. If a future change adds a network-hopping read

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sparse → dense promotion at fill ratio > [`DENSE_PROMOTION_THRESHOLD`].
 //!
 //! The threshold is fixed in code rather than in the schema because

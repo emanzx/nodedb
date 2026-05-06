@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared graph algorithm utilities.
 
 use crate::engine::graph::csr::CsrIndex;

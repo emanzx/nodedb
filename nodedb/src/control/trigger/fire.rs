@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Backward-compatible re-exports from the split trigger fire modules.
 //!
 //! This file exists so that existing call sites (`control::trigger::fire::fire_after_insert`)

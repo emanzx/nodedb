@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document delete path.
 //!
 //! On bitemporal collections this appends a tombstone version so AS-OF

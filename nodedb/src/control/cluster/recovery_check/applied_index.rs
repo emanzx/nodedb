@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Applied-index gate.
 //!
 //! Ensures the metadata raft group has finished replaying its

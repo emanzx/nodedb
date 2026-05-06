@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant data purge handler.
 //!
 //! Deletes ALL data for a tenant across every engine and cache on this

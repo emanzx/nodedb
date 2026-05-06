@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Recursive (CTE-style) scan converters.
 
 use crate::bridge::envelope::PhysicalPlan;

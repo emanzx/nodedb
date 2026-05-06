@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for `GRAPH ALGO` output contracts.
 //!
 //! The Data Plane stores nodes under tenant-scoped keys

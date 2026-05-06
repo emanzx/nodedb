@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-scoped scan quiesce primitive.
 //!
 //! Purpose: before unlinking on-disk files for a purged collection, every

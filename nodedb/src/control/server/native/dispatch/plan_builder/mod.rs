@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Physical plan construction from NDB opcodes.
 //!
 //! Each engine has its own sub-module with builder functions.

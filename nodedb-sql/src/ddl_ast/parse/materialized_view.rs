@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse CREATE/DROP MATERIALIZED VIEW + CREATE/DROP CONTINUOUS AGGREGATE.
 
 use super::helpers::extract_name_after_if_exists;

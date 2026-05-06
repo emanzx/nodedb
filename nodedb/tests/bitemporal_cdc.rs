@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal CDC: `WriteEvent` → `CdcRouter` → `StreamBuffer` carries
 //! `system_time_ms` / `valid_time_ms` end-to-end.
 //!

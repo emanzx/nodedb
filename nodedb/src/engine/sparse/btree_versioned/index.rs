@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Versioned secondary-index operations.
 //!
 //! Index key: `"{tenant}:{coll}:{field}:{value}:{doc_id}\x00{sys_from:020}"`.

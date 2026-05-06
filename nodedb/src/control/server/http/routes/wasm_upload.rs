@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HTTP endpoint: `PUT /v1/functions/{name}/wasm`
 //!
 //! Accepts a raw WASM binary as the request body, stores it content-addressed,

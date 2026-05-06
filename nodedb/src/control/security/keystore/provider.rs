@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `KeyProvider` trait — the unwrap/rotate abstraction over all KMS backends.
 
 use zeroize::Zeroizing;

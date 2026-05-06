@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSERT conflict semantics for strict document engine.
 //!
 //! `INSERT` is not `UPSERT`: duplicate primary key raises SQLSTATE 23505,

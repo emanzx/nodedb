@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod approx_agg;
 pub mod asof_join;
 pub mod bitmap_index;

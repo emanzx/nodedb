@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DROP CONSUMER GROUP` DDL handler.
 //!
 //! Syntax: `DROP CONSUMER GROUP <name> ON <stream>`

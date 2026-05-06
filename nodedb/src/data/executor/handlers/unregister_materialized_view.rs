@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Materialized-view reclaim handler.
 //!
 //! Mirrors `execute_unregister_collection` one level up: a

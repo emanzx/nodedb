@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Seedable CSPRNG wrapper for provably fair random selection.
 //!
 //! Uses `rand::rngs::StdRng` (ChaCha-based) with optional seed.

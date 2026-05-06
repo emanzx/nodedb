@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP per-connection session state.
 
 use crate::types::TenantId;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Roundtrip tests for json_msgpack reader/writer.
 
 use crate::json_msgpack::{

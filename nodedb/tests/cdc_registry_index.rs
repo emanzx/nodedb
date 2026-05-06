@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage: StreamRegistry must index streams by
 //! `(tenant_id, collection)` and return shared references for the routing
 //! hot path.

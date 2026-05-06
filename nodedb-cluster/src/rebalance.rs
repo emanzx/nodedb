@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rebalancing planner — computes and executes vShard redistribution.
 //!
 //! When nodes join or leave the cluster, vShards may be unevenly distributed.

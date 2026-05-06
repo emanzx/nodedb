@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MATCH pattern query handler — parses Cypher-style MATCH syntax,
 //! compiles to PhysicalPlan::GraphMatch, and dispatches to Data Plane.
 

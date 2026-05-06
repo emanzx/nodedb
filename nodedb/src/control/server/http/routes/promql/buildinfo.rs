@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `/obsv/api/v1/status/buildinfo` — Grafana data source health check (no auth required).
 
 use axum::http::StatusCode;

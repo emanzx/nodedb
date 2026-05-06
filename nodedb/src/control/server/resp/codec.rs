@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP2 protocol codec: frame parser and response serializer.
 //!
 //! Implements the Redis Serialization Protocol (RESP2) as specified at

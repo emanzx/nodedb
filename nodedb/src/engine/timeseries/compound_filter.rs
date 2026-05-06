@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compound tag filter optimization with inverted index for hot tag combinations.
 //!
 //! For queries like `WHERE host = 'web-1' AND region = 'us-east'`, the current

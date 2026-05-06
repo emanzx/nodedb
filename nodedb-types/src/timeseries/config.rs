@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tiered partition configuration.
 
 use serde::{Deserialize, Serialize};

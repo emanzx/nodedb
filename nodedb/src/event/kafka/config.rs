@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Kafka delivery configuration parsed from `CREATE CHANGE STREAM ... WITH (DELIVERY = 'kafka', ...)`.
 
 /// Configuration for Kafka bridge delivery on a change stream.

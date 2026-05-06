@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Trigger enumeration for `PurgeCollection` cascade.
 //!
 //! A trigger fires on DML against a specific collection. When that

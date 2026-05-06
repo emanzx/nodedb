@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL handlers for adding and dropping constraints.
 
 use pgwire::api::results::{Response, Tag};

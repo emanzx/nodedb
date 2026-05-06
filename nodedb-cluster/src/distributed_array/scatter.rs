@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fan-out helpers for array distributed operations.
 //!
 //! Two entry points:

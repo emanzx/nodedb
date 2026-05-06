@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-block framing: 4-byte length prefix + payload + 4-byte CRC32C.
 //!
 //! Used for every variable-length block in a segment (each tile

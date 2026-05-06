@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fuel metering and timeout tracking for the statement executor.
 //!
 //! Prevents runaway loops in stored procedures:

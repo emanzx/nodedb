@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal version archive for CRDT collections.
 //!
 //! Physically preserves **superseded** versions of a row before it is

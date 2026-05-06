@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod budget;
 pub mod checkpoint;
 pub mod codec_build;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT operations exposed as SQL-like functions.
 //!
 //! - `SELECT crdt_state('collection', 'doc_id')` → read CRDT snapshot

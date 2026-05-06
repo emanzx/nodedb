@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! FastLanes-inspired FOR + bit-packing codec for integer columns.
 //!
 //! Frame-of-Reference (FOR): subtract the minimum value from all values,

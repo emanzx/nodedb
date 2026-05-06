@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared descriptor identity + header.
 
 use nodedb_types::Hlc;

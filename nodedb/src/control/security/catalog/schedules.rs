@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schedule metadata operations for the system catalog.
 
 use super::types::{SCHEDULES, SystemCatalog, catalog_err};

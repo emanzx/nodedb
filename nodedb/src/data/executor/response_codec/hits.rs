@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Response row structs for the search / graph / array execution paths.
 //!
 //! Most types use `#[derive(zerompk::ToMessagePack)]` with `#[msgpack(map)]`

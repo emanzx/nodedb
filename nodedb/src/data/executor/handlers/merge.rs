@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Handler for `DocumentOp::Merge`: implements the MERGE statement execution.
 //!
 //! Execution model (mirroring SQL MERGE semantics):

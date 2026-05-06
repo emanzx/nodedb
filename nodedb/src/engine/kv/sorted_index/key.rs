@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Composite sort key encoding for sorted indexes.
 //!
 //! Encodes multi-column sort keys into a single `Vec<u8>` such that the

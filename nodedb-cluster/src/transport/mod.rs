@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod auth_context;
 pub mod client;
 pub mod config;

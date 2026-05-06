@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DecommissionCoordinator` — drives a [`DecommissionPlan`] through
 //! the metadata Raft group one entry at a time.
 //!

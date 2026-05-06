@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Signal handling: graceful shutdown on Ctrl+C / SIGTERM, force-stop on second signal.
 
 use std::sync::Arc;

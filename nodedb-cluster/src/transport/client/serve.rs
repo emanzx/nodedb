@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Inbound RPC accept loop.
 
 use std::sync::Arc;

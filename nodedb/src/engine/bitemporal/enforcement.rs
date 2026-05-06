@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal audit-retention enforcement loop.
 //!
 //! Runs on the Event Plane (Tokio, `Send + Sync`). Every tick:

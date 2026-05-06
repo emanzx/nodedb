@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SmallFloat: 1-byte quantized document lengths for BM25 fieldnorms.
 //!
 //! Maps u32 doc lengths to a monotonic 0..255 byte scale.

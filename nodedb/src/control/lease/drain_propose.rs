@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Descriptor lease drain proposer flow.
 //!
 //! Wraps the replicated `DescriptorDrainStart` / `DescriptorDrainEnd`

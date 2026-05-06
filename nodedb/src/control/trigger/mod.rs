@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod batch;
 pub mod dml_hook;
 pub mod dml_hook_fire;

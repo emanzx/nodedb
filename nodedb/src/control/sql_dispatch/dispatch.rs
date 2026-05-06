@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unified SQL dispatcher: handles NodeDB SQL extensions that cannot be
 //! handled by `plan_sql` (sqlparser-based), without requiring pgwire context.
 //!

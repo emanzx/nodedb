@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Counter-aware per-second rate of increase.
 //!
 //! Mirrors Prometheus `rate()` semantics: detects monotonic counter resets

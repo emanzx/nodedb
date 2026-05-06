@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Synchronous in-memory cache updates for each [`CatalogEntry`].
 //!
 //! Runs **inline** on the raft applier thread, BEFORE the metadata

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Utility helpers for the Event Plane consumer loop.
 //!
 //! Extracted from `consumer.rs` to keep the main consumer module focused

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ST_Intersects — two geometries share any space (interior or boundary).
 //!
 //! Inverse of ST_Disjoint. A point on a polygon's edge DOES intersect

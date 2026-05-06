@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal EdgeStore primitives.
 //!
 //! Key layout appends a 20-digit zero-padded `system_from` ordinal suffix to

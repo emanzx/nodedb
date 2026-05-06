@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array CRDT operation types.
 //!
 //! Each mutation to the array engine produces one [`ArrayOp`]. Operations

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Response payload serialization for SPSC bridge transport.
 //!
 //! Replaces `serde_json::to_vec` + `serde_json::json!` on all Data Plane

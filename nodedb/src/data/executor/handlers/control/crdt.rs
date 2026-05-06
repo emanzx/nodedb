@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT operation handlers: read, versioned read, version vector, delta export,
 //! restore, compact, list insert/delete/move, and apply.
 

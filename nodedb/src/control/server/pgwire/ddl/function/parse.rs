@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared parsing helpers for function DDL statements.
 //!
 //! SQL type mapping, identifier validation, parameter parsing, and

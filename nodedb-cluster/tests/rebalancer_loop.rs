@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end rebalancer driver loop.
 //!
 //! Wires every piece of the rebalancer together without standing up

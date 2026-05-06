@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ElectionGate`] adapter backed by [`MultiRaft`].
 //!
 //! Returns `true` (gate closed) when any Raft group on this node is

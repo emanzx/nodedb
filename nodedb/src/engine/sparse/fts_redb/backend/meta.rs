@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Opaque metadata blobs (docmap, fieldnorms, analyzer, language)
 //! against `INDEX_META` keyed by `(tenant_id, collection, subkey)`.
 

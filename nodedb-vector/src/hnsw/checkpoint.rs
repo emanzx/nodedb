@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HNSW checkpoint serialization and deserialization.
 //!
 //! Serialization format: rkyv with a `RKHNS\0` magic header.

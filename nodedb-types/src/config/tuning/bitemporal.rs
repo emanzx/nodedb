@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal audit-retention scheduler tuning.
 //!
 //! Controls the cadence of the background enforcement loop that dispatches

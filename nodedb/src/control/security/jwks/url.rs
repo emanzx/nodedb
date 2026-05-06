@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JWKS URL validation: SSRF defense for the JWKS fetch path.
 //!
 //! A [`JwksPolicy`] captures the effective allow-list for a running

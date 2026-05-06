@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! String scalar functions.
 
 use super::shared::{num_arg, str_arg};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Declarative conflict resolution policies for CRDT constraint violations.
 //!
 //! ~80% of constraint violations should be auto-resolved

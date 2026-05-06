@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fixed Content-Type for all HTTP JSON responses: application/vnd.nodedb.v1+json.
 
 use axum::http::HeaderValue;

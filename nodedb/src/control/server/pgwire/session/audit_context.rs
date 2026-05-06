@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-session DDL audit context.
 //!
 //! The pgwire `do_query` entry point installs a snapshot of the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Codec identifiers, resolved codec type, column statistics, and name parsing.
 //!
 //! [`ColumnCodec`] is the user-facing codec selector (includes `Auto`).

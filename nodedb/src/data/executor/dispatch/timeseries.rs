@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatch for TimeseriesOp variants (scan, ingest).
 
 use crate::bridge::envelope::Response;

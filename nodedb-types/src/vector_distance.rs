@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared scalar distance metric implementations.
 //!
 //! Pure scalar functions that the compiler auto-vectorizes. Used by both

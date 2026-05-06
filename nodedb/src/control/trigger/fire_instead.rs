@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSTEAD OF trigger firing logic.
 //!
 //! INSTEAD OF triggers replace the DML operation entirely. When an INSTEAD OF

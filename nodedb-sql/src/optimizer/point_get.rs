@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Detect equality on primary key → convert Scan to PointGet.
 
 use crate::types::*;

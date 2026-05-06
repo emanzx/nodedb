@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot creation: captures full engine state across all Data Plane cores.
 //!
 //! A snapshot consists of a set of object-store keys:

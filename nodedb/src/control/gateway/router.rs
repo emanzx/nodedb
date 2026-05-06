@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Physical plan → `Vec<TaskRoute>` routing.
 //!
 //! The router consults the local [`RoutingTable`] to decide whether each

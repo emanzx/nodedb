@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Binary operation evaluation.
 
 use std::collections::BTreeMap;

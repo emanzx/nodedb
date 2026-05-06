@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE TENANT <name> [ID <id>]` handler. Migrated to
 //! `CatalogEntry::PutTenant` in phase 1k.6.
 

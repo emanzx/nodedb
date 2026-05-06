@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use crate::engine::EngineId;
 
 /// Errors produced by the memory governor.

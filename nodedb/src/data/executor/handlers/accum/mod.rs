@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Streaming aggregate accumulators for the generic GROUP BY path.
 //!
 //! Each `AggAccum` variant holds only the derived state needed to compute the

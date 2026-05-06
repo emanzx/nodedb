@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 

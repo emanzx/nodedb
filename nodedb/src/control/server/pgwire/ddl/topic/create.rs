@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE TOPIC` DDL handler.
 //!
 //! Syntax: `CREATE TOPIC <name> [WITH (RETENTION = '1 hour')]`

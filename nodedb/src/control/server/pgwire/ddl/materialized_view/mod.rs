@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Materialized view DDL — split by concern.
 //!
 //! - [`create`] — `CREATE MATERIALIZED VIEW` (propose through raft)

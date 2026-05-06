@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Geometry construction and transformation operations.
 //!
 //! ST_Buffer, ST_Envelope, ST_Union — produce new geometries from existing ones.

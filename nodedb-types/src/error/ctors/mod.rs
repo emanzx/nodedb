@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `NodeDbError` constructors, split by category.
 //!
 //! Each submodule provides `impl NodeDbError` blocks; Rust merges all of

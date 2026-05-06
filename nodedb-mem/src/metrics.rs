@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Metrics export for the memory governor.
 //!
 //! Provides jemalloc introspection to report actual RSS, mapped memory,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Background log compaction for change streams.
 //!
 //! Periodically scans all compaction-enabled streams and deduplicates

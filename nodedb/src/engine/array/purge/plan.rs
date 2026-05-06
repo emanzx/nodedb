@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Computes which segments to rewrite and what to drop, for a single array
 //! at a given system-time cutoff.
 //!

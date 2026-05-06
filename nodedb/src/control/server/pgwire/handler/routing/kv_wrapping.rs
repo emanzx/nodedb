@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV point-get response shaping: inject the primary key into the
 //! stored value map before the pgwire layer turns it into a SQL row.
 

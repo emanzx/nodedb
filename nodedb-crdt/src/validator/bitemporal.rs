@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal-aware validation helpers.
 //!
 //! CRDT constraint validation for bitemporal collections must scope to the

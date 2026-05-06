@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bidirectional `u32 ↔ String` document ID mapping.
 //!
 //! Each collection maintains its own DocIdMap. Integer IDs eliminate

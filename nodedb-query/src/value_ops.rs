@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Core value operations on `nodedb_types::Value`: comparison, coercion, truthiness.
 //!
 //! Equivalent to `json_ops.rs` but operates on the internal `Value` type directly,

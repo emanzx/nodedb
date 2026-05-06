@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-thread jemalloc arena pinning for Thread-per-Core isolation.
 //!
 //! In a TPC architecture, multiple cores sharing jemalloc's default arenas

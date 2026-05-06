@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Helper functions for the OLLP dependent-read dispatch path.
 //!
 //! These helpers are called from `execute_planned_sql_inner` when a

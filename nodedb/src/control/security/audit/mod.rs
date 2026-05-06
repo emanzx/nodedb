@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Immutable audit log for security-relevant events.
 //!
 //! The log is organized into focused submodules:

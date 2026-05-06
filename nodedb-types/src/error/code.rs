@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stable numeric error codes for programmatic error handling.
 
 use std::fmt;

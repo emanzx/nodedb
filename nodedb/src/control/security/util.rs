@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared utilities for the security subsystem.
 
 /// Decode a base64url-encoded string (no padding required).

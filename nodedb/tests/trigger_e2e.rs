@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end tests for trigger execution: CREATE/DROP lifecycle,
 //! BEFORE validation, INSTEAD OF, ALTER ENABLE/DISABLE, SECURITY DEFINER.
 

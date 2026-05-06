@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Materialized view metadata operations for the system catalog.
 
 use super::types::{MATERIALIZED_VIEWS, StoredMaterializedView, SystemCatalog, catalog_err};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `MembershipSubscriber` — hook fired whenever SWIM observes a
 //! member state transition.
 //!

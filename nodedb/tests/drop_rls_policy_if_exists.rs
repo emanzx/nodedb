@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage: DROP RLS POLICY ... IF EXISTS must succeed silently
 //! when the named policy is absent rather than returning error 42P01/42704.
 

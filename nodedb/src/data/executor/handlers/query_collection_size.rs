@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-size-estimate handler.
 //!
 //! Sums on-core bytes for `(tenant_id, collection)` across every

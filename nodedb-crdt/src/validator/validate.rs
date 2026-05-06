@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Basic validate() + validate_or_reject() entry points.
 
 use crate::CrdtAuthContext;

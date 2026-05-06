@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate → user-PK translation for vector search responses.
 //!
 //! The Data Plane emits each hit's `id` as the bound `Surrogate.as_u32()`

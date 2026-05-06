@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CRDT MERGE INTO` DSL handler.
 
 use std::time::Duration;

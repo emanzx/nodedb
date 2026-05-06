@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-flight transaction types for the Calvin scheduler driver.
 
 use std::collections::BTreeSet;

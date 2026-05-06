@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER COLLECTION accounts ADD COLUMN balance DECIMAL DEFAULT 0 AS MATERIALIZED_SUM ...`
 //! — ADD COLUMN variant that binds a computed balance to another collection's
 //! per-row contribution. Atomically maintained on INSERT into the source side.

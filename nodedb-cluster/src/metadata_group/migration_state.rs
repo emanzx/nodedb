@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Durable migration state: `MigrationStateTable`, `MigrationId`,
 //! `MigrationCheckpointPayload`, and `MigrationPhaseTag`.
 //!

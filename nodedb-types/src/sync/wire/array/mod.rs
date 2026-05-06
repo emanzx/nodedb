@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array CRDT sync wire envelopes.
 //!
 //! Wire types carry opaque msgpack-encoded payloads (encoded by

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection and column metadata types for query planning.
 
 use super::query::EngineType;

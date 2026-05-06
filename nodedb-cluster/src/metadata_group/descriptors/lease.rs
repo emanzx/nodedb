@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Descriptor lease record.
 
 use nodedb_types::Hlc;

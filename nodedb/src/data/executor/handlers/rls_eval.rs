@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data Plane RLS filter evaluation for post-fetch / post-candidate operations.
 //!
 //! The Control Plane injects serialized `ScanFilter` bytes into physical plan

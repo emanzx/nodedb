@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSERT ... SELECT handler: copy documents from source to target collection.
 
 use tracing::debug;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Core dispatch mechanics: single-task dispatch, Raft replication, and local Data Plane submission.
 
 use std::sync::Arc;

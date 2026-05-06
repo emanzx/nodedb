@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Formal verification via proptest: fuzz RLS predicate evaluation.
 //!
 //! Properties:

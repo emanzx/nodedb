@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal scope types threaded through the SQL planner.
 //!
 //! A `TemporalScope` captures the user-facing `FOR SYSTEM_TIME AS OF <ms>` /

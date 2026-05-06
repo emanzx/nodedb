@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ARRAY_* table-valued function as a JOIN source.
 //!
 //! When a JOIN's left or right relation is `ARRAY_SLICE(...)` (or

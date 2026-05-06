@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Per-column codecs for SparseTile scalar columns.
 //
 // surrogates  (Vec<Surrogate>)  → fastlanes (u32 as i64)

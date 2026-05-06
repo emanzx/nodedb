@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT delta packager: converts WriteEvents into outbound deltas for Lite sync.
 //!
 //! The Event Plane consumer calls `package_for_lite()` for each WriteEvent

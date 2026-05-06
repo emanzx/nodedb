@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Node-level cascade: soft-delete every edge incident on a node.
 
 use std::collections::HashMap;

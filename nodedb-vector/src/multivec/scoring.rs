@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MaxSim aggregation for multi-vector late interaction (ColBERT / MetaEmbed).
 //!
 //! `score(Q, D) = Σᵢ maxⱼ sim(qᵢ, dⱼ)`

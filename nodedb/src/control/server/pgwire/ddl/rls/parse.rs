@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RLS predicate compilation helpers.
 //!
 //! SQL-text parsing for `CREATE RLS POLICY` is done by the `nodedb-sql`

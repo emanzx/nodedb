@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Note: bypasses WebSocket transport and live cluster; exercises
 // coord-to-shard routing logic and op-log isolation directly.
 //

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Real-UDP convergence test for the SWIM failure detector.
 //!
 //! Spawns three SWIM instances on ephemeral loopback UDP ports, each

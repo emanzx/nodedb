@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Slice accessors for the CSR index.
 //!
 //! Provides read-only access to the underlying arrays for OLAP snapshot

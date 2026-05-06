@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! R-tree entry deletion with underflow handling.
 
 use super::node::{EntryId, NodeKind, RTreeEntry};

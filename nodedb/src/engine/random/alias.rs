@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Alias method for O(N) setup, O(1) weighted random selection.
 //!
 //! The alias method (Vose's algorithm) preprocesses a weight distribution

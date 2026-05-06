@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Value conversion utilities: SqlValue ↔ nodedb_types::Value, msgpack encoding,
 //! column default evaluation, and WHERE-clause time-range extraction.
 

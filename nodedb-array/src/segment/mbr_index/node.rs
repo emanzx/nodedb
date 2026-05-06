@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! R-tree node + bounding box.
 //!
 //! BBox stores per-dim min/max as [`DomainBound`] so it can carry the

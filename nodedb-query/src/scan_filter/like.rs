@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// SQL LIKE pattern matching.
 ///
 /// Supports `%` (zero or more characters) and `_` (exactly one character).

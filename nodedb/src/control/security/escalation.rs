@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Auto-escalation: repeated violations → suspend → ban.
 //!
 //! Tracks violation counts per user. When thresholds are crossed,

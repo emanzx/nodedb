@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Metadata counter and tenant operations for the system catalog.
 
 use super::types::{METADATA, StoredTenant, SystemCatalog, TENANTS, catalog_err};

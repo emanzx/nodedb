@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tiered bucketing for timeseries data.
 //!
 //! Data flows through three tiers:

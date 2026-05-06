@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Load-imbalance plan computation.
 //!
 //! Given a snapshot of per-node `LoadMetrics` and the current routing

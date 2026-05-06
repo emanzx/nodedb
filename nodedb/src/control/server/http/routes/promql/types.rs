@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared query-parameter types for PromQL HTTP handlers.
 
 use serde::Deserialize;

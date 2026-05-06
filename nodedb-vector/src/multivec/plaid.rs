@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PLAID-style centroid-based candidate pruning for multi-vector search.
 //!
 //! Builds K-means centroids over all document vectors.  Each document is

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory delta index for SPFresh streaming inserts.
 //!
 //! Fresh vectors accumulate here until `DeltaIndex::is_full()` signals that

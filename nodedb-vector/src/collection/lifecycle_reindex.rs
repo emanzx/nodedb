@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rebuild-related accessors on `VectorCollection`.
 //!
 //! Provides the methods needed by the concurrent REINDEX path:

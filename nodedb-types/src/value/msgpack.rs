@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hand-rolled zerompk implementations for `Value`.
 //!
 //! Cannot use derive because `rust_decimal::Decimal` is an external type.

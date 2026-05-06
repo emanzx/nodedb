@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! pgwire handlers for CRDT conflict-policy DDL.
 //!
 //! - `ALTER COLLECTION <name> SET ON CONFLICT <policy> FOR <kind>`

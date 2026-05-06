@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The canonical wire-type for entries proposed to the sequencer Raft group.
 //!
 //! [`SequencerEntry`] mirrors the [`crate::metadata_group::entry::MetadataEntry`]

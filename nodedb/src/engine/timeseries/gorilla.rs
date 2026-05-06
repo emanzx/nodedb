@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gorilla XOR encoding — re-exported from nodedb-codec for shared use.
 //!
 //! The canonical implementation lives in `nodedb_codec::gorilla` so both

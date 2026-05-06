@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP TCP listener: accepts connections and spawns session handlers.
 //!
 //! Runs on the Control Plane (Tokio). Each connection is handled by a

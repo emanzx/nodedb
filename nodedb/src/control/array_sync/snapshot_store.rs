@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`OriginSnapshotStore`] — persistent store for array tile snapshots.
 //!
 //! Snapshots are keyed by `(array_name, snapshot_hlc_bytes)` in a redb table

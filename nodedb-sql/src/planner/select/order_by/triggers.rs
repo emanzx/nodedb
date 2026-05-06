@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Search-trigger detection on ORDER BY expressions.
 //!
 //! Maps a `SearchTrigger`-tagged function call (e.g. `vector_distance(...)`,

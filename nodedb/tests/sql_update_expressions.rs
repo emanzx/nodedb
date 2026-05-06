@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for UPDATE statements whose RHS is a non-literal
 //! expression (column arithmetic, scalar functions, `NOW()`, ...).
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sync session: handles one WebSocket connection from a NodeDB-Lite
 //! client. Processes incoming frames (handshake, delta push, vector
 //! clock sync, token refresh, ping/pong) and sends responses. Each

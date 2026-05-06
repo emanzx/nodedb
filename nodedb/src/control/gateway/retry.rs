@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed `NotLeader` retry with 3-attempt budget + 50/100/200 ms backoff.
 //!
 //! When a remote dispatch returns `Error::NotLeader`, the retry helper:

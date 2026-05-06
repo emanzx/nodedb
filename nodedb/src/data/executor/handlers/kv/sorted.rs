@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV sorted index (leaderboard) handlers.
 
 use tracing::debug;

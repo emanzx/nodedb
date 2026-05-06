@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Conditional scalar functions: coalesce, nullif, greatest, least.
 
 use crate::value_ops::compare_values;

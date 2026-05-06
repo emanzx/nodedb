@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod execute_sql;
 pub mod format;
 pub mod handler;

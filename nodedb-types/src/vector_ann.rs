@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Runtime ANN tuning options threaded from SQL planner → Data Plane.
 //!
 //! Mirrors `nodedb_sql::types::VectorAnnOptions` but lives in `nodedb-types`

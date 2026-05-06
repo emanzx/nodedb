@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Executor implementations for PG FTS surface functions.
 //!
 //! These functions are evaluated at row-scan time via `eval_function`.

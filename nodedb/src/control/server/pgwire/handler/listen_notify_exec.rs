@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Handlers for LISTEN, NOTIFY, and UNLISTEN SQL statements.
 //!
 //! These commands intercept before the normal planner since they have no

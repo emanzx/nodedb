@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal recovery and follower-replay correctness for the array engine.
 //!
 //! Two correctness properties are verified:

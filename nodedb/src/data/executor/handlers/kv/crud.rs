@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV Get, Put, Delete, Truncate handlers.
 
 use nodedb_types::Surrogate;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard S3 archival with shard-aware key naming.
 //!
 //! Each shard archives its own partitions with shard-specific prefixes.

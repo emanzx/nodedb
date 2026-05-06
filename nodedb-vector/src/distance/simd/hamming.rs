@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fast Hamming distance using u64 POPCNT.
 
 pub fn fast_hamming(a: &[u8], b: &[u8]) -> u32 {

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial query handler: R-tree index scan with predicate refinement.
 //!
 //! Documents with geometry fields are auto-indexed into per-field R-trees

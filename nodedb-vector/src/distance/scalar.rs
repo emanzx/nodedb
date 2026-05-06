@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scalar (non-SIMD) distance metric implementations.
 //!
 //! Re-exports scalar implementations from `nodedb-types`.

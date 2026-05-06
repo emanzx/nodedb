@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KvEngine: per-core KV engine owning hash tables and expiry wheel.
 //!
 //! `!Send` — owned by a single TPC core. Each collection gets its own

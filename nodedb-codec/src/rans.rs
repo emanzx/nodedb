@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Interleaved rANS (Asymmetric Numeral Systems) entropy coder.
 //!
 //! Compresses byte streams to the Shannon entropy limit — optimal

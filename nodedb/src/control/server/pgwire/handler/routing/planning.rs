@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL planning: converts SQL text into physical task lists.
 
 use std::sync::Arc;

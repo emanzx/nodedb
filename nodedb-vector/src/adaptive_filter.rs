@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Adaptive filtered search strategy selection.
 //!
 //! Selects the optimal search strategy based on filter selectivity:

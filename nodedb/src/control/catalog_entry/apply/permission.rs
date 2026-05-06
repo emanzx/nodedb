@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Apply permission grant catalog entries to `SystemCatalog` redb.
 
 use tracing::warn;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Persistent collection-tombstone set backing `_system.wal_tombstones`.
 //!
 //! Tombstones are written here atomically with their WAL record during

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GET `/obsv/api/v1/series` — find series by label matchers.
 
 use axum::extract::{Query, State};

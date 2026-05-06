@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BACKUP TENANT orchestrator.
 //!
 //! Discovers every node that holds a vShard owning some of the

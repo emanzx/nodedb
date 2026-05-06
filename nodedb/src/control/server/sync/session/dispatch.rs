@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Frame dispatch: `process_frame` routes incoming frames to the
 //! per-kind handler methods.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Skip index for Block-Max WAND.
 //!
 //! One `SkipEntry` per 128-doc block. Enables two operations:

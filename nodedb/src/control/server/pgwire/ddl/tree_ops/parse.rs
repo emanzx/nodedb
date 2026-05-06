@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parsing helpers shared across the tree-ops DDL entry points.
 
 use pgwire::error::PgWireResult;

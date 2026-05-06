@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The `NodeDb` trait: unified query interface for both Origin and Lite.
 //!
 //! Application code writes against this trait once. The runtime determines

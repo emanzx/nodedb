@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`LoadMetricsProvider`] adapter backed by [`NexarTransport`].
 //!
 //! Returns a single-entry snapshot containing only the local node's

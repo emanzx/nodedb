@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Numeric field-ID constants for the TextFields wire format.
 //
 // IDs are assigned sequentially starting at 1. Deleted fields are tombstoned:

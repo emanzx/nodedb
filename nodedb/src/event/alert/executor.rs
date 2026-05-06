@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Alert evaluation loop on the Event Plane.
 //!
 //! Background Tokio task that periodically evaluates all enabled alert rules.

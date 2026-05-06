@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Designated timestamp column auto-detection.
 //!
 //! Three-tier heuristic:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The `ClusterSubsystem` trait — the shared interface every subsystem implements.
 
 use std::time::Instant;

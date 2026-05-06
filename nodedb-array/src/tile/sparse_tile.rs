@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sparse tile payload — coordinate list + per-attribute columns.
 //!
 //! Storage layout is column-major so per-attribute codecs

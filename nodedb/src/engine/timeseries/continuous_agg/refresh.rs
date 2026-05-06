@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Incremental refresh engine for continuous aggregates.
 //!
 //! Takes a `ColumnarDrainResult` (flushed data) and computes aggregates

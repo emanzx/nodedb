@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Probe target scheduler — implements Lifeguard §4.3's "random
 //! permutation" rule: every alive peer must be probed exactly once per
 //! epoch, and epochs restart with a freshly shuffled order.

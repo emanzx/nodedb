@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scope grant management: GRANT/REVOKE SCOPE TO/FROM ORG/USER/TEAM.
 //!
 //! Effective scopes for a user = user scopes UNION team scopes UNION org scopes.

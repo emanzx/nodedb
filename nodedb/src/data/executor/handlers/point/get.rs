@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PointGet: read one document by id, apply RLS filters, return bytes.
 
 use tracing::debug;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Retention policy enforcement background loop.
 //!
 //! Spawned on the Event Plane alongside the cron scheduler. On each evaluation

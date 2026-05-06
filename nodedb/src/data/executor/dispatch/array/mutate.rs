@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ArrayOp::Put` / `Delete` / `Flush` / `Compact` handlers.
 
 use nodedb_array::types::ArrayId;

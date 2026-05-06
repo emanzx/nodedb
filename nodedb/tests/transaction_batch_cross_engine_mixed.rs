@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MetaOp::TransactionBatch atomicity tests for Columnar, Timeseries, and CRDT
 //! engine pairs. Pairs with KV are in transaction_batch_cross_engine.rs.
 //! Crash injection tests are in transaction_batch_cross_engine_crash.rs.

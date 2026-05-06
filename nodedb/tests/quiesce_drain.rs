@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-scoped quiesce drain regression test.
 //!
 //! Enforces the contract that `execute_unregister_collection`'s

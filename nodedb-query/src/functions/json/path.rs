@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lightweight JSONPath parser.
 //!
 //! Handles: `$`, `$.key`, `$.a.b`, `$.arr[0]`, `$.a.arr[0].b`.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Peer-identity verification for the Raft mTLS transport.
 //!
 //! After the TLS handshake completes, rustls has verified that the peer's

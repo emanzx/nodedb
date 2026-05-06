@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CALL <procedure>(args)` execution handler.
 //!
 //! Parses the CALL statement, resolves the procedure from the catalog,

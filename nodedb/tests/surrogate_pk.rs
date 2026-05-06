@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for `assign_surrogate` semantics over a real
 //! `SystemCatalog`, including UPSERT idempotency, allocation
 //! divergence, drop-collection cleanup, and the WAL-flush trigger.

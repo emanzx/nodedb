@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MsgPack decoding for [`ErrorDetails`].
 
 use zerompk::{FromMessagePack, Read};

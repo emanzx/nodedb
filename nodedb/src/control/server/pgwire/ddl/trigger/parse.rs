@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CREATE TRIGGER SQL parser.
 
 use pgwire::error::PgWireResult;

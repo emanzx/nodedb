@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for integer overflow handling in SQL expressions.
 //!
 //! The const-folder and procedural executor must detect integer overflow

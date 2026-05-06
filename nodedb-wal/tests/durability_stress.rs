@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL durability stress test.
 //!
 //! Spawns 8 independent writer threads, each owning its own WAL file.

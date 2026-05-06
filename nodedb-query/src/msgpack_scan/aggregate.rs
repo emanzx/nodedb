@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Zero-deserialization aggregate computation on raw MessagePack documents.
 //!
 //! Replaces `compute_aggregate(op, field, docs: &[serde_json::Value])` with

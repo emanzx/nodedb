@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RaBitQ — 1-bit quantization with O(1/√D) MSE error bound (SIGMOD 2024).
 //!
 //! Algorithm outline

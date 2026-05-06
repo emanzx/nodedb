@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for stable hash-based OIDs and pg_index population.
 //!
 //! Covers:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! io_uring-based WAL writer for Thread-per-Core data plane.
 //!
 //! This replaces `pwrite` + `fsync` with io_uring submission, enabling:

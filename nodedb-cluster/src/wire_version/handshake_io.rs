@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Async I/O wrappers for the wire-version handshake exchange.
 //!
 //! Framing: every message is preceded by a 4-byte big-endian length prefix

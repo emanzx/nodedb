@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Insertion algorithm for `HnswCodecIndex<C>`.
 //!
 //! Implements the standard HNSW insert (Malkov & Yashunin 2018, Algorithm 1)

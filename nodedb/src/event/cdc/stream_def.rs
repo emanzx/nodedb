@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Change stream definition: persistent configuration for a CDC stream.
 
 /// Which operations to include in the stream.

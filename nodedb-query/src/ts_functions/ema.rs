@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Exponential Moving Average (EMA).
 
 /// Compute an exponential moving average.

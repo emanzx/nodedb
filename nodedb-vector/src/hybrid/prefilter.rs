@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pre-filter bitmap composition for cross-engine hybrid retrieval.
 //!
 //! Each upstream engine (Array, Graph, Bitemporal, Spatial, FTS) produces a

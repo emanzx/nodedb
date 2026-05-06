@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`TernaryCodec`] — BitNet b1.58 ternary [`VectorCodec`] implementation.
 
 use crate::vector_quant::codec::VectorCodec;

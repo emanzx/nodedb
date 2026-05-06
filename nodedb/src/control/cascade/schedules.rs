@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schedule enumeration for `PurgeCollection` cascade.
 //!
 //! Schedules may reference a specific target collection via

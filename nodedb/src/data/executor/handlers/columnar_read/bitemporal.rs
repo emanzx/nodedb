@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal row-visibility predicate for system-time / valid-time queries.
 
 /// Bitemporal row-level visibility predicate.

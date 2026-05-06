@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lightweight msgpack decoder for timeseries ingest rows.
 //!
 //! Decodes a msgpack array of maps into `Vec<Vec<(String, MsgpackValue)>>`.

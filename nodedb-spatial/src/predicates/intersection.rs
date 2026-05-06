@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ST_Intersection — compute the area shared by two geometries.
 //!
 //! Uses Sutherland-Hodgman polygon clipping for polygon-polygon intersection.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Three-source hybrid search handler: vector + BM25 text + graph BFS, fused via weighted RRF.
 //!
 //! Pipeline:

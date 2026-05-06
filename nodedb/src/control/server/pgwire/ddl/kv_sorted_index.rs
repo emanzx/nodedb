@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL and SQL function handlers for sorted indexes (leaderboards).
 //!
 //! DDL:

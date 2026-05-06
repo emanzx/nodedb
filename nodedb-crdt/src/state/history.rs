@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Version-history operations: version vectors, time-travel reads, targeted compaction, restore.
 
 use loro::{LoroDoc, LoroValue, ValueOrContainer};

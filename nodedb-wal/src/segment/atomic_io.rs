@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Durable atomic file / directory operations for checkpoint-class writes.
 //!
 //! The tmp-file + rename pattern is atomic only if both the file data and

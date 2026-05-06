@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WHEN clause condition parser for trigger binary fast-reject.
 //!
 //! Parses simple WHEN predicates of the form `NEW.field OP value` or

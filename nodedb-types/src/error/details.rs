@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Machine-matchable structured error details.
 
 use serde::{Deserialize, Serialize};

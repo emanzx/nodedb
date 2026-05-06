@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! VShardMessageType discriminant constants for array shard RPCs.
 //!
 //! These values mirror the `VShardMessageType` repr(u16) variants added

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Type-checking scalar functions.
 
 use nodedb_types::Value;

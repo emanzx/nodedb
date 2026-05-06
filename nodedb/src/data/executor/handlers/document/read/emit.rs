@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Response emission helpers for document scans.
 //!
 //! Two emission shapes are kept distinct: transformed rows (decoded → projected

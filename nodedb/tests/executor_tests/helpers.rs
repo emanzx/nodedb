@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared test helpers for CoreLoop integration tests.
 #![allow(dead_code)]
 

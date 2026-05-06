@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared dispatch utilities used by both the pgwire and native endpoints.
 
 use std::time::{Duration, Instant};

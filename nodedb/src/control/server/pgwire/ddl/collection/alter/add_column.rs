@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER {TABLE,COLLECTION} <name> ADD [COLUMN] <def>` — append a column
 //! to a strict-document / columnar collection's schema.
 

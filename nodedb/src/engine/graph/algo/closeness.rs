@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Closeness Centrality — inverse sum of shortest-path distances.
 //!
 //! `CC(v) = (r - 1) / sum(shortest_path(v, u))` for all reachable u,

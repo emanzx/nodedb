@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PostgreSQL JSON operator and SQL/JSON standard scalar function registrations.
 
 use nodedb_types::columnar::ColumnType;

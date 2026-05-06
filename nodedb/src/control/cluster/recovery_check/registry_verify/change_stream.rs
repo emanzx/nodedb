@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `StreamRegistry` (CDC change stream) verifier.
 //!
 //! Checks that the in-memory `StreamRegistry` is consistent with

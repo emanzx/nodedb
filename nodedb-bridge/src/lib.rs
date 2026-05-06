@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! # nodedb-bridge
 //!
 //! Lock-free, capacity-bounded SPSC ring buffer bridging a **Tokio Control Plane**

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end SQL tests for bitemporal array reads via pgwire.
 //!
 //! Exercises the `AS OF SYSTEM TIME <ms>` and `AS OF VALID TIME <ms>`

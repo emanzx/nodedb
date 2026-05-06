@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Phase L cluster transport security.
 //!
 //! These tests exercise the full Raft-over-QUIC and SWIM-over-UDP paths

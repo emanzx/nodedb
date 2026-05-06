@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dead-Letter Queue (DLQ) for sync-rejected deltas.
 //!
 //! When a sync delta is rejected (RLS violation, rate limit, constraint

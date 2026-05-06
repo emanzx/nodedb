@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BM25 scoring function.
 //!
 //! Single implementation used by both Origin and Lite, ensuring identical

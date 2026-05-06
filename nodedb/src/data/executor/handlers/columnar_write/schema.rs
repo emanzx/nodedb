@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schema inference, field coercion, bitemporal column injection, and
 //! schema-ordered row <-> object conversion.
 

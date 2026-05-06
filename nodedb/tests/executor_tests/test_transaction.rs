@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for transaction batch execution.
 
 use nodedb::bridge::envelope::{PhysicalPlan, Status};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV hash table entry: key + inline/overflow value + TTL metadata.
 //!
 //! Each slot in the Robin Hood hash table stores a `KvEntry`. Small values

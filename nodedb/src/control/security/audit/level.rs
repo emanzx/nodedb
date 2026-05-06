@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit-level filter applied to the recording path.
 
 /// Audit level: controls which events are recorded.

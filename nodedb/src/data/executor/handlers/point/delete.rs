@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PointDelete: remove one document plus its cascading side-effects across
 //! inverted, secondary, graph, and spatial indexes.
 

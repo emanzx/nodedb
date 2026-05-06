@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin EXPLAIN preamble row generation.
 //!
 //! Prepends a Calvin-specific preamble row to EXPLAIN output when the task

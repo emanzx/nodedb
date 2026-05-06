@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: bitemporal array compaction — ceiling resolution,
 //! truncation flags, and valid-time filtering.
 

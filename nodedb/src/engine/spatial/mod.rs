@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Re-export shared spatial engine from nodedb-spatial crate.
 // Origin's spatial handlers (data/executor/handlers/spatial.rs) and
 // checkpoint logic (data/executor/spatial_checkpoint.rs) use these directly.

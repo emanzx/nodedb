@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar engine base operations dispatched to the Data Plane.
 //!
 //! `ColumnarOp` is the base for all columnar-profile collections:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Subcommand dispatch table.
 
 use std::path::PathBuf;

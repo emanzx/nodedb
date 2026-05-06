@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster TLS credential resolution.
 //!
 //! Resolves a [`TransportCredentials`] from the operator's [`ClusterSettings`]

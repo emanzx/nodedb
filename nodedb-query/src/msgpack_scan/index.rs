@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-document structural index for O(1) field access.
 //!
 //! When a query accesses multiple fields from the same document (e.g.,

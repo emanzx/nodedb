@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data Plane apply and rollback coverage for `MetaOp::TransactionBatch`.
 //!
 //! These tests exercise the cross-shard apply path using

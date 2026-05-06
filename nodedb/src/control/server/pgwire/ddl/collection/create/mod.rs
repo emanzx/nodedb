@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE COLLECTION` DDL — split by concern.
 //!
 //! - [`handler`] — the `create_collection` pgwire entry point

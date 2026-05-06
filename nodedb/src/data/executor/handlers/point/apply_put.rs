@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared "apply a PointPut inside an externally-owned transaction" helper.
 //!
 //! This is called by PointPut and by any composite path (triggers, UPSERT)

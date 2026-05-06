@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data Plane handlers for synonym group meta operations.
 //!
 //! - `MetaOp::PutSynonymGroup`    — persist a synonym group to the FTS backend

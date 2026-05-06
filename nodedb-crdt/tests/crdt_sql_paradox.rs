@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: The CRDT / SQL Paradox.
 //!
 //! Simulates the exact scenario Gemini identified as the 20% risk:

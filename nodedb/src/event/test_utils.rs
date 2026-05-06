@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared test utilities for Event Plane tests.
 
 #![cfg(test)]

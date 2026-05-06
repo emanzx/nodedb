@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared msgpack-row sorting utilities used by scan handlers.
 
 /// Sort msgpack-map rows by `(field, ascending)` keys. Decodes each row to

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! S3-compatible cold storage archival for timeseries partitions.
 //!
 //! Uploads sealed partitions older than `archive_after` to any

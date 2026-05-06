@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-engine collection reclaim handlers.
 //!
 //! Each file in this module unlinks the persistent on-disk surface

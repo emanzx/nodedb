@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bollinger Bands for anomaly detection and volatility analysis.
 //!
 //! - `BOLLINGER_UPPER(period, k)` = SMA + k × σ

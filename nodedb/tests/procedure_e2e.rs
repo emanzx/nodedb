@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end tests for stored procedure execution: CREATE/DROP/CALL lifecycle,
 //! exception handling, fuel metering via live pgwire server.
 

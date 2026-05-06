@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! pgwire wire-level tests for per-connection tenant scoping and Trust-mode
 //! identity resolution.
 //!

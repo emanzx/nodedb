@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Streaming MV metadata operations for the system catalog.
 
 use super::types::{STREAMING_MVS, SystemCatalog, catalog_err};

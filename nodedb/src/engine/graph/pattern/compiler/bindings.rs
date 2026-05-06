@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Node and edge binding parsers for Cypher MATCH patterns.
 
 use super::super::ast::*;

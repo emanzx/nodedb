@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Topology and routing-table save / load.
 
 use crate::error::{ClusterError, Result};

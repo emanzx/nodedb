@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ReachabilitySubsystem`] — wraps the [`ReachabilityDriver`] lifecycle.
 //!
 //! Depends on `swim` because the driver probes peers that SWIM knows

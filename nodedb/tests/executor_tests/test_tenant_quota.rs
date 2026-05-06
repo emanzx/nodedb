@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant quota enforcement tests.
 //!
 //! Verifies that TenantIsolation correctly enforces quotas and that

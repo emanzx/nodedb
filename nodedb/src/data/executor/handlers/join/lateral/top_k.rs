@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `LateralTopK` handler: equi-correlated LATERAL with ORDER BY + LIMIT optimization.
 
 use tracing::debug;

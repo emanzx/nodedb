@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Token bucket rate limiter: burst + sustained rate control.
 //!
 //! Each bucket has a capacity (burst) and a refill rate (sustained QPS).

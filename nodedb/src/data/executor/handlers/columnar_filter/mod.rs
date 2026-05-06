@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar predicate evaluation on raw column vectors.
 //!
 //! Evaluates `ScanFilter` predicates directly on typed columnar data

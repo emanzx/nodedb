@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Validator struct, constructors, and accessors.
 
 use std::collections::{HashMap, HashSet};

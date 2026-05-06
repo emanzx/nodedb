@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! k-Core Decomposition — Batagelj-Zaversnik peeling algorithm.
 //!
 //! Iteratively removes nodes with degree < k, increasing k until the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MATCH pattern AST — Cypher-compatible graph pattern representations.
 //!
 //! Represents parsed MATCH queries as structured data for compilation

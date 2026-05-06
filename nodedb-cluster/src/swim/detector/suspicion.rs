@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Suspicion timer — the state that tracks which peers are in
 //! [`MemberState::Suspect`] and when they should be promoted to
 //! [`MemberState::Dead`].

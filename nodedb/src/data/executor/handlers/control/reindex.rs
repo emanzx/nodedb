@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Concurrent index rebuild (REINDEX CONCURRENTLY) for HNSW, FTS LSM, and graph CSR.
 //!
 //! Design: the Data Plane dispatches a `RebuildIndex` op.  For the concurrent

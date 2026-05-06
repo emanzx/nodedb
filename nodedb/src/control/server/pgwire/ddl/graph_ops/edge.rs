@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Edge mutation handlers: GRAPH INSERT EDGE, GRAPH DELETE EDGE,
 //! GRAPH LABEL / GRAPH UNLABEL.
 //!

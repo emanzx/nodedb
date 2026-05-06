@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-join aggregation in the Control Plane.
 //!
 //! When a query has `GROUP BY` over a `JOIN` result, the Data Plane cores

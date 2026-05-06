@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-tenant isolation: CDC (Change Data Capture).
 //!
 //! Writes by Tenant A must NOT appear in Tenant B's change stream subscription.

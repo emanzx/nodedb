@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW ROUTING` — expose the vshard → leaseholder → node address
 //! mapping so smart clients can cache it and route writes directly
 //! to the leaseholder, skipping the gateway hop.

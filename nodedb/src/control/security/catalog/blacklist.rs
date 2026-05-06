@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Blacklist catalog operations (redb persistence).
 
 use super::types::{BLACKLIST, StoredBlacklistEntry, SystemCatalog, catalog_err};

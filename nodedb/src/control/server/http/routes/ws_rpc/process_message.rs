@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single WebSocket message processing for the JSON-RPC protocol.
 
 use sonic_rs;

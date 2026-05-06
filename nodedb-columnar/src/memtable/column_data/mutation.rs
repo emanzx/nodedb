@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Mutation methods on `ColumnData`: truncate, push, push_valid.
 //!
 //! `push_ref` and `backfill_nulls` live in `mutation_ingest.rs`.

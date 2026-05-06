@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Consecutive-sample difference.
 
 /// Compute the difference between each sample and its predecessor.

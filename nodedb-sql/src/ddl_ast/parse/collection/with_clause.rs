@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse the `WITH (...)` clause and `BALANCED ON (...)` clause in CREATE COLLECTION.
 
 /// Extract engine name and other key-value options from the `WITH (...)` clause.

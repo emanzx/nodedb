@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `cross_core_bfs` — multi-hop BFS that drives `GRAPH TRAVERSE`, the
 //! tree DDL aggregates (`TREE_SUM`, `TREE_CHILDREN`) and any other
 //! breadth-first walk that needs to see the full cross-core / cross-shard

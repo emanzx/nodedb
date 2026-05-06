@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-tenant isolation: Sparse (Document) engine.
 //!
 //! Tenant A inserts a document. Tenant B queries the same collection name

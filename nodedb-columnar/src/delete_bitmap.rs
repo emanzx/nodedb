@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-segment delete bitmap for columnar UPDATE/DELETE.
 //!
 //! Uses roaring bitmaps for space-efficient tracking of deleted row indices.

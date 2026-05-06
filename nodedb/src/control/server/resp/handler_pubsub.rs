@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP Pub/Sub handlers: SUBSCRIBE, PUBLISH mapped to NodeDB change_stream
 //! and topic_registry.
 

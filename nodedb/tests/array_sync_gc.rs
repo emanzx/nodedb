@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Note: bypasses WebSocket transport and Origin infrastructure.
 // Drives `nodedb_array::sync::gc::collapse_below` directly against an
 // InMemoryOpLog + MockSnapshotSink.

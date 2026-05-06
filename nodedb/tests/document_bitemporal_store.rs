@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal document storage — end-to-end from `DocumentEngine` to
 //! the versioned redb table.
 //!

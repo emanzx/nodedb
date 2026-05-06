@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for KV engine operations via the SPSC bridge.
 
 use nodedb::bridge::envelope::{PhysicalPlan, Status};

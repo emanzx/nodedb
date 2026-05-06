@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared JSON value operations: comparison, coercion, truthiness.
 //!
 //! Used by both expression evaluation (computed projections) and scan filters

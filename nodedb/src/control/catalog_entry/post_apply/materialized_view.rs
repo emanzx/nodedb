@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MaterializedView post-apply — no in-memory registry to sync.
 //! The refresh loop reads the view definition straight from
 //! `SystemCatalog` on its next tick.

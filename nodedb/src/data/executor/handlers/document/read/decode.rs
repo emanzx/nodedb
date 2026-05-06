@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document decoding helpers shared by the read paths.
 
 use crate::data::executor::{doc_format, strict_format};

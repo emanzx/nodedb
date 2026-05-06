@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for DEFAULT expression evaluation in INSERT.
 //!
 //! The planner's `evaluate_default_expr` recognizes only a fixed keyword list

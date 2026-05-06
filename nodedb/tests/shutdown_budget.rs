@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! D-δ integration test 1: nodedb binary exits within 1 second of SIGTERM.
 //!
 //! Spawns the real `nodedb` binary via `std::process::Command`, waits for

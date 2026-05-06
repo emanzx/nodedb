@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse ALTER COLLECTION sub-operations.
 
 use crate::ddl_ast::statement::AlterCollectionOp;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data Plane core snapshot — serializes all engine state for transfer.
 //!
 //! Used by InstallSnapshot (lagging follower recovery) and vShard migration

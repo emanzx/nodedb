@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER SEQUENCE` handler — RESTART + FORMAT paths.
 
 use pgwire::api::results::{Response, Tag};

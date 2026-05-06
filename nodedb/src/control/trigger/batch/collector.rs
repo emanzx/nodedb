@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Trigger batch collector: accumulates row events into batches.
 //!
 //! Used by the Event Plane consumer to batch consecutive WriteEvents targeting

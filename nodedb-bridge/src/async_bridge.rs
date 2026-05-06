@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Async wrappers for the SPSC bridge.
 //!
 //! These integrate the raw `Producer`/`Consumer` with Tokio's async runtime

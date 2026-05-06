@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL record types for columnar operations.
 //!
 //! Each mutation (INSERT, DELETE, compaction commit) produces a WAL record

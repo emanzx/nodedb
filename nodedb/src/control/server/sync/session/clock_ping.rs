@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector clock sync + ping/pong.
 
 use std::time::Instant;

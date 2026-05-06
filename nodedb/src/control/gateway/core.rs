@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gateway — the single entry point for executing a `PhysicalPlan` against
 //! the cluster.
 //!

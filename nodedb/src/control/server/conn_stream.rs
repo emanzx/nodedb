@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Polymorphic TCP/TLS connection stream for server sessions.
 //!
 //! Wraps plain TCP and TLS-encrypted streams behind a single type

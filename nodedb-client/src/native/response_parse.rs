@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Response parsing helpers for native protocol results.
 
 use std::collections::HashMap;

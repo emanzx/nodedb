@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Phase 2 validation gate tests.
 //!
 //! These verify end-to-end correctness across all engines and ensure

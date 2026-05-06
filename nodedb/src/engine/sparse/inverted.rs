@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Full-text inverted index for Origin, backed by redb.
 //!
 //! Wraps `nodedb_fts::FtsIndex<RedbFtsBackend>` to provide persistent

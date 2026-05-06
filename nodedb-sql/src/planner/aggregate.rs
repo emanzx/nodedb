@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GROUP BY and aggregate planning.
 
 use sqlparser::ast::{self, GroupByExpr};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `Shard` trait — abstracts local-mmap vs future remote-RPC partition fetch.
 //!
 //! Vamana's beam-search rerank step needs full-precision FP32 vectors for

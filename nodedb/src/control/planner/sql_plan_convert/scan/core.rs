@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Generic scan converters: row scan, secondary-index lookup, point get.
 
 use nodedb_sql::types::{EngineType, Filter, SqlValue};

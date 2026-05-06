@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Error types for the subsystem bootstrap and shutdown lifecycle.
 
 use thiserror::Error;

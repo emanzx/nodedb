@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GDPR erasure semantics for the array engine.
 //!
 //! Two correctness properties:

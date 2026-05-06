@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Background event trigger processor.
 //!
 //! Subscribes to the ChangeStream and evaluates DEFINE EVENT triggers

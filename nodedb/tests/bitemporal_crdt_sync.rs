@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal CRDT sync: version preservation + live-scoped UNIQUE +
 //! receiver-stamped system time.
 //!

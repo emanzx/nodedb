@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Release all leases held by this node on SIGTERM.
 //!
 //! On a clean shutdown the process walks

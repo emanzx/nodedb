@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for timeseries query engine (GitHub issues #6-#9).
 //!
 //! Tests the full path: ILP ingest → memtable → flush → disk partitions →

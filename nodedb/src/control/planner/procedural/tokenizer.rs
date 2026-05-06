@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Procedural SQL tokenizer.
 //!
 //! Splits procedural SQL text into a stream of tokens. SQL expressions

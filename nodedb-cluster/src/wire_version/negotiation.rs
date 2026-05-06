@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire-version range negotiation.
 
 use super::error::WireVersionError;

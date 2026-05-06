@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! API key management — generation, verification, storage.
 //!
 //! Key format: `ndb_<key_id>.<secret>`

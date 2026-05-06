@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Node / label string↔id interning and the node-label bitset.
 
 use std::collections::hash_map::Entry;

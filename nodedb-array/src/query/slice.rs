@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Coordinate-range slice over a sparse tile.
 //!
 //! A [`Slice`] carries one optional [`DimRange`] per schema dimension

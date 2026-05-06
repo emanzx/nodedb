@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Superuser password resolution and auto-generation.
 
 use super::config::AuthConfig;

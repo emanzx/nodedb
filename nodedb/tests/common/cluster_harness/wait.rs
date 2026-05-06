@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Poll a predicate with a deadline. Same shape as
 //! `nodedb-cluster/tests/common/mod.rs::wait_for`, copied rather than
 //! shared because test harnesses cross crate boundaries.

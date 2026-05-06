@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! L0 RAM memtable for timeseries ingest.
 //!
 //! Incoming metrics and log entries are buffered in the memtable before

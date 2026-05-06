@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod envelope;
 pub mod error;
 pub mod handshake_io;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESTORE collection SET VERSION = 'checkpoint' WHERE id = 'doc-id'
 
 use std::time::Duration;

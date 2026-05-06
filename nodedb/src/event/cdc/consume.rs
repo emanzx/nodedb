@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared stream consumption logic.
 //!
 //! Used by both HTTP endpoints and pgwire SELECT to read events from a

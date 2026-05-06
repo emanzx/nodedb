@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lexer-aware parameter binding for DSL statements.
 //!
 //! # The architectural problem

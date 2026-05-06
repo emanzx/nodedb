@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! OLLP orchestrator configuration.
 
 use std::time::Duration;

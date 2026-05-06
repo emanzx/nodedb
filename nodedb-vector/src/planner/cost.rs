@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multidimensional cost model for the vector query planner.
 //!
 //! All values are **heuristic estimates** derived from typical hardware

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL catch-up task for timeseries ingest.
 //!
 //! During sustained high-throughput ILP ingest, the SPSC bridge between

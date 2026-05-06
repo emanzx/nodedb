@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared utilities for OPQ codebook training.
 
 /// Minimal deterministic RNG (Xorshift64) — avoids external deps in lib code.

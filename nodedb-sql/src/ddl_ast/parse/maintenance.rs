@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse maintenance: ANALYZE, COMPACT, SHOW COMPACTION STATUS, SHOW STORAGE.
 
 use crate::ddl_ast::statement::NodedbStatement;

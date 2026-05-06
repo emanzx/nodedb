@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scalar Quantization (SQ8): FP32 → INT8 per-dimension.
 //!
 //! Each dimension is independently quantized to `[0, 255]` using per-dimension

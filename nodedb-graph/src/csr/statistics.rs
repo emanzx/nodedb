@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Edge table statistics for query planning and optimization.
 //!
 //! Maintains per-label edge counts and degree distribution histograms.

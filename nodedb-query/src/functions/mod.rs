@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scalar function evaluation for SqlExpr.
 //!
 //! All functions return `Value::Null` on invalid/missing

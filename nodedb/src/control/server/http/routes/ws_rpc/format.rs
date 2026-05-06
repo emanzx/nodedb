@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Formatting helpers for WebSocket RPC responses and notifications.
 
 use crate::control::change_stream::ChangeEvent;

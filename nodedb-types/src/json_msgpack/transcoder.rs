@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Streaming msgpack → JSON string transcoder.
 //!
 //! Walks msgpack bytes and writes JSON text directly into a String.

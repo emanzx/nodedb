@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! OLLP orchestrator property test.
 //!
 //! Verifies that under sustained contention the retry-storm is bounded:

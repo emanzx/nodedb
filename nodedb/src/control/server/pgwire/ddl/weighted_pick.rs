@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WEIGHTED_PICK SQL table-valued function for weighted random selection.
 //!
 //! `SELECT * FROM WEIGHTED_PICK('collection', weight => 'weight_col', count => N

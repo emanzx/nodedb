@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: a joining node whose first seed is dead
 //! falls back to the next seed in the list and still joins.
 //!

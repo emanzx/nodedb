@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed AST returned by the array-statement parser.
 
 use crate::types_array::{

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Plan classification and response formatting.
 
 use std::sync::Arc;

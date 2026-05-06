@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cascading codec pipeline: chains type-aware encoding → terminal compressor.
 //!
 //! Each `ColumnCodec` variant maps to a fixed pipeline. The `encode_pipeline()`

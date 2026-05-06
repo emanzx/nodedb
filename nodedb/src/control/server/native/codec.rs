@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Native protocol framing and serialization.
 //!
 //! Handles reading/writing length-prefixed frames and auto-detecting

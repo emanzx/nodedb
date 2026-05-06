@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Edge insert / remove paths and node-edge cleanup.
 
 use super::types::CsrIndex;

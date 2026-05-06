@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Canonical aggregate key generation.
 //!
 //! A single source of truth for naming aggregate output fields.

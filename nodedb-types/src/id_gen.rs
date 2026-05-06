@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! First-class ID type generation and validation.
 //!
 //! Supports: UUID v4, UUID v7, ULID, CUID2, NanoID.

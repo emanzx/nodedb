@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph Diameter and Eccentricity on the CSR index.
 //!
 //! Eccentricity(v) = max distance from v to any reachable node.

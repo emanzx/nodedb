@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-process token state machine for single-use join-token enforcement.
 //!
 //! The `JoinTokenStore` tracks every issued token's lifecycle from

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod pg_fts_funcs;
 pub mod tsquery_parser;
 

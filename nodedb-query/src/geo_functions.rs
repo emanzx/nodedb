@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Geospatial SQL function evaluation.
 //!
 //! All ST_* predicates, geometry operations, and geo_* utility functions.

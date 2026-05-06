@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar aggregation functions for timeseries data.
 //!
 //! Operates on contiguous column slices (`&[f64]`, `&[i64]`) for

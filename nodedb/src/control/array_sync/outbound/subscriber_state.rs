@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-subscriber HLC cursor persistence for outbound array sync.
 //!
 //! `ArraySubscriberState` records the HLC watermark of the last op delivered

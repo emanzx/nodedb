@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! 3-node cluster integration test for surrogate identity replication.
 //!
 //! Verifies that surrogate allocations made on the Raft leader are

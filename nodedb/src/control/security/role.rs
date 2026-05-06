@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Custom role management with inheritance.
 //!
 //! Built-in roles (Superuser, TenantAdmin, ReadWrite, ReadOnly, Monitor) are

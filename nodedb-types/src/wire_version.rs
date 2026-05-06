@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single source of truth for the `WIRE_FORMAT_VERSION` constant
 //! shared between every crate that needs to stamp or interpret it.
 //!

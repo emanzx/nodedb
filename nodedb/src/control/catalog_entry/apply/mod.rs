@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Synchronous host-side application of a [`CatalogEntry`] to
 //! `SystemCatalog` redb — dispatched by DDL family.
 //!

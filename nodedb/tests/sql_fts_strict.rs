@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Full-text search coverage for strict-doc collections.
 //!
 //! A search index attached to a strict-doc collection must observe writes

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Z-Score window function for anomaly detection.
 //!
 //! Computes `(value - mean) / stddev` over a sliding window.

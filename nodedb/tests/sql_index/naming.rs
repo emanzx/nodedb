@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CREATE INDEX naming, SHOW INDEXES, and parse-time shape tests.
 //!
 //! The "silent no-op" regression mode (DDL parses, audit records

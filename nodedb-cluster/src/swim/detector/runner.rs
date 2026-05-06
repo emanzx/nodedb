@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `FailureDetector` — the SWIM runtime task.
 //!
 //! One instance per node. Owns the membership list (shared via `Arc`),

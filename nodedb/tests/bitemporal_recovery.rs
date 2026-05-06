@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal recovery & idempotency.
 //!
 //! Two correctness properties verified here:

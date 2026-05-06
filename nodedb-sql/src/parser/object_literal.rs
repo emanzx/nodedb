@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parser for `{ key: value }` object literal syntax.
 
 use std::collections::HashMap;

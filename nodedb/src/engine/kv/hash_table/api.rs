@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Public KvHashTable API: get, put, delete, reap, set_expire, persist.
 
 use nodedb_types::Surrogate;

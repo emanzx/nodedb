@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SharedState impl methods: quota, audit, polling, memory estimates.
 
 use std::sync::Mutex;

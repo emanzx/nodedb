@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-GC sweeper loop.
 //!
 //! One long-lived Tokio task per node. On each eval tick (default 60s)

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ArrayEngine` — Data-Plane handle that owns every array's LSM store.
 //!
 //! The engine is `!Send` (`HashMap` of stores with no sync wrappers).

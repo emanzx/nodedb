@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shutdown phase enum. Mirrors [`crate::control::startup::StartupPhase`]
 //! in reverse — drain in the opposite order subsystems were initialised.
 //!

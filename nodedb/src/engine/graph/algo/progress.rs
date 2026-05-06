@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Progress reporting for long-running graph algorithms.
 //!
 //! Iterative algorithms (PageRank, Label Propagation, Louvain) emit

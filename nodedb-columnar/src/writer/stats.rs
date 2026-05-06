@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Statistics computation helpers: numeric min/max, string zone-maps, bloom filters.
 
 use crate::format::{BlockStats, BloomFilter};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! vShard routing for array tiles.
 //!
 //! Arrays are sharded by Hilbert-curve prefix: the top `prefix_bits`

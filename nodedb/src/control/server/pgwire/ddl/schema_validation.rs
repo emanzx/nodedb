@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schema parsing and type validation helpers for collection DDL.
 
 /// Parse FIELDS clause from CREATE COLLECTION parts.

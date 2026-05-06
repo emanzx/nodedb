@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL append logic for write operations.
 //!
 //! Serializes write plans as MessagePack and appends to the appropriate

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ARRAY_FLUSH / ARRAY_COMPACT → PhysicalPlan::Array(ArrayOp::*).
 
 use nodedb_array::types::ArrayId;

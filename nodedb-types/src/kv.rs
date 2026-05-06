@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV engine configuration types.
 //!
 //! Key-Value collections use a hash-indexed primary key for O(1) point lookups.

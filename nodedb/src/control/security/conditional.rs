@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Conditional grant evaluation: temporal windows, MFA, IP, device trust.
 //!
 //! Conditions are attached to scope grants via `GRANT SCOPE ... WHEN/REQUIRE`.

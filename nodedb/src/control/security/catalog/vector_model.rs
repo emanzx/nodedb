@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Catalog operations for vector model metadata.
 //!
 //! Stores per-column embedding model information in `_system.vector_model_metadata`.

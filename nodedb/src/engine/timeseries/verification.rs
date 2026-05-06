@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Verification gate tests for the timeseries engine.
 //!
 //! Each test validates a specific correctness property that must hold

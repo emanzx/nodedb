@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-group hysteresis state machine for alert rules.
 //!
 //! Prevents flapping: a brief dip below threshold doesn't clear an active alert,

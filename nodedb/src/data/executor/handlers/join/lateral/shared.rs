@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helpers for LATERAL join handlers.
 
 use crate::bridge::envelope::PhysicalPlan;

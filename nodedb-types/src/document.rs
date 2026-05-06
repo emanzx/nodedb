@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document type: the universal data container for CRDT-backed records.
 //!
 //! Documents are the primary unit of storage, sync, and conflict resolution.

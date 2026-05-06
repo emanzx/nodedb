@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Divergence types — used by both `integrity` (cross-table
 //! referential checks) and `registry_verify` (in-memory vs
 //! redb).

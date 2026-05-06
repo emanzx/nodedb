@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Namespace-scoped authorization helper.
 //!
 //! Extends collection-level grants with namespace scoping:

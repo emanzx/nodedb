@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV TTL handlers: Expire, Persist, GetTtl.
 
 use tracing::debug;

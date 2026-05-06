@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! AFTER trigger firing logic.
 //!
 //! Called after DML operations to fire matching AFTER ROW triggers.

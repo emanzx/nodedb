@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shard splitting: vector-aware and graph-aware partitioning.
 //!
 //! When a shard becomes overloaded, it can be split into two shards.

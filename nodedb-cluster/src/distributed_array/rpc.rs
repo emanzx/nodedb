@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RPC dispatch trait for array shard fan-out.
 //!
 //! `ShardRpcDispatch` abstracts the transport used to send one request

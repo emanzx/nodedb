@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gateway smoke tests — one golden-path test per listener (C-δ.6).
 //!
 //! Each test brings up a single-node cluster, issues a real operation via the

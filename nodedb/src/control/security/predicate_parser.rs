@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RLS predicate parser: tokenization and recursive descent parsing.
 //!
 //! Converts predicate expression strings into compiled [`RlsPredicate`] AST.

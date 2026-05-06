@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data types for the columnar timeseries memtable.
 
 use std::collections::HashMap;

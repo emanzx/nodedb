@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Well-Known Binary (WKB) serialization for Geometry types.
 //!
 //! WKB is the standard binary format for geometry interchange (ISO 13249).

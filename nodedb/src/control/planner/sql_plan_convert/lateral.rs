@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bridge lowering for `SqlPlan::LateralTopK` and `SqlPlan::LateralLoop`.
 //!
 //! Both variants embed the outer sub-plan as an `outer_plan: Box<PhysicalPlan>`

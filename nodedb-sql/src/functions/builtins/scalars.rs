@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scalar function registrations, split by domain.
 
 mod array_fn;

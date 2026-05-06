@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shape subscribe/delta/unsubscribe handlers and compaction.
 //!
 //! - ShapeSubscribe (0x20): client registers a shape, receives initial snapshot

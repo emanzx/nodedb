@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed apply machinery — tracks pending Raft proposals and applies
 //! committed entries to the local Data Plane.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! FETCH and MOVE command handlers for server-side cursors.
 
 use std::sync::Arc;

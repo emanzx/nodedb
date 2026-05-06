@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transport-agnostic vShard envelope.
 //!
 //! "The on-wire format for vShard migration (segment files, WAL tail,

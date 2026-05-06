@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Streaming MV processor: updates aggregate state from CdcEvents.
 //!
 //! Called from the Event Plane consumer for each event. Finds all

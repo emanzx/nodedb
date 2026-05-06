@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Standardized error types for the NodeDB public API.
 //!
 //! [`NodeDbError`] is a **struct** (not an enum) that separates:

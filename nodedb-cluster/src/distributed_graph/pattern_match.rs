@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed pattern matching — cross-shard scatter-gather for MATCH.
 //!
 //! When a MATCH pattern encounters a ghost edge (destination on another shard),

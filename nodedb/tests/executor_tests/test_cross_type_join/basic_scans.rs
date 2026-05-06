@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Basic scan and roundtrip tests: KV, document, merge, and broadcast merge.
 
 use crate::helpers::{make_ctx, send_ok};

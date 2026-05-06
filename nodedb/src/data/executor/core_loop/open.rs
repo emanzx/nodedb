@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CoreLoop` constructors: `open` and `open_with_array_catalog`.
 
 use std::collections::HashMap;

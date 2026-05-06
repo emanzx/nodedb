@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Binary Tuple serialization for NodeDB strict document mode.
 //!
 //! Strict mode replaces MessagePack with a fixed-layout Binary Tuple for

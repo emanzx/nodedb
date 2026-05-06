@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ACORN-1 static 2-hop filtered traversal — feature-flagged baseline.
 //!
 //! Retained **only** for benchmarking against NaviX.  When a 1-hop neighbor

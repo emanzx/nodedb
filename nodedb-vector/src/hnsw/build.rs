@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HNSW insert algorithm (Malkov & Yashunin, Algorithm 1).
 
 use crate::error::VectorError;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-apply side effects for a [`CatalogEntry`] — dispatched by
 //! DDL family.
 //!

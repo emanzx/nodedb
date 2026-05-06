@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pre-validation pass for a candidate epoch batch.
 //!
 //! The validator detects intra-batch write-set conflicts and produces a

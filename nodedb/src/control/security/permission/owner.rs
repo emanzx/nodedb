@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Object ownership CRUD on `PermissionStore`.
 
 use crate::control::security::catalog::{StoredOwner, SystemCatalog};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PartitionRegistry core — struct definition, construction, partition creation,
 //! interval management, and basic accessors.
 

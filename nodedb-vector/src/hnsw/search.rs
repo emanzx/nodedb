@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HNSW search algorithm (Malkov & Yashunin, Algorithm 2).
 //!
 //! Beam search through the multi-layer graph with optional Roaring bitmap

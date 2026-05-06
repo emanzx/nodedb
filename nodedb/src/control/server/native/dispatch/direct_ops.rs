@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Direct Data Plane operation dispatch (PointGet, VectorSearch, Graph, etc.).
 
 use nodedb_types::protocol::{NativeResponse, OpCode, TextFields};

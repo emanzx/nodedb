@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-node cluster orchestration.
 
 use std::time::Duration;

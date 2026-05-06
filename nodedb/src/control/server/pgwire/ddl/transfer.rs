@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Atomic transfer SQL functions: TRANSFER (fungible) and TRANSFER_ITEM (non-fungible).
 //!
 //! `SELECT TRANSFER(collection, source_key, dest_key, field, amount)`

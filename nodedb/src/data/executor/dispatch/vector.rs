@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector operation dispatch.
 
 use crate::bridge::envelope::Response;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CJK character bigram tokenizer (Elasticsearch `cjk_analyzer` approach).
 //!
 //! Generates overlapping character bigrams for CJK text.

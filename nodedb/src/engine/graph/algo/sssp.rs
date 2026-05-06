@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single-Source Shortest Path — Dijkstra's algorithm on weighted CSR.
 //!
 //! Uses `BinaryHeap` (min-heap via `Reverse`) with lazy deletion:

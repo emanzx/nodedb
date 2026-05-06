@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Remote-node dispatch helpers for RESTORE TENANT.
 
 use std::sync::Arc;

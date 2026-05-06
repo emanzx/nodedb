@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! 3-node cluster integration test: surrogate hwm replication and
 //! monotonicity across a metadata-group leader failover.
 //!

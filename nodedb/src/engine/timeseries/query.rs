@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query execution engine for timeseries data.
 //!
 //! Provides scan, aggregation, and downsample operations over L1 segments.

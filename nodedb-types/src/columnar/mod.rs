@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod column_def;
 pub mod column_parse;
 pub mod column_type;

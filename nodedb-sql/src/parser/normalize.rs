@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL identifier normalization.
 
 use crate::error::{Result, SqlError};

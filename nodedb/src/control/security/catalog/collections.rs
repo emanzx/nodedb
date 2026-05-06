@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection metadata operations for the system catalog.
 
 use super::types::{COLLECTIONS, StoredCollection, SystemCatalog, catalog_err};

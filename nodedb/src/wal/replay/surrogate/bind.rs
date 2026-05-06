@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Replay arm for `RecordType::SurrogateBind`: idempotently re-apply
 //! the `(surrogate, collection, pk_bytes)` triple to the catalog and
 //! advance the in-memory registry past the bound surrogate.

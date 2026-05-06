@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stored procedure metadata operations for the system catalog.
 
 use super::procedure_types::StoredProcedure;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Minimal flag parser shared by all subcommands.
 //!
 //! The operator CLI needs two kinds of long-form flags:

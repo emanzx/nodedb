@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant- and collection-scoped edge purge.
 //!
 //! Structural range deletes on both `EDGES` and `REVERSE_EDGES`. No

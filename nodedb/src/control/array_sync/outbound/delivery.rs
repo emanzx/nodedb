@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ArrayDeliveryRegistry`] — per-session bounded mpsc channels for
 //! outbound array CRDT frames.
 //!

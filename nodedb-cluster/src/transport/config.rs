@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! QUIC and TLS configuration for Raft RPCs.
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `acquire_lease` — synchronous propose-and-wait helper for
 //! descriptor leases. Mirrors `metadata_proposer::propose_catalog_entry`.
 

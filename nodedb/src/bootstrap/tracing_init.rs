@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tracing subscriber initialisation (format + filter).
 
 use tracing_subscriber::EnvFilter;

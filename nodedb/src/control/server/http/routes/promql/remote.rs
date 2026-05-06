@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Prometheus remote write/read HTTP handlers.
 //!
 //! - POST `/obsv/api/v1/write`  — accept snappy-compressed protobuf `WriteRequest`

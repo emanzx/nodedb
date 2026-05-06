@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pre-validation: fast-reject before Raft round-trip.
 //!
 //! The full validation path is: agent delta → Raft proposal → leader validates

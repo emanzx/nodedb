@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Descriptor lease acquisition and release via the metadata raft group.
 //!
 //! Wraps the `MetadataEntry::DescriptorLeaseGrant` /

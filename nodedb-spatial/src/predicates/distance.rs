@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ST_Distance and ST_DWithin — minimum distance between geometries.
 //!
 //! Point-to-point uses haversine (great-circle distance in meters).

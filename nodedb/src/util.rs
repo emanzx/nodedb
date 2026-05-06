@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared utility functions.
 
 /// FNV-1a 64-bit hash of a byte slice.

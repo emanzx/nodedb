@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Recursive-descent parser for PostgreSQL `tsquery` boolean syntax.
 //!
 //! Supported grammar (left-recursive precedence, lowest-to-highest):

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Write-batch coalescing: amortizes redb fsync across consecutive PointPut tasks.
 
 use tracing::debug;

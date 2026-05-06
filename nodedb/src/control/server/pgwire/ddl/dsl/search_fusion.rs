@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SEARCH <collection> USING FUSION(...)` DSL.
 //!
 //! Parsing is delegated to `nodedb_sql::ddl_ast::parse_search_using_fusion`

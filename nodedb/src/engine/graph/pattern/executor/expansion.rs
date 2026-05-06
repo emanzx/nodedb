@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Variable-length path expansion and neighbor collection.
 
 use std::collections::HashSet;

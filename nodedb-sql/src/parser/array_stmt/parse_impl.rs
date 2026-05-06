@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `Parser` struct and recursive-descent parse methods for array statements.
 
 use super::super::ast::{

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Structural collection and tenant drops.
 //!
 //! Each table is scanned by tuple range and every matching entry is

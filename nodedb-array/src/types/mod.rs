@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod array_id;
 pub mod cell_value;
 pub mod coord;

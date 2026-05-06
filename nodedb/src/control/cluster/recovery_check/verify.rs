@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level pipeline invoked at the `CatalogSanityCheck`
 //! startup phase.
 //!

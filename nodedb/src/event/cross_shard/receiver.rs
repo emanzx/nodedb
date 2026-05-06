@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard event receiver: handles inbound writes from remote Event Planes.
 //!
 //! When a remote node sends a `VShardEnvelope(CrossShardEvent)`, this module:

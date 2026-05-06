@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Kafka producer lifecycle manager.
 //!
 //! Tracks running Kafka producer tasks per stream. Starts producers on

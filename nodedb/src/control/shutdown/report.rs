@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-shutdown report returned from [`super::LoopRegistry::shutdown_all`].
 //!
 //! Split into its own file so D.1's sequencer can extend the

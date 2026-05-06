@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schema-inference utilities for `NodeDbQueryParser`.
 //!
 //! These free functions are called by `parser.rs` during Parse-message

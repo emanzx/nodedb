@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GET /v1/cluster/debug/raft/{group_id}` — dump the Raft state for one
 //! group from the node-local `raft_status_fn`.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-group, per-partition offset tracking with redb persistence.
 //!
 //! Each consumer group maintains its own set of partition offsets,

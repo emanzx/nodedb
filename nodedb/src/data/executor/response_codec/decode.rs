@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Payload→docs decoders for inline sub-plans (multi-way joins consuming an
 //! inner-join Response, etc.).
 

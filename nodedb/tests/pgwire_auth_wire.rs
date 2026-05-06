@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end TCP roundtrip: real pgwire connection executes DDL and
 //! observes both state mutation and SHOW SESSION results.
 

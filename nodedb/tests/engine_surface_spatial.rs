@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Spatial engine.
 //!
 //! Covers: ST_GeoHash encode/decode roundtrip, H3 encode/decode roundtrip,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIMD-accelerated filter kernels returning u64 bitmasks.
 //!
 //! Each kernel compares a column slice against a scalar and returns a

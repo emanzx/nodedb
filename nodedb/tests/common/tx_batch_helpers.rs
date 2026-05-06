@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Plan-builder helpers shared by transaction batch cross-engine tests.
 #![allow(dead_code)]
 

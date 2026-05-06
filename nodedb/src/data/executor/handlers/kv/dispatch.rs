@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV operation dispatch: routes `KvOp` variants to their handler methods.
 
 use crate::bridge::envelope::Response;

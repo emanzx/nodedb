@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column-level redaction: mask or pseudonymize fields based on role.
 //!
 //! Evaluated after RLS (row filtering), before result delivery.

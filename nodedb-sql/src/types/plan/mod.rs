@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SqlPlan intermediate representation and supporting types.
 
 mod merge_types;

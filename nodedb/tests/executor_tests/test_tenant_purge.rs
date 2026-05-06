@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant data purge integration test.
 //!
 //! Creates data across multiple engines as Tenant A, purges, then verifies

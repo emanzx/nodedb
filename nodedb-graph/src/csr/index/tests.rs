@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unit tests for the `CsrIndex` split modules.
 
 use super::types::{CsrIndex, Direction};

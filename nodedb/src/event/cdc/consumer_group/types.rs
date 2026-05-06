@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Consumer group type definitions.
 
 /// Persistent definition of a consumer group. Stored in the system catalog.

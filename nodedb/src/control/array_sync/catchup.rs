@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`OriginCatchupServer`] — serve array catch-up requests from Lite peers.
 //!
 //! Called from [`super::inbound::OriginArrayInbound::handle_catchup_request`]

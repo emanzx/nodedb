@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ClusterCatalog` struct, `open`, and metadata persistence
 //! (cluster id, CA cert, bootstrap check).
 //!

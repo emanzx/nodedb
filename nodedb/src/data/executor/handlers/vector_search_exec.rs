@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CoreLoop methods for vector search execution.
 
 use roaring::RoaringBitmap;

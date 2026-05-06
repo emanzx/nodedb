@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ArrayOp::Aggregate` handler.
 //!
 //! Cross-tile reduction with optional group-by-dim. The tile-local

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SieveRouter — routes a filtered ANN query to a specialized subindex when the
 //! predicate signature matches, or falls back to NaviX on the global index.
 

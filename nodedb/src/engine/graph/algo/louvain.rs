@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Louvain Community Detection — modularity optimization on the CSR index.
 //!
 //! Two-phase iterative algorithm:

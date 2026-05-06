@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-core LRU document cache for O(1) hot-key point lookups.
 //!
 //! Each Data Plane core owns one `DocCache`. It is `!Send` by design —

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Risk scoring: combine signals into a score, expose as `$auth.risk_score` in RLS.
 //!
 //! Signals: new_ip, new_country, impossible_travel, unusual_time,

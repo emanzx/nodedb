@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Session parameter commands: SET, SHOW, SHOW ALL, EXPLAIN.
 
 use std::sync::Arc;

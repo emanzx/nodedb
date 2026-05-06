@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Async mmap pre-fetcher for Data Plane TPC cores.
 //!
 //! Ensures mmap'd pages are resident before compute touches them.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Replay arm for `RecordType::SurrogateAlloc`: monotonically advance
 //! the in-memory `SurrogateRegistry` hwm.
 

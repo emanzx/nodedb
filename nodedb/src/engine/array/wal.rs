@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL payload definitions for the array engine.
 //!
 //! Three record types ride on the existing nodedb-wal pipeline:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rewrite pgvector's `<->` distance operator into a `vector_distance()`
 //! function call that standard sqlparser can parse.
 

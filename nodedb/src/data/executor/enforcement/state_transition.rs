@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! State transition constraint enforcement.
 //!
 //! On UPDATE, if a constrained column's value changes, validates that

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Server-side `JoinRequest` handler: build a `JoinResponse` from current cluster state.
 //!
 //! Called by [`crate::raft_loop::handle_rpc`] on the group-0 leader when a

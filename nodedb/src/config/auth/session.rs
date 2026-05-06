@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SessionHandleConfig` and `SessionFingerprintMode` configuration types.
 
 use serde::{Deserialize, Serialize};

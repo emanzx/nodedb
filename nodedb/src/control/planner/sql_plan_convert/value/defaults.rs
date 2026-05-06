@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column DEFAULT expression evaluation at insert time.
 //!
 //! Supports ID generation functions (UUIDv4/v7, ULID, CUID2, NANOID), `NOW()`,

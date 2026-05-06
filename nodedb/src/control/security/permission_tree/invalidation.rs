@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CDC-driven cache invalidation for the permission tree.
 //!
 //! When rows in the permission table or resource hierarchy are mutated,

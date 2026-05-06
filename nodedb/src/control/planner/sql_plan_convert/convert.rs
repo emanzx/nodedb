@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Convert nodedb-sql SqlPlan IR to NodeDB PhysicalPlan + PhysicalTask.
 //!
 //! This is the Origin-specific mapping layer. It adds vShard routing,

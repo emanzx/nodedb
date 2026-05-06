@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Descriptor lease acquisition and release methods for `SharedState`.
 
 use std::sync::Arc;

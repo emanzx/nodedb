@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// Serializable snapshot of a tenant's Data Plane state.
 ///
 /// Shared between Control Plane (backup/restore DDL) and Data Plane

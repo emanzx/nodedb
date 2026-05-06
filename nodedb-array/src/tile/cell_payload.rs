@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal cell payload for the array engine.
 //!
 //! `CellPayload` wraps the cell's attribute values with valid-time bounds and

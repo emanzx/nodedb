@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Expansion and decoding helpers for the Calvin scheduler driver.
 
 use std::collections::BTreeSet;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Conversions from `nodedb_sql::types::SqlValue` into runtime / wire forms.
 
 use nodedb_sql::types::SqlValue;

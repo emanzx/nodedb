@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! pgwire-neutral dispatch outcome used by both pgwire adapter and procedural executor.
 
 /// Result of a unified SQL dispatch call.

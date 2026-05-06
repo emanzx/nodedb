@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end Calvin pgwire test: verifies that a multi-shard transaction
 //! submitted via `simple_query` under `cross_shard_txn = 'strict'` is admitted
 //! by the sequencer and advances `admitted_total`.

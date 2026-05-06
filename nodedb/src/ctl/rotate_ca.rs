@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `nodedb rotate-ca --stage` and `nodedb rotate-ca --finalize`.
 //!
 //! The two-phase rotation ceremony described in L.4:

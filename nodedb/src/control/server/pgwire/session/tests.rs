@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for session store (transaction lifecycle, params, cursors, live).
 
 use crate::control::server::pgwire::session::state::TransactionState;

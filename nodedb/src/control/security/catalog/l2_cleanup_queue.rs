@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! L2 (object-store) cleanup queue — post-purge delete backlog.
 //!
 //! When a collection hard-delete commits, any columnar/vector/FTS

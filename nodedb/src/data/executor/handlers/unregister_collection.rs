@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-scoped purge handler.
 //!
 //! Reclaims storage for a single `(tenant_id, collection)` pair

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL handlers for atomic KV SQL functions: KV_INCR, KV_DECR, KV_CAS, KV_GETSET.
 //!
 //! These are side-effecting operations that dispatch to the Data Plane via the

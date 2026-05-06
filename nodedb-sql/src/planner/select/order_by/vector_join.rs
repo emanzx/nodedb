@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector-search-on-join target detection.
 //!
 //! A `JOIN` shape `vector_collection ⋈ ARRAY_SLICE(...)` is fused into a

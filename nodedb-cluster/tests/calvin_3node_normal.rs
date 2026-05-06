@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! 3-node sequencer normal-path integration test.
 //!
 //! Verifies the happy path for a Calvin cross-shard transaction:

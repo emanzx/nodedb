@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-session DDL transaction buffer.
 //!
 //! When a pgwire session is inside a `BEGIN` block and executes DDL

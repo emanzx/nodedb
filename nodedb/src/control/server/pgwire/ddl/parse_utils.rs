@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared parsing utilities for DDL handlers.
 
 /// Find the matching closing paren for the open paren at `start`.

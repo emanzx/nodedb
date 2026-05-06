@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DataProposeRequest / DataProposeResponse wire types and codecs.
 //!
 //! Used to forward data-group (non-metadata) Raft proposals from a follower

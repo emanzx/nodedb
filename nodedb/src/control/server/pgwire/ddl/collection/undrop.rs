@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `UNDROP COLLECTION <name>` — restore a soft-deleted collection.
 //!
 //! Valid only while the collection's retention window has not elapsed

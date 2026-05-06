@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PEM encoding + file-system writes shared between `tls::resolve_credentials`
 //! (bootstrap path) and `ctl::regen_certs` (operator reissue).
 //!

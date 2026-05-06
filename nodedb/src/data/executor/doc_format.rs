@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document format conversion between JSON and MessagePack.
 //!
 //! Documents enter the system as JSON (from SQL INSERT via DataFusion).

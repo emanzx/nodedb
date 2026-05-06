@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GRANT / REVOKE role over the pgwire DDL path, plus the readonly guard
 //! that covers the same surface.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration-style dispatch tests for array read handlers.
 //!
 //! Each test drives a fresh `CoreLoop` through a sequence of bridge

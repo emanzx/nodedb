@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin dispatch classification types.
 
 use std::collections::BTreeSet;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transaction batch execution handler.
 //!
 //! Executes a `PhysicalPlan::TransactionBatch` atomically: all sub-plans

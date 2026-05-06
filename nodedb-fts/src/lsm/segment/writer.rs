@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment writer: flushes a memtable to an immutable on-disk segment.
 //!
 //! Produces a byte buffer containing: sorted term dictionary,

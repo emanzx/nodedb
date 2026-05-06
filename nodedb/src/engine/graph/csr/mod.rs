@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CSR adjacency index — re-exported from the shared `nodedb-graph` crate.
 //!
 //! The core CSR implementation (index, weights, compaction, persistence,

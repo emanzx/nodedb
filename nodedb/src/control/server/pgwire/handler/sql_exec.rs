@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Main SQL execution entry point with DDL dispatch.
 //!
 //! Transaction commands (BEGIN/COMMIT/ROLLBACK/SAVEPOINT) are in `transaction_cmds.rs`.

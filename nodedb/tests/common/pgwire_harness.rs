@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared pgwire end-to-end test harness.
 //!
 //! Spawns a full NodeDB server (Data Plane core + pgwire listener + response poller)

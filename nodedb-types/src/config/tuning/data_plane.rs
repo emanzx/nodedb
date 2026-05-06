@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data Plane core runtime and query execution tuning.
 
 use serde::{Deserialize, Serialize};

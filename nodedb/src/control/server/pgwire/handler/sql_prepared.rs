@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL-level PREPARE / EXECUTE / DEALLOCATE handling.
 //!
 //! These are explicit SQL DDL statements — separate from the wire-level

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! New-txn processing, dependent-read barrier setup, and txn-completion
 //! bookkeeping for the Calvin scheduler.
 

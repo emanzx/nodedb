@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal DML correctness: UPDATE/DELETE/UPSERT on a bitemporal
 //! collection must append versions (copy-on-write), never overwrite.
 //! Every past version must remain accessible via `versioned_get_as_of`.

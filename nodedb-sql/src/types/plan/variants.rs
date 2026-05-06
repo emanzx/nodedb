@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The `SqlPlan` enum — top-level plan produced by the SQL planner.
 
 use crate::fts_types::FtsQuery;

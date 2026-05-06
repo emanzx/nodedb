@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Quarantine wrapper for vector NDVS segment reads.
 //!
 //! `MmapVectorSegment::open` / `open_with_policy` return `std::io::Error`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Binary Tuple decoder: O(1) field extraction from tuple bytes.
 //!
 //! Given a schema and a column index, computes the byte offset and extracts

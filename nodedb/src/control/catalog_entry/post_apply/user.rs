@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! User post-apply side effects — upsert / deactivate the
 //! in-memory `credentials` cache. Follower nodes accept the
 //! leader's pre-computed `StoredUser` verbatim.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory sequence registry with lock-free counters.
 //!
 //! Loaded from catalog on startup. Provides nextval/currval/setval operations.

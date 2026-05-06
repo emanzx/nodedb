@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Postgres-semantic value coercion for planner use-sites.
 //!
 //! The planner matches `sqlparser::ast::Value` in numeric contexts

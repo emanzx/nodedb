@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PromQL expression evaluator.
 //!
 //! Evaluates a parsed AST against a set of pre-fetched time series.

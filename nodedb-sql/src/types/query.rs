@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query structure types: projections, sort keys, aggregates, windows, engine/join/spatial enums.
 
 use crate::types_expr::SqlExpr;

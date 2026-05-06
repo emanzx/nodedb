@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Boot-time surrogate registry recovery.
 //!
 //! Reads the persisted high-watermark from any

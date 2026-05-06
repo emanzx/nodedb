@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Reductions over a sparse tile.
 //!
 //! Five reducers (Sum / Count / Min / Max / Mean) operate on a single

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tile identifier — `(hilbert_prefix, system_from_ms)`.
 //!
 //! The Hilbert prefix locates the tile in ND space; the system-time

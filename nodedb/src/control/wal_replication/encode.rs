@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Convert write-side PhysicalPlan variants to ReplicatedWrite for Raft proposal.
 
 use super::types::{ReplicatedEntry, ReplicatedWrite};

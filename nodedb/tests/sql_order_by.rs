@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ORDER BY edge case regression tests.
 //!
 //! Covers: ASC/DESC, mixed direction, NULL ordering, LIMIT interaction,

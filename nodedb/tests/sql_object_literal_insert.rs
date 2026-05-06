@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for `{ key: value }` object literal INSERT syntax.
 //!
 //! Verifies that `INSERT INTO coll { ... }` produces the same result as the

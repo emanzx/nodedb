@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Merge multiple sealed partitions into a single output partition.
 
 use std::path::{Path, PathBuf};

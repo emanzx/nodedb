@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Prometheus text-format rendering for `SystemMetrics`.
 
 use super::fields::SystemMetrics;

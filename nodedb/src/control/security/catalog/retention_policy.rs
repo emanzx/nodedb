@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Retention policy metadata operations for the system catalog.
 
 use super::types::{RETENTION_POLICIES, SystemCatalog, catalog_err};

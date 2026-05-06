@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared HNSW types used by both Origin and Lite vector engines.
 
 use crate::vector_distance::DistanceMetric;

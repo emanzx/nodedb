@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dedicated audit WAL segment.
 //!
 //! Provides a separate, append-only WAL for audit entries with the same

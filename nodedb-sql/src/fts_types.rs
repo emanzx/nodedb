@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! FTS query type used by `SqlPlan::TextSearch`.
 //!
 //! `FtsQuery` is the structured representation of a full-text search query

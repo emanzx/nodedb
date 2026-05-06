@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV engine operations dispatched to the Data Plane.
 
 use nodedb_types::Surrogate;

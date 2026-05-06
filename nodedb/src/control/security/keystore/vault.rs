@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HashiCorp Vault transit-engine key provider.
 //!
 //! ## Flow

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph DSL types used in `NodedbStatement` graph variants.
 
 /// Traversal direction for graph DSL variants. Mirrors the engine's

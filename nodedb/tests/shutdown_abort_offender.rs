@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! D-δ integration test 4: offender task is aborted after 500ms budget.
 //!
 //! Start the binary with NODEDB_TEST_SLOW_DRAIN_TASK=1, which registers a

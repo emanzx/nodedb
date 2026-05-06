@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition merge executor.
 //!
 //! Merges multiple sealed partitions into one, combining their columnar

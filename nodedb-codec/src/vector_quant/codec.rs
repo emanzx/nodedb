@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dual-phase `VectorCodec` trait — the seam that makes future quantization
 //! algorithms drop-in additions rather than engine rewrites.
 //!

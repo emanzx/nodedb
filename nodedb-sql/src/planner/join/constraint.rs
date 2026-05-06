@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ON-clause / USING-clause extraction: equi-join keys + non-equi residual.
 
 use sqlparser::ast;

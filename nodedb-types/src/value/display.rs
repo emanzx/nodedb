@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`std::fmt::Display`] implementation for [`Value`].
 
 use std::fmt;

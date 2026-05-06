@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Memory governance tuning.
 
 use serde::{Deserialize, Serialize};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment writer: drains a memtable into a compressed columnar segment.
 
 mod block;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! AUTO_TIER query routing for tiered retention policies.
 //!
 //! When a timeseries collection has an enabled retention policy with `auto_tier = true`,

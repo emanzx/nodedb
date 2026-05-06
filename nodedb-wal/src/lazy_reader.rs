@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lazy WAL reader: reads headers without payload for selective replay.
 //!
 //! Unlike `WalReader` which reads every payload into a `Vec<u8>`, this

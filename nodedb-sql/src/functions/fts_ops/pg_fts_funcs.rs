@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lowering helpers for PG full-text search surface operators.
 //!
 //! These functions are called from `resolver/expr.rs` to lower PG FTS

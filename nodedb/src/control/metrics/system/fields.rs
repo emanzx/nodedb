@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SystemMetrics` struct definition — all atomic fields.
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Two-pass Vamana graph builder (randomized → α-pruned).
 //!
 //! Pass 1: For each node, assign R random neighbors, then refine via

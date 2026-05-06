@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for the Graph DSL pgwire handlers
 //! (`pgwire/ddl/graph_ops.rs`, `pgwire/ddl/match_ops.rs`).
 //!

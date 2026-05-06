@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NodeDB DSL extensions — custom SQL-like commands beyond standard SQL.
 //!
 //! - SEARCH <collection> USING FUSION(vector=..., graph=..., top_k=...)

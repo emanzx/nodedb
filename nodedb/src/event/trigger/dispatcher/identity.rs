@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! System identity used to execute trigger bodies.
 //!
 //! Triggers run with superuser privileges (SECURITY DEFINER model): trigger

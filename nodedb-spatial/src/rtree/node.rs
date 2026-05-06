@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! R-tree node types and constants.
 
 use nodedb_types::BoundingBox;

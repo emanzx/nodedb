@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Handler for `DocumentOp::UpdateFromJoin`: implements the two-phase
 //! `UPDATE target SET ... FROM src WHERE target.col = src.col` execution.
 //!

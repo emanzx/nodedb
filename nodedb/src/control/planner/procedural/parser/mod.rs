@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Procedural SQL parser.
 //!
 //! Converts a token stream from the tokenizer into a `ProceduralBlock` AST.

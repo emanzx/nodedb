@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared conversion helpers for native protocol dispatch.
 
 use nodedb_types::Value;

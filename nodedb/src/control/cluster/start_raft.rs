@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Start the Raft event loop, RPC server, and both appliers.
 
 use std::sync::{Arc, Mutex};

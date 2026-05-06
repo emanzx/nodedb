@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Harmonic Centrality — sum of inverse distances.
 //!
 //! `HC(v) = (1 / (n - 1)) * sum(1 / d(v, u))` for all u != v.

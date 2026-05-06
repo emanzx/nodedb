@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Outbound Raft RPC transport.
 //!
 //! [`NexarTransport`] implements [`RaftTransport`] — serialize the request,

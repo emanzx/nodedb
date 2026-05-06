@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! User CRUD operations for the system catalog.
 
 use super::types::{StoredUser, SystemCatalog, USERS, catalog_err};

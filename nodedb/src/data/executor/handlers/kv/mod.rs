@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV engine operation handlers for the Data Plane executor.
 
 mod atomic;

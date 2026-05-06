@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ArrayOp::Elementwise` handler.
 //!
 //! Coord-aligned pairwise op between two open arrays sharing the same

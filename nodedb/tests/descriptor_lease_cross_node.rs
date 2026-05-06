@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end cluster tests for the descriptor lease API.
 //!
 //! Asserts that `SharedState::acquire_descriptor_lease` and

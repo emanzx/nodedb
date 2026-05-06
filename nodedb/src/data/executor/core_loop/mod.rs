@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 mod accessors;
 mod bitemporal_time;
 pub(in crate::data::executor) mod deferred;

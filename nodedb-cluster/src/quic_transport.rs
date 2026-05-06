@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! QUIC/TCP fallback transport for shard migration and cross-node communication.
 //!
 //! Provides the same wire format as RDMA transport but over QUIC (or TCP fallback).

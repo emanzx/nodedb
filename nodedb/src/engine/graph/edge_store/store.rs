@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! EdgeStore root — types, redb table definitions, open/close.
 //!
 //! Query paths (`get_edge`, `scan_*`, `put_edge_raw`) live in `scan.rs`.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tiered grouping strategies: dispatch, direct-index, FxHash, generic,
 //! time-bucket, and integer-to-string key resolution.
 

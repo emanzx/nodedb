@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unit tests for [`NexarTransport`]: end-to-end RPC roundtrips, concurrent
 //! fan-out, connection reuse, and unreachable-peer errors.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Extract bitemporal `_ts_system` / `_ts_valid_from` from a serialized
 //! row payload.
 //!

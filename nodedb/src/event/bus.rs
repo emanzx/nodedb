@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event bus: per-core ring buffers from Data Plane to Event Plane.
 //!
 //! Same design pattern as the SPSC bridge (Control → Data), but in the

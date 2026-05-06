@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE MATERIALIZED VIEW` handler — replicates through the
 //! metadata raft group via `CatalogEntry::PutMaterializedView`.
 

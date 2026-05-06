@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Quantizer training helpers for `VectorCollection`.
 //!
 //! Split from `lifecycle.rs` to keep that file under the 500-line cap.

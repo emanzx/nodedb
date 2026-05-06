@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Native protocol session: the run loop that reads frames, routes
 //! by opcode, and writes responses.
 //!

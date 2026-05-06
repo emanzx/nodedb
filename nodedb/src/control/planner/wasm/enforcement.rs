@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-tenant WASM quota enforcement.
 //!
 //! Separates the enforcement lifecycle into two steps that bracket execution:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Control-Plane cluster array operations.
 //!
 //! These variants are emitted by the SQL converter when cluster mode is

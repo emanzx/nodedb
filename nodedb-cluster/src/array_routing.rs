@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tile-aware array routing — maps `(array_name, coord)` → vShard id.
 //!
 //! A distributed Origin shards each array's op-log by tile: ops for tile T of

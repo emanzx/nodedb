@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! redb cross-table referential integrity checks.
 //!
 //! redb transactions are atomic per-write but NOT across

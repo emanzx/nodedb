@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WASM instance pool: pre-warmed wasmtime instances per function.
 //!
 //! Creating a wasmtime Store + Instance is moderately expensive (~10μs).

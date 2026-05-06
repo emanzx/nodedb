@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parsing helpers for TYPEGUARD DDL field definitions.
 
 use nodedb_types::TypeGuardFieldDef;

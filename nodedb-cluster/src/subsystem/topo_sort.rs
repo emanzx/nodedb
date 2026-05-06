@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Topological sort for the subsystem dependency graph.
 //!
 //! Uses Kahn's algorithm (BFS-based). Returns indices into the original

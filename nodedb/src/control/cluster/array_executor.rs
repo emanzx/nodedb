@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Concrete `ArrayLocalExecutor` implementation for the shard-side array handler.
 //!
 //! `DataPlaneArrayExecutor` implements the `ArrayLocalExecutor` trait defined in

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Set operation payload merging: UNION DISTINCT, INTERSECT, EXCEPT.
 //!
 //! Operates on raw msgpack payloads — no decode/re-encode round-trip.

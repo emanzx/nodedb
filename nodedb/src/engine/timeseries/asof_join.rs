@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ASOF JOIN: temporal join for timeseries data.
 //!
 //! For each row in the left table, finds the closest preceding (or equal)

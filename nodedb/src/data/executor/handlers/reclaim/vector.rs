@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector engine reclaim — unlink per-collection HNSW checkpoint files.
 //!
 //! Checkpoint layout (see `vector_checkpoint.rs::checkpoint_vector_indexes`):

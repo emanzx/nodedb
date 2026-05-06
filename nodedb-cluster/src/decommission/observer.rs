@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DecommissionObserver` — local-node self-shutdown signal.
 //!
 //! The coordinator proposes a full decommission plan through the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ND Hilbert curve encode/decode (Skilling 2004 transposed-form).
 //!
 //! Operates on `n` per-dim integer coordinates of `bits` bits each,

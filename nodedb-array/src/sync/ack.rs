@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-replica acknowledgement watermarks for GC frontier tracking.
 //!
 //! [`AckVector`] tracks the highest [`Hlc`] that each peer has confirmed

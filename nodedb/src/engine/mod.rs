@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod array;
 pub mod bitemporal;
 pub mod crdt;

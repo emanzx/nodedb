@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-vShard payload fuser.
 //!
 //! After a broadcast scan produces multiple payloads (one per vShard), the

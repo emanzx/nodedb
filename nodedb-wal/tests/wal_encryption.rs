@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// WAL encryption restart roundtrip integration test.
 ///
 /// Writes encrypted records, verifies ciphertext on disk, simulates a process

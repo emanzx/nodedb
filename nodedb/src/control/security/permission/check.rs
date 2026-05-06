@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Permission evaluation: `check`, `check_function`, `is_owner`.
 //!
 //! Multi-layer order: superuser → owner → built-in role → explicit

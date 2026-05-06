@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-write coordination: memtable flush + compaction commit.
 
 use std::collections::HashMap;

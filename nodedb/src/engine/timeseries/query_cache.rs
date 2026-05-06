@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition-level query cache for sealed immutable partitions.
 //!
 //! Sealed partitions never change → cache entries never invalidate.

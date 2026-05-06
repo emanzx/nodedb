@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIMD-accelerated kernels for graph algorithm hot loops.
 //!
 //! Runtime dispatch selects the fastest available instruction set:

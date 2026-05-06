@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Type definitions for stored procedure catalog storage.
 
 /// Parameter direction for stored procedures.

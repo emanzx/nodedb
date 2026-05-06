@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-loop consumer side of the shutdown watch.
 //!
 //! Held by every background loop. Expected usage pattern:

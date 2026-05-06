@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed ORDER BY + LIMIT merge for document scans.
 //!
 //! Each shard applies ORDER BY + LIMIT locally and returns its top-N rows.

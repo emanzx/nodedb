@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NEON-accelerated bitpack unpacking for AArch64.
 //!
 //! Processes 4 values at a time using 128-bit NEON registers.

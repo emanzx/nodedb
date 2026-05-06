@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse CREATE/DROP/ALTER/DESCRIBE/SHOW SEQUENCE.
 
 use super::helpers::extract_name_after_if_exists;

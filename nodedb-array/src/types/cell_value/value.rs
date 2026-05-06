@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Attribute payload for a single cell.
 //!
 //! A cell's value is one [`CellValue`] per attribute defined on the

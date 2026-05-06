@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PointUpdate: read-modify-write field-level changes to a single document.
 //!
 //! Each assignment is either a pre-encoded literal (fast binary merge when

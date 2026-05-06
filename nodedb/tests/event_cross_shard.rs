@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Event Plane cross-shard delivery.
 //!
 //! Tests: HWM dedup, retry queue with volume bound, DLQ on exhaust,

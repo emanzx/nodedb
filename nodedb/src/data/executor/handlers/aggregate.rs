@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregate handler: GROUP BY, HAVING, and aggregate function execution.
 //!
 //! The generic (non-columnar) path uses **streaming accumulators** — see

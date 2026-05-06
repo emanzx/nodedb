@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory memtable for the FTS LSM engine.
 //!
 //! Accumulates postings in a HashMap until a spill threshold is reached.

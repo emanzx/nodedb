@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parquet predicate pushdown: row-group pruning + row-level filtering.
 //!
 //! When reading Parquet files from cold storage (L2), this module applies

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RAII budget guard for the memory governor.
 //!
 //! [`BudgetGuard`] acquires a byte reservation from the [`MemoryGovernor`]

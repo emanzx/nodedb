@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal stamping helpers for `CoreLoop`.
 //!
 //! `_ts_system` on every bitemporal write must be strictly monotonic

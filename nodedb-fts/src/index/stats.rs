@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Corpus statistics for BM25 scoring.
 
 use crate::backend::FtsBackend;

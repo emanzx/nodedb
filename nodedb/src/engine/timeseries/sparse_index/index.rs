@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SparseIndex` construction, queries, and serialization.
 //!
 //! File format:

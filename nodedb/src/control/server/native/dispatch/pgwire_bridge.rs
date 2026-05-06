@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Convert pgwire DDL results to native protocol responses.
 
 use nodedb_types::protocol::NativeResponse;

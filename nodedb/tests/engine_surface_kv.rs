@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Key-Value engine.
 //!
 //! Covers: set/get, upsert, delete, secondary index scan, count, and WAL durability.

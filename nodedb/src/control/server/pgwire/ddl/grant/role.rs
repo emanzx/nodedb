@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GRANT/REVOKE ROLE x TO/FROM user` handlers.
 //!
 //! Reuses the existing `CatalogEntry::PutUser` variant. The

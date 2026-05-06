@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HashJoin bitmap-prefilter injection.
 //!
 //! When `QueryOp::HashJoin` carries an `inline_left_bitmap` or

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Elastic add/remove — proves the end-to-end path from membership
 //! change to rebalancer dispatch.
 //!

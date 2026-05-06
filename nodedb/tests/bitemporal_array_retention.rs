@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests: array compaction with `audit_retain_ms` retention.
 //!
 //! Regression coverage for the cell-loss bug: tile-versions are SPARSE —

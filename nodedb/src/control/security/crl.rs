@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Certificate Revocation List (CRL) loading and checking.
 //!
 //! When `crl_path` is configured, the CRL file is loaded on startup and

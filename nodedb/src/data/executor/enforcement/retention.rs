@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Retention and legal hold enforcement: reject DELETE operations that
 //! violate data retention policies or active legal holds.
 

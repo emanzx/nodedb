@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Geohash encoding/decoding for spatial indexing.
 //!
 //! Geohash is an interleaved Z-order curve over (longitude, latitude) that

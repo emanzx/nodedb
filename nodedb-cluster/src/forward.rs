@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Physical-plan execution trait for leader-based request routing.
 //!
 //! [`PlanExecutor`]: the physical-plan execution path introduced in C-β.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory registry of all arrays, mirrored to the system catalog.
 //!
 //! The registry is keyed by logical array name and maintains a reverse

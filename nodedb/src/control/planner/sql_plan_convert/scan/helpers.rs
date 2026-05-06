@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tiny helpers shared across the scan/search converters.
 
 use nodedb_sql::TemporalScope;

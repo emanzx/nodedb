@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lock-free per-core telemetry buffer.
 //!
 //! Data Plane cores MUST NOT serve HTTP endpoints or accept Prometheus scrapes.

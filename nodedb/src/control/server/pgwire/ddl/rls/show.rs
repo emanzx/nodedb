@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW RLS POLICIES [ON <collection>] [TENANT <id>]` handler.
 
 use std::sync::Arc;

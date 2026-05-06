@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CDC event router: matches WriteEvents to registered change streams.
 //!
 //! For each WriteEvent, finds all matching change streams (by tenant,

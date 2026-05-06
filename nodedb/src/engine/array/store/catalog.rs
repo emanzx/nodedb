@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-array LSM store — manifest, memtable, open segment handles.
 //!
 //! Each [`ArrayStore`] manages one array's directory. The engine in

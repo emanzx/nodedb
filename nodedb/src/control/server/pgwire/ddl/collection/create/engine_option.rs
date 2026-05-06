@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Canonical engine-option parsing for `CREATE COLLECTION` and `CREATE TABLE`.
 //!
 //! The single accepted syntax is `WITH (engine='<name>')`. All legacy axes —

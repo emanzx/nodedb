@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector index checkpoint methods for [`CoreLoop`].
 //!
 //! Contains HNSW build completion polling and checkpoint load/save operations.

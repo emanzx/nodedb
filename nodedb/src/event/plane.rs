@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event Plane: top-level lifecycle struct.
 //!
 //! The Event Plane is the third architectural layer — purpose-built for

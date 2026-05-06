@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! UTF-8-safe tokenizer for SQL expression text.
 //!
 //! Iterates by `char` (not byte) to avoid panicking on multi-byte codepoints.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `push_ref` and `backfill_nulls` methods on `ColumnData`.
 //!
 //! Extracted from `mutation.rs` to keep that file under 500 lines.

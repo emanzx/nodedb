@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Generic encoders for Data Plane response payloads, plus the
 //! `decode_payload_to_json` transcoder used at the Control Plane boundary.
 

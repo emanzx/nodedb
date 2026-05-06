@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Log Sequence Number — monotonically increasing identifier for WAL records.
 //!
 //! LSNs are the universal ordering primitive across both Origin and Lite.

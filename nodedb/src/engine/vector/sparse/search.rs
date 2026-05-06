@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sparse vector dot-product search with top-K selection.
 //!
 //! Iterates query dimensions, looks up each in the inverted index's posting

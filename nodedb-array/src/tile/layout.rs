@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tile layout — mapping cell coordinates to tile boundaries.
 //!
 //! Tile coordinates are cell coordinates integer-divided by the

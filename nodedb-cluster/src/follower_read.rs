@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Follower-read decision gate.
 //!
 //! [`FollowerReadGate`] answers a single question: "given the

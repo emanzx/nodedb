@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-array manifest — durable list of segment files plus the schema
 //! hash that the segments were written with.
 //!

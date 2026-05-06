@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RlsPolicyStore` verifier.
 //!
 //! Checks that the in-memory `RlsPolicyStore` is consistent with

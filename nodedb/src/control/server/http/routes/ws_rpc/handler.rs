@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WebSocket RPC upgrade handler and connection lifecycle.
 //!
 //! Accepts WebSocket connections at `/ws`. Clients send JSON requests

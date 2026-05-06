@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NDJSON and JSON array import for `COPY FROM`.
 
 use pgwire::error::PgWireResult;

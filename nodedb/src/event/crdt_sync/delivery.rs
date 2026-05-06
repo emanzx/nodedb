@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT sync delivery: session registry + per-session push queues.
 //!
 //! Manages connected Lite sessions and delivers outbound deltas to them.

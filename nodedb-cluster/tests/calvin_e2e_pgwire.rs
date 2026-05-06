@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end Calvin pgwire smoke test.
 //!
 //! Verifies that the sequencer path fires correctly for a multi-vshard INSERT

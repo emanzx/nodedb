@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `_system.l2_cleanup_queue` virtual view.
 //!
 //! Surfaces the post-purge object-store delete backlog. Rows come

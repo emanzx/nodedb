@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Zero-deserialization binary scanner for MessagePack documents.
 //!
 //! Operates directly on `&[u8]` MessagePack bytes without decoding into

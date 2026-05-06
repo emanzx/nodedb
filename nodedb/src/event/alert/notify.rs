@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Alert notification dispatch: TOPIC, WEBHOOK, INSERT INTO.
 //!
 //! Called by the eval loop when a hysteresis transition occurs (Fired or Recovered).

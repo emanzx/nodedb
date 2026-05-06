@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partial-index predicate: parse once, evaluate per row.
 //!
 //! A partial index declared as `CREATE INDEX ... WHERE <expr>` is

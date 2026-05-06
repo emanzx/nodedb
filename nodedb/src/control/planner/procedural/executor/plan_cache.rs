@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parsed procedural block cache for triggers and procedures.
 //!
 //! Avoids re-parsing trigger/procedure bodies on every invocation.

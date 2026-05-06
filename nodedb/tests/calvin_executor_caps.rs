@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Calvin executor admission-cap rejections.
 //!
 //! Verifies that `Inbox::submit` correctly enforces:

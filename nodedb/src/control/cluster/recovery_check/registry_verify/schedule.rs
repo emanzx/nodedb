@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ScheduleRegistry` verifier.
 //!
 //! Checks that the in-memory `ScheduleRegistry` is consistent with

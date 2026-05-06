@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! EXPLAIN PERMISSION and policy introspection DDL commands.
 //!
 //! ```sql

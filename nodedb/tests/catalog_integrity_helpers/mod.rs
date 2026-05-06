@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared fixtures and helpers for `catalog_integrity_*` integration tests.
 //!
 //! Every parent-replicated catalog type has a `make_*` constructor that

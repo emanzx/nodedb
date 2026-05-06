@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Session-level `ReadConsistency` — wire `SET` / `SHOW` for the
 //! `default_read_consistency` session parameter.
 //!

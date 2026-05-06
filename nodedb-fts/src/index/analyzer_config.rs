@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-collection analyzer configuration stored in backend metadata.
 //!
 //! Uses structural `(tid, collection, subkey)` meta blobs:

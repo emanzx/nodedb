@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Field-aware BM25 scoring: weighted multi-field scoring.
 //!
 //! `final_score = Σ(weight_i * bm25(field_i))`

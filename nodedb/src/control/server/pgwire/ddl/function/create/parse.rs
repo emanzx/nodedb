@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse a `CREATE [OR REPLACE] FUNCTION` statement into a
 //! typed `ParsedCreateFunction`.
 

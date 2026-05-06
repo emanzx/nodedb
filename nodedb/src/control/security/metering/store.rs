@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Usage store: accumulates flushed usage events for querying.
 //!
 //! In production, this would write to `_system.usage` as a timeseries

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Predicate class hashing for OLLP circuit-breaker keying.
 //!
 //! The `predicate_class` function maps a (collection, filter-text) pair to a

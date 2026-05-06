@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Highlight and match offset utilities for search results.
 
 use crate::analyzer::pipeline::analyze;

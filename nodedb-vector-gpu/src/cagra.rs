@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CAGRA fixed-degree flat-graph index — GPU-resident inference.
 //!
 //! Warp-aligned adjacency layout. Inference kernels execute with no thread

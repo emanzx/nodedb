@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WASM UDF runtime.
 //!
 //! **Execution location:** WASM UDFs execute on the **Control Plane** (Tokio).

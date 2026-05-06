@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Production metadata-group commit applier.
 //!
 //! Single branch for DDL: decode the opaque `CatalogDdl { payload }`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HNSW graph structure — nodes, parameters, core index operations.
 //!
 //! Production implementation per Malkov & Yashunin (2018).

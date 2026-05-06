@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BitNet b1.58 ternary quantization codec.
 //!
 //! Encodes FP32 vectors into ternary trits `{-1, 0, +1}` using per-vector

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector ANN option types for SqlPlan.
 
 use crate::types_array;

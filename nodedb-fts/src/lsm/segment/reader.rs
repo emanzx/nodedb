@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment reader: reads term dictionary and decodes posting blocks on demand.
 
 use crate::block::PostingBlock;

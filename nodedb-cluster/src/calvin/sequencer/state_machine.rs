@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin sequencer Raft state machine.
 //!
 //! [`SequencerStateMachine`] is called on every replica (including the leader)

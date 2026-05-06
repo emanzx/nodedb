@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schedule post-apply side effects — sync the in-memory cron
 //! registry so the scheduler executor picks up the change on its
 //! next tick.

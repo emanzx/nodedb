@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Array (ND sparse) engine.
 //!
 //! Covers: CREATE ARRAY DDL, INSERT INTO ARRAY, ARRAY_SLICE TVF query,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Write-time evaluation of stored generated (computed) columns.
 //!
 //! Called during INSERT and UPDATE to materialize generated column values.

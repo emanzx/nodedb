@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document write paths: JSON and raw-MessagePack entry points.
 
 use super::batch::{DocumentEngine, wall_now_ms};

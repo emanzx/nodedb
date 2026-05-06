@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Structured detail body for `UNDROP COLLECTION` audit records.
 //!
 //! Serialized as JSON into the `AuditEntry::detail` field. SIEM /

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Error types for Binary Tuple encoding/decoding.
 
 use nodedb_types::columnar::ColumnType;

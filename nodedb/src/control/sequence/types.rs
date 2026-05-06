@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequence runtime types.
 
 use std::sync::Mutex;

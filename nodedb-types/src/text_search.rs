@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Text search parameter types shared across the NodeDb trait boundary.
 //!
 //! These are the user-facing knobs for full-text search queries. The

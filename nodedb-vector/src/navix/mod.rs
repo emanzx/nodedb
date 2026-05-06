@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod acorn;
 pub mod selectivity;
 pub mod traversal;

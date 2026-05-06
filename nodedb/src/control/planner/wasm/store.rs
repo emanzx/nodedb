@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WASM module blob store: per-tenant, content-addressed by SHA-256.
 //!
 //! Stores raw `.wasm` binaries in the system catalog (redb) under

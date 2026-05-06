@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shape subscribe/snapshot/delta/unsubscribe + vector clock sync messages.
 
 use std::collections::HashMap;

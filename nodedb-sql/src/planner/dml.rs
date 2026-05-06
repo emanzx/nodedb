@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSERT, UPDATE, DELETE planning.
 
 use sqlparser::ast::{self};

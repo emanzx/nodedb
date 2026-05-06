@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tiny hand-written tokenizer for array DDL/DML.
 //!
 //! Scope is limited to the four `ARRAY` statements — identifiers,

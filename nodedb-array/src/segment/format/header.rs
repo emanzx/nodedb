@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment header — 32-byte fixed prefix at file offset 0.
 //!
 //! Layout (little-endian):

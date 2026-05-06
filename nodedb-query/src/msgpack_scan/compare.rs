@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Byte-level comparison and hashing for MessagePack field values.
 //!
 //! Operates on raw byte ranges returned by `extract_field`. Used for

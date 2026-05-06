@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Change stream metadata operations for the system catalog.
 
 use super::types::{CHANGE_STREAMS, SystemCatalog, catalog_err};

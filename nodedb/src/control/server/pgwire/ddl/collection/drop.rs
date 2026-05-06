@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DROP COLLECTION DDL.
 //!
 //! Supported forms (tokens are case-insensitive):

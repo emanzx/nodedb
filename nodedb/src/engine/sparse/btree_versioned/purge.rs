@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit-retention purge for the versioned document / index tables.
 //!
 //! Same contract as `edge_store::temporal::purge`: drop *superseded*

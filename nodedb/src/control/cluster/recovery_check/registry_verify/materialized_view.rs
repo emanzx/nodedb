@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `MvRegistry` (streaming materialized view) verifier.
 //!
 //! Checks that the in-memory `MvRegistry` is consistent with

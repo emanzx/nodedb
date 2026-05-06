@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Minimal cron expression parser — Vixie POSIX 5-field dialect.
 //!
 //! # Dialect

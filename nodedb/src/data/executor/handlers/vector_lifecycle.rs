@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector index lifecycle handlers: stats query, seal, compact, rebuild.
 //!
 //! Separated from `vector.rs` (write handlers) by concern:

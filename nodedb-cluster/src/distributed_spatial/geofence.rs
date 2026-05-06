@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed geofence evaluation.
 //!
 //! Geofence polygons are replicated to all shards (small — typically <10K

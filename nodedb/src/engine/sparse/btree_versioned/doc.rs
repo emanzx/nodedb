@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document-level operations on the versioned document table.
 
 use redb::{ReadableTable, TableDefinition};

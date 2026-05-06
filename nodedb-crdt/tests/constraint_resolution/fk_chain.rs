@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! FK chain across agents: child arrives before parent, defer-and-retry resolves.
 
 use loro::LoroValue;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared graph types used by both Origin and Lite CSR engines.
 
 use serde::{Deserialize, Serialize};

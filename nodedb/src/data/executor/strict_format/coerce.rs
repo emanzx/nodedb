@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Value coercion and JSON conversion for strict document columns.
 
 use nodedb_types::columnar::ColumnType;

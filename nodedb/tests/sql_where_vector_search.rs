@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for vector-search triggers in WHERE clauses.
 //!
 //! `try_extract_where_search` matches `TextMatch` and the spatial predicates

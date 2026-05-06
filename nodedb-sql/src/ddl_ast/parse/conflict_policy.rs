@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse `ALTER COLLECTION <name> SET ON CONFLICT <policy> FOR <kind>`
 //! and `SHOW CONFLICT POLICY ON <name>`.
 

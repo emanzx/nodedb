@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ParsedStatement — the result of parsing SQL in the extended query protocol.
 //!
 //! Stored in pgwire's `StoredStatement<ParsedStatement>` after a Parse message.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RetentionPolicyRegistry` verifier.
 //!
 //! Checks that the in-memory `RetentionPolicyRegistry` is consistent

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Adaptive backpressure controller.
 //!
 //! Monitors SPSC queue utilization and drives state transitions:

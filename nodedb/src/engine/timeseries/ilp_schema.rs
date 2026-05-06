@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar-schema derivation + evolution for ILP ingest.
 //!
 //! Splits three concerns out of the ingest loop:

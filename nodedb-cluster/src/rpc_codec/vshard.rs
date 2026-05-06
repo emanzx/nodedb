@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! VShardEnvelope RPC glue.
 //!
 //! The VShardEnvelope carries graph BSP, timeseries scatter-gather, migration,

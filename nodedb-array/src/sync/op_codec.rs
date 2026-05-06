@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MessagePack encode/decode for [`ArrayOp`] and batches thereof.
 //!
 //! Uses `zerompk` (the workspace's MessagePack codec) so that encoding is

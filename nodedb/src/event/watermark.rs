@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Watermark store: persists last-processed LSN per core to redb.
 //!
 //! The Event Plane tracks how far each core's consumer has progressed.

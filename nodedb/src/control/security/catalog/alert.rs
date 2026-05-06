@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Alert rule metadata operations for the system catalog.
 
 use super::types::{ALERT_RULES, SystemCatalog, catalog_err};

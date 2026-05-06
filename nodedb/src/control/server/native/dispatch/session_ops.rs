@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Session parameter operations: SET, SHOW, RESET (opcode form).
 
 use nodedb_types::protocol::NativeResponse;

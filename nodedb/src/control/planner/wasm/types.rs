@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL ↔ WASM type mapping.
 
 use wasmtime::ValType;

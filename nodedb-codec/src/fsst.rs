@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! FSST (Fast Static Symbol Table) codec for string/log columns.
 //!
 //! Builds a lightweight dictionary of common substrings (1-8 bytes) and

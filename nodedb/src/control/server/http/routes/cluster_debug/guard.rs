@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared access gate + JSON response helper for the
 //! `/cluster/debug/*` endpoints.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Extract dependency references from a function body.
 //!
 //! Scans the body SQL for function calls that match other

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed join execution: broadcast and shuffle joins across cluster nodes.
 //!
 //! **Broadcast join**: Control Plane serializes the small side (< 8 MiB),

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Write-path mutations: insert, insert_if_absent, delete, update.
 
 use nodedb_types::surrogate::Surrogate;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Ghost stub refcount persistence — survives restarts so ghost
 //! edges aren't counted twice after a crash.
 

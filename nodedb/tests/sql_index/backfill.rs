@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Two-phase Building→Ready backfill and UNIQUE enforcement.
 
 use super::common::pgwire_harness::TestServer;

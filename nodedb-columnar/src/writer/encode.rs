@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Low-level encoding helpers: validity bitmaps, numeric pipelines, schema hash.
 
 use nodedb_codec::{ResolvedColumnCodec, encode_f64_pipeline, encode_i64_pipeline};

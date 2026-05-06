@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `truncated_before_horizon` flag for bitemporal array slice responses.
 //!
 //! The flag is set when `system_as_of` is below the oldest tile version on a

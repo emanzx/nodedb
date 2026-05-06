@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The canonical wire-type for every entry proposed to the metadata Raft group.
 
 use serde::{Deserialize, Serialize};

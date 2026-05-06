@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Primitive Calvin type definitions.
 //!
 //! Provides [`SortedVec`], [`EngineKeySet`], [`PassiveReadKey`], and

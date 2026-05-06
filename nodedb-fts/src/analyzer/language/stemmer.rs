@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Language-specific analyzer: Snowball stemming with per-language stop words.
 
 use rust_stemmers::{Algorithm, Stemmer};

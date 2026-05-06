@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod dedup;
 pub mod dispatcher;
 pub mod dlq;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW MATERIALIZED VIEWS [FOR <source>]` handler.
 
 use std::sync::Arc;

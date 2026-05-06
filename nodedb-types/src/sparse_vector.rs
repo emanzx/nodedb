@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sparse vector type for learned sparse retrieval (SPLADE, SPLADE++).
 //!
 //! Internal representation: sorted `Vec<(u32, f32)>` — (dimension_index, weight).

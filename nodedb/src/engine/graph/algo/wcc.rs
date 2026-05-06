@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Weakly Connected Components — Union-Find with path compression and
 //! union-by-rank on the CSR index.
 //!

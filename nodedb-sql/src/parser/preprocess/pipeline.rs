@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL pre-processing orchestrator: rewrite NodeDB-specific syntax into
 //! standard SQL before handing to sqlparser-rs.
 //!

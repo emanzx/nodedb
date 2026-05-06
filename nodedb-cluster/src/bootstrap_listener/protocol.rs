@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire protocol for the bootstrap cred-delivery RPC.
 //!
 //! One bidi QUIC stream per request. Both directions carry a single

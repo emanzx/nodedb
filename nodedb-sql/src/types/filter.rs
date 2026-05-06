@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Filter predicate types for SQL plan IR.
 
 use crate::types_expr::{SqlExpr, SqlValue};

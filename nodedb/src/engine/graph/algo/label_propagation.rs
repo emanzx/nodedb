@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Community Detection — Label Propagation Algorithm (LPA) on the CSR index.
 //!
 //! Each node adopts the most frequent label among its neighbors (ties broken

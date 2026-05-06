@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! α-pruning for the Vamana graph.
 //!
 //! Given a candidate set of (neighbor_id, distance_to_target) pairs, this

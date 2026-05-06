@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! External sort infrastructure: sort helpers, run files, and k-way merge.
 
 use std::cmp::Reverse;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Matryoshka adaptive-dim querying.
 //!
 //! For embedding models trained with Matryoshka Representation Learning

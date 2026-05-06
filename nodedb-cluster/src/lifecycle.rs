@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Node lifecycle management: join, leave, decommission.
 //!
 //! Handles the full lifecycle of a node in the cluster:

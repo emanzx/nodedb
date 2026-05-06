@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sparse vector index checkpoint methods for [`CoreLoop`].
 //!
 //! Follows the same pattern as `vector_checkpoint.rs`: serialize each index

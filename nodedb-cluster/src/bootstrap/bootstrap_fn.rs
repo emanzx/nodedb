@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bootstrap path: the founding member of a new cluster.
 
 use std::sync::{Arc, Mutex, RwLock};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Phase 4 validation gate tests.
 //!
 //! 1. Security regression: auth failures, privilege changes, tenant isolation

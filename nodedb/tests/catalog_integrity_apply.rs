@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Applier contract: for every parent-replicated `Put<T>` variant, the
 //! synchronous `apply_to` path MUST write a matching `StoredOwner` row
 //! to redb. If it does not, the next restart's integrity check aborts

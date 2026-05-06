@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Discriminant tag constants for the ErrorDetails wire format.
 //
 // Table is stable — never reorder, never recycle IDs.

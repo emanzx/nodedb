@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Procedure transaction context: buffers DML tasks for COMMIT/ROLLBACK/SAVEPOINT.
 //!
 //! Stored procedures can execute COMMIT mid-body to finalize buffered DML,

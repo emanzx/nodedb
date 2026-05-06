@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MetaEmbed-specific search helpers.
 //!
 //! MetaEmbed (ICLR 2026) stores K pre-computed Meta Token vectors per document

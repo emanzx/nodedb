@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! UNION / UNION ALL planning.
 
 use sqlparser::ast::{self, SetExpr, SetOperator, SetQuantifier};

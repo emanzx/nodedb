@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-runtime waker integration.
 //!
 //! The hardest part of the bridge: when the SPSC queue transitions between

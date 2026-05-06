@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Physical plan types for MERGE operations carried across the SPSC bridge.
 
 use super::types::UpdateValue;

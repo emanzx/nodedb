@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster health monitoring — periodic pings, failure detection, topology broadcast.
 //!
 //! The [`HealthMonitor`] runs as a background task alongside the Raft loop:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment reader for L1 timeseries data.
 //!
 //! Reads and decodes L1 segment files (Gorilla-compressed metrics,

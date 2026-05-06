@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Quarantine object-store backend construction.
 //!
 //! `QuarantineStorageConfig` + `build_quarantine_store` are extracted here

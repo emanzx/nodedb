@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Apply ownership catalog entries to `SystemCatalog` redb.
 //!
 //! Two write paths share this file:

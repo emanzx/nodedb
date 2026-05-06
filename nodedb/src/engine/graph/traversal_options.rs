@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-query graph traversal configuration.
 //!
 //! Adaptive fan-out uses a two-tier limit with optional graceful

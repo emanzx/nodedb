@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL parsing helpers for `CREATE CONTINUOUS AGGREGATE`.
 //!
 //! Extracted from `continuous_agg.rs` to keep that file under 500 lines.

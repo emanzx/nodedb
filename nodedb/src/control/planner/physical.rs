@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use crate::bridge::envelope::PhysicalPlan;
 use crate::types::{TenantId, VShardId};
 

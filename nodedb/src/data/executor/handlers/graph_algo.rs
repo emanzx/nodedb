@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph algorithm dispatch handler.
 //!
 //! Routes `PhysicalPlan::GraphAlgo` to the appropriate algorithm

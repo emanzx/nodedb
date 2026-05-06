@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Minimal `pg_catalog` virtual-table emulation.
 //!
 //! Generic Postgres clients (DBeaver, pgAdmin, SQLAlchemy, psql's

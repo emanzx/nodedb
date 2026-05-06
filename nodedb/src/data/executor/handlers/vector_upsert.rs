@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Direct upsert handler for vector-primary collections.
 //!
 //! Bypasses MessagePack document encoding. The caller (Control Plane) has

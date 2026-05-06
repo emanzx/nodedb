@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scan-params struct and the base scan entry point.
 
 use nodedb_types::surrogate_bitmap::SurrogateBitmap;

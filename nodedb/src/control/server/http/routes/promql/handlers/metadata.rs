@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GET `/obsv/api/v1/metadata` — metric metadata for Grafana metric browser.
 
 use axum::extract::State;

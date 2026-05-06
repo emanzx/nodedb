@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cascade orchestrator — composes the per-kind enumerators into a
 //! single `collect_dependents` call.
 //!

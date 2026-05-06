@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PointInsert: write one document, probing existence under the same
 //! write transaction so duplicate primary keys surface as
 //! `unique_violation` (SQLSTATE 23505) instead of silently overwriting.

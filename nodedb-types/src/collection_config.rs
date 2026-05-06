@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector-primary collection configuration types.
 //!
 //! `PrimaryEngine` is a parallel attribute to `CollectionType` that tells the

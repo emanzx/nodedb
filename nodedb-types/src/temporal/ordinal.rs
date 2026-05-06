@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Strictly-monotonic `i64` ordinal clock for bitemporal `system_from` keys.
 //!
 //! Requirements the storage layer places on `system_from`:

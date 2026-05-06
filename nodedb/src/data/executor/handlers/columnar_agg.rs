@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Native columnar aggregation for GROUP BY queries on columnar memtables.
 //!
 //! Bypasses the generic document-style aggregation path that converts

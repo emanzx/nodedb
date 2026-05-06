@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Access denial response configuration for RLS policies.
 //!
 //! Controls what happens when an RLS policy denies access:

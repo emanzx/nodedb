@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Row-scope evaluator for [`SqlExpr`].
 //!
 //! `eval()` resolves column references against a single document. `eval_with_old()`

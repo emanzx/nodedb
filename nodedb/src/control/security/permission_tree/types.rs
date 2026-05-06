@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Permission tree types: definitions, levels, and grants.
 //!
 //! Permission levels are user-defined ordered strings stored in the

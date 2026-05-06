@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for non-trivial WHERE-clause expressions.
 //!
 //! Scalar functions (`LOWER`, `UPPER`, `LENGTH`, arithmetic, ...) on the

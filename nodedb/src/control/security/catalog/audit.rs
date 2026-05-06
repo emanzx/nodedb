@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit log operations for the system catalog.
 
 use redb::ReadableTableMetadata;

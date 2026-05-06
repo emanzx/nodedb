@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rate limiting configuration: tiers, endpoint costs, defaults.
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unit tests for ARRAY_* function planning.
 
 use crate::catalog::{ArrayCatalogView, SqlCatalogError};

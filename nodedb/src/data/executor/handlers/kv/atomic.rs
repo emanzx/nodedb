@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV atomic operation handlers: Incr, IncrFloat, Cas, GetSet.
 
 use tracing::debug;

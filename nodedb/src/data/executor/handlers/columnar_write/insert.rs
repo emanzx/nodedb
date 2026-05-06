@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar insert dispatcher: builds rows, applies ON CONFLICT semantics,
 //! drives the per-row insert, flushes the memtable, updates spatial index.
 

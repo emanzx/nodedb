@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration smoke tests for `Gateway::execute` and `Gateway::execute_sql`.
 //!
 //! Tests:

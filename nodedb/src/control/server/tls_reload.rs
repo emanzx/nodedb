@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TLS certificate hot-reload.
 //!
 //! Watches cert/key files for changes and atomically swaps the TLS

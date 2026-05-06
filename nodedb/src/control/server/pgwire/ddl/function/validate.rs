@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Function body validation via sqlparser.
 //!
 //! Validates that:

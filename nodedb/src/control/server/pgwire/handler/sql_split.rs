@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL statement splitter for multi-statement pgwire messages.
 
 /// Split a SQL string at top-level semicolons into individual statements.

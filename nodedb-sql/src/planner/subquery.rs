@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Subquery planning: IN (SELECT ...), NOT IN (SELECT ...), scalar subqueries.
 //!
 //! Rewrites WHERE-clause subqueries into semi/anti joins so the existing

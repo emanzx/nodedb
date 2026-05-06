@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The canonical shutdown watch. One instance per `SharedState`.
 //!
 //! Producers signal via [`ShutdownWatch::signal`]. Consumers

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level routers for `GRANT` and `REVOKE` SQL statements.
 //! Decides between role-membership and permission-grant paths
 //! based on whether the second token is `ROLE`.

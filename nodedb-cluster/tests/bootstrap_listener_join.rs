@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the bootstrap-listener join flow with the
 //! full token state machine: valid token accepted, invalid HMAC rejected,
 //! replayed token rejected, expired token rejected, audit entries logged.

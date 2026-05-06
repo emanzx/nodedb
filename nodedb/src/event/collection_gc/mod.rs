@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event-Plane sweeper that hard-deletes soft-deleted collections once
 //! their retention window has elapsed.
 //!

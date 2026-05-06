@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine rules for the ND sparse array engine.
 //!
 //! Array operations live behind a dedicated DDL/DML surface

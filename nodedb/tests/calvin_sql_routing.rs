@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Calvin SQL surface: SET cross_shard_txn, SHOW, EXPLAIN preamble.
 //!
 //! End-to-end multi-shard-commit tests are skipped here — they require a real

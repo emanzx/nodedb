@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BEFORE trigger firing logic.
 //!
 //! BEFORE triggers fire synchronously in the Control Plane BEFORE the row

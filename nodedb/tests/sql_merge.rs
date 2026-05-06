@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the SQL MERGE statement.
 //!
 //! Each test spins up a fresh single-core NodeDB server and exercises

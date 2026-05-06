@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Memory governor pressure transitions across 70/85/95 thresholds must reduce
 //! SPSC read depth, suspend reads, and emit metrics.
 //!

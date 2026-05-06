@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage for the collection hard-delete pipeline at
 //! the SystemCatalog layer. Exercises the idempotency contracts the
 //! pgwire `drop_collection` handler relies on, plus the per-engine

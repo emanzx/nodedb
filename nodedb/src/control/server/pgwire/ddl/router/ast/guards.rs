@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! IF [NOT] EXISTS guard arms: return early on duplicate-creation or not-found-drop.
 
 use pgwire::api::results::{Response, Tag};

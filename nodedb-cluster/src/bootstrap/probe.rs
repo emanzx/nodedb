@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bootstrap probe: deterministic "who should bootstrap" decision and
 //! the live Ping probe used to confirm the elected bootstrapper is up.
 //!

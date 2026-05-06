@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Role post-apply side effects — upsert / remove the in-memory
 //! `roles` cache.
 

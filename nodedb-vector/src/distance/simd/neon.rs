@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NEON kernels for ARM64.
 
 #![cfg(target_arch = "aarch64")]

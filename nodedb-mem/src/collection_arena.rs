@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-collection jemalloc arena registry.
 //!
 //! Each vector-primary collection receives a dedicated jemalloc arena so

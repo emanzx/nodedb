@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RPC frame header layout and framing helpers.
 //!
 //! # Current layout (18 bytes)

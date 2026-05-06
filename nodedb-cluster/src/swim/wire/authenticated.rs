@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authenticated SWIM datagram wire.
 //!
 //! SWIM has no TLS layer — UDP datagrams travel in the clear. The

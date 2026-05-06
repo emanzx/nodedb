@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub(super) mod legacy;
 pub(crate) mod path;
 pub(super) mod pg_ops;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ORDER BY planning and sort key extraction.
 //!
 //! Search-triggering sort detection (vector_distance, bm25_score, rrf_score)

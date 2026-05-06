@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Background-thread rebuild functions and Data-Plane cutover appliers for
 //! concurrent index rebuild. See `reindex.rs` for the dispatch/poll surface.
 //!

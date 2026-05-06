@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Replay-time utilities layered over raw [`WalRecord`] streams.
 //!
 //! The WAL crate does not know the payload shapes of domain writes (those

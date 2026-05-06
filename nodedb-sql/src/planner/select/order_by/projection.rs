@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SELECT-projection fallback for hybrid-search and text-search trigger detection.
 //!
 //! When `apply_order_by` left the plan as a `Scan` (no ORDER BY, or an

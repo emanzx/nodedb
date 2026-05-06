@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! 3-node sequencer leader-failover integration test.
 //!
 //! This test verifies that:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vamana on-disk layout description.
 //!
 //! **No I/O code lives here.** This module describes the byte layout that

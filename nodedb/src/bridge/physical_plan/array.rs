@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array engine operations dispatched to the Data Plane.
 //!
 //! `ArrayOp` is the wire type for array query operators (slice,

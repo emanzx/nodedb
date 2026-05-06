@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-Raft coordinator: owns every Raft group hosted on this node,
 //! routes inbound RPCs, and surfaces aggregated `Ready` output to the
 //! tick loop.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CRDT delta application endpoint.
 //!
 //! POST /v1/collections/{name}/crdt/apply

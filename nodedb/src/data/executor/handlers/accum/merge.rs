@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `merge_from` implementations for `AggAccum` and `GroupState`.
 //!
 //! Split into a separate file to keep `accum/mod.rs` under the 500-line

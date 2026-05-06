@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Canonical startup phases, ordered from process entry to
 //! the moment client-facing listeners begin processing
 //! requests.

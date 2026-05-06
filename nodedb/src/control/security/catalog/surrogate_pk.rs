@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate ↔ PK catalog ops for the `_system.surrogate_pk{,_rev}` tables.
 //!
 //! Forward + reverse mapping between user-visible primary keys and the

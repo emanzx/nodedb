@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use super::batch::DocumentEngine;
 use crate::engine::document::store::config::CollectionConfig;
 use crate::engine::document::store::extract::json_to_msgpack;

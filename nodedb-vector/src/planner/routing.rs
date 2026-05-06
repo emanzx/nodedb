@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Filter routing decision tree for the vector query planner.
 //!
 //! Given information about the query's filter predicates, this module decides

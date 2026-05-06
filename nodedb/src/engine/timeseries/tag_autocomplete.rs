@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tag value autocomplete: `SHOW TAG VALUES FOR 'host' FROM metrics`.
 //!
 //! Returns all distinct values for a tag column by reading from the symbol

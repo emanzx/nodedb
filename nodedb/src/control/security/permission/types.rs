@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data shapes and string helpers shared across the
 //! permission module.
 

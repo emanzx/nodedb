@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Static argument type specifications for all built-in functions.
 //!
 //! Each constant defines the accepted argument types per position.

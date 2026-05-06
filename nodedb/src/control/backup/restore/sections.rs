@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Catalog-section and data-section helpers for RESTORE TENANT.
 
 use std::sync::Arc;

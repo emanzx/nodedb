@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Webhook delivery configuration types.
 
 /// Webhook delivery configuration for a change stream.

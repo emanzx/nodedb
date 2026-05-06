@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WASM runtime: wasmtime Engine with compilation caching.
 //!
 //! The Engine is shared across all WASM UDF invocations. Module compilation

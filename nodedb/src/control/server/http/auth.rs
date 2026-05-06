@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HTTP API authentication via API key bearer tokens.
 //!
 //! Extracts `AuthenticatedIdentity` from the `Authorization: Bearer ndb_...` header.

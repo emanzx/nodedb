@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial engine reclaim — unlink per-collection R*-tree checkpoint
 //! + docmap files.
 //!

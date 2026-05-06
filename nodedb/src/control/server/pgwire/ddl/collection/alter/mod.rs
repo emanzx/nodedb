@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ALTER TABLE / ALTER COLLECTION DDL handlers.
 //!
 //! Each column operation (`ADD COLUMN`, `DROP COLUMN`, `RENAME COLUMN`,

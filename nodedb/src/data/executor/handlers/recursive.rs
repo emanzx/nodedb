@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Recursive CTE handler: iterative fixed-point execution.
 //!
 //! Executes the base query once to seed the working table, then

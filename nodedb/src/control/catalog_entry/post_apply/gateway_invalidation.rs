@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gateway plan-cache invalidation for DDL descriptor mutations.
 //!
 //! The gateway plan cache keys on `(sql_hash, ph_hash, GatewayVersionSet)`.

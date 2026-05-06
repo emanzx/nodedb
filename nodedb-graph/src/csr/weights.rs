@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Edge weight management for the CSR index.
 //!
 //! Optional `f64` weight per edge stored in parallel arrays. `None` when the

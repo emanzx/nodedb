@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Configuration for the Calvin sequencer service.
 
 use std::time::Duration;

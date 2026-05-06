@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DomainBound` comparison + bbox intersection.
 //!
 //! `DomainBound` is `PartialOrd` only because Float64 carries NaN; in

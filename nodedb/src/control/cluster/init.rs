@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster startup: create transport, open catalog, bootstrap/join/restart.
 
 use std::sync::{Arc, Mutex, RwLock};

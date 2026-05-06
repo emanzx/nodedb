@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! N-gram and edge n-gram analyzers for substring and prefix matching.
 
 use super::pipeline::TextAnalyzer;

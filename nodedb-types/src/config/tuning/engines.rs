@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-engine tuning: Vector, Sparse, Graph, Timeseries.
 
 use serde::{Deserialize, Serialize};

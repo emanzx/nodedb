@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant DDL handlers.
 //!
 //! - [`create`] — `CREATE TENANT` (proposes `CatalogEntry::PutTenant`).

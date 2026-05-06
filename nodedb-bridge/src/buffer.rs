@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lock-free SPSC ring buffer.
 //!
 //! The core data structure: a fixed-capacity circular buffer with cache-line-padded

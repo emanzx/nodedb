@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `MultiRaft` struct, constructors, group lifecycle, tick, observability.
 
 use std::collections::HashMap;

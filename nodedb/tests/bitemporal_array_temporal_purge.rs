@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end integration tests for `ArrayEngine::temporal_purge`.
 //!
 //! Each test builds a fresh `ArrayEngine` in a temp directory, writes

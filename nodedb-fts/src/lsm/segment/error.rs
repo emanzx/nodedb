@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed errors for segment I/O and validation.
 
 use thiserror::Error;

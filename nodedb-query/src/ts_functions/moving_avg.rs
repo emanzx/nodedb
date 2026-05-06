@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Simple Moving Average (SMA) with Kahan-compensated summation.
 
 /// Compute a simple moving average over a sliding window.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query operations (joins, aggregates) dispatched to the Data Plane.
 
 /// Aggregate specification for Data Plane aggregate execution.

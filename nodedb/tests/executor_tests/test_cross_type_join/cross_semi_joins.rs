@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-join and semi-join tests with inline scalar aggregate subqueries.
 
 use crate::helpers::{make_ctx, send_ok};

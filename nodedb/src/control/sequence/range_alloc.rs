@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft-coordinated range allocation for distributed sequences.
 //!
 //! Each node (Origin shard or Lite instance) requests a chunk of IDs from

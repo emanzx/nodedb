@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `nodedb regen-certs` — reissue the per-node certificate under the
 //! existing CA.
 //!

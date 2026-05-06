@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Event Plane trigger dispatch.
 //!
 //! Tests: event source cascade prevention, trigger registry matching,

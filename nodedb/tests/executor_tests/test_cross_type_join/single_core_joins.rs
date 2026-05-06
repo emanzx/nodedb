@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single-core hash join and self-join tests.
 
 use crate::helpers::{make_ctx, send_ok};

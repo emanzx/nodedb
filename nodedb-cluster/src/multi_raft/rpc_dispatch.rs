@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Inbound RPC dispatch — look up the target group and delegate.
 //!
 //! Also holds the response handlers (`handle_append_entries_response`,

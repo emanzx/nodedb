@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE SPARSE INDEX` DSL handler.
 
 use pgwire::api::results::{Response, Tag};

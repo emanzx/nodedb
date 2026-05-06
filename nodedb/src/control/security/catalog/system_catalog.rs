@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SystemCatalog: redb-backed persistent catalog database.
 //!
 //! Opens or creates the system.redb file, initializes all tables,

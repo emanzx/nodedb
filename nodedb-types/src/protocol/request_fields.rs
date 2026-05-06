@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RequestFields — tagged union of operation-specific field sets.
 //!
 //! # Wire format (MsgPack)

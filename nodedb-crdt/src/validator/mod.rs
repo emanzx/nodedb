@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Constraint validator — checks deltas against committed state.
 //!
 //! This is the core of the CRDT/SQL bridge. When a delta arrives from a peer,

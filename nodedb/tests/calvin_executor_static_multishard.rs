@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tests for static-set multi-shard Calvin execution path.
 //!
 //! Verifies the types and plan structures used by `MetaOp::CalvinExecuteStatic`.

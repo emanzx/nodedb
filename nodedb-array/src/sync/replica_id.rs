@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stable per-replica identity.
 //!
 //! Each array-engine replica (Lite instance or Origin shard) is assigned a

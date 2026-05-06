@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Basic cluster boot and single-node create tests.
 
 use std::time::Duration;

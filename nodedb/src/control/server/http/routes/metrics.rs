@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Prometheus-compatible metrics endpoint.
 
 use axum::extract::State;

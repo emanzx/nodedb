@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DroppedCollection` — row shape for `_system.dropped_collections`.
 //!
 //! Returned by `NodeDb::list_dropped_collections`. Each row describes

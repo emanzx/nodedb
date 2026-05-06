@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster replication hooks for [`CredentialStore`].
 //!
 //! Powers the `CatalogEntry::PutUser` / `DeactivateUser` pipeline.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partial indexes: `CREATE INDEX ... WHERE <predicate>`.
 //!
 //! `StoredIndex.predicate` is stored but no layer enforces it: writes

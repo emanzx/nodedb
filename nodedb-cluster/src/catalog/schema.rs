@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! redb table definitions, key constants, and shared error helpers
 //! for the cluster catalog.
 //!

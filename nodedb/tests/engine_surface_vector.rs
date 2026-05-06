@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Vector engine.
 //!
 //! The vector engine is accessed via `WITH (engine='vector')` which maps to

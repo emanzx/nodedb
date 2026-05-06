@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ColumnDef`] and [`ColumnModifier`] — typed column definitions for strict
 //! document and columnar collections.
 

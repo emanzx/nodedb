@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! FACET_COUNTS and SEARCH_WITH_FACETS SQL interception.
 //!
 //! These are intercepted before DataFusion planning because they use a custom

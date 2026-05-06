@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`std::fmt::Display`] and [`std::str::FromStr`] for [`ColumnType`], plus
 //! [`ColumnTypeParseError`].
 

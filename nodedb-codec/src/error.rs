@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Error types for codec operations.
 
 /// Errors that can occur during encoding or decoding.

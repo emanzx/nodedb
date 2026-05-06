@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: nodedb binary exits non-zero when startup fails.
 //!
 //! The test spawns the real `nodedb` binary (built in the test profile) with

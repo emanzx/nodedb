@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ORDER BY ↔ SELECT-projection alias resolution.
 //!
 //! `ORDER BY <ident>` may reference a column alias declared in SELECT. The

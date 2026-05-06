@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the Calvin dependent-read path.
 //!
 //! Uses mock channels to simulate the passive → active read result flow

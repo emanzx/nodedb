@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sync wait primitive used to block on a Raft group's local apply
 //! watermark.
 //!

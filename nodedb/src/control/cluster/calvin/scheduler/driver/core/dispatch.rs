@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Static and active (dependent-read) txn dispatch to the Data Plane.
 
 use std::time::Instant;

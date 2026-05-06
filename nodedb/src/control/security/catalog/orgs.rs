@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Organization catalog operations (redb persistence).
 
 use super::types::{ORG_MEMBERS, ORGS, SystemCatalog, catalog_err};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster bootstrap and join protocol.
 //!
 //! Three startup paths:

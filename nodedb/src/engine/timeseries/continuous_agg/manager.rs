@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Continuous aggregate manager: registry, lifecycle, and query.
 //!
 //! Lives on the Data Plane (!Send). One per core. Manages all continuous

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SWIM subsystem bootstrap.
 //!
 //! [`spawn`] is the one-stop entry point callers (cluster startup or

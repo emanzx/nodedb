@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CP-side helper that turns a `(collection, pk_bytes)` into a stable
 //! `Surrogate`, allocating from the registry on the first call and
 //! returning the persisted value on every subsequent call (UPSERT

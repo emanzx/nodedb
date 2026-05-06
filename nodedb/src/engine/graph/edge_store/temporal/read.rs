@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Ceiling resolver — reverse range scan with optional valid-time filter.
 
 use super::keys::{

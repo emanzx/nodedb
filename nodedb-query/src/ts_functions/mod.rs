@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries SQL function kernels.
 //!
 //! Pure computation on `&[f64]` / `&[i64]` slices — no DataFusion, no Arrow,

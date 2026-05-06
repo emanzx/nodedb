@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BALANCED constraint check across all new inserts in a transaction.
 
 use std::collections::HashMap;

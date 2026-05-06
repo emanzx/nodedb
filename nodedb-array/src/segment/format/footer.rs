@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment footer — trailing metadata block.
 //!
 //! Trailer (last 16 bytes of the file):

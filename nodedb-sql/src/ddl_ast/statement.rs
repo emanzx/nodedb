@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The [`NodedbStatement`] enum — one variant per DDL command.
 
 pub use super::alter_ops::{AlterCollectionOp, AlterRoleOp, AlterUserOp};

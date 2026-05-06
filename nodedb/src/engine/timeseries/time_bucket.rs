@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `time_bucket(interval, timestamp)` function for timeseries downsampling.
 //!
 //! Truncates a timestamp to the start of the interval it falls in.

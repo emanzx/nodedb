@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The Calvin sequencer service.
 //!
 //! [`SequencerService`] drives the epoch ticker and Raft proposal loop on the

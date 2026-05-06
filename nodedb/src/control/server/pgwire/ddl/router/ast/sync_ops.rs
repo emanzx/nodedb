@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Synchronous DDL dispatch arms (no `.await`).
 
 use pgwire::api::results::Response;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Table scanning and import/export methods for `SparseEngine`.
 
 use tracing::debug;

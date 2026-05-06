@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin-aware test node that adds a sequencer Raft group to the
 //! standard `TestNode` harness.
 //!

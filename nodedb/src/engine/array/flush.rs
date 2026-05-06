@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Flush path: drain the memtable, build a sparse segment, atomically
 //! install it on disk, and persist the manifest.
 

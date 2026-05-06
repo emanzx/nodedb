@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for general CHECK constraints.
 //!
 //! Verifies that `ALTER COLLECTION ... ADD CONSTRAINT name CHECK (expr)` enforces

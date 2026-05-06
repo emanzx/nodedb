@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! AFTER STATEMENT trigger firing logic.
 //!
 //! AFTER STATEMENT triggers fire once per DML statement, not per row.

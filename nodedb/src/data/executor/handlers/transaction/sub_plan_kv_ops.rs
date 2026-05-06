@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV operation dispatch for transaction batches.
 
 use crate::bridge::envelope::{ErrorCode, Response, Status};

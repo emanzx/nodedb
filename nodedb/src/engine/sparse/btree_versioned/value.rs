@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Versioned payload format: `[tag:u8][valid_from_ms:i64 LE][valid_until_ms:i64 LE][body...]`.
 
 pub const TAG_LIVE: u8 = 0x00;

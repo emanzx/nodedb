@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KvEngine write operations: PUT, DELETE, EXPIRE, PERSIST.
 
 use nodedb_types::Surrogate;

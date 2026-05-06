@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Live query subscriptions via WebSocket.
 //!
 //! HTTP upgrade to WebSocket. Client sends a query filter (collection +

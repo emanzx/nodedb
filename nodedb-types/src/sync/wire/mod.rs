@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sync wire protocol: frame format and message types.
 //!
 //! Frame format: `[msg_type: 1B][length: 4B LE][rkyv/msgpack body]`

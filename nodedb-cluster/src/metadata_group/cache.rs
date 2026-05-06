@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-node in-memory view of the replicated metadata state.
 //!
 //! The cache tracks everything `nodedb-cluster` natively understands:

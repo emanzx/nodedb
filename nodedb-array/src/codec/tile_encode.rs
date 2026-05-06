@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Structural sparse-tile encoder.
 //
 // encode_sparse_tile writes the following into `out` (BlockFraming is applied

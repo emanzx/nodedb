@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TPC (Thread-per-Core) runtime for Data Plane cores.
 //!
 //! Replaces the naive `sleep(50µs)` busy-poll with an eventfd-driven wake

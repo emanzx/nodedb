@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE CHANGE STREAM` DDL handler.
 //!
 //! Syntax:

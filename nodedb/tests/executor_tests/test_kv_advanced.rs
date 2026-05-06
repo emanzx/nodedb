@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Advanced KV integration tests: protocol simulation, cross-engine,
 //! TTL+CDC, CRDT sync, secondary index stress.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Persistence glue for the array catalog.
 //!
 //! Mirrors the `trigger` / `sequence` registry pattern: the

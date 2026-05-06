@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequencer-specific error types.
 //!
 //! [`SequencerError`] is a typed error for all failure modes observed by

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authentication and ping handlers.
 
 use nodedb_types::protocol::{AuthMethod as ProtoAuth, NativeResponse};

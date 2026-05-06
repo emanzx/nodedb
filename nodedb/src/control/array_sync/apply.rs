@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`OriginApplyEngine`] — Control-Plane side of array op application on Origin.
 //!
 //! On Origin, array engine state (`ArrayEngine`) lives in the Data Plane

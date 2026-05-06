@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RaftLoop` struct, constructors, top-level run loop, and thin wrappers
 //! over `MultiRaft` proposal APIs. The tick body lives in
 //! [`super::tick`]; the inbound-RPC handler lives in

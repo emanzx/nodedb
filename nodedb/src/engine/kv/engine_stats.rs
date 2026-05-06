@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV engine expiry, truncate, and observability stats.
 //!
 //! Methods on [`super::engine::KvEngine`] for expiry wheel management,

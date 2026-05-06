@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Window function specification and evaluation.
 //!
 //! Evaluated after sort, before projection. Each spec produces a new column

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Executor-level OLLP surrogate verification tests.
 //!
 //! These tests validate the optimistic lock-based predicate (OLLP) verification

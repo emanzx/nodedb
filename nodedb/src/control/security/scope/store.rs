@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scope definition store: in-memory cache + redb persistence.
 //!
 //! A scope is a named bundle of permissions:

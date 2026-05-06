@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Auth-scoped API keys: `nda_` format, bound to `_system.auth_users`.
 //!
 //! Distinct from DB user keys (`ndb_`). Auth keys:

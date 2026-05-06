@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod buffer;
 pub mod compaction;
 pub mod consume;

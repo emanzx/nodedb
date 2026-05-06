@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine-name → `CollectionType` mapping for `CREATE COLLECTION` / `CREATE TABLE` DDL.
 //!
 //! The single public entry point is [`build_collection_type`]. It consumes the

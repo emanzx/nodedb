@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Online Pearson correlation coefficient (Welford-style).
 
 /// Online accumulator for Pearson correlation.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Streaming MV state persistence: periodic flush to redb + restore on startup.
 //!
 //! MvState is primarily in-memory for O(1) access. This module persists

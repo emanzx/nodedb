@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Metrics for unknown or mismatched wire versions observed on inbound frames.
 //!
 //! # Wiring

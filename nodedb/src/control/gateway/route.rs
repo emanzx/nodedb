@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Route decision types for the Gateway.
 //!
 //! [`TaskRoute`] pairs a sub-plan with where it should be executed.

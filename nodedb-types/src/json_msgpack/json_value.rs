@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `JsonValue` newtype wrapper around `serde_json::Value` with zerompk traits.
 
 use zerompk::{ToMessagePack, Write};

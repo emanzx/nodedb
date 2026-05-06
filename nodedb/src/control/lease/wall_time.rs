@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wall-clock helper shared by every lease code path that needs a
 //! "real time now" reference — the renewal loop, the drain tracker
 //! check, and the drain TTL computation. See `lease::renewal::tick`

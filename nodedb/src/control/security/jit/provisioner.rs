@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JIT (Just-In-Time) user provisioning from JWT claims.
 //!
 //! When `jit_provisioning = true`, users are automatically created in

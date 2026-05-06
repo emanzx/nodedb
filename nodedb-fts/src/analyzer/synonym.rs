@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Synonym expansion for query-time term enrichment.
 
 use std::collections::HashMap;

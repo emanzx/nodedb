@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PromQL built-in functions.
 //!
 //! All functions operate on sorted sample vectors and return a scalar or

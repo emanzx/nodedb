@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Join path: contact seeds, receive full cluster state, apply locally.
 //!
 //! The join loop is deliberately robust against two realistic cluster

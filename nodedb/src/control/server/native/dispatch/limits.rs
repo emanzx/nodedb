@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-operation cap enforcement for direct Data Plane operations.
 //!
 //! All caps come from `SharedState::limits`, which is populated at startup

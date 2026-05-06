@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PromQL tokenizer.
 
 use super::error::PromqlError;

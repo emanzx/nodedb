@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-core BFS orchestration contracts.
 //!
 //! `cross_core_bfs` (`nodedb/src/control/server/graph_dispatch.rs`) is the

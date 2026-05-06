@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL replication tests: collections, sequences, triggers, procedures, schedules, change streams.
 
 use std::time::Duration;

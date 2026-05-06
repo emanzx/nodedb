@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-tile Minimum Bounding Region + per-attr statistics.
 //!
 //! The MBR is recorded in the tile footer and indexed at the segment

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Server-side native protocol handshake.
 //!
 //! Called immediately after TCP (or TLS) accept, before any regular

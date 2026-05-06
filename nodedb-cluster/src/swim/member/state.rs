@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The four-valued SWIM member state machine.
 //!
 //! SWIM (with the Lifeguard refinement) tracks four distinct states per

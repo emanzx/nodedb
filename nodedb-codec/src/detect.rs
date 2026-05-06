@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Codec auto-detection from column type and data distribution.
 //!
 //! Analyzes up to the first 1024 values of a column to select the optimal

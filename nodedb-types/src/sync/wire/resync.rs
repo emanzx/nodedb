@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Re-sync request and throttle messages.
 
 use serde::{Deserialize, Serialize};

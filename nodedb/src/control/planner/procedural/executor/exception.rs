@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Exception condition matching for procedural SQL exception handlers.
 //!
 //! Maps error messages to exception conditions (OTHERS, SQLSTATE, named).

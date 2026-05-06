@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-runtime integration test.
 //!
 //! Proves the bridge works across real Tokio ↔ "TPC" thread boundaries:

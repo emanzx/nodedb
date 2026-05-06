@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Beam-search for the Vamana graph.
 //!
 //! Single-layer greedy traversal (Vamana has no upper layers unlike HNSW).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT BALANCE_AS_OF('collection', 'key', 'column', 'timestamp')`
 //!
 //! Returns `current_balance - SUM(value_expr over source rows WHERE created_at > timestamp)`.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL dispatch: DataFusion planning + Data Plane execution.
 
 use nodedb_types::TraceId;

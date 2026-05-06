@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar UPDATE and DELETE handlers for plain/spatial collections.
 //!
 //! Uses `nodedb-columnar`'s `MutationEngine` for full mutation support

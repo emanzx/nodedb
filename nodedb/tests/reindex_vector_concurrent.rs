@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! REINDEX VECTOR CONCURRENTLY must not degrade query p99 beyond 2× during rebuild.
 //!
 //! Inserts 10K random 128-d vectors (deterministic seed), establishes a

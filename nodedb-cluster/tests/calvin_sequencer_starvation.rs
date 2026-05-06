@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Starvation property test for the Calvin sequencer inbox.
 //!
 //! Eight OS threads each submit transactions in a tight loop for 200 ms. All

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Type guard enforcement: per-field type + CHECK validation at write time.
 //!
 //! Evaluated on the Data Plane before WAL append. If any guard fails,

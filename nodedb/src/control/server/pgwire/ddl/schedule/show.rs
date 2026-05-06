@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW SCHEDULES` and `SHOW SCHEDULE HISTORY` DDL handlers.
 
 use std::sync::Arc;

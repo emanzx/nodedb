@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Protocol listener spawning for all non-native listeners.
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CollectionTombstoned` record payload codec.
 //!
 //! Fixed little-endian wire format (no serde dep pulled into `nodedb-wal`):

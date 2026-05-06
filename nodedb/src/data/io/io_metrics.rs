@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-priority IO metrics for the io_uring submission path.
 //!
 //! Tracks queue depth and submission-to-completion latency separately for

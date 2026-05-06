@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `KeyDerivation` config enum and its mapping to a concrete `KeyProvider`.
 
 use std::path::PathBuf;

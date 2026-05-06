@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Point operation handlers: PointGet, PointPut, PointDelete, PointUpdate,
 //! plus the shared `apply_point_put` transaction helper.
 //!

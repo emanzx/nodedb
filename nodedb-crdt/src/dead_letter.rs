@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dead-letter queue for rejected CRDT deltas.
 //!
 //! When a delta fails constraint validation at commit time, it's not silently

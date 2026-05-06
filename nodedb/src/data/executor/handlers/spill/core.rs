@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Generic spill-to-disk file I/O shared by all GROUP BY spillers.
 //!
 //! `SpillCore<K, V>` handles serializing an in-memory map to temp files and

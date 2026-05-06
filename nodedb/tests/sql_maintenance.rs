@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for maintenance commands: ANALYZE, COMPACT, REINDEX, SHOW STORAGE.
 
 mod common;

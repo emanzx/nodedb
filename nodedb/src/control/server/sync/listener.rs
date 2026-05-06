@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WebSocket listener for NodeDB-Lite sync connections.
 //!
 //! Accepts `ws://` connections on the Tokio Control Plane. Each connection

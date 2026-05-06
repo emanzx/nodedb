@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-lifecycle retention configuration.
 //!
 //! Controls how long a soft-deleted collection (status `is_active =

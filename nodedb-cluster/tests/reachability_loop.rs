@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Reachability loop closes the circuit-breaker blind spot.
 //!
 //! Scenario: peer 42 starts out unreachable so its breaker opens.

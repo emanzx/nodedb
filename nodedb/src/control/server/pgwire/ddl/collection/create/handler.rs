@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The `create_collection` pgwire handler.
 //!
 //! All DDL fields arrive pre-parsed from the `nodedb-sql` AST layer.

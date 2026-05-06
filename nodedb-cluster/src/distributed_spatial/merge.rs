@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard spatial result merging.
 //!
 //! Unlike vector search (which needs distance re-ranking), spatial predicates

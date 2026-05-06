@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the catalog recovery sanity check pipeline.
 //!
 //! Each test builds a real `SharedState` backed by a tempdir `system.redb`,

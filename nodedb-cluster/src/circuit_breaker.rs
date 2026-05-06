@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-peer circuit breaker and retry policy for RPC resilience.
 //!
 //! The circuit breaker prevents sending RPCs to peers that are consistently

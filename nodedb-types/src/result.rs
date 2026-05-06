@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query result types returned by the `NodeDb` trait methods.
 
 use std::collections::HashMap;

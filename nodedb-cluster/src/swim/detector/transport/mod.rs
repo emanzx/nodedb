@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SWIM transport abstraction.
 //!
 //! The detector talks to the network exclusively through the [`Transport`]

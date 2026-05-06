@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIMD-accelerated bitmap operations on `&[u64]` word arrays.
 //!
 //! Provides bulk AND/OR for the custom fixed-width bitmaps in `bitmap_index.rs`.

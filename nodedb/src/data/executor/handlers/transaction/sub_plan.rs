@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-sub-plan execution within a transaction batch.
 
 use crate::bridge::envelope::{ErrorCode, PhysicalPlan, Response, Status};

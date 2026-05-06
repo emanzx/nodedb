@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection name validation tests.
 
 /// Collection name validation: allowed chars are `[a-zA-Z0-9_-]`.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use crate::error::Result;
 use crate::message::LogEntry;
 use crate::state::HardState;

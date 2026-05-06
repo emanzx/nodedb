@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared HTTP route helpers: request ID extraction, plan dispatch.
 //!
 //! Used by the CRDT endpoint and any future dedicated endpoints.

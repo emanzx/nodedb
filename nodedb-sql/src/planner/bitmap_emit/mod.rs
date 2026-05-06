@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Planner analysis passes for selective-predicate → bitmap pushdown.
 //!
 //! These passes inspect `SqlPlan` join children and return hints about which

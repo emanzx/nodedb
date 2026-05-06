@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ApiKey post-apply side effects — upsert / mark-revoked the
 //! in-memory `api_keys` cache.
 

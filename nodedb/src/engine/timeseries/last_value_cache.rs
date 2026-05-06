@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Last-Value Cache: O(1) lookup of the most recent (timestamp, value) per series.
 //!
 //! Updated atomically on every write to the timeseries memtable.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RETURNING clause pre-processing for DML statements.
 //!
 //! DataFusion does not support RETURNING on DML (INSERT/UPDATE/DELETE).

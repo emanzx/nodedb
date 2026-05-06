@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Background apply loop — reads committed Raft entries from the mpsc channel,
 //! dispatches them through the SPSC bridge to the Data Plane, and resolves
 //! propose waiters with the result.

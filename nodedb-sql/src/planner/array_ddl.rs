@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Planner for `CREATE ARRAY` and `DROP ARRAY`.
 //!
 //! Validation is engine-agnostic: name non-empty, dims non-empty, attrs

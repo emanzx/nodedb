@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Memory-pressure awareness for the Data Plane core loop.
 //!
 //! Two concerns live here:

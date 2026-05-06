@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Internal state transitions and replication logic.
 
 use std::time::{Duration, Instant};

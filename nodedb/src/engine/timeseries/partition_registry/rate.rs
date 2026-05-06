@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Exponentially weighted moving average rate estimator for AUTO interval mode.
 
 use nodedb_types::timeseries::PartitionInterval;

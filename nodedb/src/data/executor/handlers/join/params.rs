@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared parameter structs for join execution handlers.
 
 use crate::bridge::envelope::PhysicalPlan;

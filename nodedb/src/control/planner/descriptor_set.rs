@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-plan descriptor version set — the C.6 plan-cache key.
 //!
 //! When the planner resolves a collection through

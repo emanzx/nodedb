@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Helpers for `array_cluster_exec`: agg-partial finalisation, error mappers,
 //! and response-opcode → `VShardMessageType` lookup for the local-dispatch
 //! fast path.

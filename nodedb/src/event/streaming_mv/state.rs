@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-MV, per-group-key partial aggregate state.
 //!
 //! Supports incremental updates: each incoming event updates only the

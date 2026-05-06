@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helpers for PromQL HTTP handlers.
 
 use axum::http::StatusCode;

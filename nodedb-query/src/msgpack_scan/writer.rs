@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Msgpack scalar writers for constructing response messages, aggregate results,
 //! projections, and other output data — all in raw msgpack without intermediary types.
 //!

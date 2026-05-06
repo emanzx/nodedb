@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL constraint definitions for CRDT collections.
 //!
 //! Constraints are checked at commit time against the leader's state.

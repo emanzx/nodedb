@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial join strategy: R-tree probe join.
 //!
 //! When two collections are joined on a spatial predicate

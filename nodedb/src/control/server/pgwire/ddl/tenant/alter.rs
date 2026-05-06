@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER TENANT <id> SET QUOTA <field> = <value>` handler.
 //!
 //! Tenant quotas live in the in-memory `TenantStore` and are not part

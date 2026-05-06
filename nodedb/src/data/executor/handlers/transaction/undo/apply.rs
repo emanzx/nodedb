@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-engine undo entry application logic.
 //!
 //! Each `apply_undo_*` method handles one engine family's undo entries.

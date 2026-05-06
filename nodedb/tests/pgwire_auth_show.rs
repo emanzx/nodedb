@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SHOW commands (SHOW SESSION, SHOW GRANTS) over the DDL path.
 
 mod common;

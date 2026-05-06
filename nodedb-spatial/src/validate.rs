@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Geometry validation (geo_is_valid).
 //!
 //! Checks structural validity per OGC Simple Features:

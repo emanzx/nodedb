@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Change Data Capture (CDC) API endpoints.
 //!
 //! Two modes:

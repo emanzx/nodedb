@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CalvinReadResult` handling and dependent-read barrier timeout sweeps.
 
 use tracing::warn;

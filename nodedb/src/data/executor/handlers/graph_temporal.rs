@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal graph handlers.
 //!
 //! Implements [`GraphOp::TemporalNeighbors`] and [`GraphOp::TemporalAlgorithm`]

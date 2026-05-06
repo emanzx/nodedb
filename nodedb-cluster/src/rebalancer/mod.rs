@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Load-based automatic rebalancer.
 //!
 //! This module is the *signal* side of the rebalancer: given a

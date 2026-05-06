@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL SELECT on KV collections must return rows with each projected
 //! column as its own field, the same way every other engine does.
 //! Protocol dictates response shape, not engine.

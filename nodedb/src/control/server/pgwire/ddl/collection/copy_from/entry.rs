@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Entry point: `copy_from_file`, path validation, and engine-support check.
 
 use std::path::Path;

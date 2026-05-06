@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Property column store — columnar property storage for graph analytics.
 //!
 //! Extracts node/edge properties from the edge store into columnar arrays

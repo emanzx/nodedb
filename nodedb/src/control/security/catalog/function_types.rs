@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Type definitions for user-defined function catalog storage.
 
 /// Parameter definition for a user-defined function.

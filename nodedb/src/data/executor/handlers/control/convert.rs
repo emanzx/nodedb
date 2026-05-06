@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Conversion utilities for CRDT value types.
 
 /// Convert a `serde_json::Value` to a `loro::LoroValue`.

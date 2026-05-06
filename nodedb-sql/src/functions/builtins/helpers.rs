@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared builders for built-in function registrations.
 
 use nodedb_types::columnar::ColumnType;

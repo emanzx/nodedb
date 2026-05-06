@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pcodec wrapper for complex numerical sequences.
 //!
 //! For data where ALP's decimal-to-integer trick doesn't apply (scientific

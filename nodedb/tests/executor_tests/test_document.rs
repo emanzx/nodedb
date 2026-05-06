@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for document operations (PointGet/Put/Delete, RangeScan, CRDT).
 
 use nodedb::bridge::envelope::{ErrorCode, PhysicalPlan, Status};

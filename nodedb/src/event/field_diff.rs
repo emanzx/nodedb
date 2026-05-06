@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Field-level change diffing for CDC events.
 //!
 //! Compares `old_value` and `new_value` JSON objects to produce per-field diffs.

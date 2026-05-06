@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Count-Min Sketch — approximate frequency estimation for high-cardinality streams.
 //!
 //! Fixed memory: `width × depth × 8` bytes. Default (1024 × 4) = 32 KB.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Describe overrides for prepared statements and portals.
 //!
 //! Provides real parameter types and result schemas instead of the

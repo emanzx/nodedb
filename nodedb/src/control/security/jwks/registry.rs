@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-provider JWKS registry: routes JWT tokens to the correct provider,
 //! fetches keys on demand, and validates signatures.
 

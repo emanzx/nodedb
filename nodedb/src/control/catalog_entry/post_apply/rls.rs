@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-apply side effects for RLS policy `CatalogEntry` variants.
 //!
 //! After the synchronous `apply::rls` step has written the redb row,

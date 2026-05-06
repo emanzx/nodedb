@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read handlers: GRAPH TRAVERSE, GRAPH NEIGHBORS, GRAPH PATH.
 
 use pgwire::api::results::Response;

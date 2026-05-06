@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DML dispatch and transaction control for the statement executor.
 
 use super::super::transaction::ProcedureTransactionCtx;

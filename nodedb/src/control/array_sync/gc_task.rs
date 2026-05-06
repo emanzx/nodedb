@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ArrayGcTask`] — periodic log compaction for array CRDT sync.
 //!
 //! Spawned once at startup by `SharedState::open`. Every `interval` seconds:

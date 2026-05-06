@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for trigger execution: BEFORE, INSTEAD OF, AFTER STATEMENT,
 //! SECURITY DEFINER, CRDT non-duplication, cascade depth, DML hook classification.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition assignment for consumer groups.
 //!
 //! Within a consumer group, partitions (vShards) are distributed across

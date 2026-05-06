@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RPC handlers for incoming Raft messages.
 
 use tracing::{debug, info, warn};

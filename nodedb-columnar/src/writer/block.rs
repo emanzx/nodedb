@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column block encoding: `encode_column_blocks` and the per-block dispatch logic.
 
 use std::sync::Arc;

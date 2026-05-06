@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ArrayOp::Slice` and `ArrayOp::Project` handlers.
 //!
 //! Both are read-only fan-outs over the engine's tile scan. Slice

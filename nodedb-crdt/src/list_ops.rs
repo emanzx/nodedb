@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LoroMovableList operations for block document model.
 //!
 //! A block document is a LoroMap with a `blocks` field that is a

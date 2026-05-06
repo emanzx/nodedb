@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array schema CRDT sync wire message.
 
 use serde::{Deserialize, Serialize};

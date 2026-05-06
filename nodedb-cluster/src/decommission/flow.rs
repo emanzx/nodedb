@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Decommission flow — emit the full ordered sequence of metadata
 //! entries that move a node from `Active` to fully removed.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MessagePack encoding for grouped timeseries aggregate results.
 
 use nodedb_query::agg_key::canonical_agg_key;

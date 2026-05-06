@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! TDigest — approximate percentile estimation (mergeable centroids).
 
 /// Centroid in the t-digest: represents a cluster of values.

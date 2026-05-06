@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parameter structs for scan/search plan conversion functions.
 
 use nodedb_sql::types::{

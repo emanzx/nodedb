@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-collection analyzer and synonym registry.
 
 use std::collections::HashMap;

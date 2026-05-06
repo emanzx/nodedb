@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-core BFS and shortest-path orchestration for graph traversal.
 //!
 //! In single-node mode, BFS is local: the Control Plane broadcasts

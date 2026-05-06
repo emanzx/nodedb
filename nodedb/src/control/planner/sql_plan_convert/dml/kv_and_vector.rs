@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_sql::types::{KvInsertIntent, SqlExpr, SqlValue, VectorPrimaryRow};
 
 use crate::bridge::envelope::PhysicalPlan;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ExecuteRequest / ExecuteResponse — cross-node physical-plan execution RPC.
 //!
 //! Discriminants 18 and 19 are permanently assigned to these variants.

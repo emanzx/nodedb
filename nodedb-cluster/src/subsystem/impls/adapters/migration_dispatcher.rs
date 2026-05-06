@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`MigrationDispatcher`] adapter backed by [`MigrationExecutor`].
 //!
 //! Converts a [`PlannedMove`] (from the rebalancer plan) into a

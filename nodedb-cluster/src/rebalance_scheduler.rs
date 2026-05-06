@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rebalance scheduler: automatic trigger-based shard redistribution.
 //!
 //! Monitors cluster health metrics and triggers rebalancing when:

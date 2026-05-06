@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP handlers for Redis-compatible sorted set commands.
 //!
 //! ZADD, ZREM, ZRANK, ZREVRANK, ZRANGE, ZRANGEBYSCORE, ZCARD, ZSCORE, ZINCRBY.

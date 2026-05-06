@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spill-to-disk manager for the native columnar GROUP BY path.
 //!
 //! The columnar path uses `GroupKey = Vec<GroupKeyPart>` (integer/symbol IDs)

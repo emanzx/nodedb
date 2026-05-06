@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PointPut: insert or overwrite one document, committing storage + indexes
 //! + stats in a single redb transaction via `apply_point_put`.
 

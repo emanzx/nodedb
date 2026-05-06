@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! FTS query parser: recognises `NOT <term>` and `-<term>` negation operators.
 //!
 //! The parser is intentionally flat — parentheses are not supported. Attempting

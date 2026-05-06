@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ALTER FUNCTION ... OWNER TO` DDL handler.
 
 use pgwire::api::results::{Response, Tag};

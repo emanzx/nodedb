@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate WAL crash-recovery: every `(collection, pk)` binding emitted
 //! before a force-kill must be re-derivable from the WAL on restart, and
 //! the registry hwm must not regress.

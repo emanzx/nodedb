@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NodeDB Array Engine — LSM-style storage on top of `nodedb-array` segments.
 //!
 //! Lives in the Data Plane: `!Send`, no tokio. Persistence routes through

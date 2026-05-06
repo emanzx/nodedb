@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Flat (brute-force) vector index for small collections.
 //!
 //! Simple linear scan over all stored vectors. No graph overhead, exact

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! INSERT conflict semantics for columnar-family engines.
 //!
 //! Columnar storage is OLAP-shaped (append-only segments, zonemap pruning),

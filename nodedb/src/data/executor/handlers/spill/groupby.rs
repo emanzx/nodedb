@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spill-to-disk manager for the schemaless GROUP BY aggregation path.
 //!
 //! Uses `String`-keyed `GroupState` accumulators, spilling to temp files when

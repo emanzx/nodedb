@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Group-level membership helpers consumed by the tick loop's join /
 //! promotion phases.
 //!

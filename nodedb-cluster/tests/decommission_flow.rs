@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end decommission flow.
 //!
 //! Wires every piece of the decommission subsystem together without

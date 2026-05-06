@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph engine operations dispatched to the Data Plane.
 
 use nodedb_types::{Surrogate, SurrogateBitmap};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authentication object replication tests: users, roles, API keys.
 
 use std::time::Duration;

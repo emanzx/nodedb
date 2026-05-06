@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GeoParquet and GeoArrow metadata for geometry columns.
 //!
 //! GeoParquet: JSON metadata in Parquet file key-value metadata that tells

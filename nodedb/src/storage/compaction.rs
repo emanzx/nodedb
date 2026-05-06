@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LSM-style L1 segment compaction and HNSW segment merging.
 //!
 //! **L1 segment compaction**: merge small L1 segments into larger ones.

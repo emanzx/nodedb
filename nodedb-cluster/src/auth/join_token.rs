@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HMAC-SHA256 join-token issuance and constant-time verification.
 //!
 //! Token format (opaque to callers, transmitted as hex):

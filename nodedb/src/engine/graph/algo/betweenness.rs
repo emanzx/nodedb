@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Betweenness Centrality — Brandes' algorithm on the CSR index.
 //!
 //! For each source node s, run BFS from s, then accumulate dependency

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WorkloadAnalyzer — tracks historical query predicates and exposes a 3D cost
 //! model (memory × latency × recall) to guide SIEVE subindex build decisions.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for array operators and array aggregate functions.
 
 use nodedb::bridge::envelope::PhysicalPlan;

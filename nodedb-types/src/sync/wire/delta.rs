@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Delta push / ack / reject / collection-purged messages.
 
 use serde::{Deserialize, Serialize};

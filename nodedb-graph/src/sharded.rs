@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant-partitioned CSR index.
 //!
 //! The graph engine multiplexes many tenants onto one per-core `CsrIndex`.

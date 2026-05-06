@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate hwm persistence trait + concrete `SystemCatalog`-backed impl.
 //!
 //! The redb storage layout (singleton `_system.surrogate_hwm` table) lives

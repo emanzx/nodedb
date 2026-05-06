@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CredentialStore` struct + constructors + private helpers.
 //!
 //! Other concerns (crud, auth, list, replication) live in sibling

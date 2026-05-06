@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Re-bucket cells into a different tile-extent layout.
 //!
 //! The same schema may be re-tiled (different `tile_extents`) for a

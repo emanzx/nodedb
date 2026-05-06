@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Core text analysis trait and the default English analysis pipeline.
 //!
 //! Pipeline stages (applied at both index time and query time):

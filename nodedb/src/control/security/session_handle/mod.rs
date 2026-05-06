@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Opaque session handle store: maps CSPRNG handles to cached `AuthContext`.
 //!
 //! Allows connection poolers and stateless clients to authenticate once via

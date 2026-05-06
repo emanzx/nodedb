@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal columnar — row-level visibility predicate.
 //!
 //! Unit-scope test: the collection-level write path is covered by

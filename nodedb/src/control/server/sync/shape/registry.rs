@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-client shape registry: tracks which shapes each connected client
 //! is subscribed to and evaluates mutations against active shapes.
 

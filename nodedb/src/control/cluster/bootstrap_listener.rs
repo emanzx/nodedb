@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Host-side glue for the cluster bootstrap listener (L.4).
 //!
 //! Wires `nodedb-cluster`'s transport-only listener to the local

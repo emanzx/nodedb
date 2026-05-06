@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW CONSTRAINTS ON <collection>` — unified view of all constraint kinds.
 
 use std::sync::Arc;

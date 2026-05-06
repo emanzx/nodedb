@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Search algorithm for `HnswCodecIndex<C>`.
 //!
 //! Two-stage HNSW search:

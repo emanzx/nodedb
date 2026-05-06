@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column and table resolution against the catalog.
 
 use std::collections::HashMap;

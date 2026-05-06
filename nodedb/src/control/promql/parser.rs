@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Recursive descent PromQL parser.
 //!
 //! Parses a token stream (from [`super::lexer::tokenize`]) into an AST.

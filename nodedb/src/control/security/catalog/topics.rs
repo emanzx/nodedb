@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Durable topic metadata operations for the system catalog.
 
 use super::types::{SystemCatalog, TOPICS_EP, catalog_err};

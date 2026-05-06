@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft-backed `TokenStateBackend` for crash-safe single-use enforcement.
 //!
 //! # Design

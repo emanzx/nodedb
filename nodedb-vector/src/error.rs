@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector engine error types.
 
 use nodedb_mem::MemError;

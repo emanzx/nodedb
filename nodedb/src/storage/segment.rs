@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use std::io::{Read, Write};
 use std::path::Path;
 

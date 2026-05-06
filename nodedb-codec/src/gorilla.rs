@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gorilla XOR encoding for floating-point timeseries metrics.
 //!
 //! Implements the Facebook Gorilla paper's XOR-based compression for

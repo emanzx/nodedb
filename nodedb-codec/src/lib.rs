@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compression codecs for NodeDB timeseries columnar storage.
 //!
 //! Provides per-column codec selection with **cascading compression**:

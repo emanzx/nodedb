@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod decode;
 pub mod encode;
 pub mod hilbert;

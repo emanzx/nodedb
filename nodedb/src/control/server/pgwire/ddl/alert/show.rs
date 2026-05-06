@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW ALERTS` and `SHOW ALERT STATUS ON <name>` DDL handlers.
 
 use std::sync::Arc;

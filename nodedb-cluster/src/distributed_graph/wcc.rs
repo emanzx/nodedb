@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Distributed WCC — cross-shard component merging via label propagation.
 //!
 //! Each shard computes local WCC via union-find, then iteratively exchanges

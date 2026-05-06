@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cache isolation across tenants.
 //!
 //! Tests that the timeseries query_cache and recent_cache do not leak

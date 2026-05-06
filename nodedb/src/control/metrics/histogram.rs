@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lock-free histogram for latency distributions.
 //!
 //! Fixed bucket boundaries with atomic counters. O(1) recording,

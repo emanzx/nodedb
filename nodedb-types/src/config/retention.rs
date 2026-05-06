@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-engine bitemporal retention configuration.
 //!
 //! Bitemporal collections split "retention" along two independent axes:

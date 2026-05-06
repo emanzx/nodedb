@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! VectorCollection search: multi-segment merging with SQ8 reranking.
 //!
 //! The `search_with_payload_filter` method wires payload bitmap pre-filtering

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bounded connection pool for native protocol connections.
 //!
 //! Uses a semaphore for max-size enforcement and a std::sync::Mutex

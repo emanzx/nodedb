@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! EXCEPTION handler parsing for procedural SQL blocks.
 
 use super::super::ast::*;

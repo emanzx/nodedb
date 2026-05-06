@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MATCH pattern executor — runs pattern matching on the CSR index.
 //!
 //! Takes a parsed `MatchQuery` and produces a result set of bound variable

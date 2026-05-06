@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL handlers for continuous aggregates.
 //!
 //! - `CREATE CONTINUOUS AGGREGATE <name> ON <source> BUCKET '5m' AGGREGATE sum(col) AS alias [, ...] [GROUP BY col, ...] [WITH (...)]`

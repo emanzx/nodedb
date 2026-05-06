@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stable `kind()` label coverage across variants.
 
 use crate::control::catalog_entry::entry::CatalogEntry;

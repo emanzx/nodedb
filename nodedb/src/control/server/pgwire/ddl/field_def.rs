@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DEFINE FIELD handler.
 //!
 //! Parses: DEFINE FIELD <name> ON <collection> [TYPE <type>] [DEFAULT <expr>]

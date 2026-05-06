@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Entry points: aggregate_memtable and aggregate_partition.
 //!
 //! Builds filter bitmask, applies sparse index skip, then dispatches

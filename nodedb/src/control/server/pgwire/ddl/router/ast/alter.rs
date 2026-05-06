@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ALTER COLLECTION dispatcher: maps `AlterCollectionOp` to individual handlers.
 
 use pgwire::api::results::Response;

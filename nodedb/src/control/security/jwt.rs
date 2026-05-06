@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JWT (JSON Web Token) bearer token authentication.
 //!
 //! Validates JWTs presented as `Authorization: Bearer <token>` headers

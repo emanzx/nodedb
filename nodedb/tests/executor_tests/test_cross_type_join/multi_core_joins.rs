@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-core broadcast join and inline hash join tests.
 
 use crate::helpers::{make_ctx_with_id, send_ok};

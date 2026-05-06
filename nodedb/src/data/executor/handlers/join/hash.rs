@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hash join core data structures and algorithm — index build and probe.
 
 use nodedb_query::msgpack_scan;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft single-group state machine.
 //!
 //! Split across files:

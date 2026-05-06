@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Liveness-driven routing invalidation.
 //!
 //! [`RoutingLivenessHook`] is a [`MembershipSubscriber`] that clears

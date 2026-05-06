@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SELECT VERIFY_HASH_CHAIN('collection')`
 //!
 //! Scans documents in the collection, verifies each hash chain link.

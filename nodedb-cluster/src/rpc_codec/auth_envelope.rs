@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authenticated frame envelope wrapping the existing RPC wire frame.
 //!
 //! # Layout

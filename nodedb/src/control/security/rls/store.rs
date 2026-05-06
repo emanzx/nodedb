@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RlsPolicyStore` — in-memory policy registry keyed by
 //! `(tenant_id, collection)`. CRUD + scoped query methods live
 //! here; evaluation logic is in [`super::eval`].

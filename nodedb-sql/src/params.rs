@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! AST-level parameter binding for prepared statements.
 //!
 //! Every `Value::Placeholder("$N")` in a parsed statement is rewritten to

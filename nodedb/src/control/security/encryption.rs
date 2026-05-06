@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Master-key + DEK envelope used for the WAL's AES-256-GCM record
 //! encryption. The DEK is generated at random per file, wrapped under
 //! the master key with AES-256-GCM (authenticated key wrapping), and

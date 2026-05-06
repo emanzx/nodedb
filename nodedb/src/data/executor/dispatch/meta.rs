@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatch for MetaOp variants (WAL, snapshots, retention, continuous aggregates).
 
 use crate::bridge::envelope::Response;

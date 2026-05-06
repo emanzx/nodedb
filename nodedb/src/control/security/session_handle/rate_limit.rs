@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-connection sliding-window rate limiter for `SET LOCAL
 //! nodedb.auth_session` attempts.
 //!

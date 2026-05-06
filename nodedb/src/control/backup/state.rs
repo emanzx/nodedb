@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-connection state tracking pending COPY IN restore operations.
 //!
 //! pgwire's COPY protocol spans multiple wire messages:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document engine plan builders.
 
 use nodedb_types::CollectionType;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Enforcement-option parsing and projection helpers:
 //!
 //! - [`parse_balanced_clause`]        — WITH BALANCED ON (...) parser

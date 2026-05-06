@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Two-node churn during rebalance.
 //!
 //! `elastic_scaling.rs` covers a single new joiner. This test covers

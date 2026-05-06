@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Microseconds-precision signed duration type.
 
 use serde::{Deserialize, Serialize};

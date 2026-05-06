@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pairwise binary ops between two coord-aligned sparse tiles.
 //!
 //! Both inputs must share the same schema (same dim arity, same attr

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft configuration-change propose/apply with learner semantics.
 //!
 //! `propose_conf_change` writes a `ConfChange` payload (see

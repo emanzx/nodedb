@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `apply_and_disseminate` — keep the dissemination queue consistent
 //! with every [`MembershipList::apply`] outcome.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Variable-width bitpacking for `u32` arrays.
 //!
 //! Packs an array of u32 values using the minimum number of bits per value.

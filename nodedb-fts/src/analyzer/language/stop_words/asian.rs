@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stop word lists for Asian languages.
 //! CJK languages (Chinese, Japanese, Korean) primarily use particles/function words.
 //! Languages with whitespace (Hindi, Indonesian, Vietnamese) use conventional stop words.

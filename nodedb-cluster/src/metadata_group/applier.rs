@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`MetadataApplier`] trait: the contract raft_loop uses to dispatch
 //! committed entries on the metadata group (group 0).
 

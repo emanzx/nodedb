@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Supporting row and intent types for SqlPlan.
 
 use crate::types_expr::SqlValue;

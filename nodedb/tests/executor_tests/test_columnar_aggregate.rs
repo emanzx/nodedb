@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use crate::helpers::{make_ctx, payload_value, send_ok};
 use nodedb::bridge::envelope::PhysicalPlan;
 use nodedb::bridge::physical_plan::{AggregateSpec, ColumnarInsertIntent, ColumnarOp, QueryOp};

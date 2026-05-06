@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query endpoint — execute SQL/DDL via HTTP POST.
 //!
 //! POST /v1/query { "sql": "SELECT * FROM users LIMIT 10" }

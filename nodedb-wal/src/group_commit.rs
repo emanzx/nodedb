@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Group commit coordinator.
 //!
 //! Batches concurrent WAL write requests into a single fsync for maximum NVMe IOPS.

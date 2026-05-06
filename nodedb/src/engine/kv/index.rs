@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV secondary indexes: in-memory B-Tree indexes on value fields.
 //!
 //! Each `KvFieldIndex` maps a single field's value → set of primary keys.

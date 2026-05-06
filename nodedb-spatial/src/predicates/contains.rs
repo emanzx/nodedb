@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ST_Contains — geometry A fully contains geometry B.
 //!
 //! DE-9IM pattern: T*****FF* — B's interior intersects A's interior, and

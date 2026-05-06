@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Impersonation & delegation: admin acts as user, user delegates to another.
 //!
 //! Impersonation: `IMPERSONATE AUTH USER 'x'` — admin assumes user's identity.

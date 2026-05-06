@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW TENANT USAGE` and `SHOW TENANT QUOTA` read-only handlers.
 
 use std::sync::Arc;

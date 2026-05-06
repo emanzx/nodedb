@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! HashJoin bitmap-emission analysis.
 //!
 //! Given the two children of a `SqlPlan::Join`, this module determines which

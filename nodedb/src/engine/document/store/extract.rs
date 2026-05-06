@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JSON / MessagePack conversion and secondary-index value extraction.
 
 /// Strip the leading `$.` or `$` prefix from a JSON path expression.

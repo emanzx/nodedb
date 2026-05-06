@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Materialized sum: on INSERT to source collection, atomically update balance
 //! on the target collection within the same Data Plane transaction.
 //!

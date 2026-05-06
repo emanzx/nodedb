@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Auto-ANALYZE trigger: tracks DML counts per collection and triggers
 //! automatic ANALYZE when a threshold is exceeded.
 //!

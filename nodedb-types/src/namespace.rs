@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Storage namespace identifiers for the blob KV store.
 //!
 //! Both SQLite (native) and OPFS (WASM) backends use the same namespace

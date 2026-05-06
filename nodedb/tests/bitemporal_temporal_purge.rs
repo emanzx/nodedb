@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal audit-retention temporal-purge end-to-end integration.
 //!
 //! Covers the three purge paths that share the `MetaOp::TemporalPurge*`

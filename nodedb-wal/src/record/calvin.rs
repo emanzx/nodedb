@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin scheduler WAL payload types.
 //!
 //! Uses fixed little-endian encoding (no msgpack framing) for zero-allocation

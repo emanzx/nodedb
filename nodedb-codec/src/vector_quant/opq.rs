@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Optimized Product Quantization (OPQ) — Non-Para OPQ via iterative
 //! SVD-Procrustes rotation that minimizes PQ reconstruction error, yielding
 //! 10–20% recall improvement over vanilla PQ at equal memory.

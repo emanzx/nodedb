@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Algorithm result → Arrow RecordBatch conversion.
 //!
 //! Converts algorithm output (per-node scores, component IDs, etc.)

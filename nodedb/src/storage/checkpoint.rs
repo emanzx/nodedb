@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Checkpoint spread / dirty page throttling.
 //!
 //! Prevents checkpoint storms by tracking dirty page counts per engine

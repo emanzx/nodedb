@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Violation types for DLQ classification.
 //!
 //! When a sync delta is rejected, the `ViolationType` categorizes *why* it

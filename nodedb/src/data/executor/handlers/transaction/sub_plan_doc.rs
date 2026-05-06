@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document PointPut and PointDelete helpers for transaction sub-plans.
 
 use crate::bridge::envelope::{ErrorCode, Response};

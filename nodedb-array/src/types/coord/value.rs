@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Variable-arity ND coordinate.
 //!
 //! A `Coord` is one cell address: a tuple of per-dimension scalars.

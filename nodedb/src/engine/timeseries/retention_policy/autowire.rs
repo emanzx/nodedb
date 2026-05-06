@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Auto-wiring: create/remove continuous aggregates from retention policy tiers.
 //!
 //! When a retention policy is created, this module builds a `ContinuousAggregateDef`

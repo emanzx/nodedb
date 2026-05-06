@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unicode script detection for CJK and other non-Latin scripts.
 //!
 //! Routes text segments to the appropriate tokenization path:

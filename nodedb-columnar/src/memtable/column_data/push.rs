@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Append operations on `ColumnData`: push owned values and push borrowed values.
 
 use nodedb_types::value::Value;

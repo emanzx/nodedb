@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-agent UNIQUE auto-rename: 3 agents offline simultaneously all claim
 //! the same email; under `RenameSuffix` the suffix counter advances
 //! monotonically (`_1`, `_2`) and conflict-free deltas accept directly.

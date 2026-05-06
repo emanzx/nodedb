@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire-enum stability snapshot tests.
 //!
 //! Each test asserts the exact JSON form for every known variant.

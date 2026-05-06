@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Atomic KV operations: INCR, INCR_FLOAT, CAS, GETSET.
 //!
 //! All operations are atomic within a single TPC core (which owns the key's

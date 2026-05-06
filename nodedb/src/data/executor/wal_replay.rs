@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL replay for CoreLoop startup recovery: vector + KV engines.
 
 use super::core_loop::CoreLoop;

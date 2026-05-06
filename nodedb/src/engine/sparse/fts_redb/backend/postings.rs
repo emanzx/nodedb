@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Posting-list operations against the `POSTINGS` table
 //! keyed by `(tenant_id, collection, term)`.
 

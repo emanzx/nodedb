@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal retention: backfill preservation + version-lossless compaction.
 //!
 //! Retention on bitemporal timeseries keys off `max_system_ts` (when the

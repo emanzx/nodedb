@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Convert sqlparser AST expressions to our SqlExpr IR.
 
 use sqlparser::ast::{self, Expr, Value};

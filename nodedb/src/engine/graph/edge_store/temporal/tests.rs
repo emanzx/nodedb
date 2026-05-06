@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration of keys + payload + write + read paths.
 
 #![cfg(test)]

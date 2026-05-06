@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE SEARCH INDEX` DSL handler (higher-level alias for fulltext).
 
 use pgwire::api::results::{Response, Tag};

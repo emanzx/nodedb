@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SWIM probe message structs.
 //!
 //! These are the four datagram types the failure detector exchanges

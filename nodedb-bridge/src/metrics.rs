@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bridge throughput and backpressure metrics.
 //!
 //! All counters are atomic so they can be read from any thread (e.g., a metrics

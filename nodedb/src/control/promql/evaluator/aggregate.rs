@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregation operator evaluation.
 
 use std::collections::BTreeMap;

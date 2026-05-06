@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Inbound Raft RPC dispatch — `impl RaftRpcHandler for RaftLoop`.
 //!
 //! Each RPC variant is either handled inline (Raft consensus RPCs that

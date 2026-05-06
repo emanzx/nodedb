@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GeoJSON-compatible geometry types.
 //!
 //! Supports Point, LineString, Polygon, MultiPoint, MultiLineString,

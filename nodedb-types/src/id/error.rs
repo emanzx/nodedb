@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared error type for string-based identifier validation.
 
 /// Maximum byte length for all string ID types.

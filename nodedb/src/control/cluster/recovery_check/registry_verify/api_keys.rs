@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ApiKeyStore` verifier. Compares by `key_id`, value
 //! encodes `(username, revoked, expires_at)` so ALTER /
 //! REVOKE divergences surface as value mismatches.

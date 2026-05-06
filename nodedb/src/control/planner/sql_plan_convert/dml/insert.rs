@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_sql::types::{EngineType, SqlExpr, SqlValue};
 use nodedb_types::Surrogate;
 

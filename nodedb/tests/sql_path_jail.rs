@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Filesystem paths are not part of the SQL surface.
 //!
 //! `BACKUP TENANT`, `RESTORE TENANT` (+ `DRY RUN`), `COPY <coll> FROM`,

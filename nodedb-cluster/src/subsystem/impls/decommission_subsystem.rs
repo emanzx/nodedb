@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`DecommissionSubsystem`] — wraps the [`DecommissionObserver`] lifecycle.
 //!
 //! Depends on `swim` because the observer polls topology state that is

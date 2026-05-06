@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Prometheus serialization: WAL, replication, bridge, compaction, auth, connections, queries.
 
 use std::fmt::Write;

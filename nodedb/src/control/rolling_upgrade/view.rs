@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster-wide version view derived on demand from the live
 //! `ClusterTopology` — no shadow state, no seeded-once field.
 //!

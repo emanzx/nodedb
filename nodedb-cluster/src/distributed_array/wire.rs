@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire types for array shard RPC messages.
 //!
 //! All request/response pairs are zerompk-serialisable. Complex sub-payloads

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ALP-RD (Real Doubles) codec for true arbitrary f64 values.
 //!
 //! For full-precision doubles (scientific data, vector embeddings) where

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Plan-time constant folding for `SqlExpr`.
 //!
 //! Evaluates literal expressions and registered zero-or-few-arg scalar

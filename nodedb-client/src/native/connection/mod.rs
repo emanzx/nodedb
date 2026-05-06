@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single TCP connection to a NodeDB server over the native binary protocol.
 //!
 //! Handles MessagePack framing, request/response correlation via sequence

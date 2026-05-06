@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIMD-accelerated aggregation kernels for timeseries f64 columns.
 //!
 //! Runtime CPU detection selects the fastest available path:

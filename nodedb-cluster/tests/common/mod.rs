@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 #![allow(dead_code, unused_imports)]
 
 pub mod calvin_test_node;

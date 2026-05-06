@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Binary Quantization (BQ): sign-bit encoding + Hamming distance.
 //!
 //! Each dimension is encoded as a single bit: 1 if positive, 0 if negative.

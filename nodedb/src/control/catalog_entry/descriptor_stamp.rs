@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Descriptor versioning stamp helpers.
 //!
 //! Called by the metadata commit applier right before any `Put*`

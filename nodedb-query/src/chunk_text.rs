@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CHUNK_TEXT(text, chunk_size, overlap, strategy)` — deterministic text splitting.
 //!
 //! Splits a text string into overlapping chunks using one of three strategies:

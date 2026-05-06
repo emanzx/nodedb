@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array CRDT delta wire message (single op).
 
 use serde::{Deserialize, Serialize};

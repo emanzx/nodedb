@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant isolation enforcement.
 //!
 //! Tenant data MUST be logically isolated in identifiers,

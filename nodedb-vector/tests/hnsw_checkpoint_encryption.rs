@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for vector checkpoint at-rest encryption.
 //!
 //! Tests verify:

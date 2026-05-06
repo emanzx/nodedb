@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL record header: fixed 50-byte prefix + constants.
 
 use crate::error::{Result, WalError};

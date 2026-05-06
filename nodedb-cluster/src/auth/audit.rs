@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit log entries for bootstrap join-token lifecycle events.
 //!
 //! Every accept/reject/expire transition that happens inside the

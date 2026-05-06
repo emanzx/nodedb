@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for GROUP BY ROLLUP, CUBE, and GROUPING SETS.
 //!
 //! Each test creates a small `orders` collection, inserts fixture data,

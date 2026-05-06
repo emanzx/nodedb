@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Final snapshot commit: CRC validation → atomic rename → Raft log boundary advance.
 //!
 //! Called only when the last chunk (`done == true`) has been written to the

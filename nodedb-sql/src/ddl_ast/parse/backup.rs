@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse BACKUP TENANT / RESTORE TENANT.
 
 use crate::ddl_ast::statement::NodedbStatement;

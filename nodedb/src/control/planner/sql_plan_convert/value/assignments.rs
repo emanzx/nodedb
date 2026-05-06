@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! UPDATE assignment serialization: `(field, SqlExpr)` pairs → wire-ready
 //! `UpdateValue` payloads.
 //!

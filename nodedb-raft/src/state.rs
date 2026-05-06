@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// Persistent state that must survive restarts.
 ///
 /// Corresponds to Raft paper Figure 2 "Persistent state on all servers".

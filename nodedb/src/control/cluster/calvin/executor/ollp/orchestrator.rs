@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! OLLP retry orchestrator.
 //!
 //! Orchestrates the optimistic retry loop for dependent-read Calvin

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bridge between `MetadataFilter` (nodedb-types) and document evaluation.
 //!
 //! Converts the typed `MetadataFilter` enum into runtime evaluation against

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse CREATE INDEX / DROP INDEX / SHOW INDEX / REINDEX.
 
 use super::helpers::extract_name_after_if_exists;

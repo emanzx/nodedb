@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL handlers for all constraint kinds: state transitions, transition checks,
 //! general CHECK constraints, and SHOW CONSTRAINTS.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for trigger execution fuel / budget limits.
 //!
 //! Trigger bodies run user-supplied code. An infinite loop must not pin a

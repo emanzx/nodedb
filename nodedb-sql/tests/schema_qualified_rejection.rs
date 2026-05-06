@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests: schema-qualified names are rejected at plan time.
 //!
 //! All tests use `plan_sql()` with a minimal catalog that knows about

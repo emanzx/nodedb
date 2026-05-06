@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod broadcast;
 pub mod conn_stream;
 pub mod dispatch_utils;

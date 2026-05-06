@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit event taxonomy + per-variant routing rules (auth-stream flag,
 //! minimum level).
 

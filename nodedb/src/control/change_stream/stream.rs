@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL change notification bus.
 //!
 //! Tails the WAL and broadcasts committed mutations to subscribers on

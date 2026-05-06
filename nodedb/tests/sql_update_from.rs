@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for `UPDATE target SET ... FROM src WHERE target.id = src.id`.
 //!
 //! Each test spins up a fresh single-core server and exercises the UPDATE...FROM

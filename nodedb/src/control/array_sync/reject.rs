@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Helper to build outbound [`ArrayRejectMsg`] frames.
 
 use nodedb_array::sync::hlc::Hlc;

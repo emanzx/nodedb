@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query engine plan builders (recursive CTE).
 
 use nodedb_types::protocol::TextFields;

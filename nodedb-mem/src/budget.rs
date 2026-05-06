@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-engine memory budget tracking.
 
 use std::sync::atomic::{AtomicUsize, Ordering};

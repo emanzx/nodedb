@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial scan converter.
 
 use crate::bridge::envelope::PhysicalPlan;

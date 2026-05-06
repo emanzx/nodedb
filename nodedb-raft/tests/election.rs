@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Election state-machine corner cases.
 //!
 //! Inline tests in `node/rpc.rs` and `node/core.rs` cover the happy

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ColumnData` enum definition and constructor.
 
 use nodedb_types::columnar::ColumnType;

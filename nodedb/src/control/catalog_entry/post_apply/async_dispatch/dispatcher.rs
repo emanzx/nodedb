@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-apply side-effect dispatcher.
 //!
 //! Dispatches per-variant side effects for `CatalogEntry` mutations on

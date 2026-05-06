@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW FUNCTIONS` DDL handler.
 //!
 //! Lists all user-defined functions for the current tenant, plus system functions.

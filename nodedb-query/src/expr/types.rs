@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SqlExpr AST node definitions.
 
 use nodedb_types::Value;

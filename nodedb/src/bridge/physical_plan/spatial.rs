@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial engine operations dispatched to the Data Plane.
 
 use nodedb_types::{SurrogateBitmap, geometry::Geometry};

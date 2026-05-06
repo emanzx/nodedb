@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Propose `ReplicatedWrite::CalvinReadResult` Raft entries from passive
 //! participants.
 

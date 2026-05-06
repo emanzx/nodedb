@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dynamic value type for document fields and SQL parameters.
 //!
 //! Covers the value types needed for AI agent workloads: strings, numbers,

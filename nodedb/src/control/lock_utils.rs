@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Lock recovery utilities with observability.
 //!
 //! Centralizes the poisoned-lock recovery pattern used across the Control

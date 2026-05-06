@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cell-order and tile-order strategies.
 
 use serde::{Deserialize, Serialize};

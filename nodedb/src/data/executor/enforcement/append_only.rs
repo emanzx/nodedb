@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Append-only enforcement: reject UPDATE and DELETE on append-only collections.
 
 use crate::bridge::envelope::ErrorCode;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP command handlers: translate Redis commands into KvOp dispatches.
 
 use sonic_rs;

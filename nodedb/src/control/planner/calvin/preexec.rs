@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Optimistic pre-execution scan for OLLP dependent-read transactions.
 //!
 //! Before submitting a `BulkUpdate` or `BulkDelete` via the Calvin

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit-log emission by DDL + catalog-backed audit persistence across
 //! restart cycles.
 

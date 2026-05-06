@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Coordinate-level Ceiling resolution for bitemporal cell versions.
 //!
 //! `ceiling_resolve_cell` finds the latest system-time version of a cell

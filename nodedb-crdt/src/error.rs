@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Error types for the CRDT engine.
 
 /// Errors produced by CRDT operations.

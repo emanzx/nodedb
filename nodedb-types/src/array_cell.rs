@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed payload for `Value::ArrayCell`.
 //!
 //! An `ArrayCell` carries a single N-dimensional array cell across the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESTORE TENANT orchestrator.
 //!
 //! Validates a backup envelope, merges all sections into a single

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NodeDB reserved identifier list.
 //!
 //! These keywords are intercepted by the DDL dispatcher or DSL rewriter

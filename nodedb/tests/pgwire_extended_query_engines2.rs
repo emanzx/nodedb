@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Extended-query protocol coverage for Spatial, Vector, and Array engines,
 //! plus cross-engine parameter error-path tests.
 //!

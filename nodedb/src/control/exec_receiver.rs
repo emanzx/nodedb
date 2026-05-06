@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Local execution of incoming `ExecuteRequest` RPCs.
 //!
 //! When a remote node sends an `ExecuteRequest` to this node (because this

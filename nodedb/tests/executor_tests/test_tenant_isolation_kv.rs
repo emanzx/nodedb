@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-tenant isolation: Key-Value engine.
 //!
 //! Tenant A puts a key. Tenant B gets the same key — must get NotFound.

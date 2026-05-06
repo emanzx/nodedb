@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Compensation actions applied when a migration is aborted.
 //!
 //! A `MigrationAbort` entry carries an ordered list of these

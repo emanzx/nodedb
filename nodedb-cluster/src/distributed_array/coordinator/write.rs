@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Write-path coordinator for distributed array operations.
 //!
 //! Provides [`coord_put`], [`coord_put_partitioned`], and [`coord_delete`]

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level SWIM datagram enum.
 //!
 //! `SwimMessage` is the single type every transport sends and receives.

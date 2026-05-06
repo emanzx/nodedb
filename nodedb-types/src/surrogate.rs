@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate — a global, stable, monotonically-allocated u32 row identity.
 //!
 //! Every logical row in every engine carries a surrogate. The surrogate is

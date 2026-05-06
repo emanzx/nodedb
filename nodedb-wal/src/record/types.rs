@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Record type discriminants.
 //!
 //! Types 0-255 are reserved for NodeDB core.

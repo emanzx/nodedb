@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod coordinator;
 pub mod pagerank;
 pub mod pattern_match;

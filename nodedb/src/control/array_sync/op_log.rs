@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`OriginOpLog`] — redb-backed op-log for array CRDT sync on Origin.
 //!
 //! Each op is stored in a single redb table under the composite key:

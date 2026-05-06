@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Methods on `VectorCollection` for building the collection-level
 //! codec-dispatch index (RaBitQ, BBQ).
 //!

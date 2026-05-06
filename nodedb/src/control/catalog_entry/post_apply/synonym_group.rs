@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Synonym group post-apply side effects — sync the in-memory registry.
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries scatter-gather coordinator.
 //!
 //! Runs on the Control Plane. Dispatches aggregation queries to all shards

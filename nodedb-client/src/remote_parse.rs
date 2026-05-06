@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Value conversion and SQL formatting helpers for the remote client.
 //!
 //! Extracts pgwire row/column conversion, JSON-to-Value mapping, and

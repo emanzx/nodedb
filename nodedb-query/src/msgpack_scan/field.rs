@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Field extraction from raw MessagePack maps.
 //!
 //! Given a `&[u8]` containing a MessagePack map, extract the byte range

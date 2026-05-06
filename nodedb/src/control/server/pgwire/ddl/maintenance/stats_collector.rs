@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column statistics collector using SIMD-accelerated kernels.
 //!
 //! Extracts typed slices from scan results and computes per-column

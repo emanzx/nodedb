@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Filter evaluation on columnar data vectors.
 //!
 //! Provides sparse, dense, and SIMD-bitmask filter evaluation paths.

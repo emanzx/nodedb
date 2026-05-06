@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `_system.audit_log` virtual view.
 //!
 //! Surfaces the durable audit log with seq and timestamp range pushdown.

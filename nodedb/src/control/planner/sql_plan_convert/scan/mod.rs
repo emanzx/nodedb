@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scan and search plan conversions (read-only query paths).
 //!
 //! Split by concern so each file stays under the project's hard size limit.

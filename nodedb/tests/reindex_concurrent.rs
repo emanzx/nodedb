@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for REINDEX CONCURRENTLY — shadow-build + atomic cutover
 //! for HNSW, FTS LSM, and graph CSR, with non-blocking concurrent reads.
 

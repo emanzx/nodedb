@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! AES-256-GCM SEGC envelope for columnar segment at-rest encryption.
 //!
 //! Plaintext segments start with the 4-byte magic `NDBS`. Encrypted segments

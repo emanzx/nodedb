@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-tenant CRDT engine state.
 //!
 //! Manages the loro-backed CRDT state, constraint validation, and dead-letter

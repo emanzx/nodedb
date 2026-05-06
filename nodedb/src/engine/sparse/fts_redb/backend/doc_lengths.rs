@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-document token-length operations against `DOC_LENGTHS`
 //! keyed by `(tenant_id, collection, surrogate_u32)`.
 

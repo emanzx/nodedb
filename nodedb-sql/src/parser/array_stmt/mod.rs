@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Recursive-descent parser for NodeDB array DDL/DML.
 //!
 //! Recognises `CREATE ARRAY`, `DROP ARRAY`, `INSERT INTO ARRAY`, and

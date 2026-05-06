@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DisseminationQueue` — bounded, decaying piggyback buffer.
 //!
 //! The queue is a `HashMap<NodeId, PendingUpdate>` so that a fresher

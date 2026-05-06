@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SSE2-accelerated bitpack unpacking for x86_64.
 //!
 //! Processes 4 values at a time using 128-bit SSE2 registers.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial R-tree checkpoint methods for [`CoreLoop`].
 //!
 //! Saves and restores R-tree indexes and the doc_map to disk.

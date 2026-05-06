@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries push handler for sync sessions.
 //!
 //! Decodes Gorilla-encoded metric blocks from Lite, builds ILP-format

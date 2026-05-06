@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Msgpack serialization for `serde_json::Value` and `nodedb_types::Value`.
 
 use super::json_value::JsonValue;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Offset window functions: lag, lead, nth_value.
 
 use crate::expr::SqlExpr;

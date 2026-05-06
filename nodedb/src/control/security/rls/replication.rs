@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Applier-side helpers for replicated RLS policies.
 //!
 //! `install_replicated_policy` / `install_replicated_drop_policy`

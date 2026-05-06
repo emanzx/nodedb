@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector engine — all types re-exported from the shared `nodedb-vector` crate.
 //!
 //! Origin uses the `collection` feature which enables SIMD, IVF-PQ, mmap,

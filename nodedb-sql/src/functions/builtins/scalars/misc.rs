@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Miscellaneous scalar function registrations (coalesce, nullif, make_array, utility).
 
 use nodedb_types::columnar::ColumnType;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-collection codec selection. Wraps the generic `HnswCodecIndex<C>`
 //! for codecs other than Sq8 (which retains its specialised fast path
 //! in `quantize.rs` / `search.rs`).

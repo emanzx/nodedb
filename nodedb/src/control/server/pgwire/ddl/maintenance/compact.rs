@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `COMPACT collection [PARTITION 'name']` — trigger manual compaction.
 //!
 //! Dispatches a MetaOp::Compact to the Data Plane via the standard

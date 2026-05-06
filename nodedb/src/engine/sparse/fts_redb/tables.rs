@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Redb table definitions for the full-text search backend.
 //!
 //! Every table is keyed by a structural `(tenant_id, collection, …)` tuple —

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Standardized control-loop metrics.
 //!
 //! Every periodic loop in the cluster (Principle 2.4) exposes the

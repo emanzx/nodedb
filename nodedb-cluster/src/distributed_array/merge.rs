@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Merge functions for distributed array query results.
 //!
 //! Slice merges concatenate row sets from shards in arrival order and

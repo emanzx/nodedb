@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document storage keys are derived from the row's stable surrogate identity.
 //!
 //! The substrate redb tables (`DOCUMENTS`, `INDEXES`) use string keys; the

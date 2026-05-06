@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for warm-tier storage via `object_store::ObjectStore`.
 //!
 //! Exercises snapshot write/read/delete and quarantine record/rebuild against

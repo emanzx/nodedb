@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use std::path::{Path, PathBuf};
 
 use nodedb_types::timeseries::{MetricSample, PartitionInterval, TieredPartitionConfig};

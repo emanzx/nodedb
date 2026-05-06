@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Propose tracker — slot map keyed by `(group_id, log_index)` that lets
 //! proposers wait for a Raft entry to commit and execute, with race-safe
 //! resolution if the apply path beats the proposer's `register()` call.

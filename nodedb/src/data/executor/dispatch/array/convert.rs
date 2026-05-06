@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine-boundary conversion between `nodedb_types::Value` (the wire
 //! and SQL-surface carrier) and the array engine's typed
 //! `CoordValue` / `CellValue`.

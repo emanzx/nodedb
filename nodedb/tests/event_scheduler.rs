@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Event Plane cron scheduler.
 //!
 //! Tests: cron expression matching, per-collection affinity detection,

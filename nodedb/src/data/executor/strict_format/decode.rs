@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Strict document decoding: Binary Tuple → Value/msgpack/JSON.
 
 use nodedb_types::columnar::StrictSchema;

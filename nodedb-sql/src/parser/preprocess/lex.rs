@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared SQL lexer for preprocess passes.
 //!
 //! The lexer classifies a SQL string into non-overlapping segments, allowing

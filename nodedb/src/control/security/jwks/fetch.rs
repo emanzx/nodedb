@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JWKS HTTP fetcher: downloads and parses JWKS from provider endpoints.
 //!
 //! Handles HTTP fetch, JSON deserialization, key extraction, and error

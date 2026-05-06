@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for PostgreSQL-style JSON path operators.
 //!
 //! Covers all 9 operators in SELECT projection and WHERE filter positions:

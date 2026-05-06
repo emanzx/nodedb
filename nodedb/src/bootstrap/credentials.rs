@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate WAL replay and superuser credential bootstrap.
 
 use std::sync::Arc;

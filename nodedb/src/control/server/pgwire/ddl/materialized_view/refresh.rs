@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `REFRESH MATERIALIZED VIEW` — re-materialize the view target by
 //! executing the view's stored `SELECT` and writing each computed row
 //! to the target collection.

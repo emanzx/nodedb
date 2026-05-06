@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Standard, Simple, and Keyword analyzers.
 
 use super::pipeline::{TextAnalyzer, analyze};

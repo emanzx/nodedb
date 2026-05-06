@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-session plan cache for prepared statements.
 //!
 //! Caches compiled `Vec<PhysicalTask>` per SQL string, keyed by

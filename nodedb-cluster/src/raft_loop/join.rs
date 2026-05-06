@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Server-side `JoinRequest` orchestration.
 //!
 //! This is the async flow invoked by the `RaftRpc::JoinRequest` arm in

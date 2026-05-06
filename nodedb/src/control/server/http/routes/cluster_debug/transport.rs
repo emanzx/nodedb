@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GET /v1/cluster/debug/transport` — dump the QUIC transport's
 //! connection cache + per-peer circuit-breaker state.
 

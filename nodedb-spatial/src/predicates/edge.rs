@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Low-level segment and edge geometry primitives.
 //!
 //! Used by ST_Contains, ST_Intersects, and ST_Distance. All operations

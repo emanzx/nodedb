@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire protocol version newtype.
 
 /// Opaque wrapper around a `u16` wire-protocol version number.

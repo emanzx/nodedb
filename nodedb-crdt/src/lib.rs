@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! # nodedb-crdt
 //!
 //! CRDT engine with SQL constraint validation for NodeDB.

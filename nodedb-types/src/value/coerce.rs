@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Type-coerced equality and ordering for `Value`.
 //!
 //! Single source of truth for type coercion in filter/sort evaluation.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE RLS POLICY` handler — proposes
 //! `CatalogEntry::PutRlsPolicy` through the metadata raft group so
 //! every node's applier installs the policy into both

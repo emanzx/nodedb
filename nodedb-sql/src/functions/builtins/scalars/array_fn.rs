@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array engine scalar function registrations.
 
 use nodedb_types::columnar::ColumnType;

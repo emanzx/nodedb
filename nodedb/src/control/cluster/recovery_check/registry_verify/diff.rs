@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Generic diff helper for registry verifiers.
 //!
 //! Every verifier produces the same shape: two deterministic

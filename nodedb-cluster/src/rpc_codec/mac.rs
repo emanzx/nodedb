@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Symmetric MAC key + HMAC-SHA256 primitive for the authenticated Raft
 //! envelope.
 //!

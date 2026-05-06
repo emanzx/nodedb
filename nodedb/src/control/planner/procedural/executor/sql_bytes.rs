@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Low-level byte-oriented helpers for SQL string manipulation.
 
 /// Advance past ASCII whitespace characters starting at position `i`.

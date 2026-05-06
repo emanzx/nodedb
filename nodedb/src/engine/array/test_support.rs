@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared test fixtures for `ArrayEngine` unit tests across the
 //! split write/flush/compact/read modules.
 

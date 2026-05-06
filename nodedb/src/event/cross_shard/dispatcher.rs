@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard event dispatcher: reliable outbound delivery via QUIC.
 //!
 //! Maintains a per-target-node bounded send queue. A background Tokio task

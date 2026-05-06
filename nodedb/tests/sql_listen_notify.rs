@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for LISTEN / NOTIFY / UNLISTEN.
 //!
 //! Each test spins up a full NodeDB server via the pgwire harness and

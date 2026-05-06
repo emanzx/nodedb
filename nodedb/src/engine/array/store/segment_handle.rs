@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Open segment file — mmap'd bytes (plaintext) or owned decrypted buffer.
 //!
 //! `SegmentReader` borrows its byte slice with an explicit lifetime so it

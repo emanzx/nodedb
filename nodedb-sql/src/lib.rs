@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! nodedb-sql: SQL parser, planner, and optimizer for NodeDB.
 //!
 //! Parses SQL via sqlparser-rs, resolves against a catalog, and produces

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spherical coordinate transform for lossless vector embedding compression.
 //!
 //! L2-normalized embeddings (standard for cosine similarity search) live on

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Built-in function registry for SQL planning.
 //!
 //! Tracks known functions, their categories, arg specs, return types,

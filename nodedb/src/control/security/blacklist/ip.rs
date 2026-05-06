@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! IP/CIDR blacklist matching.
 //!
 //! Checks if a client IP address falls within any blacklisted CIDR range.

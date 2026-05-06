@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level query entry: CTE handling, UNION dispatch, and LIMIT
 //! application. ORDER BY and search-trigger detection live in `order_by.rs`.
 

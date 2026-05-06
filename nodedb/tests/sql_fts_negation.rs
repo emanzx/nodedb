@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for NOT-operator negation in FTS queries.
 //!
 //! Covers `NOT <term>` (keyword syntax) and `-<term>` (Lucene-style prefix),

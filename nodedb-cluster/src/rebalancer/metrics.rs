@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-node load metrics and scoring.
 //!
 //! `LoadMetrics` is the raw per-node observation the rebalancer loop

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory registry ⇔ redb verification.
 //!
 //! Each submodule holds a single verifier for one registry

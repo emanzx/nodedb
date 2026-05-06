@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared parsing helpers used across collection DDL sub-modules.
 
 use sonic_rs;

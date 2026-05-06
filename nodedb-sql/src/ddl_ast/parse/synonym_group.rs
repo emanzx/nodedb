@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse `CREATE SYNONYM GROUP`, `DROP SYNONYM GROUP`, and `SHOW SYNONYM GROUPS`.
 //!
 //! Syntax:

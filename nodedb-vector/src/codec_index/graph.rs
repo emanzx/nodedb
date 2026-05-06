@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `HnswCodecIndex<C>` — generic HNSW graph parameterised on any `VectorCodec`.
 //!
 //! Stores one `C::Quantized` payload per node instead of raw FP32 vectors.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Projections: alternate sort orders for timeseries partitions.
 //!
 //! Stores data sorted by both `(timestamp, host)` (default — time-range queries)

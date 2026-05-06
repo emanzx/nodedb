@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GET /v1/cluster/debug/leases` — dump live descriptor leases + the
 //! local drain tracker.
 

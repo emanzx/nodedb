@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed errors for the segment quarantine subsystem.
 
 /// Errors produced by the quarantine registry.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GAP_FREE sequence mode: serialized reservation with rollback support.
 //!
 //! In GAP_FREE mode, only one transaction holds the next number at a time.

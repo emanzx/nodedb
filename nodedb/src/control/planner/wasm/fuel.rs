@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fuel and memory limit enforcement for WASM UDFs.
 //!
 //! Fuel metering: each WASM instruction consumes fuel. When fuel hits zero,

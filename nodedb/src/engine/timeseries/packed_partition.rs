@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single-file packed partition format with versioned binary footer.
 //!
 //! Combines all column files, schema, sparse index, and metadata into a

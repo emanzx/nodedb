@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! io_uring-backed `NodeFetcher` for disk-resident Vamana indexes.
 //!
 //! `IoUringNodeFetcher` implements `nodedb_vector::vamana::NodeFetcher` using

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MERGE statement planning.
 //!
 //! Translates `sqlparser::ast::Statement::Merge` into `SqlPlan::Merge`.

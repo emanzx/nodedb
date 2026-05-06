@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for RLS policy predicate parsing.
 //!
 //! The USING clause predicate must preserve balanced parentheses faithfully.

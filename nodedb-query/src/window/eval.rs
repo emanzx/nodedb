@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level dispatch for window-function evaluation.
 
 use super::aggregate::apply_aggregate_window;

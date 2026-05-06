@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shape definition schema — re-exports from `nodedb-types`.
 //!
 //! All shape types are defined in `nodedb-types::sync::shape` so that both

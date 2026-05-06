@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests: `ALTER ARRAY ... SET (...)`.
 //!
 //! Verifies the four correctness properties required by Phase B:

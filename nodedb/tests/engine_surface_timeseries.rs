@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Timeseries engine.
 //!
 //! Covers: ingest, time-range scans, aggregations, retention policy creation,

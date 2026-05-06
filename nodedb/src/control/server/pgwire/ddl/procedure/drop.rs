@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DROP PROCEDURE` DDL handler.
 
 use pgwire::api::results::{Response, Tag};

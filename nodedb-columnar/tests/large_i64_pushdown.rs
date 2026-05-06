@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end integration test for predicate pushdown correctness with
 //! i64 values outside ±2^53 (not exactly representable in f64).
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Inbound Raft RPC handling.
 //!
 //! Accepts connections from the QUIC endpoint, dispatches incoming bidi

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query-side partition selection: overlap pruning, merge candidate selection,
 //! retention expiry scan.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Time-series gap filling (interpolation).
 
 /// Interpolation method for filling NULL gaps.

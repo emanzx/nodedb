@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared timeseries types for multi-model database engines.
 //!
 //! Used by both `nodedb` (server) and `nodedb-lite` (embedded) for

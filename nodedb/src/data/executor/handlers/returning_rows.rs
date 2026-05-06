@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Helper for projecting post-write documents into a `RowsPayload`.
 //!
 //! Called by PointUpdate, BulkUpdate, PointDelete, BulkDelete handlers

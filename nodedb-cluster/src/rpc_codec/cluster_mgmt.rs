@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster management wire types and codecs.
 
 use super::discriminants::*;

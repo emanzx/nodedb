@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod bm25_global;
 pub mod merge_sort;
 pub mod partial_group;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal write paths on `EdgeStore`:
 //! `put_edge_versioned`, `soft_delete_edge`, `gdpr_erase_edge`.
 

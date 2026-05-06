@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-flight migration recovery.
 //!
 //! Called from `MigrationExecutor::recover_in_flight_migrations` which

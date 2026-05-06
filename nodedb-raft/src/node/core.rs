@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RaftNode` struct, constructors, simple accessors, `tick`, and `propose`.
 //!
 //! Membership mutation (add/remove voter, add/remove/promote learner) lives

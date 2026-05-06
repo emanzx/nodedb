@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Presence subsystem configuration and internal types.
 
 use std::time::Instant;

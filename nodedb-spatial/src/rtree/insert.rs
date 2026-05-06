@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! R*-tree insertion with overflow treatment (forced reinsert).
 
 use nodedb_types::BoundingBox;

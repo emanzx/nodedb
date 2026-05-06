@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Synonym group metadata operations for the system catalog.
 
 use serde::{Deserialize, Serialize};

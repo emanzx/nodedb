@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CascadeDefer` FK lifecycle tests: retry-success and TTL-expiration paths.
 
 use loro::LoroValue;

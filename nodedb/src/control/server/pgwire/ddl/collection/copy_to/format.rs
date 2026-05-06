@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Format serializers for COPY TO: NDJSON, JSON array, CSV.
 
 use nodedb_sql::ddl_ast::statement::CopyFormat;

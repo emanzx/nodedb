@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `release_leases` — synchronous propose-and-wait helper for
 //! batched descriptor lease release. Mirrors `propose::acquire_lease`
 //! but with `MetadataEntry::DescriptorLeaseRelease`.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot export for CoreLoop state.
 
 use super::core_loop::CoreLoop;

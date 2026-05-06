@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Credential selection for the Raft QUIC transport.
 //!
 //! [`TransportCredentials`] is the mandatory argument threaded into every

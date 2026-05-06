@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector index lifecycle DDL handlers.
 //!
 //! - `SHOW VECTOR INDEX status ON collection.column` — query live stats from Data Plane

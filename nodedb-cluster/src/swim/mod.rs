@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SWIM — Scalable Weakly-consistent Infection-style Membership.
 //!
 //! This module implements the foundation of NodeDB's cluster membership and

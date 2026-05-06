@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster startup entry point: dispatches to bootstrap, join, or restart.
 //!
 //! The decision tree is deliberately small and delegates every

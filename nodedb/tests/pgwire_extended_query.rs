@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Extended-query protocol (Parse/Bind/Describe/Execute) must return
 //! rows with one decoded field per column declared by Describe.
 //!

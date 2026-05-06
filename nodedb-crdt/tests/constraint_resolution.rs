@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Multi-agent CRDT constraint resolution lifecycles.
 //!
 //! Inline `validator/tests.rs` covers each policy mechanism in isolation

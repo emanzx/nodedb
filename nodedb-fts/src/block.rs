@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! 128-document posting block with compressed storage.
 //!
 //! Each `PostingBlock` holds up to 128 postings. Data is stored as:

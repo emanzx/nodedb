@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-invocation scratch arena for HNSW beam-search heaps.
 //!
 //! `BeamSearchArena` holds pre-allocated backing buffers for the three

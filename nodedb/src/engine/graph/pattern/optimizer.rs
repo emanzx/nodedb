@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MATCH query optimizer — reorders pattern triples by selectivity.
 //!
 //! Uses CSR edge statistics to determine which edge labels are most

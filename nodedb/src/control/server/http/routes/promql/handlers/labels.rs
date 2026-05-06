@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GET `/obsv/api/v1/labels` and GET `/obsv/api/v1/label/:name/values`.
 
 use axum::extract::{Path, Query, State};

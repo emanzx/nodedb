@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-channel presence state: subscriber tracking and broadcast generation.
 
 use std::collections::HashMap;

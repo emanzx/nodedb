@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Strict document encoding: Value/bytes → Binary Tuple.
 
 use nodedb_types::columnar::StrictSchema;

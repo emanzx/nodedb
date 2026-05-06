@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Three-source GraphRAG fusion: vector search + BM25 text + graph expansion, fused via RRF.
 //!
 //! Pipeline:

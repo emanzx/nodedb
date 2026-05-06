@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `File` key provider — load a raw 32-byte key from a local file.
 //!
 //! The simplest backend: the file must contain exactly 32 bytes.

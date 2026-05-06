@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse users/roles/permissions/grants + audit/tenants/constraints/typeguards.
 
 use crate::ddl_ast::statement::{AlterRoleOp, AlterUserOp, NodedbStatement};

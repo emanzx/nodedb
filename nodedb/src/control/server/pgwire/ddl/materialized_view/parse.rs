@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE MATERIALIZED VIEW` SQL parser + WITH-clause helpers.
 
 use pgwire::error::PgWireResult;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! GET/POST `/obsv/api/v1/query_range` — range PromQL query.
 
 use axum::extract::{Query, State};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine rules for key-value collections.
 
 use crate::engine_rules::*;

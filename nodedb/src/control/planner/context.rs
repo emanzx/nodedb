@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Query planning context for the Control Plane.
 //!
 //! Uses nodedb-sql for SQL parsing and planning. The DataFusion session

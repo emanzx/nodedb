@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scalar-function shims that live in the pgwire layer.
 //!
 //! These accept a `SELECT <fn>(<args>)` call and rewrite it to

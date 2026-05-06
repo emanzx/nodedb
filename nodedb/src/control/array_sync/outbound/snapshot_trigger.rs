@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot trigger: detect when a subscriber's cursor has fallen behind the
 //! op-log GC boundary and initiate a server-driven catch-up.
 //!

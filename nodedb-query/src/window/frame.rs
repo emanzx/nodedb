@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Window frame bound resolution.
 //!
 //! Given the current row position, the partition length, the frame spec, and

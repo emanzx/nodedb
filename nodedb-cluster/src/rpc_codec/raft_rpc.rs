@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level `RaftRpc` enum and `encode` / `decode` dispatcher.
 
 use nodedb_raft::message::{

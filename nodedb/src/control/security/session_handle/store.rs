@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SessionHandleStore` — fingerprint-bound, rate-limited, observable session
 //! handle resolver. See `super::mod` for the design rationale.
 

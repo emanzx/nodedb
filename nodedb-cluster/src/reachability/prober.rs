@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ReachabilityProber`] — the injection seam for reachability probes.
 //!
 //! Implementations:

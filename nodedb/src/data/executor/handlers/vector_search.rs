@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector search parameter types and shared helper functions.
 //!
 //! DP emits each hit's `id` as the bound `Surrogate.as_u32()` (or the

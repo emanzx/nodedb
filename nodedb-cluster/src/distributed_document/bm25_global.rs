@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Global IDF computation for distributed BM25 text search.
 //!
 //! BM25 scoring depends on IDF (Inverse Document Frequency) — how rare a

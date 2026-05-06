@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RPC type discriminant constants.
 //!
 //! All constants MUST remain stable across versions — they appear on the

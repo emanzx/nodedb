@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ROLLUP / CUBE / GROUPING SETS execution.
 //!
 //! For each grouping set we run the existing single-set aggregation path,

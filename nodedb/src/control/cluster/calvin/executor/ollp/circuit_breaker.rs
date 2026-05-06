@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Circuit-breaker for OLLP per-predicate-class retry storms.
 //!
 //! States:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gateway-based dispatch: routes tasks through `Gateway::execute` instead of
 //! the old SQL-string `ForwardRequest` forwarding path.
 //!

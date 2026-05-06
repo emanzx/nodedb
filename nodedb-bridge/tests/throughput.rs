@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bridge throughput validation test.
 //!
 //! Target: Pump data through Tokio→TPC→Tokio. Memory must stay flat.

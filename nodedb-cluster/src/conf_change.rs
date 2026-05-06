@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft configuration change types.
 //!
 //! Configuration changes (add/remove peer) are proposed as regular Raft log

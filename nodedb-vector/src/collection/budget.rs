@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RAM budget enforcement and mmap spillover for `VectorCollection`.
 
 use crate::collection::tier::StorageTier;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Replicated metadata Raft group (group 0).
 //!
 //! All cluster-wide state — DDL (via opaque host payload), topology,

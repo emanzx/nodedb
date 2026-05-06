@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard event delivery types.
 //!
 //! Serialized as MessagePack inside `VShardEnvelope.payload` for

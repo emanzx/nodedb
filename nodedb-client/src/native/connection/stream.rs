@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::net::TcpStream;
 

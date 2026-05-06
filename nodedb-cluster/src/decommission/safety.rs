@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Decommission safety gate.
 //!
 //! Before the coordinator proposes a single metadata entry, it must

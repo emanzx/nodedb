@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Basic InstallSnapshot recovery tests exercising `MultiRaft::handle_install_snapshot`
 //! and the snapshot framing CRC path in `decode_snapshot_chunk`.
 //!

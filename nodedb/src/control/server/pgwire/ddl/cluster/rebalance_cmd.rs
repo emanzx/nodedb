@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rebalance DDL command: REBALANCE.
 
 use std::sync::Arc;

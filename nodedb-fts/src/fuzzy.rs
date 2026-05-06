@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fuzzy string matching via Levenshtein edit distance.
 //!
 //! Used for typo-tolerant full-text search. When an exact term match

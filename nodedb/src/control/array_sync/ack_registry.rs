@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ArrayAckRegistry`] — per-replica ack HLC tracking for array GC.
 //!
 //! Each connected Lite peer periodically sends `ArrayAckMsg { array, replica_id,

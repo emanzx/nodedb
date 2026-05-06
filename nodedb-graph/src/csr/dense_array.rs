@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Zero-copy-capable array backing for CSR dense arrays.
 //!
 //! `DenseArray<T>` holds either an owned `Vec<T>` (from compaction or

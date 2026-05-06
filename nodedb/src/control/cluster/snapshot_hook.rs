@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RaftSnapshotQuarantineHook` — bridges cluster snapshot events to the
 //! in-process `QuarantineRegistry`.
 

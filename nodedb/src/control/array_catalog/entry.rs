@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `ArrayCatalogEntry` — the persistent schema digest for one array.
 //!
 //! The schema is carried as an opaque msgpack blob so

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for WITH RECURSIVE (recursive CTEs).
 //!
 //! Tests cover: value-generating sequence, UNION ALL vs UNION, tree traversal,

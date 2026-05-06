@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Elastic scaling glue — ties SWIM membership transitions to the
 //! rebalancer loop so new/departing nodes trigger an immediate sweep
 //! instead of waiting for the next 30 s tick.

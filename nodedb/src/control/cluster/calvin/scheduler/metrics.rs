@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scheduler observability metrics.
 //!
 //! All counters are `AtomicU64` so they can be read from a Prometheus scrape

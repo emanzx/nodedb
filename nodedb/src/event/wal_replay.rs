@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL replay: converts WAL records into WriteEvents for Event Plane recovery.
 //!
 //! On startup or when entering WAL Catchup Mode, the Event Plane reads WAL

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIEM export: CDC stream for audit_log + auth_events, webhook with HMAC.
 
 use std::collections::VecDeque;

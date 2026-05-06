@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod completion;
 pub mod sequencer;
 pub mod types;

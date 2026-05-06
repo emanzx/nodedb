@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE / DROP / SHOW RLS POLICY` handlers.
 //!
 //! Supports both legacy static predicates and rich `$auth.*` predicates:

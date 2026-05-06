@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-stream CDC lag warning emitter.
 //!
 //! Tracks the rolling drop rate per `(tenant_id, stream_name)` over a

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed error variants for the SWIM subsystem.
 //!
 //! `SwimError` is the single error type returned by every public function

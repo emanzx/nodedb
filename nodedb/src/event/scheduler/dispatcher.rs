@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bounded job dispatcher for the scheduler.
 //!
 //! Three compounding hazards in the original `scheduler_loop`:

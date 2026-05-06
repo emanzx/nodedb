@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial scatter-gather coordinator for cross-shard spatial queries.
 //!
 //! Same pattern as vector/timeseries distributed queries:

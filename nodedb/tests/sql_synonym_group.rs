@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the `CREATE SYNONYM GROUP` / `DROP SYNONYM GROUP` /
 //! `SHOW SYNONYM GROUPS` DDL surface and end-to-end FTS query expansion.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end native protocol handshake tests.
 //!
 //! Boots a real NodeDB server with the native TCP listener and exercises the

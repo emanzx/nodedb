@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for stored procedure execution: transaction control,
 //! SAVEPOINT, OUT parameters, exception handling, routability, parser changes.
 

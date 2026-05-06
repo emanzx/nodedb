@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end tests for function security: CREATE/DROP lifecycle,
 //! DML rejection in function bodies, procedural UDF compilation.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 #![allow(dead_code, unused_imports)] // Not every test file uses every helper.
 
 //! Multi-node in-process cluster harness for nodedb-crate integration tests.

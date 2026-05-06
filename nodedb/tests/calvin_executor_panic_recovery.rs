@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Executor panic-recovery test for `MetaOp::CalvinExecuteStatic`.
 //!
 //! Compiled only with `--features failpoints`. Tests the Calvin executor's

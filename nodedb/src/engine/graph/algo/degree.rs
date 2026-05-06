@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Degree Centrality — normalized degree per node.
 //!
 //! `DC(v) = degree(v) / (n - 1)` where degree is in-degree, out-degree,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Full-text search re-exports from `nodedb-fts`.
 //!
 //! Query-layer code that needs BM25 scoring, analyzers, or fuzzy matching

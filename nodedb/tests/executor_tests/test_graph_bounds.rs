@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Graph traversal boundary tests.
 //!
 //! Verifies that BFS, shortest path, and subgraph materialization

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RLS policy persistence in the system catalog.
 //!
 //! `RlsPolicy` (the runtime shape) carries `Option<RlsPredicate>` and

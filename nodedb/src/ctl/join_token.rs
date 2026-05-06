@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `nodedb join-token --create` — thin CLI wrapper over
 //! [`nodedb_cluster::auth::join_token`].
 //!

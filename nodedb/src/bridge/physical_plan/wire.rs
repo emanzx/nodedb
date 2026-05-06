@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire-format encode/decode helpers for PhysicalPlan.
 //!
 //! MessagePack encoding via zerompk. Used by the cluster layer to ship

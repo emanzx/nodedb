@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire-level verification that `SessionHandleStore::resolve()` binds to the
 //! caller's `(tenant_id, peer IP)` fingerprint.
 //!

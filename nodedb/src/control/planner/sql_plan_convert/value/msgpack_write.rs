@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Standard-msgpack writers for `SqlValue`.
 //!
 //! These are the *only* msgpack producers used by the DML path — no JSON or

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `parse` — decode and fully validate a plaintext backup envelope.
 
 use super::types::{Envelope, EnvelopeError, EnvelopeMeta, Section, read2, read4, read8};

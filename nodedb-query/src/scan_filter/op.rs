@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `FilterOp` enum and its string/serde conversions.
 //!
 //! `FilterOp` is an O(1)-dispatch discriminant used by the scan filter

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Array engine dispatch — wires `PhysicalPlan::Array(ArrayOp)` to the
 //! Data-Plane `ArrayEngine` via the shared `ArrayCatalogHandle`.
 

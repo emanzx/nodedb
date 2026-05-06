@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Retention policy type definitions.
 //!
 //! A retention policy defines tiered data lifecycle for a timeseries collection:

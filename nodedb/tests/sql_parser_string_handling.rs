@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for SQL parsers handling string literals correctly.
 //!
 //! Hand-rolled parsers must skip over single-quoted string literals when

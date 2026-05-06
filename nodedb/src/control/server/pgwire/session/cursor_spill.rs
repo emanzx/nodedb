@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cursor spill-to-disk for large result sets.
 //!
 //! When a cursor exceeds the configurable row limit, excess rows are

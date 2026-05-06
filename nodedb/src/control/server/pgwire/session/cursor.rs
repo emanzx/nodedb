@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Server-side cursor methods on SessionStore.
 
 use std::net::SocketAddr;

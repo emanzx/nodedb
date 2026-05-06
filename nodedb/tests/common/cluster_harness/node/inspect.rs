@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Local-state inspector methods on [`TestClusterNode`].
 //!
 //! These read-only accessors let integration tests assert that an

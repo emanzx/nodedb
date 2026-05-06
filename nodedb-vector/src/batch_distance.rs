@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Batch distance computation for HNSW neighbor selection.
 //!
 //! Instead of computing distances one-at-a-time in a loop, collects

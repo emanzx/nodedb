@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Consumer group metadata operations for the system catalog.
 
 use super::types::{CONSUMER_GROUPS, SystemCatalog, catalog_err};

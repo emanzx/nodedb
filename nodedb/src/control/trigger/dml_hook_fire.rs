@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BEFORE / INSTEAD-OF / AFTER trigger dispatch helpers for DML hooks.
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single-node integration test for surrogate identity round-trip.
 //!
 //! Asserts three properties:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Canonical wire timestamp types for NodeDB.
 //!
 //! All wire-level timestamps use these two concepts:

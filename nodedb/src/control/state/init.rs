@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SharedState constructors: new (test) and new_with_credentials (test+catalog).
 
 use std::sync::atomic::AtomicU64;

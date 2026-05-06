@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bitemporal `AS OF` scan handler. Reads from the versioned document table at
 //! the requested system-time cutoff, applies an optional valid-time predicate
 //! per version, and emits rows in the same wire format as the regular scan.

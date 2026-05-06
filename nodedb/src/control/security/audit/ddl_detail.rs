@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Structured detail body for `AuditEvent::DdlChange`.
 
 /// Structured detail for a `AuditEvent::DdlChange` record. Produced

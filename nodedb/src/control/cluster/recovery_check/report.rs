@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregated report from `verify_and_repair`.
 //!
 //! Consumed by `main.rs` at the `CatalogSanityCheck` phase:

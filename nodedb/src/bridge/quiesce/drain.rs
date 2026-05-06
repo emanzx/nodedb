@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Drain coordination: `begin_drain`, `wait_until_drained`, `clear_drain`.
 
 use std::future::Future;

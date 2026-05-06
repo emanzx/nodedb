@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Strict document encoding/decoding: Value ↔ Binary Tuple.
 //!
 //! All internal encoding uses `nodedb_types::Value` directly — no JSON intermediary.

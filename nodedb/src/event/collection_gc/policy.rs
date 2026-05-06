@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Retention-window resolution for the collection GC sweeper.
 //!
 //! Resolution order (highest precedence first):

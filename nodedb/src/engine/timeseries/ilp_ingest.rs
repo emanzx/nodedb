@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ILP → columnar memtable ingestion bridge.
 //!
 //! Accumulates parsed ILP lines into batches and flushes them to the

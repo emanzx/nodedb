@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level `ArrayOp` dispatch — routes every variant to its handler.
 
 use std::sync::Arc;

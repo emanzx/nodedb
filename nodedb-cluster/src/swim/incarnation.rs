@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Incarnation numbers — monotonic epoch counters per node.
 //!
 //! SWIM resolves conflicting state updates by comparing `(incarnation, state)`

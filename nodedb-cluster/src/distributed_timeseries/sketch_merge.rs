@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partial sketch merging for approximate aggregation across shards.
 //!
 //! Each shard computes a local sketch (HLL, t-digest, topK). The coordinator

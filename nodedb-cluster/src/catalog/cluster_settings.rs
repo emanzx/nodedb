@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster-wide settings persisted in the catalog.
 //!
 //! [`ClusterSettings`] is written once at bootstrap (from the operator's

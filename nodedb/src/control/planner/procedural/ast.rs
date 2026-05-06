@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Procedural SQL abstract syntax tree.
 //!
 //! Shared across functions, triggers, and procedures.

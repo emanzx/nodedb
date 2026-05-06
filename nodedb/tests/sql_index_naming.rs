@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for `CREATE INDEX` on document collections:
 //! naming, registration, uniqueness enforcement, planner visibility,
 //! partial indexes, backfill, and EXPLAIN plan-shape.

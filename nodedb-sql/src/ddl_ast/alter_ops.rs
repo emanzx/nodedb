@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed sub-operations for `ALTER COLLECTION`, `ALTER USER`, and `ALTER ROLE`.
 
 /// Typed sub-operation for `ALTER COLLECTION <name> ...`.

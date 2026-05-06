@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ColumnType — the atomic value type for typed schemas.
 
 use serde::{Deserialize, Serialize};

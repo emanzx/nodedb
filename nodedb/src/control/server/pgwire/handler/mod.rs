@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 mod copy_handler;
 mod core;
 mod cursor_cmds;

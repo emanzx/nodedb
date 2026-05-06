@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse CREATE/DROP/ALTER/DESCRIBE/SHOW for COLLECTION (and TABLE alias).
 //!
 //! `DROP COLLECTION` extensions (sqlparser 0.61 does not tokenize

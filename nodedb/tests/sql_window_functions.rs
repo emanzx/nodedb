@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for SQL window function dispatch.
 //!
 //! Covers PostgreSQL-compatible window verbs that must either be implemented

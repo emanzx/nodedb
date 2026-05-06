@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Spatial scan plan builder.
 
 use nodedb_types::protocol::TextFields;

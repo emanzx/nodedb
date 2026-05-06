@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_wal::record::RecordType;
 
 use super::core::WalManager;

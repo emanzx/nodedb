@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GRANT/REVOKE <perm> ON <object> TO/FROM <grantee>` handlers.
 //!
 //! Migrated to `CatalogEntry::{PutPermission, DeletePermission}`

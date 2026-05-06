@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use serde::{Deserialize, Serialize};
 
 /// Per-engine memory budget allocation as fractions of the global ceiling.

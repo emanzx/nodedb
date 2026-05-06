@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatch for KvOp variants (engine pressure check + delegation to execute_kv).
 
 use crate::bridge::envelope::Response;

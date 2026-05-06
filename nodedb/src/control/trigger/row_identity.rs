@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared utility for injecting row identity fields into trigger payloads.
 
 use std::collections::HashMap;

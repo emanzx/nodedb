@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Single SWIM probe round.
 //!
 //! One probe round follows the Lifeguard sequence:

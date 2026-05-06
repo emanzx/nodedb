@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Virtual table row generators for each pg_catalog table.
 
 use std::sync::Arc;

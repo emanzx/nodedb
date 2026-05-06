@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition entry + directory-name formatting.
 
 use nodedb_types::timeseries::PartitionMeta;

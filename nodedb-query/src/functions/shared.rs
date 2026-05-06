@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared argument-extraction helpers used by all function sub-modules.
 
 use nodedb_types::Value;

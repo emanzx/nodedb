@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-aggregate watermark tracking.
 //!
 //! Tracks the highest timestamp fully aggregated and detects out-of-order

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Expression evaluation helpers for the statement executor.
 //!
 //! Evaluates SQL expressions and converts results to Rust types (bool, i64,

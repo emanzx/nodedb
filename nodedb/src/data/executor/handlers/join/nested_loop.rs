@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Nested-loop join execution.
 
 use tracing::debug;

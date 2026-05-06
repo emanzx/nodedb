@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end TLS negotiation test for the pgwire listener.
 //!
 //! Validates that:

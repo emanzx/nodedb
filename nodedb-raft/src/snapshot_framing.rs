@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot chunk framing for `InstallSnapshot` RPCs.
 //!
 //! # Wire layout (per chunk)

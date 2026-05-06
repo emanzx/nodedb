@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Migration DDL commands: SHOW MIGRATIONS.
 
 use std::sync::Arc;

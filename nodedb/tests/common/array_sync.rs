@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helpers for array CRDT sync integration tests.
 
 use std::sync::Arc;

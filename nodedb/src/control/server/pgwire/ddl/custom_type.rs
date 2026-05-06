@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! pgwire handlers for custom type DDL.
 //!
 //! - `CREATE TYPE <name> AS ENUM ('label1', 'label2', ...)`

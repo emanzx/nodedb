@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SharedState struct definition — all fields for the Control Plane.
 
 use std::sync::atomic::AtomicU64;

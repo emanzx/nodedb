@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SHA-256 hash chain computation for append-only collections with HASH_CHAIN.
 //!
 //! Each INSERT computes `SHA-256(previous_hash || row_id || row_contents)`.

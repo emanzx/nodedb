@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partial aggregate merge functions for cross-shard aggregation.
 //!
 //! Each shard computes local partial aggregates. The coordinator merges

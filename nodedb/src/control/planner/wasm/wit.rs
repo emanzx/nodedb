@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WASM Interface Type (WIT) definitions for NodeDB UDFs.
 //!
 //! Defines the contract between NodeDB and user-supplied WASM modules.

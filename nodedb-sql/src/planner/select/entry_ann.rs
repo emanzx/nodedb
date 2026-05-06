@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ANN options parsing for vector distance SQL functions.
 //!
 //! Parses named arguments of the form `name => value` passed to

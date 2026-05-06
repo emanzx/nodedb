@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster readiness gate: raft election wait, catalog sanity check, peer warm-up.
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration-level coverage for the collection hard-delete cascade
 //! enumerator. Sits on top of the `SystemCatalog` redb fixture from
 //! `catalog_integrity_helpers` and exercises `collect_dependents`

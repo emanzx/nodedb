@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Write-event tag correctness: the `WriteOp` emitted to the Event Plane
 //! must reflect whether the mutation created a new row or replaced an
 //! existing one. Downstream consumers (AFTER triggers, CDC) branch on

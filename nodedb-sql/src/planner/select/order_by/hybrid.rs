@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hybrid-search plan construction from `rrf_score(...)` calls.
 //!
 //! Two-source form:

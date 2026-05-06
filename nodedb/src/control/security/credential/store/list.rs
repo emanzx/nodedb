@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read-only accessors: list users, check emptiness, expose the
 //! underlying `SystemCatalog`.
 

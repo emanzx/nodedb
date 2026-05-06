@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-tenant CSR-partition and deleted-node-tracker helpers on
 //! `CoreLoop`. Extracted from `mod.rs` so the main file stays under the
 //! 500-LOC ceiling while leaving the two-field group cohesive here —

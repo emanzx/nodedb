@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MsgPack encoding for [`ErrorDetails`].
 //!
 //! Every variant encodes as a 2-element MessagePack array:

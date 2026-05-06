@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RDMA transport for high-performance shard migration base copy.
 //!
 //! Feature-gated behind `rdma`. When RDMA hardware is unavailable,

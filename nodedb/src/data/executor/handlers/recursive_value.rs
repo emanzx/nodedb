@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Value-generating recursive CTE handler.
 //!
 //! Evaluates `WITH RECURSIVE name(cols) AS (anchor UNION [ALL] step WHERE cond)`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SIMD-accelerated aggregation kernels for i64 columns.
 //!
 //! Mirrors the f64 dispatch in `simd_agg.rs`. Uses i128 accumulator for

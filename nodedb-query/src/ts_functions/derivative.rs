@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pure mathematical derivative (rate of change per second).
 //!
 //! Unlike `ts_rate`, this does NOT handle counter resets.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cursor-based msgpack → `serde_json::Value` and `nodedb_types::Value` readers.
 //!
 //! Deterministic raw byte parser — the first byte of each msgpack value

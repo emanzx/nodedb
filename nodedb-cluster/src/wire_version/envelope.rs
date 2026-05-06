@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Versioned wire envelope for cluster messages.
 //!
 //! # On-wire layout (v2 envelope)

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-dimension closed interval `[lo, hi]`.
 //!
 //! Stored on each [`crate::schema::DimSpec`]. The interval is closed on

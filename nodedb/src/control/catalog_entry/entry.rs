@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! The `CatalogEntry` enum itself.
 //!
 //! Every variant corresponds to a single mutation on the host-side

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end pgwire tests for security features:
 //! audit log, RLS, SHOW USERS, SHOW GRANTS, SHOW CONSTRAINTS.
 

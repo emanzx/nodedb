@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregate and window function registrations.
 
 use nodedb_types::columnar::ColumnType;

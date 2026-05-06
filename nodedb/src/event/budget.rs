@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event Plane memory budget: tracks total usage and enforces cap.
 //!
 //! Prevents unbounded memory growth by tracking memory usage across all

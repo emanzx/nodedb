@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! NaviX adaptive-local filtered HNSW traversal (VLDB 2025).
 //!
 //! Replaces ACORN-1's static 2-hop expansion with a per-hop heuristic switch

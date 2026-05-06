@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-row error accumulator for batched trigger execution.
 //!
 //! When a BEFORE trigger raises an exception on some rows in a batch,

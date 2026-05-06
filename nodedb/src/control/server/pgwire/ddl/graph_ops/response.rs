@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pgwire response construction for graph DSL handlers.
 
 use std::sync::Arc;

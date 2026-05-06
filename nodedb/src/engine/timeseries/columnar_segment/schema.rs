@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schema serialization (V2: includes codec per column).
 
 use nodedb_codec::ColumnCodec;

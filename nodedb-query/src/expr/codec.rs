@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Manual zerompk wire format for [`SqlExpr`].
 //!
 //! Each variant encodes as an array `[tag_u8, field1, field2, ...]`. Tags

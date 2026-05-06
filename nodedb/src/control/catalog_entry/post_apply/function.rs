@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Function post-apply side effects — clear the parsed block
 //! cache so the next call re-parses the new body.
 

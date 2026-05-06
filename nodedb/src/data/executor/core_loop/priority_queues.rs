@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Three-tier priority task queue for the Data Plane core loop.
 //!
 //! Replaces the single `VecDeque<ExecutionTask>` with three queues:

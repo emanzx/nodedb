@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-session temporary table registry.
 //!
 //! Temporary tables store data as Arrow RecordBatches in memory.

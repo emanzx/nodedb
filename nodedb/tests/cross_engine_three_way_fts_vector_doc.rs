@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-engine three-way bitmap test: FTS → Vector → Document.
 //!
 //! Scenario:

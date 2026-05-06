@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod append_only;
 pub mod balanced;
 pub mod hash_chain;

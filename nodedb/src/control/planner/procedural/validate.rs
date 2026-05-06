@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Procedural function body validation.
 //!
 //! Checks that a procedural block is legal for a `CREATE FUNCTION` body:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`NexarTransport`] struct, constructors, and basic accessors.
 
 use std::collections::HashMap;

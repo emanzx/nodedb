@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `VectorCodec` implementation for `Sq8Codec`.
 //!
 //! Wraps the existing concrete SQ8 quantizer as a dual-phase codec. The

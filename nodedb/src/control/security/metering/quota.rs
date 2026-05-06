@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Usage quota enforcement: hard (block), soft (warn), throttle, overage.
 
 use std::collections::HashMap;

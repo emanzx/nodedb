@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Security tests for JWKS / JWT provider configuration and JWKS fetch path.
 //!
 //! Tests go through existing public entry points (`ServerConfig::from_file`,

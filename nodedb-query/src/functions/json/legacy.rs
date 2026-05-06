@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Existing JSON manipulation scalar functions (json_extract, json_set, etc.)
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tokio `AsyncFd` integration for eventfd-based waking.
 //!
 //! This module wraps our `EventFd` in Tokio's `AsyncFd`, enabling truly async

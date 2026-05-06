@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Row-Level Security (RLS) policies.
 //!
 //! RLS adds per-row access control: predicates injected into physical

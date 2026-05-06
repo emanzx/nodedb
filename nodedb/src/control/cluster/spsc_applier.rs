@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CommitApplier for committed data-group Raft entries.
 //!
 //! When a Raft entry is committed across the quorum, it is pushed into the

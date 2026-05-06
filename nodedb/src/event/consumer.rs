@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event Plane consumer: one Tokio task per Data Plane core ring buffer.
 //!
 //! Each consumer operates in one of two modes:

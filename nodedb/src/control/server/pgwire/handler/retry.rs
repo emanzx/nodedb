@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transparent retry for `RetryableSchemaChanged`.
 //!
 //! When the planner tries to acquire a descriptor lease at a

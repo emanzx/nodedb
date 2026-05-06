@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod key;
 pub mod manager;
 pub mod tree;

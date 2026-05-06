@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! POST `/obsv/api/v1/annotations` — Grafana annotation query.
 
 use axum::extract::State;

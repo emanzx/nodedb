@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Session-scoped authentication context derived from JWT claims or DB identity.
 //!
 //! `AuthContext` is the rich session context built after authentication. It

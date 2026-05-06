@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot chunk buffering and assembly for inbound array sync.
 //!
 //! Split from [`super::inbound`] to keep that module within the project's

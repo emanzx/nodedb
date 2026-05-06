@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Trait seam for distributed vector algorithms.
 //!
 //! `VectorShardSeam` defines the cross-shard exchange surface that advanced

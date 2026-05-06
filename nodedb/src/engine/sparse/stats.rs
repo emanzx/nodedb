@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Column statistics for cost-based query optimization.
 //!
 //! Maintains per-collection, per-field statistics in redb metadata tables,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ILP (InfluxDB Line Protocol) TCP listener for timeseries ingest.
 //!
 //! Accepts plain TCP connections on the configured port. Each connection

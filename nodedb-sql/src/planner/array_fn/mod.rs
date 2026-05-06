@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Planner for `ARRAY_*` table-valued / scalar functions.
 //!
 //! The functions live in two AST shapes:

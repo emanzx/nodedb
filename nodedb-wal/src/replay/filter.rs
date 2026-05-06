@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-tombstone replay filter.
 //!
 //! A [`TombstoneSet`] records, per `(tenant_id, collection)` pair, the

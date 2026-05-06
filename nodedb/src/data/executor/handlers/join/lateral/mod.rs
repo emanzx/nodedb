@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LATERAL join execution: `LateralTopK` and `LateralLoop` handlers.
 
 mod loop_handler;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Secondary index management for the KV engine.
 //!
 //! Implements register, drop, lookup, and stats methods on [`super::engine::KvEngine`].

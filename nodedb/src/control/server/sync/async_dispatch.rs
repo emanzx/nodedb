@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Async Data Plane dispatch helpers for the sync WebSocket listener.
 //!
 //! Contains async functions that cross the Control Plane / Data Plane boundary

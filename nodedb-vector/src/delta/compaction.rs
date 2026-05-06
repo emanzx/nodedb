@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SPFresh LIRE-style topology-aware local patching.
 //!
 //! Rather than rebuilding the entire HNSW on every update, `LirePatcher`

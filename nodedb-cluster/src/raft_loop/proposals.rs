@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft proposal API — local and leader-forwarded proposals for both
 //! the metadata group (group 0) and data groups.
 

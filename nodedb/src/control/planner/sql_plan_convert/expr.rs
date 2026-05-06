@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Expression conversion and CTE inlining.
 
 use nodedb_sql::types::{SortKey, SqlExpr, SqlPlan};

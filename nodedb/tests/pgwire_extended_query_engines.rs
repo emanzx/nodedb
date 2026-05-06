@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Extended-query protocol coverage for KV, Columnar, and Timeseries engines.
 //!
 //! Spatial, Vector, Array, and error-path tests are in

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Smoke tests for CDC endpoints.
 //!
 //! Endpoints covered:

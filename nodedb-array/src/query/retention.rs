@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cell-level retention merger for bitemporal tile compaction.
 //!
 //! [`merge_for_retention`] replaces the tile-granularity

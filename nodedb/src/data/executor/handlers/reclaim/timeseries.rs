@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Timeseries engine reclaim — remove per-collection partition
 //! directories.
 //!

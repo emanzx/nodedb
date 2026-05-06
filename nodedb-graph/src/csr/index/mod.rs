@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dense integer CSR adjacency index with interned node IDs and labels.
 //!
 //! Split across:

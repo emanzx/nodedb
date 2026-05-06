@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatcher: try each DDL family's `try_parse` in turn.
 
 use super::{

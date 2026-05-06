@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `VectorCodec` implementation for binary quantization.
 //!
 //! Introduces the `BinaryCodec` wrapper struct (holding `dim`) and implements

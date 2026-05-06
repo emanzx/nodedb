@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequence audit log: records every GAP_FREE reservation and its outcome.
 //!
 //! Persisted to the `_system.sequence_log` redb table. Each entry records:

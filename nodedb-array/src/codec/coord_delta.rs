@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Per-axis zigzag-varint delta encode/decode over a `DimDict`'s index stream.
 //
 // The DimDict stores (dict_values, indices). For each cell, we record the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Error type for datetime and duration construction and arithmetic.
 
 /// Error type for datetime and duration construction and arithmetic.

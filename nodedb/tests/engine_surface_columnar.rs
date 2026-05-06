@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine surface tests for the Columnar engine.
 //!
 //! Covers: ingest, aggregations (SUM/AVG/MIN/MAX), predicate pushdown,

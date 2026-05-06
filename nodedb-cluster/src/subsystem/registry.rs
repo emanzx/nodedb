@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SubsystemRegistry` — owns a collection of subsystems, resolves their
 //! dependency order, starts them, and coordinates clean shutdown on failure.
 

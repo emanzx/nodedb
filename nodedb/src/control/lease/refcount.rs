@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-query descriptor lease refcount + scope guard.
 //!
 //! Descriptor leases are acquired at plan time and held

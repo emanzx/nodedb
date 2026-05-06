@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! pg_catalog query interception and dispatch.
 
 use pgwire::api::results::Response;

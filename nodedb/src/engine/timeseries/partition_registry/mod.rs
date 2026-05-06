@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition registry — tracks all partitions for a timeseries collection.
 //!
 //! Maintains a `BTreeMap<i64, PartitionEntry>` keyed by partition start

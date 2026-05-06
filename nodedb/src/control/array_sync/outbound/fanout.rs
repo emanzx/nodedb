@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`ArrayFanout`] — fan out an applied array op to all matching subscribers.
 //!
 //! Called by the post-apply observer hook (see `apply.rs`) after an

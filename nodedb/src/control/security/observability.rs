@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Auth observability: Prometheus-compatible metrics, anomaly detection, circuit breaker.
 
 use std::sync::atomic::{AtomicU64, Ordering};

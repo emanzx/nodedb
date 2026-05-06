@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL execution via the SPSC gateway for WebSocket RPC.
 
 use crate::control::gateway::core::QueryContext;

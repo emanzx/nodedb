@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE ARRAY` / `DROP ARRAY` lowering to `PhysicalTask`.
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Planner visibility of secondary indexes.
 //!
 //! Two regression modes are guarded here:

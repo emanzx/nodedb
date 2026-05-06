@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scatter-gather coordinator for cross-shard graph traversals.
 //!
 //! Cross-shard hops are NOT handled by forwarding the traversal to

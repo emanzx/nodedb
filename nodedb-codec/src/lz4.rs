@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LZ4 block compression codec for string/log columns.
 //!
 //! Uses `lz4_flex` (pure Rust, WASM-compatible) for fast decompression

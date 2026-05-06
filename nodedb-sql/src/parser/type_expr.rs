@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parser and validator for type expression strings used by the typeguard system.
 //!
 //! Parses strings like `"STRING"`, `"INT|NULL"`, `"ARRAY<STRING>"` into a

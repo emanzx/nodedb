@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SqlPlan::Array*` → `PhysicalTask` lowering for the read/maint
 //! function surface (ARRAY_SLICE, ARRAY_AGG, ARRAY_PROJECT,
 //! ARRAY_ELEMENTWISE, ARRAY_FLUSH, ARRAY_COMPACT).

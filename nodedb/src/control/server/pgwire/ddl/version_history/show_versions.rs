@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SHOW VERSIONS OF collection WHERE id = 'doc-id' [LIMIT N]
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Auth user catalog operations (redb persistence for JIT-provisioned users).
 
 use super::types::{AUTH_USERS, StoredAuthUser, SystemCatalog, catalog_err};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! CdcEvent: the formatted event that change stream consumers read.
 //!
 //! Each event contains full context — consumers never need to fetch

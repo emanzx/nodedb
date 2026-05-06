@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-tenant isolation: Full-Text Search engine.
 //!
 //! Tenant A indexes documents with text. Tenant B searches — must get zero results.

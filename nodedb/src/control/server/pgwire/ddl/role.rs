@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use nodedb_sql::ddl_ast::AlterRoleOp;
 use pgwire::api::results::{Response, Tag};
 use pgwire::error::PgWireResult;

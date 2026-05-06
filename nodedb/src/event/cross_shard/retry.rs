@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Volume-bounded retry queue for cross-shard writes.
 //!
 //! Exponential backoff (100ms base, 2x, capped at 10s).

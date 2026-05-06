@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Crash-injection tests for `MetaOp::TransactionBatch`.
 //!
 //! Compiled only with `--features failpoints`. Each test arms a panic on

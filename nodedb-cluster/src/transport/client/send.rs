@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Outbound RPC: encode, wrap in authenticated envelope, dial/reuse,
 //! send-and-receive, retry + circuit breaker.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tree traversal for [`super::HilbertPackedRTree`].
 //!
 //! Lives next to [`super::build`] so the build step can stay focused on

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read path (1100s), query (1200s), auth (2000s) constructors.
 
 use std::fmt;

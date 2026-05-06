@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared types for grouped aggregation: result container, schema
 //! resolution, per-row accumulation, and bitmask iteration.
 

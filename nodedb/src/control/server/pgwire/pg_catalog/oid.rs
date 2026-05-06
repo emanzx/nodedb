@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Stable, deterministic OID helpers for pg_catalog virtual tables.
 //!
 //! OIDs must be stable across server restarts, collection drop+recreate, and

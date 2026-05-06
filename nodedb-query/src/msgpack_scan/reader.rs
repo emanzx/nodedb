@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Low-level MessagePack binary reader: tag parsing, value skipping, and typed reads.
 //!
 //! All functions operate on `&[u8]` with explicit offsets. Zero allocation,

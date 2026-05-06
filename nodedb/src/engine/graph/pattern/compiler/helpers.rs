@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parser utility functions: keyword search, comma splitting, etc.
 
 /// Find a keyword at top level (not inside parentheses/brackets/braces).

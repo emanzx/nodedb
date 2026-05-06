@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Primary key index for columnar collections.
 //!
 //! Maps PK values to (segment_id, row_index) locations. Used for:

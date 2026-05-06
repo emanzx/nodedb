@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-collection bitemporal audit-retention registry.
 //!
 //! Thread-safe `RwLock`-backed registry of

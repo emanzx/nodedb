@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scheduler executor: Tokio task that evaluates cron expressions every second.
 //!
 //! For each due schedule, dispatches the SQL body through the Control Plane

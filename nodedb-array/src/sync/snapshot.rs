@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot wire types and chunk codec for array CRDT sync.
 //!
 //! A [`TileSnapshot`] captures the full state of a tile coord-range at a

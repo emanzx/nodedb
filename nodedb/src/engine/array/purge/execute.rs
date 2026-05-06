@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Executes a [`PurgePlan`] by rewriting affected segments in place.
 //!
 //! For each [`SegmentPurgeAction`]:

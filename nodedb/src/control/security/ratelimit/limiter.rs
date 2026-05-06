@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hierarchical rate limiter: per-user → per-org → per-tenant.
 //!
 //! Each identity gets a token bucket. Requests consume tokens based on

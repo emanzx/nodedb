@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SqlPlan intermediate representation types.
 //!
 //! These types represent the output of the nodedb-sql planner. Both Origin

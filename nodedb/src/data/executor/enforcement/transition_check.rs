@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transition check predicate enforcement.
 //!
 //! Evaluates predicates with `OLD.*` and `NEW.*` column access on UPDATE.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Read-path methods for `ArrayEngine`.
 
 use nodedb_array::segment::{MbrQueryPredicate, TilePayload};

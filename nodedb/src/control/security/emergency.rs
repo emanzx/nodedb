@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Emergency & incident response: lockdown, break-glass, bulk suspend, two-party auth.
 
 use std::sync::RwLock;

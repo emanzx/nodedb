@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use loro::LoroValue;
 
 use super::core::CrdtState;

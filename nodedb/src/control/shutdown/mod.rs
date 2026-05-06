@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Central shutdown coordination: one watch, one registry, one
 //! spawn helper. Replaces the ad-hoc `_shutdown_senders: Vec<_>`
 //! graveyard that carried no join handles, no laggard detection,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Arrow IPC encoding for columnar transport.
 //!
 //! Converts `Vec<(doc_id, serde_json::Value)>` into an Arrow RecordBatch

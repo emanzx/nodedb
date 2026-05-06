@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schema construction with full validation.
 //!
 //! Every `ArraySchema` in the system passes through `ArraySchemaBuilder::build()`

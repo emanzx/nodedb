@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Double-buffered memtable manager with admission control.
 //!
 //! Implements the industry-standard pattern used by RocksDB, ClickHouse, and

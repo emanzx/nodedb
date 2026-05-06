@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SELECT DIFF(collection, 'doc-id', version_a, version_b)
 
 use std::sync::Arc;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LATERAL join planning: classify correlation shape and emit the appropriate
 //! `SqlPlan::LateralTopK` or `SqlPlan::LateralLoop` variant.
 

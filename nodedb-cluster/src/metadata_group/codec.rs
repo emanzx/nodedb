@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Serialize / deserialize helpers for [`MetadataEntry`].
 //!
 //! Entries are wrapped in a [`crate::wire_version::Versioned`] envelope so

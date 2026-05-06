@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-group partial-snapshot accumulation state.
 
 use std::fs::File;

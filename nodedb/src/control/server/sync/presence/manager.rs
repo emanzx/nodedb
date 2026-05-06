@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PresenceManager: channel subscription, broadcast fan-out, TTL sweeping.
 //!
 //! Lives entirely in the Control Plane (Tokio, `Send + Sync`). No persistence,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Attribute projection over a sparse tile.
 //!
 //! Drops attribute columns the caller doesn't need. Coordinates and

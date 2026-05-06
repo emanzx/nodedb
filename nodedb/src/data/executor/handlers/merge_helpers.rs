@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Pure helper functions for MERGE statement execution (arm selection, action application).
 
 use crate::bridge::physical_plan::UpdateValue;

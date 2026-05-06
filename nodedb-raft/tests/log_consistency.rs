@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Log-consistency invariants exercised at the crate boundary.
 //!
 //! Inline unit tests in `log.rs` cover the basic shape (empty, append,

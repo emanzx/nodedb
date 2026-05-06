@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! EXPLAIN PERMISSION: full permission resolution trace + policy linting.
 
 use super::auth_context::AuthContext;

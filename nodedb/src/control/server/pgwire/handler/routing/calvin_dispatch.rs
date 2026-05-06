@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin multi-shard distributed dispatch.
 //!
 //! Handles the strict multi-shard path via the Calvin sequencer, including

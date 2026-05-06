@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatch `MetaOp::UnregisterCollection` to the local Data Plane.
 //!
 //! Called from `catalog_entry::post_apply::async_dispatch::collection::purge_async`

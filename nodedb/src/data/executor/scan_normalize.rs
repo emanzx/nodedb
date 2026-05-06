@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Universal document scan: routes to the correct engine and normalizes
 //! all results to standard msgpack maps.
 //!

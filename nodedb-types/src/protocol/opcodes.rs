@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Operation codes and response status for the native binary protocol.
 
 use serde::{Deserialize, Serialize};

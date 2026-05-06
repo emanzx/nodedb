@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for `rrf_score()` SQL function projection.
 //!
 //! The bug class fixed here spanned four layers, each silently dropping or

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bounded per-stream event retention buffer.
 //!
 //! Each change stream has its own buffer that holds recent events for

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Async post-apply for `CatalogEntry::DeleteMaterializedView`.
 //!
 //! Runs on **every node** so each follower reclaims its local copy

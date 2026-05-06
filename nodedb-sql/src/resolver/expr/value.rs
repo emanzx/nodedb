@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use sqlparser::ast::Value;
 
 use crate::error::{Result, SqlError};

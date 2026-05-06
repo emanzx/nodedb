@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! RESP gateway dispatch helpers.
 //!
 //! Routes KV operations through `Gateway::execute` when the gateway is

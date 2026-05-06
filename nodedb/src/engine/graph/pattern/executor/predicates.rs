@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WHERE predicate application and RETURN column projection.
 
 use super::super::ast::*;

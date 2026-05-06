@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Well-Known Text (WKT) serialization and parsing for Geometry types.
 //!
 //! Standard interchange format used by PostGIS, ArcadeDB (Spatial4J),

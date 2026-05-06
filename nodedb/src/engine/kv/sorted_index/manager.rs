@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SortedIndexManager: manages all sorted indexes for a KV engine core.
 //!
 //! Each sorted index is identified by `(tenant_id, collection, index_name)`.

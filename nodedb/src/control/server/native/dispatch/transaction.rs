@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transaction control: BEGIN, COMMIT, ROLLBACK.
 
 use nodedb_types::TraceId;

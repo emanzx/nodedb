@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! User CRUD operations: create, deactivate, update password/roles.
 
 use crate::types::TenantId;

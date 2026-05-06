@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! R-tree range search and nearest-neighbor queries.
 
 use nodedb_types::BoundingBox;

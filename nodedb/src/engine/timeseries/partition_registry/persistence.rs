@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Manifest persistence, recovery, and orphan cleanup.
 
 use nodedb_types::timeseries::{PartitionState, TieredPartitionConfig};

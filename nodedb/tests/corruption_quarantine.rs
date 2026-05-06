@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Corruption in any of (columnar, FTS, Raft snapshot) segment files must
 //! surface as `SegmentQuarantined` and appear in the debug enumeration endpoint.
 //!

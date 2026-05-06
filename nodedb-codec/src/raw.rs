@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raw (identity) codec — no compression.
 //!
 //! Passes data through unchanged. Used for symbol columns (already

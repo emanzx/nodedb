@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Concurrent session store — keyed by socket address.
 
 use std::collections::HashMap;

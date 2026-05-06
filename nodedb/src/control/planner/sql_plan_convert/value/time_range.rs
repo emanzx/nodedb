@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Time-range extraction from WHERE filters on timestamp columns.
 //!
 //! Walks the `Filter` / `SqlExpr` tree looking for comparisons or BETWEEN on

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Local Data-Plane execution trait for array shard operations.
 //!
 //! `ArrayLocalExecutor` is defined here in `nodedb-cluster` and

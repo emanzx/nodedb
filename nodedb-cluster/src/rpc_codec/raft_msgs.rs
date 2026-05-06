@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft consensus wire types and codecs.
 
 use nodedb_raft::message::{

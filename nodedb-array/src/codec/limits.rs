@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Defensive size caps for codec decoders.
 //
 // Every length field read from segment bytes drives an allocation or a

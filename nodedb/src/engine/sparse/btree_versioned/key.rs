@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Key layout for the versioned document and index tables.
 
 /// 20-digit zero-pad for i64 lexicographic ordering under reverse-scan.

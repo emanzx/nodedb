@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-tenant isolation: Vector engine.
 //!
 //! Tenant A inserts vectors. Tenant B searches — must get zero results.

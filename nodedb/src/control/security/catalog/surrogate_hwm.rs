@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Surrogate hwm catalog ops for the `_system.surrogate_hwm` table.
 //!
 //! Singleton table — one row keyed `"global"` holding the highest

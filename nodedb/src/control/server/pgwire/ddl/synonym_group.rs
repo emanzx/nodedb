@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! pgwire handlers for synonym group DDL.
 //!
 //! - `CREATE SYNONYM GROUP <name> AS ('term1', 'term2', ...)`

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Value conversions: engine Value → JSON for response encoding, and
 //! timeseries columnar cell → raw msgpack for the timeseries scan path.
 

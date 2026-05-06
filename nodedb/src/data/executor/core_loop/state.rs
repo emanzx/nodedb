@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CoreLoop` struct definition — all fields for the per-core Data Plane loop.
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Product Quantization (PQ): 8-16x compression for large datasets.
 //!
 //! Splits D-dimensional vectors into M subvectors, clusters each subspace

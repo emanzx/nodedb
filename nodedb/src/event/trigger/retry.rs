@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Exponential backoff retry queue for failed async trigger DML.
 //!
 //! When a trigger body's DML fails (constraint violation, timeout, shard

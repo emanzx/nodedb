@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `RlsPolicy` / `PolicyType` data shapes and the internal
 //! `policy_key` helper used by the store.
 

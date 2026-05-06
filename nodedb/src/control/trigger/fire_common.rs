@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared trigger evaluation logic: WHEN clause evaluation, body execution.
 //!
 //! Used by BEFORE, AFTER, and INSTEAD OF trigger fire paths.

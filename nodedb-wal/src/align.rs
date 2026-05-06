@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! O_DIRECT alignment utilities.
 //!
 //! O_DIRECT requires that:

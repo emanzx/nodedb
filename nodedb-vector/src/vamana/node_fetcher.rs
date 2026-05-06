@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `NodeFetcher` trait — abstracts in-memory vs io_uring-backed FP32 vector
 //! retrieval for Vamana beam-search and rerank.
 //!

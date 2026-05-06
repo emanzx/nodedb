@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `PURGE TENANT <id> CONFIRM` — Data Plane meta op that deletes
 //! ALL tenant data across every engine. Superuser-only, requires
 //! the literal `CONFIRM` keyword.

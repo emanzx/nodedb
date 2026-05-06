@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `GroupRegistry` (CDC consumer group) verifier.
 //!
 //! Checks that the in-memory `GroupRegistry` is consistent with

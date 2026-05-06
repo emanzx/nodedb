@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 pub mod count_min;
 pub mod hll;
 pub mod spacesaving;

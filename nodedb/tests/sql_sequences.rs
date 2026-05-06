@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for sequences: CREATE/DROP/ALTER/SHOW SEQUENCE, SERIAL.
 
 mod common;

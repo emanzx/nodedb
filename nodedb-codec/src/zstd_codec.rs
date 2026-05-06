@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Zstd compression codec for cold/archived partitions.
 //!
 //! Higher compression ratio than LZ4 (~5-10x for structured data), slower

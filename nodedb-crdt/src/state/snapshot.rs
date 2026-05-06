@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Snapshot export/import, history compaction, memory estimation.
 
 use loro::LoroDoc;

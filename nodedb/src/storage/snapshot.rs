@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Layered snapshots and Point-In-Time Recovery (PITR).
 //!
 //! - **Layered Snapshots**: Base image + block-level deltas.

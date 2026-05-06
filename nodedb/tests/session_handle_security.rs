@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire-level coverage for the session-handle resolver's missing
 //! hygiene layer: rate limiting + visibility on miss.
 //!

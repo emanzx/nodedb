@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bit-packing and unpacking primitives for the FastLanes codec.
 //!
 //! Written as tight loops over bytes that LLVM auto-vectorizes to

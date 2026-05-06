@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Merge a set of segments into one new segment.
 //!
 //! Algorithm: read all input tiles into a `BTreeMap<TileId, MergedTile>`,

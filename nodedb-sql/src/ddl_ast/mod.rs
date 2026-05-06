@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed AST for NodeDB-specific DDL statements.
 //!
 //! Every DDL command the system supports is represented as a variant

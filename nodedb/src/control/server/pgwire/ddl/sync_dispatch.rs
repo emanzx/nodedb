@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared async dispatch helper for DDL and DSL handlers.
 //!
 //! Sends a [`PhysicalPlan`] to the Data Plane and awaits the response.

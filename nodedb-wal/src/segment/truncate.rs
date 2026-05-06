@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sealed segment truncation after checkpoint LSN advances.
 
 use std::fs;

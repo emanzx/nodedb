@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Period lock enforcement: reject writes to rows in closed/locked fiscal periods.
 //!
 //! On each write (INSERT, UPDATE, DELETE), extracts the period column value from

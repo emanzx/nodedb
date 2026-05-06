@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the corrupt-segment quarantine subsystem.
 //!
 //! Tests cover the registry's two-strike logic, startup-scan rebuild,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector scatter-gather coordinator for cross-shard k-NN search.
 //!
 //! Same pattern as graph BSP and timeseries scatter-gather:

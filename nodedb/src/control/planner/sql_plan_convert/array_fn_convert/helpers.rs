@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helpers for array fn → PhysicalTask lowering.
 
 use nodedb_array::schema::{ArraySchema, AttrType as EngineAttrType, DimType as EngineDimType};

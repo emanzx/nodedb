@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vector search and hybrid search scalar function registrations.
 
 use nodedb_types::columnar::ColumnType;

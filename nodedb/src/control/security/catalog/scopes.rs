@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Scope catalog operations (redb persistence).
 
 use super::types::{SCOPE_GRANTS, SCOPES, SystemCatalog, catalog_err};

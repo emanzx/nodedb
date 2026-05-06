@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hybrid Logical Clock (HLC) for array CRDT sync.
 //!
 //! Each array op carries an [`Hlc`] that encodes a wall-clock millisecond

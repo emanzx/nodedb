@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Engine identification for memory budget tracking.
 
 /// Identifies a subsystem that owns a memory budget.

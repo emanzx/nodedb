@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration coverage for SQL JOIN correctness.
 //!
 //! Covers: RIGHT JOIN plan conversion (inline swap), multi-predicate join

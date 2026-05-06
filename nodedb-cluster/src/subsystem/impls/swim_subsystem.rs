@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`SwimSubsystem`] — wraps the SWIM failure detector lifecycle.
 //!
 //! This is the root subsystem (no dependencies) that spawns the SWIM

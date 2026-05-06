@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed request and response structs for the HTTP API.
 //!
 //! All structs derive `Serialize` + `Deserialize` with `snake_case` renaming.

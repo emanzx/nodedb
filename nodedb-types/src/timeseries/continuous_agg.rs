@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Continuous aggregate definition types.
 //!
 //! Shared between Origin and Lite. Origin uses these for SQL DDL parsing

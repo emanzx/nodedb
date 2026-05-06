@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-engine checkpoint writes must be durable across power loss.
 //!
 //! Each checkpoint writer uses the tmp-file + rename pattern for atomicity, but

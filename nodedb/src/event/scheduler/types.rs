@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Schedule definition types.
 
 /// What to do when a scheduled execution was missed (server was down).

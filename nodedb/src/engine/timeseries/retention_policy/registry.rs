@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! In-memory retention policy registry.
 //!
 //! Loaded from the system catalog on startup. All mutations go through

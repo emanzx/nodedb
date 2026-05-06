@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Write-path error constructors (codes 1000–1099 + accounting + type enforcement).
 
 use std::fmt;

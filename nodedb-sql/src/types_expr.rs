@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SQL value / expression / operator types.
 //!
 //! Extracted from `types.rs` to keep both files under the 500-line limit.

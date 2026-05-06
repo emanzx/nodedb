@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Conversions between `Value` and `serde_json::Value`.
 
 use std::str::FromStr;

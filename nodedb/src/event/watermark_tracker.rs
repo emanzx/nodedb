@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-partition watermark tracker.
 //!
 //! Tracks `(LSN, event_time)` pairs per partition (vShard). The global

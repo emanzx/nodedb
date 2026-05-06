@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DDL replication correctness matrix.
 //!
 //! For every DDL variant that flows through the replicated metadata

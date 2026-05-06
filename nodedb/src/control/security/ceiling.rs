@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tenant ceilings: hard limits that even superusers respect.
 //!
 //! Ceilings are guardrails that cannot be bypassed by any role.

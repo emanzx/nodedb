@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sync-layer security: JWT upgrade validation, per-delta RLS enforcement,
 //! and silent rejection with forensic audit logging.
 //!

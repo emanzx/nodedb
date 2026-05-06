@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authenticated identity context attached to every audit entry.
 
 /// Auth context for enriched audit entries.

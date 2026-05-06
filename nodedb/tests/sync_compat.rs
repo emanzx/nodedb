@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests verifying Origin and Lite speak the exact same sync protocol.
 //!
 //! Uses shared types from `nodedb-types` to build frames and verify roundtrip

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatch for SpatialOp variants (scan).
 
 use crate::bridge::envelope::Response;

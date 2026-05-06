@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Continuous WAL archiving for disaster recovery.
 //!
 //! WAL segments are streamed to remote storage (S3/GCS). Combined with

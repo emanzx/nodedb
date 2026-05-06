@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document helper scalar function registrations.
 
 use crate::functions::arg_types;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-tenant quota usage tracking.
 
 /// Per-tenant resource quota usage.

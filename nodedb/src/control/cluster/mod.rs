@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster mode startup and integration.
 //!
 //! Bridges `nodedb-cluster` (Raft, transport, routing, metadata group)

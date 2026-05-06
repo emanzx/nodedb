@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin scheduler restart idempotency tests.
 //!
 //! Covers the WAL-recovery layer: after N epochs, a freshly-opened

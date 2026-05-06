@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document collection scan handler.
 
 use tracing::{debug, warn};

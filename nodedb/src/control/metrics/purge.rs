@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection hard-delete ("purge") metrics.
 //!
 //! These track the Event Plane retention-GC sweeper: how many

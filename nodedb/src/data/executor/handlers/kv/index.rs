@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV secondary index handlers: RegisterIndex, DropIndex.
 
 use tracing::debug;

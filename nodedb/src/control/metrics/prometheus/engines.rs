@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Prometheus serialization: per-engine metrics, data plane, storage, subscriptions.
 
 use std::sync::atomic::Ordering;

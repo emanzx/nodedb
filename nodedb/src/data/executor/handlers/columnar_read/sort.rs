@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! ORDER BY comparator: sort a materialized row buffer by a typed sort-key list.
 
 /// Compare two columnar rows by the planner's sort-key list. Missing

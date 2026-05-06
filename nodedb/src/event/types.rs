@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event types emitted by the Data Plane and consumed by the Event Plane.
 //!
 //! Events carry **full row data** (new_value + old_value) as `Arc<[u8]>` pointing

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-shard delivery metrics.
 //!
 //! Atomic counters for observability: writes/sec, retry rate, DLQ depth,

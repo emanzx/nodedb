@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire frame format and message-type discriminants.
 
 /// Sync message type identifiers.

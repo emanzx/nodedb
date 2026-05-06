@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Key encoding and field extraction helpers for the KV engine.
 
 /// Compute a numeric key for per-collection HashMap lookups.

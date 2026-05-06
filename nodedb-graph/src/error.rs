@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed error enum for the shared graph engine.
 //!
 //! Every fallible operation on `CsrIndex` (label interning, edge insert,

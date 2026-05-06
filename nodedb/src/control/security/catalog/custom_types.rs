@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Custom type metadata operations for the system catalog.
 //!
 //! Persists `CREATE TYPE` definitions (enum and composite) via the

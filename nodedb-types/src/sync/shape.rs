@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shape definition schema: parameterized boundaries for sync subscriptions.
 //!
 //! A "shape" defines what subset of the database a Lite client sees.

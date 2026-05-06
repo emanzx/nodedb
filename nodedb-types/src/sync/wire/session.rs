@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Session lifecycle messages: handshake, token refresh, keepalive.
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `SHOW RANGES` — vshard distribution across the cluster.
 
 use std::sync::Arc;

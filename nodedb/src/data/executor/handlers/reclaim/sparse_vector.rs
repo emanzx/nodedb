@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sparse-vector engine reclaim — unlink per-collection checkpoint files.
 //!
 //! Checkpoint layout (see `sparse_vector_checkpoint.rs`):

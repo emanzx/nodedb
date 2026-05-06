@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration test: a joining node that contacts a follower
 //! first gets a `not leader; retry at <addr>` response, follows
 //! the hint, and joins via the real group-0 leader.

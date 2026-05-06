@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Rebalancer driver loop.
 //!
 //! [`RebalancerLoop`] is the active half of the load-based rebalancer.

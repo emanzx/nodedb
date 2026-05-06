@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// A single entry in the Raft log.
 ///
 /// Each entry carries the term in which it was created and an opaque command

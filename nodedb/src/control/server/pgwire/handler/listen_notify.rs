@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! LISTEN/NOTIFY: PostgreSQL-compatible async change notifications.
 //!
 //! ```sql

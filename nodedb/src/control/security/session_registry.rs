@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Active session registry for BLACKLIST WITH KILL SESSIONS.
 //!
 //! Tracks all active connections (native, pgwire, HTTP) and provides

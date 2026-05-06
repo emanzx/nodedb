@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Wire-enum stability snapshot tests for nodedb-crdt enums.
 
 use serde_json::json;

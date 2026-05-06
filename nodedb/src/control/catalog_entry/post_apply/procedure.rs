@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Procedure post-apply side effects — same block-cache
 //! invalidation pattern as Function.
 

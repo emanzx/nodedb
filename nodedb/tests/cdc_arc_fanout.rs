@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage: CDC fan-out and buffer reads must share event
 //! allocations via reference counting, not deep-clone per subscriber or poll.
 //!

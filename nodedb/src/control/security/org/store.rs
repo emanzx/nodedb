@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Organization store: in-memory cache + redb persistence.
 //!
 //! Manages `_system.orgs` and `_system.org_members` records.

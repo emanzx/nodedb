@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CsrIndex` struct definition and constructor.
 //!
 //! Memory layout at scale (1B edges):

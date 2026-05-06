@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `DROP TRIGGER` and `ALTER TRIGGER ... ENABLE/DISABLE` DDL handlers.
 
 use pgwire::api::results::{Response, Tag};

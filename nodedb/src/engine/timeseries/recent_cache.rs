@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Recent-window cache: keeps the last N hours of data decompressed in memory.
 //!
 //! Dashboard queries typically hit the last 1-24 hours. Older data stays

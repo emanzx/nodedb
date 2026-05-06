@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Row-level WHERE predicate evaluation for memtable scans.
 
 use crate::bridge::scan_filter::{FilterOp, ScanFilter};

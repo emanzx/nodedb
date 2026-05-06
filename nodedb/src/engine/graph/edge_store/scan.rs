@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Current-state scan + Ceiling-backed lookups and raw insert (snapshot restore).
 
 use std::collections::{HashMap, HashSet};

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-Raft-group applied-index watchers.
 //!
 //! A single primitive — [`AppliedIndexWatcher`] — tracks the highest

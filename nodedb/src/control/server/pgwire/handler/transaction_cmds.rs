@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transaction command handlers: BEGIN, COMMIT, ROLLBACK, SAVEPOINT.
 //!
 //! Extracted from `sql_exec.rs` — handles all transactional state management

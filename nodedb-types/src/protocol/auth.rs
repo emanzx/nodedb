@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Authentication method types.
 
 use serde::{Deserialize, Serialize};

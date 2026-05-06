@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! IVF-PQ index for billion-scale datasets.
 //!
 //! Inverted File with Product Quantization: partition vectors into Voronoi

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DateTime and duration scalar functions.
 
 use crate::value_ops::{to_value_number, value_to_display_string};

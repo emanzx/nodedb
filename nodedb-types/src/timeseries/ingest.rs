@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Ingest types, time range, and symbol dictionary.
 
 use std::collections::HashMap;

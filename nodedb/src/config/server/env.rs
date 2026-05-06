@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use std::net::{IpAddr, SocketAddr};
 
 use super::ServerConfig;

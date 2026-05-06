@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Plan-time predicate evaluation: substitute `$auth.*` references and
 //! combine policies into concrete `ScanFilter` values.
 //!

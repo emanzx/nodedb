@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin scheduler driver core.
 //!
 //! One [`Scheduler`] task runs per vshard hosted on this node. It receives

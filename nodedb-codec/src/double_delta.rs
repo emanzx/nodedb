@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! DoubleDelta codec for timestamp columns.
 //!
 //! Timestamps are monotonically increasing with near-constant intervals

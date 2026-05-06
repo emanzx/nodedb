@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Gateway-based SQL task dispatch for the native protocol.
 //!
 //! When `SharedState.gateway` is `Some`, tasks are routed through

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-runtime wake signaling via Linux eventfd.
 //!
 //! eventfd is the only safe primitive for waking across Tokio and Glommio/monoio:

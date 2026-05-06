@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE CONSUMER GROUP` DDL handler.
 //!
 //! Syntax: `CREATE CONSUMER GROUP <name> ON <stream>`

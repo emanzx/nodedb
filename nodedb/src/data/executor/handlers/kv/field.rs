@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV field-level operation handlers: FieldGet, FieldSet.
 
 use tracing::debug;

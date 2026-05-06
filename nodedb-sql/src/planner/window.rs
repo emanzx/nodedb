@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Window function extraction from SELECT projection.
 
 use sqlparser::ast;

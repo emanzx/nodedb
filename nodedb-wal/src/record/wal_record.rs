@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `WalRecord` — header + payload with encryption + checksum helpers.
 
 use super::header::{

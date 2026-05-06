@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PostgreSQL-compatible LISTEN/NOTIFY notification bus.
 //!
 //! Lives entirely on the Control Plane (`Send + Sync`, Tokio).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use super::{
     super::statement::NodedbStatement,
     fusion_params::{FusionParams, RAG_FUSION_KEYWORDS},

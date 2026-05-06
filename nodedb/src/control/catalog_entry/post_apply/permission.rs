@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-apply side effects for permission grant `CatalogEntry`
 //! variants. After the synchronous applier has written the redb
 //! row, install the in-memory grant on every node so the

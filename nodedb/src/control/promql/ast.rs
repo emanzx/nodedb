@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! PromQL abstract syntax tree.
 
 use super::label::LabelMatcher;

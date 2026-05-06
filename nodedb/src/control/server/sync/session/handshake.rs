@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Handshake + fork detection.
 
 use std::collections::HashMap;

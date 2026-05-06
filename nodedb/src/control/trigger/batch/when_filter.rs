@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WHEN clause batch filtering.
 //!
 //! Evaluates a trigger's WHEN predicate against each row in a batch,

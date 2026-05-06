@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JWT exchange endpoint: validate JWT, JIT provision user, return `nda_` key.
 //!
 //! ```text

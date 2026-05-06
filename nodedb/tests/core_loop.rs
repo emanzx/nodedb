@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for CoreLoop execution across all engines.
 
 #[path = "executor_tests/helpers.rs"]

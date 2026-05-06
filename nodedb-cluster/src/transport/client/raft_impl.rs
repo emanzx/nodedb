@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `nodedb_raft::RaftTransport` trait impl — dispatches Raft RPCs through the
 //! outbound [`send_rpc`] path and unpacks the typed response.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partial aggregate state for incremental merging.
 //!
 //! Stores enough state per (bucket, group_key) to merge incrementally:

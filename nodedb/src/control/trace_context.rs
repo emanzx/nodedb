@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end trace propagation across all planes.
 //!
 //! Ensures `trace_id` flows from:

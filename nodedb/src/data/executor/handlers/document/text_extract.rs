@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Text extraction utilities for full-text search indexing.
 
 /// Extract all indexable text from a JSON document, including nested arrays.

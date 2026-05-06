@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Corpus statistics against the dedicated `STATS` table
 //! keyed by `(tenant_id, collection)`.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Handshake frames and per-operation limits for the native binary protocol.
 
 use serde::{Deserialize, Serialize};

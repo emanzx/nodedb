@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Background merge cycle: pick mergeable groups, merge, atomically update registry.
 
 use std::path::{Path, PathBuf};

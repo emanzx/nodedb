@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Columnar and Timeseries write tracking for transaction batches.
 //!
 //! These handlers capture prior state before each write so the undo log

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 // Structural sparse-tile decoder — symmetric to tile_encode.
 //
 // Validates the version byte, dispatches on CodecTag, and reconstructs

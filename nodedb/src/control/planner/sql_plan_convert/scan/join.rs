@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Hash-join converter and the filter/condition merger and bitmap-hint plan
 //! synthesis it depends on.
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! W3C-compatible 128-bit trace identifiers and 64-bit span identifiers.
 //!
 //! `TraceId` is a 16-byte value matching the W3C `traceparent` wire format:

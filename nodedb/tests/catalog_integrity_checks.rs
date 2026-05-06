@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cross-table referential integrity checks 6–8 (dangling-reference
 //! divergences) plus the end-to-end clean-integrity test that applies
 //! every parent-replicated `Put<T>` variant and asserts zero violations.

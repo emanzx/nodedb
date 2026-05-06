@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Secondary skip indexes for high-selectivity column filtering.
 //!
 //! Beyond the sparse primary index (timestamp-based block skip), these

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! [`OriginArrayInbound`] — dispatcher for inbound array CRDT wire messages.
 //!
 //! Receives decoded wire messages from the WebSocket listener, validates

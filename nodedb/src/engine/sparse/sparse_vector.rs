@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Learned sparse vector storage and search (SPLADE/ELSER).
 //!
 //! Stores sparse embeddings as `Vec<(u32, f32)>` (token_id, weight) pairs.

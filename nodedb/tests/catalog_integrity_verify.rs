@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Verifier coverage: `verify_redb_integrity` reports `OrphanRow`
 //! divergences symmetrically for every parent-replicated DDL type,
 //! not just `Collection`. Plus a compile-time exhaustive classification

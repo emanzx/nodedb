@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Top-level dispatcher: iterate every registry verifier,
 //! aggregate divergence counts per registry, and repair any
 //! divergences found. A second verify pass after repair

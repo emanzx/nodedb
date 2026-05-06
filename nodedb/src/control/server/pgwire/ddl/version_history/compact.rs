@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! COMPACT HISTORY ON collection WHERE id = 'doc-id' BEFORE 'checkpoint'
 
 use std::time::Duration;

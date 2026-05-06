@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Windowed query helpers for sorted indexes.
 //!
 //! These functions handle time-windowed queries where only entries within

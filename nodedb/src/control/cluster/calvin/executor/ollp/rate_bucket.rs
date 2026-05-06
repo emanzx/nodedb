@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sliding-window rate counter for per-tenant OLLP budgets.
 //!
 //! `RateBucket` tracks event timestamps in a `VecDeque<Instant>` and

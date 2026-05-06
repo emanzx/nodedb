@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `PendingUpdate` — one membership delta waiting to be gossiped.
 //!
 //! Each entry tracks how many outgoing datagrams have already carried it

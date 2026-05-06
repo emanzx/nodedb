@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Control Plane enforcement for general CHECK constraints.
 //!
 //! General CHECK constraints may contain subqueries (`SELECT ...`) and `NEW.field`

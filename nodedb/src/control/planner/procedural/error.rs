@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Typed error enum for procedural SQL parsing, compilation, and validation.
 //!
 //! Replaces `Result<T, String>` throughout the procedural module.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL payload encryption using AES-256-GCM.
 //!
 //! Design:

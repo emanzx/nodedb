@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Peer-aware running-aggregate for RANGE BETWEEN UNBOUNDED PRECEDING AND
 //! CURRENT ROW.
 //!

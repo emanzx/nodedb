@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Apply custom type catalog entries to `SystemCatalog` redb.
 
 use tracing::warn;

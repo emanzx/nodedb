@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the ILP → gateway migration (C-δ.4).
 //!
 //! Tests:

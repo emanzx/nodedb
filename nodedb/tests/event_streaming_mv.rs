@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for Event Plane streaming materialized views.
 //!
 //! Tests: incremental aggregation (COUNT/SUM/MIN/MAX), watermark-driven

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-tile entry stored in the segment footer.
 //!
 //! Each entry locates a tile payload inside the segment file and

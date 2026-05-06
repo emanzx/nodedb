@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Vectorized predicate evaluation on dictionary-encoded columns.
 //!
 //! Implements late materialization for `DictEncoded` columns: predicates are

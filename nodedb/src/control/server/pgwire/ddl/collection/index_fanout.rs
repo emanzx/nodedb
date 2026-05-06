@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster fan-out for `CREATE INDEX` backfill.
 //!
 //! Single-node CREATE INDEX runs `DocumentOp::BackfillIndex` against

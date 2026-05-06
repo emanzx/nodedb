@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Block-Max WAND scoring engine.
 //!
 //! Two-level skip: WAND pivot selection across terms, then block-level

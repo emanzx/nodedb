@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Procedural SQL → expression compiler.
 //!
 //! Compiles a `ProceduralBlock` AST into an equivalent SQL expression string.

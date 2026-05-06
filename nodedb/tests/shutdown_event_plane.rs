@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! D-δ integration test 5: Event Plane watermarks persisted through shutdown.
 //!
 //! Verifies the `PersistingWatermarks` shutdown phase end-to-end:

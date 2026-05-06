@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! KV Scan handler and filter extraction.
 
 use tracing::debug;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// Errors produced by the cross-runtime bridge.
 #[derive(Debug, thiserror::Error)]
 pub enum BridgeError {

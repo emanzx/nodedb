@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Partition types: metadata, state, interval, and flushed data.
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parse CREATE/DROP/ALTER CHANGE STREAM and CREATE/DROP/SHOW CONSUMER GROUP.
 
 use super::helpers::extract_name_after_if_exists;

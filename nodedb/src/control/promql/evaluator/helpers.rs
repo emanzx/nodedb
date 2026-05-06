@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared helper functions for the evaluator.
 
 use super::super::ast::Grouping;

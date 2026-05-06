@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `KvHashTable` struct definition, constructor, and introspection methods.
 
 use std::collections::HashMap;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Session parameter methods (SET/SHOW) on SessionStore.
 
 use std::net::SocketAddr;

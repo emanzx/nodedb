@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE VECTOR INDEX` DSL handler.
 //!
 //! Parses the full quantization-parameter surface advertised in `docs/vectors.md`:

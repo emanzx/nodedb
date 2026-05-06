@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Existence-check helpers used by IF EXISTS / IF NOT EXISTS guards.
 
 use crate::control::security::identity::AuthenticatedIdentity;

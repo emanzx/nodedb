@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! JWK (JSON Web Key) parsing and verification key abstraction.
 //!
 //! Parses JWKS JSON responses into `VerificationKey` values that can

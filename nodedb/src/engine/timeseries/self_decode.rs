@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Self-decoding partition metadata (AnyBlox pattern).
 //!
 //! When Origin upgrades its codec pipeline, edge Lite devices with older

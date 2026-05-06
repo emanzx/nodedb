@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Coordinated retention across shards.
 //!
 //! When retention drops partitions, all shards must drop the same time range

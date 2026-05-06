@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use roaring::RoaringBitmap;
 
 /// Build a roaring bitmap from a set of document IDs.

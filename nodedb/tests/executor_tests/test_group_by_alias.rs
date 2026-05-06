@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for GROUP BY alias and positional reference resolution.
 //!
 //! Verifies that GROUP BY clauses correctly resolve SELECT expression aliases

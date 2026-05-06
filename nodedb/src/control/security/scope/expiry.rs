@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Periodic scope grant expiry processor.
 //!
 //! Spawns a Tokio task that periodically checks for expired scope grants

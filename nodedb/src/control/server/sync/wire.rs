@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sync wire protocol — re-exports from `nodedb-types`.
 //!
 //! All wire types are defined in `nodedb-types::sync::wire` so that both

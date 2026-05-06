@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Integration tests for the native protocol → gateway migration (C-δ.5).
 //!
 //! Tests:

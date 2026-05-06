@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-column vector model metadata for embedding tracking and migration.
 //!
 //! Stored in the system catalog keyed by `(tenant_id, collection, column)`.

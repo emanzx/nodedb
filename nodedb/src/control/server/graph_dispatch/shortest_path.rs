@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `cross_core_shortest_path` — mirrors `cross_core_bfs` but records
 //! parent pointers so `GRAPH PATH FROM 'src' TO 'dst'` can reconstruct
 //! an ordered path across every topology (single core, single-node

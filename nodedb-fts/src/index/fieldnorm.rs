@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Fieldnorm storage: SmallFloat-encoded document lengths per collection.
 //!
 //! Stores a compact `Vec<u8>` array indexed by surrogate. Each byte is

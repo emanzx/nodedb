@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Transaction lifecycle methods on SessionStore.
 
 use std::net::SocketAddr;

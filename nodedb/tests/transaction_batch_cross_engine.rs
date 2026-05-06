@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! MetaOp::TransactionBatch must atomically commit or atomically roll back
 //! across engine pairs. This file covers KV paired with every other engine.
 //!

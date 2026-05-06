@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Control-Plane executor for `PhysicalPlan::ClusterArray` variants.
 //!
 //! `NexarArrayDispatch` bridges `ShardRpcDispatch` ↔ `NexarTransport`,

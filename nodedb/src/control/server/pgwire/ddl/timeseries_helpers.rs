@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Internal helpers for timeseries DDL handlers.
 
 /// Parse a `WITH (key = 'value', ...)` clause from a split DDL statement.

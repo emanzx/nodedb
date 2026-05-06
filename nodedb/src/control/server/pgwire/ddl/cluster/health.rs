@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Peer health DDL commands: SHOW PEER HEALTH.
 
 use std::sync::Arc;

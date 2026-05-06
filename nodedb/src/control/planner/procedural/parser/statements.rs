@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Individual statement parsers for the procedural SQL parser.
 
 use super::super::ast::*;

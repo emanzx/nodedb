@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `LateralLoop` handler: general nested-loop LATERAL for non-equi correlations.
 
 use tracing::debug;

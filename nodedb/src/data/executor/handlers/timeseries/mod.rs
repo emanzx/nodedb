@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Data Plane handlers for timeseries scan and ingest.
 
 pub mod aggregate;

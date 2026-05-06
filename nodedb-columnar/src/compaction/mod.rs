@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Segment compaction: merge segments, drop deleted rows, re-encode.
 //!
 //! Compaction reads one or more source segments along with their delete

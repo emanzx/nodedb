@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 use std::fmt::Debug;
 use std::sync::Arc;
 

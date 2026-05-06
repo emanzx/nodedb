@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Bridge throughput benchmarks.
 //!
 //! Risk 3: Validate 50GB / 5GB/s bridge throughput target.

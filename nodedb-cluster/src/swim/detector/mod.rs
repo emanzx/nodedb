@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! SWIM failure detector — the runtime that drives the probe loop.
 //!
 //! This module is the `!I/O` portion of the SWIM subsystem: it owns the

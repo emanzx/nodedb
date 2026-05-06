@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shard-side handler for incoming VShardEnvelope messages.
 //!
 //! When a remote node sends a VShardEnvelope via QUIC (wrapped in

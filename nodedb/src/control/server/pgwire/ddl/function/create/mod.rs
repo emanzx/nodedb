@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! `CREATE [OR REPLACE] FUNCTION` — split by concern.
 //!
 //! - [`handler`] — the `create_function` pgwire entry point

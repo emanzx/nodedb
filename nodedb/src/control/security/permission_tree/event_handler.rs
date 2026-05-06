@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Event Plane integration: process WriteEvents that affect permission trees.
 //!
 //! When a row is written to a collection that serves as a permission table

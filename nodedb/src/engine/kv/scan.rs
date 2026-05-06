@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cursor-based KV scan with optional glob pattern matching.
 
 use super::entry::KvEntry;

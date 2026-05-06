@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sync (3000s), storage (4000s), serialization (4200s), config (5000s),
 //! cluster (6000s), memory (7000s), encryption (8000s), internal (9000s)
 //! constructors.

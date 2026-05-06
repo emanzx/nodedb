@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! pgwire COPY-protocol bridge for backup/restore wire surface.
 //!
 //! - `intent_to_response()` runs in `SimpleQueryHandler::do_query`

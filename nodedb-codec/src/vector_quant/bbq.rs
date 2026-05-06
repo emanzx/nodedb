@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! BBQ — Better Binary Quantization (Elasticsearch 9.1, mid-2025).
 //!
 //! Centroid-centered asymmetric 1-bit quantizer with 14-byte corrective

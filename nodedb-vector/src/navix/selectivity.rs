@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Local selectivity estimation for NaviX adaptive-local filtered traversal.
 //!
 //! At each hop during HNSW traversal, NaviX computes the fraction of 1-hop

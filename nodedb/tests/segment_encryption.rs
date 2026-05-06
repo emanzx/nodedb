@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! End-to-end test: snapshot core files are encrypted at rest when a KEK is
 //! configured, and the same KEK is required to restore.
 //!

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection conflict-resolution policy DDL.
 
 use nodedb_crdt::policy::CollectionPolicy;

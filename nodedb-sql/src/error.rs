@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Error types for the nodedb-sql crate.
 
 /// Errors produced during SQL parsing, resolution, or planning.

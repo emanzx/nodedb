@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Dispatch `DocumentOp::Register` to this node's Data Plane
 //! after a collection has been committed.
 //!

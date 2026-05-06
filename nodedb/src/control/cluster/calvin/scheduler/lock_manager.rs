@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Deterministic lock manager for the Calvin scheduler.
 //!
 //! # Design

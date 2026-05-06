@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Token-authenticated bootstrap RPC for cred delivery (L.4).
 //!
 //! Joining nodes that have **no** cluster TLS material yet connect

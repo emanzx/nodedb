@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! InfluxDB Line Protocol v2 parser (write path only).
 //!
 //! Parses lines of the form:

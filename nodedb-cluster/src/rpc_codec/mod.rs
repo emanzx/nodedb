@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Raft RPC binary codec — split into logical sub-modules.
 //!
 //! Public interface mirrors the old flat `rpc_codec.rs`:

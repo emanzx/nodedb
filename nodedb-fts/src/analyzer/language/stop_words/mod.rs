@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-language stop word lists with O(log n) binary search lookup.
 //!
 //! All lists are compiled-in `static` sorted arrays (~50KB total).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Approximate aggregation functions — re-exported from nodedb-types.
 //!
 //! The canonical implementation lives in `nodedb_types::approx` so Origin,

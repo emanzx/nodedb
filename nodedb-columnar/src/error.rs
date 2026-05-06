@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Error types for columnar segment operations.
 
 /// Errors from columnar segment encoding, decoding, and validation.

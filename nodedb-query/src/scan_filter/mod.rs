@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Post-scan filter evaluation.
 //!
 //! `ScanFilter` represents a single filter predicate.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Collection-specific async post-apply dispatchers.
 //!
 //! Runs on **every node** (via `spawn_post_apply_async_side_effects`

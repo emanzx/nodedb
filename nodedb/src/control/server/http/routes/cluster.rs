@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Cluster observability endpoint.
 //!
 //! `GET /v1/cluster/status` returns a full JSON snapshot of the

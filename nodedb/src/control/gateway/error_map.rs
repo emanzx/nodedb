@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Translate gateway errors into listener-specific error shapes.
 //!
 //! Every listener calls `gateway.execute(plan)` and gets `Result<_, Error>`.

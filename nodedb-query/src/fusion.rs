@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 /// Reciprocal Rank Fusion (RRF) for combining ranked results from multiple engines.
 ///
 /// RRF is used when a query hits multiple engines (e.g., vector similarity +

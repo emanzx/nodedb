@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! # nodedb-mem
 //!
 //! Global NUMA-aware memory governor for NodeDB.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! L2 (object-store) cleanup worker.
 //!
 //! Drains `_system.l2_cleanup_queue` — one entry per collection whose

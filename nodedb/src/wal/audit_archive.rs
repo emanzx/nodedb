@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit WAL archival to S3/object store.
 //!
 //! Archives sealed audit WAL segments to cloud storage for long-term retention.

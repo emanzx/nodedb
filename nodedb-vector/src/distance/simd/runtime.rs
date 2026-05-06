@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Runtime SIMD detection and dispatch table.
 
 use super::hamming::fast_hamming;

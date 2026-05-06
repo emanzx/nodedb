@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Per-core atomic usage counters with periodic flush.
 //!
 //! Each Data Plane core has its own set of counters (no contention).

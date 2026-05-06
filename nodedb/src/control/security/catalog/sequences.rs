@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Sequence metadata operations for the system catalog.
 
 use super::sequence_types::{SequenceState, StoredSequence};

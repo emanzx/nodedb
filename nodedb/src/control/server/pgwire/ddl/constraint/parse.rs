@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Parsing helpers for constraint DDL: transition rules, predicates, expressions.
 
 use pgwire::error::PgWireResult;

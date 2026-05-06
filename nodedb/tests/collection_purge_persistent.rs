@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Aggregation gate: after `purge_collection` / `delete_all_for_collection`
 //! on each persistent engine, the engine's own lookup surface returns
 //! zero hits for the purged `(tenant, collection)` pair while siblings

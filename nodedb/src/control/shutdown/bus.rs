@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Unified shutdown bus: phased drain with a 500 ms per-phase budget.
 //!
 //! # Overview

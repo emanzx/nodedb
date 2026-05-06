@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Canonical genomics example for bitemporal array semantics.
 //!
 //! This test documents the motivating real-world use case for bitemporal arrays:

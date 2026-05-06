@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Calvin dispatch classification and routing for cross-shard writes.
 //!
 //! This module is the single chokepoint for deciding whether a set of

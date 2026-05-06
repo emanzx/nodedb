@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! H3 hexagonal hierarchical spatial index.
 //!
 //! Uber's H3 system maps the globe into hexagonal cells at 16 resolutions

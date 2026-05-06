@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! WAL reader for crash recovery and replay.
 //!
 //! Reads records sequentially from a WAL file, validating checksums and

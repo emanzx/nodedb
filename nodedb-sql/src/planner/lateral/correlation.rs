@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Extract correlation predicates from a LATERAL subquery's WHERE clause.
 //!
 //! A correlated predicate is one where the left side references the outer

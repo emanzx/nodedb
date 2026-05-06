@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Document operation handlers — module root.
 //! Submodules: read (scan), write (batch insert, register, index ops),
 //! sort (external sort, sort helpers), text_extract (FTS indexing).

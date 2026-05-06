@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Audit-retention purge: drop *superseded* edge versions older than the
 //! system-time cutoff.
 //!

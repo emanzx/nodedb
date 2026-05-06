@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Shared token-extraction helpers for the DDL parsers.
 
 use crate::error::SqlError;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Tests for procedure behavior in cluster context.
 //!
 //! Validates data model contracts that the cluster relies on:

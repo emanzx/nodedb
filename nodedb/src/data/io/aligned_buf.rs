@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Page-aligned buffer for O_DIRECT I/O.
 //!
 //! O_DIRECT requires buffer address, offset, and length to be aligned to

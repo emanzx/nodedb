@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //! Regression coverage: DROP CONSUMER GROUP ... IF EXISTS must succeed silently
 //! when the named group is absent rather than returning a string error.
 
