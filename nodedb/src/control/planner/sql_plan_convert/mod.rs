@@ -6,6 +6,7 @@ pub mod convert;
 pub mod dml;
 pub mod expr;
 pub mod filter;
+pub mod lateral;
 pub mod scan;
 pub mod scan_params;
 pub mod set_ops;

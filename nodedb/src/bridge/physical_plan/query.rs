@@ -211,4 +211,67 @@ pub enum QueryOp {
         distinct: bool,
         limit: usize,
     },
+
+    /// LATERAL equi-correlated top-K: scan `inner_collection` once per outer
+    /// row, applying the equi-correlation as an equality filter, then return
+    /// the top `inner_limit` rows ordered by `inner_order_by`.
+    ///
+    /// The executor first runs `outer_plan` to materialise outer rows, then
+    /// for each outer row injects the equi-correlation as an equality filter
+    /// on `inner_collection`, applies `inner_order_by`, and keeps the top
+    /// `inner_limit` rows.  Output rows are `(outer_row merged with inner_row)`.
+    ///
+    /// `correlation_keys` are `(outer_col, inner_col)` equi-join pairs.
+    LateralTopK {
+        /// Sub-plan that produces the outer (driving) rows.
+        outer_plan: Box<crate::bridge::envelope::PhysicalPlan>,
+        /// Alias qualifying the outer columns in output rows.
+        outer_alias: String,
+        /// Inner collection to scan per outer row.
+        inner_collection: String,
+        /// Non-correlated filters applied to every inner scan (msgpack bytes).
+        inner_filters: Vec<u8>,
+        /// Sort keys for the inner per-outer-row result.
+        /// Each entry is `(field_name, ascending)`.
+        inner_order_by: Vec<(String, bool)>,
+        /// Maximum inner rows per outer row.
+        inner_limit: usize,
+        /// Equi-join pairs `(outer_col, inner_col)`.
+        correlation_keys: Vec<(String, String)>,
+        /// Alias qualifying inner columns in output rows.
+        lateral_alias: String,
+        /// Output projection (empty = all columns).
+        projection: Vec<JoinProjection>,
+        /// LEFT join semantics: preserve outer rows when inner is empty.
+        left_join: bool,
+    },
+
+    /// LATERAL nested-loop: for each outer row, re-execute the inner plan
+    /// with correlated values injected as additional equality filters.
+    ///
+    /// The executor runs `outer_plan`, then for each outer row reads the
+    /// `outer_col` values from `correlation_predicates`, appends equality
+    /// filters on the corresponding `inner_col` fields, and scans
+    /// `inner_collection`.
+    LateralLoop {
+        /// Sub-plan that produces the outer (driving) rows.
+        outer_plan: Box<crate::bridge::envelope::PhysicalPlan>,
+        /// Alias qualifying the outer columns in output rows.
+        outer_alias: String,
+        /// Inner collection to scan per outer row.
+        inner_collection: String,
+        /// Base inner filters (non-correlated, msgpack bytes).
+        inner_filters: Vec<u8>,
+        /// Correlated predicates: `(inner_field, outer_field)`.
+        correlation_predicates: Vec<(String, String)>,
+        /// Alias qualifying inner columns in output rows.
+        lateral_alias: String,
+        /// Output projection (empty = all columns).
+        projection: Vec<JoinProjection>,
+        /// LEFT join semantics.
+        left_join: bool,
+        /// Hard cap on outer rows. Queries that exceed this cap return a
+        /// typed `LateralCapExceeded` error instead of silently truncating.
+        outer_row_cap: usize,
+    },
 }

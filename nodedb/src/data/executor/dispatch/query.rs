@@ -6,6 +6,7 @@ use crate::bridge::physical_plan::QueryOp;
 use crate::data::executor::core_loop::CoreLoop;
 use crate::data::executor::handlers::join::{
     BroadcastJoinParams, HashJoinParams, InlineHashJoinParams, JoinParams,
+    lateral::{LateralLoopParams, LateralTopKParams},
 };
 use crate::data::executor::task::ExecutionTask;
 
@@ -180,6 +181,56 @@ impl CoreLoop {
                 &[],
                 &[],
             ),
+
+            QueryOp::LateralTopK {
+                outer_plan,
+                outer_alias,
+                inner_collection,
+                inner_filters,
+                inner_order_by,
+                inner_limit,
+                correlation_keys,
+                lateral_alias,
+                projection,
+                left_join,
+            } => self.execute_lateral_top_k(LateralTopKParams {
+                task,
+                tid,
+                outer_plan,
+                outer_alias,
+                inner_collection,
+                inner_filters,
+                inner_order_by,
+                inner_limit: *inner_limit,
+                correlation_keys,
+                lateral_alias,
+                projection,
+                left_join: *left_join,
+            }),
+
+            QueryOp::LateralLoop {
+                outer_plan,
+                outer_alias,
+                inner_collection,
+                inner_filters,
+                correlation_predicates,
+                lateral_alias,
+                projection,
+                left_join,
+                outer_row_cap,
+            } => self.execute_lateral_loop(LateralLoopParams {
+                task,
+                tid,
+                outer_plan,
+                outer_alias,
+                inner_collection,
+                inner_filters,
+                correlation_predicates,
+                lateral_alias,
+                projection,
+                left_join: *left_join,
+                outer_row_cap: *outer_row_cap,
+            }),
 
             QueryOp::BroadcastJoin {
                 large_collection,

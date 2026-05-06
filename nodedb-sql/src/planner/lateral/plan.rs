@@ -1,0 +1,292 @@
+//! LATERAL join planning: classify correlation shape and emit the appropriate
+//! `SqlPlan::LateralTopK` or `SqlPlan::LateralLoop` variant.
+
+use sqlparser::ast;
+
+use super::correlation::analyse_lateral_where;
+use crate::coerce::expr_as_usize_literal;
+use crate::error::{Result, SqlError};
+use crate::functions::registry::FunctionRegistry;
+use crate::parser::normalize::normalize_ident;
+use crate::resolver::expr::convert_expr;
+use crate::temporal::TemporalScope;
+use crate::types::*;
+
+/// The maximum outer-row count allowed for `LateralLoop` queries.
+pub const LATERAL_LOOP_CAP: usize = 100_000;
+
+/// Plan a LATERAL subquery join.
+///
+/// Called when the right side of a JOIN (or a comma-separated FROM item) is a
+/// `TableFactor::Derived { lateral: true, .. }`.
+///
+/// `outer_plan` — plan for the driving (outer) side.
+/// `outer_alias` — alias or name of the outer table for correlation detection.
+/// `subquery` — the LATERAL inner subquery.
+/// `lateral_alias` — alias given to the LATERAL in the SQL (e.g. `x` in `LATERAL (...) x`).
+/// `left_join` — true when the enclosing join is LEFT JOIN LATERAL (outer rows
+///               preserved when inner produces no rows).
+/// `outer_projection` — SELECT list projection to apply after the lateral.
+#[allow(clippy::too_many_arguments)]
+pub fn plan_lateral_join(
+    outer_plan: SqlPlan,
+    outer_alias: Option<String>,
+    subquery: &ast::Query,
+    lateral_alias: &str,
+    left_join: bool,
+    outer_projection: Vec<Projection>,
+    catalog: &dyn SqlCatalog,
+    functions: &FunctionRegistry,
+    temporal: TemporalScope,
+) -> Result<SqlPlan> {
+    let select = match subquery.body.as_ref() {
+        sqlparser::ast::SetExpr::Select(s) => s,
+        _ => {
+            return Err(SqlError::Unsupported {
+                detail: "LATERAL subquery body must be a SELECT".into(),
+            });
+        }
+    };
+
+    let outer_alias_str = outer_alias.as_deref().unwrap_or("").to_string();
+
+    let analysis = analyse_lateral_where(subquery, &outer_alias_str);
+
+    // Determine if this is the equi-correlated + TopK shape:
+    //   - At least one equi-key correlation.
+    //   - A LIMIT k on the subquery.
+    //   - No non-equi correlations (those require LateralLoop).
+    let has_equi = !analysis.equi_keys.is_empty();
+    let inner_limit = limit_from_query(subquery);
+    let is_top_k = has_equi && inner_limit.is_some() && analysis.non_equi.is_empty();
+
+    if is_top_k {
+        plan_lateral_top_k(
+            outer_plan,
+            outer_alias,
+            select,
+            subquery,
+            analysis.equi_keys,
+            inner_limit.expect("checked above"),
+            lateral_alias,
+            left_join,
+            outer_projection,
+        )
+    } else if has_equi && analysis.non_equi.is_empty() {
+        // Equi-correlated, no LIMIT: rewrite as a regular hash join.
+        let inner_plan =
+            crate::planner::select::plan_query(subquery, catalog, functions, temporal)?;
+        let equi_on: Vec<(String, String)> = analysis
+            .equi_keys
+            .into_iter()
+            .map(|c| (c.outer_col, c.inner_col))
+            .collect();
+        Ok(SqlPlan::Join {
+            left: Box::new(outer_plan),
+            right: Box::new(inner_plan),
+            on: equi_on,
+            join_type: if left_join {
+                JoinType::Left
+            } else {
+                JoinType::Inner
+            },
+            condition: None,
+            limit: 10000,
+            projection: outer_projection,
+            filters: Vec::new(),
+        })
+    } else {
+        // General correlation — LateralLoop.
+        //
+        // Non-equi correlated predicates (e.g. `e.log_time > u.created_at`)
+        // are encoded verbatim in `inner_plan`'s filter list as `GtColumn`
+        // operators; the Data Plane executor binds the outer value at runtime
+        // via `bind_outer_values`. We do NOT duplicate them in
+        // `correlation_predicates` (which the executor applies as `Eq`),
+        // because that would add a contradictory equality filter.
+        let inner_plan =
+            crate::planner::select::plan_query(subquery, catalog, functions, temporal)?;
+        let correlation_predicates: Vec<(String, String)> = analysis
+            .equi_keys
+            .iter()
+            .map(|c| (c.inner_col.clone(), c.outer_col.clone()))
+            .collect();
+        Ok(SqlPlan::LateralLoop {
+            outer: Box::new(outer_plan),
+            outer_alias,
+            inner: Box::new(inner_plan),
+            correlation_predicates,
+            lateral_alias: lateral_alias.to_string(),
+            projection: outer_projection,
+            outer_row_cap: LATERAL_LOOP_CAP,
+            left_join,
+        })
+    }
+}
+
+/// Plan the `LateralTopK` variant: equi-correlated + ORDER BY + LIMIT k.
+#[allow(clippy::too_many_arguments)]
+fn plan_lateral_top_k(
+    outer_plan: SqlPlan,
+    outer_alias: Option<String>,
+    select: &sqlparser::ast::Select,
+    subquery: &ast::Query,
+    equi_keys: Vec<super::correlation::CorrelationEq>,
+    inner_limit: usize,
+    lateral_alias: &str,
+    left_join: bool,
+    outer_projection: Vec<Projection>,
+) -> Result<SqlPlan> {
+    // Build a bare inner Scan without correlation filters (those are injected
+    // at runtime per outer row).
+    let inner_collection = extract_inner_collection(select)?;
+    let inner_filters = inner_non_correlated_filters(select, outer_alias.as_deref().unwrap_or(""))?;
+
+    // Extract ORDER BY from the inner subquery.
+    // For LATERAL inner scans we only need simple column-expression sort keys;
+    // the full search-trigger machinery (vector/hybrid search) is not applicable
+    // here, so we convert expressions directly.
+    let inner_order_by = if let Some(order_by) = &subquery.order_by {
+        match &order_by.kind {
+            ast::OrderByKind::Expressions(exprs) => exprs
+                .iter()
+                .filter_map(|o| {
+                    convert_expr(&o.expr).ok().map(|expr| SortKey {
+                        expr,
+                        ascending: o.options.asc.unwrap_or(true),
+                        nulls_first: o.options.nulls_first.unwrap_or(false),
+                    })
+                })
+                .collect(),
+            ast::OrderByKind::All(_) => Vec::new(),
+        }
+    } else {
+        Vec::new()
+    };
+
+    let correlation_keys: Vec<(String, String)> = equi_keys
+        .into_iter()
+        .map(|c| (c.outer_col, c.inner_col))
+        .collect();
+
+    Ok(SqlPlan::LateralTopK {
+        outer: Box::new(outer_plan),
+        outer_alias,
+        inner_collection,
+        inner_filters,
+        inner_order_by,
+        inner_limit,
+        correlation_keys,
+        lateral_alias: lateral_alias.to_string(),
+        projection: outer_projection,
+        left_join,
+    })
+}
+
+/// Extract the collection name from a single-table inner SELECT.
+fn extract_inner_collection(select: &sqlparser::ast::Select) -> Result<String> {
+    let from = select.from.first().ok_or_else(|| SqlError::Unsupported {
+        detail: "LATERAL subquery must have a FROM clause".into(),
+    })?;
+    match &from.relation {
+        ast::TableFactor::Table { name, .. } => {
+            crate::parser::normalize::normalize_object_name_checked(name)
+        }
+        _ => Err(SqlError::Unsupported {
+            detail: "LATERAL LateralTopK subquery must reference a plain table".into(),
+        }),
+    }
+}
+
+/// Extract filters from the inner SELECT that do NOT reference the outer alias.
+fn inner_non_correlated_filters(
+    select: &sqlparser::ast::Select,
+    outer_alias: &str,
+) -> Result<Vec<Filter>> {
+    let Some(where_expr) = &select.selection else {
+        return Ok(Vec::new());
+    };
+    let remaining = strip_outer_refs(where_expr, outer_alias);
+    match remaining {
+        Some(expr) => crate::planner::select::convert_where_to_filters(&expr),
+        None => Ok(Vec::new()),
+    }
+}
+
+/// Remove all predicates referencing `outer_alias` from a WHERE expression.
+fn strip_outer_refs(expr: &ast::Expr, outer_alias: &str) -> Option<ast::Expr> {
+    match expr {
+        ast::Expr::BinaryOp {
+            left,
+            op: ast::BinaryOperator::And,
+            right,
+        } => {
+            let l = strip_outer_refs(left, outer_alias);
+            let r = strip_outer_refs(right, outer_alias);
+            match (l, r) {
+                (None, None) => None,
+                (Some(e), None) | (None, Some(e)) => Some(e),
+                (Some(l), Some(r)) => Some(ast::Expr::BinaryOp {
+                    left: Box::new(l),
+                    op: ast::BinaryOperator::And,
+                    right: Box::new(r),
+                }),
+            }
+        }
+        ast::Expr::BinaryOp { left, right, .. } => {
+            if refs_outer(left, outer_alias) || refs_outer(right, outer_alias) {
+                None
+            } else {
+                Some(expr.clone())
+            }
+        }
+        ast::Expr::Nested(inner) => strip_outer_refs(inner, outer_alias),
+        _ => Some(expr.clone()),
+    }
+}
+
+fn refs_outer(expr: &ast::Expr, outer_alias: &str) -> bool {
+    match expr {
+        ast::Expr::CompoundIdentifier(parts) if parts.len() == 2 => {
+            normalize_ident(&parts[0]).eq_ignore_ascii_case(outer_alias)
+        }
+        ast::Expr::BinaryOp { left, right, .. } => {
+            refs_outer(left, outer_alias) || refs_outer(right, outer_alias)
+        }
+        _ => false,
+    }
+}
+
+/// Extract the LIMIT value from a query.
+fn limit_from_query(query: &ast::Query) -> Option<usize> {
+    match &query.limit_clause {
+        Some(ast::LimitClause::LimitOffset { limit, .. }) => {
+            limit.as_ref().and_then(expr_as_usize_literal)
+        }
+        Some(ast::LimitClause::OffsetCommaLimit { limit, .. }) => {
+            Some(expr_as_usize_literal(limit).unwrap_or(0))
+        }
+        None => None,
+    }
+}
+
+/// Extract a LATERAL alias from a `TableFactor::Derived`.
+pub fn lateral_alias_from_factor(factor: &ast::TableFactor) -> Option<String> {
+    match factor {
+        ast::TableFactor::Derived { alias, .. } => alias.as_ref().map(|a| normalize_ident(&a.name)),
+        _ => None,
+    }
+}
+
+/// True when a `TableFactor` is a LATERAL derived subquery.
+pub fn is_lateral_derived(factor: &ast::TableFactor) -> bool {
+    matches!(factor, ast::TableFactor::Derived { lateral: true, .. })
+}
+
+/// Extract the subquery from a `TableFactor::Derived`.
+pub fn subquery_from_factor(factor: &ast::TableFactor) -> Option<&ast::Query> {
+    match factor {
+        ast::TableFactor::Derived { subquery, .. } => Some(subquery),
+        _ => None,
+    }
+}

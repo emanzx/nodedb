@@ -1,7 +1,8 @@
-//! Join execution handlers — hash, sort-merge, broadcast, and nested-loop.
+//! Join execution handlers — hash, sort-merge, broadcast, nested-loop, and lateral.
 
 pub mod hash;
 mod hash_handlers;
+pub mod lateral;
 pub mod nested_loop;
 pub mod params;
 pub mod sort_merge;
