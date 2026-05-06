@@ -1,8 +1,8 @@
 //! Tests for static-set multi-shard Calvin execution path.
 //!
 //! Verifies the types and plan structures used by `MetaOp::CalvinExecuteStatic`.
-//! A full 3-replica WAL byte-equality test requires a real cluster and is
-//! marked `#[ignore]`.
+//! End-to-end 3-replica coverage lives in
+//! `nodedb-cluster/tests/calvin_3node_normal.rs`.
 
 use nodedb::bridge::physical_plan::PhysicalPlan;
 use nodedb::bridge::physical_plan::meta::MetaOp;
@@ -70,16 +70,4 @@ fn calvin_execute_static_and_active_are_distinct_variants() {
     assert!(is_static);
     assert!(is_passive);
     assert!(static_not_passive);
-}
-
-/// Full 3-replica WAL byte-equality test.
-///
-/// Requires a real 3-node cluster with SPSC bridge wired. Skipped in unit/integration
-/// test runs; exercised by the cluster smoke test suite.
-#[test]
-#[ignore]
-fn static_multishard_wal_byte_equality_three_replicas() {
-    // 3-replica cluster test: run same Calvin workload, assert per-replica
-    // WAL byte equality after epoch completion.
-    todo!("requires real 3-node cluster harness")
 }
