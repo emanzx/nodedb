@@ -5,7 +5,7 @@
 /// Uses 2^14 = 16384 registers (12 KB memory). Achieves ~0.8% relative
 /// error at any cardinality. Mergeable: `hll_a.merge(&hll_b)` produces
 /// the union cardinality.
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct HyperLogLog {
     registers: Vec<u8>,
     precision: u8,
@@ -209,5 +209,37 @@ mod tests {
     fn hll_memory() {
         let hll = HyperLogLog::new();
         assert_eq!(hll.memory_bytes(), 16384);
+    }
+
+    #[test]
+    fn hll_serde_roundtrip_merge_semantics() {
+        let mut a = HyperLogLog::new();
+        let mut b = HyperLogLog::new();
+        for i in 0..1000u64 {
+            a.add(i);
+        }
+        for i in 500..1500u64 {
+            b.add(i);
+        }
+
+        // Serialize and deserialize a via serde_json (serde derive, not zerompk).
+        let json = serde_json::to_vec(&a).expect("serialize HLL");
+        let mut a_prime: HyperLogLog = serde_json::from_slice(&json).expect("deserialize HLL");
+
+        // Merge b into deserialized a'.
+        a_prime.merge(&b);
+
+        // Merge b into original a.
+        a.merge(&b);
+
+        // Both should estimate ~1500 (the union cardinality).
+        let est_orig = a.estimate();
+        let est_rt = a_prime.estimate();
+        // Allow 1% relative difference between the two paths (they are identical state).
+        let diff = (est_orig - est_rt).abs() / est_orig.max(1.0);
+        assert!(
+            diff < 0.01,
+            "roundtrip diverged: orig={est_orig:.0}, roundtrip={est_rt:.0}"
+        );
     }
 }

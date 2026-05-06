@@ -1,7 +1,7 @@
 //! TDigest — approximate percentile estimation (mergeable centroids).
 
 /// Centroid in the t-digest: represents a cluster of values.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 struct Centroid {
     mean: f64,
     count: u64,
@@ -12,7 +12,7 @@ struct Centroid {
 /// Maintains a sorted set of centroids that approximate the data distribution.
 /// Accurate at the extremes (p1, p99) and reasonable in the middle.
 /// Mergeable across partitions and shards.
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct TDigest {
     centroids: Vec<Centroid>,
     max_centroids: usize,
@@ -217,6 +217,33 @@ mod tests {
         assert!(
             (4000.0..6000.0).contains(&p50),
             "merged p50 expected ~5000, got {p50:.0}"
+        );
+    }
+
+    #[test]
+    fn tdigest_serde_roundtrip_merge_semantics() {
+        let mut a = TDigest::new();
+        let mut b = TDigest::new();
+        for i in 0..500 {
+            a.add(i as f64);
+        }
+        for i in 500..1000 {
+            b.add(i as f64);
+        }
+
+        let bytes = serde_json::to_vec(&a).expect("serialize TDigest");
+        let mut a_prime: TDigest = serde_json::from_slice(&bytes).expect("deserialize TDigest");
+
+        a_prime.merge(&b);
+        a.merge(&b);
+
+        let p50_orig = a.quantile(0.5);
+        let p50_rt = a_prime.quantile(0.5);
+        // Both are approximate; require within 10% of each other.
+        let diff = (p50_orig - p50_rt).abs() / p50_orig.abs().max(1.0);
+        assert!(
+            diff < 0.10,
+            "roundtrip diverged: orig p50={p50_orig:.0}, roundtrip p50={p50_rt:.0}"
         );
     }
 }

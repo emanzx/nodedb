@@ -7,7 +7,7 @@ use std::collections::HashMap;
 /// Tracks the K most frequent items with bounded memory. Items not in
 /// the top K are approximated — their counts may be over-estimated by
 /// at most the minimum count in the structure.
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct SpaceSaving {
     items: HashMap<u64, (u64, u64)>,
     max_items: usize,
@@ -130,5 +130,39 @@ mod tests {
         assert_eq!(top.len(), 3);
         assert!(top[0].1 >= top[1].1);
         assert!(top[1].1 >= top[2].1);
+    }
+
+    #[test]
+    fn spacesaving_serde_roundtrip_merge_semantics() {
+        let mut a = SpaceSaving::new(5);
+        let mut b = SpaceSaving::new(5);
+        for _ in 0..100u64 {
+            a.add(1);
+        }
+        for _ in 0..80u64 {
+            b.add(1);
+        }
+        for _ in 0..50u64 {
+            b.add(2);
+        }
+
+        let bytes = serde_json::to_vec(&a).expect("serialize SpaceSaving");
+        let mut a_prime: SpaceSaving =
+            serde_json::from_slice(&bytes).expect("deserialize SpaceSaving");
+
+        a_prime.merge(&b);
+        a.merge(&b);
+
+        // Item 1 should have count 180 in both.
+        let top_orig = a.top_k();
+        let top_rt = a_prime.top_k();
+        assert_eq!(
+            top_orig[0].0, top_rt[0].0,
+            "top item mismatch after roundtrip"
+        );
+        assert_eq!(
+            top_orig[0].1, top_rt[0].1,
+            "top count mismatch after roundtrip"
+        );
     }
 }
