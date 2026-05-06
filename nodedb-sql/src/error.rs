@@ -51,6 +51,43 @@ pub enum SqlError {
     #[error("unsupported constraint: {feature}; {hint}")]
     UnsupportedConstraint { feature: String, hint: String },
 
+    /// WITH RECURSIVE used a set operator other than UNION or UNION ALL.
+    ///
+    /// Only `UNION` and `UNION ALL` are permitted in the recursive term of a
+    /// `WITH RECURSIVE` CTE. `INTERSECT` and `EXCEPT` are rejected because
+    /// they cannot guarantee termination in standard iterative evaluation.
+    #[error(
+        "WITH RECURSIVE: only UNION / UNION ALL are allowed in the recursive term; \
+         {op} is not permitted"
+    )]
+    InvalidRecursiveSetOp { op: String },
+
+    /// The recursive self-reference is absent, appears more than once, or
+    /// appears inside a subquery, aggregate, or the nullable side of an outer join.
+    #[error("WITH RECURSIVE: invalid self-reference to '{cte_name}' in recursive term: {reason}")]
+    InvalidRecursiveSelfRef { cte_name: String, reason: String },
+
+    /// The anchor SELECT produces a different number of columns than the
+    /// column list declared on the CTE (or the recursive arm).
+    #[error(
+        "WITH RECURSIVE CTE '{cte_name}': anchor produces {anchor_cols} column(s) \
+         but {declared_cols} were declared"
+    )]
+    RecursiveColumnMismatch {
+        cte_name: String,
+        anchor_cols: usize,
+        declared_cols: usize,
+    },
+
+    /// The recursive CTE exceeded the configured `max_recursion_depth`.
+    ///
+    /// This is a runtime error produced by the executor, not the planner.
+    #[error(
+        "WITH RECURSIVE CTE '{cte_name}' exceeded max recursion depth {max_depth}; \
+         add a stricter termination condition or raise max_recursion_depth"
+    )]
+    RecursionDepthExceeded { cte_name: String, max_depth: usize },
+
     /// Collection is soft-deleted (within retention window).
     /// Propagated from `SqlCatalogError::CollectionDeactivated`;
     /// the pgwire layer renders this as sqlstate 42P01 with an

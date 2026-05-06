@@ -49,6 +49,18 @@ pub(super) struct RecursiveScanParams<'a> {
     pub tenant_id: TenantId,
 }
 
+/// Parameters for `convert_recursive_value`.
+pub(super) struct RecursiveValueParams<'a> {
+    pub cte_name: &'a str,
+    pub columns: &'a [String],
+    pub init_exprs: &'a [String],
+    pub step_exprs: &'a [String],
+    pub condition: &'a Option<String>,
+    pub max_depth: &'a usize,
+    pub distinct: &'a bool,
+    pub tenant_id: TenantId,
+}
+
 /// Parameters for `convert_timeseries_scan`.
 pub(super) struct TimeseriesScanParams<'a> {
     pub collection: &'a str,

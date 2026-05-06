@@ -369,6 +369,36 @@ pub enum SqlPlan {
         limit: usize,
     },
 
+    /// Value-generating recursive CTE (`WITH RECURSIVE name(cols) AS (anchor UNION [ALL] step)`).
+    ///
+    /// Unlike `RecursiveScan`, this variant carries no collection reference — the anchor
+    /// row is produced entirely from literal expressions and each iteration applies the
+    /// step expressions to the previous row.  The executor evaluates this iteratively
+    /// in the Data Plane without touching storage.
+    ///
+    /// All expressions are stored as raw SQL text so they can be serialised across the
+    /// SPSC bridge without requiring `SqlExpr` to implement `Serialize`.  The executor
+    /// parses them at execution time via the same lightweight expression evaluator used
+    /// by the procedural executor.
+    RecursiveValue {
+        /// CTE name (used in error messages).
+        cte_name: String,
+        /// Column names declared on the CTE (e.g. `(n)` in `c(n) AS ...`).
+        columns: Vec<String>,
+        /// Anchor SELECT expressions as raw SQL text (one per column).
+        init_exprs: Vec<String>,
+        /// Recursive step SELECT expressions as raw SQL text (one per column).
+        /// May reference column names from `columns`.
+        step_exprs: Vec<String>,
+        /// Optional WHERE condition as raw SQL text applied to each new row
+        /// to decide whether to continue.  `None` → run until fixed point.
+        condition: Option<String>,
+        /// Maximum iterations before a `RecursionDepthExceeded` error is raised.
+        max_depth: usize,
+        /// `false` → UNION ALL (keep duplicates); `true` → UNION (deduplicate).
+        distinct: bool,
+    },
+
     /// Non-recursive CTE: execute each definition, then the outer query.
     Cte {
         /// CTE definitions: `(name, subquery_plan)`.

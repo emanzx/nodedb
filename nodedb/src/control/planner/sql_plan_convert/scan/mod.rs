@@ -14,7 +14,9 @@ pub(in crate::control::planner::sql_plan_convert) use core::{
     convert_document_index_lookup, convert_point_get, convert_scan,
 };
 pub(in crate::control::planner::sql_plan_convert) use join::convert_join;
-pub(in crate::control::planner::sql_plan_convert) use recursive::convert_recursive_scan;
+pub(in crate::control::planner::sql_plan_convert) use recursive::{
+    convert_recursive_scan, convert_recursive_value,
+};
 pub(in crate::control::planner::sql_plan_convert) use search::{
     convert_hybrid_search, convert_hybrid_search_triple, convert_text_search, convert_vector_search,
 };

@@ -5,6 +5,8 @@ mod cluster_admin;
 mod collection;
 mod conflict_policy;
 mod copy_from;
+mod copy_to;
+mod custom_type;
 mod dispatch;
 mod helpers;
 mod index;

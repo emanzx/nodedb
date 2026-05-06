@@ -212,6 +212,29 @@ pub enum QueryOp {
         limit: usize,
     },
 
+    /// Value-generating recursive CTE: iterative expression evaluation.
+    ///
+    /// No collection is needed.  The executor evaluates the anchor expressions
+    /// once to produce the first row, then repeatedly applies the step
+    /// expressions to the previous row until the condition becomes false,
+    /// a fixed point is reached, or `max_depth` is exceeded (typed error).
+    RecursiveValue {
+        /// CTE name (used in error messages).
+        cte_name: String,
+        /// Column names (length == `init_exprs.len()` == `step_exprs.len()`).
+        columns: Vec<String>,
+        /// Anchor SELECT expressions as raw SQL text.
+        init_exprs: Vec<String>,
+        /// Recursive step SELECT expressions as raw SQL text.
+        step_exprs: Vec<String>,
+        /// Optional WHERE condition as raw SQL text.
+        condition: Option<String>,
+        /// Maximum iterations before returning a depth-exceeded error.
+        max_depth: usize,
+        /// Whether to deduplicate (UNION vs UNION ALL).
+        distinct: bool,
+    },
+
     /// LATERAL equi-correlated top-K: scan `inner_collection` once per outer
     /// row, applying the equi-correlation as an equality filter, then return
     /// the top `inner_limit` rows ordered by `inner_order_by`.

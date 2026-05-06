@@ -451,6 +451,25 @@ pub(super) fn convert_one(
             tenant_id,
         }),
 
+        SqlPlan::RecursiveValue {
+            cte_name,
+            columns,
+            init_exprs,
+            step_exprs,
+            condition,
+            max_depth,
+            distinct,
+        } => super::scan::convert_recursive_value(super::scan_params::RecursiveValueParams {
+            cte_name,
+            columns,
+            init_exprs,
+            step_exprs,
+            condition,
+            max_depth,
+            distinct,
+            tenant_id,
+        }),
+
         SqlPlan::Cte { definitions, outer } => {
             super::set_ops::convert_cte(definitions, outer, tenant_id, ctx)
         }

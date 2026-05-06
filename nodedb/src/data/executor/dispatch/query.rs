@@ -154,6 +154,25 @@ impl CoreLoop {
                 *limit,
             ),
 
+            QueryOp::RecursiveValue {
+                cte_name,
+                columns,
+                init_exprs,
+                step_exprs,
+                condition,
+                max_depth,
+                distinct,
+            } => self.execute_recursive_value(
+                task,
+                cte_name,
+                columns,
+                init_exprs,
+                step_exprs,
+                condition.as_deref(),
+                *max_depth,
+                *distinct,
+            ),
+
             QueryOp::FacetCounts {
                 collection,
                 filters,

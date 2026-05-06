@@ -233,6 +233,31 @@ fn convert_expr_inner(expr: &SqlExpr, qualify: bool) -> crate::bridge::expr_eval
             }
         }
 
+        // `ARRAY['a', 'b', ...]` — lower each element and, when all resolve to
+        // `BExpr::Literal`, fold into a single `Value::Array` literal so that
+        // functions like `pg_json_has_any_key` / `pg_json_has_all_keys` receive
+        // a proper `Value::Array` argument rather than `Value::Null`.
+        SqlExpr::ArrayLiteral(elems) => {
+            let mut values = Vec::with_capacity(elems.len());
+            let mut all_literal = true;
+            for elem in elems {
+                match convert_expr_inner(elem, qualify) {
+                    BExpr::Literal(v) => values.push(v),
+                    other => {
+                        all_literal = false;
+                        // Non-literal element: fall back to Null for that slot.
+                        let _ = other;
+                        values.push(nodedb_types::Value::Null);
+                    }
+                }
+            }
+            if all_literal {
+                BExpr::Literal(nodedb_types::Value::Array(values))
+            } else {
+                BExpr::Literal(nodedb_types::Value::Null)
+            }
+        }
+
         _ => BExpr::Literal(nodedb_types::Value::Null),
     }
 }

@@ -231,6 +231,10 @@ pub enum ErrorCode {
     /// `NodeDbError::collection_draining` (code 1102) at the
     /// Control-Plane boundary.
     CollectionDraining { collection: String },
+    /// WITH RECURSIVE CTE exceeded the configured maximum recursion depth.
+    /// The client should either add a stricter termination condition or
+    /// increase `max_recursion_depth` in the server configuration.
+    RecursionDepthExceeded { cte_name: String, max_depth: usize },
     /// Internal error (io_uring failure, corruption, etc.)
     Internal { detail: String },
     /// Operation is not supported on this engine, or not yet implemented for

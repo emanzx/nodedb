@@ -23,25 +23,17 @@ pub(super) fn try_parse(
         return None;
     }
 
-    // Reject COPY (SELECT ...) — query form.
+    // COPY (SELECT ...) is the query-form TO path — handled by copy_to parser.
     let after_copy_check = trimmed["COPY ".len()..].trim_start();
     if after_copy_check.starts_with('(') {
-        return Some(Err(SqlError::Unsupported {
-            detail: "COPY (SELECT ...) TO is not supported; \
-                     use a SELECT query directly"
-                .to_string(),
-        }));
+        return None;
     }
 
-    // Reject COPY ... TO ...
-    // We look for " TO " in the upper-cased version. If present and no " FROM "
-    // precedes it, this is the TO form.
+    // Fall through for COPY ... TO — handled by copy_to parser.
     let has_from = upper.contains(" FROM ");
     let has_to = upper.contains(" TO ");
     if has_to && (!has_from || upper.find(" TO ") < upper.find(" FROM ")) {
-        return Some(Err(SqlError::Unsupported {
-            detail: "COPY ... TO is not supported; use pg_dump or a SELECT query".to_string(),
-        }));
+        return None;
     }
 
     // If it has FROM STDIN, return None — let backup/restore intercept it.
@@ -103,7 +95,7 @@ fn parse_copy_from(trimmed: &str, upper: &str) -> Result<NodedbStatement, SqlErr
 }
 
 /// Strip surrounding double or single quotes from an identifier or path.
-fn strip_quotes(s: &str) -> &str {
+pub(super) fn strip_quotes(s: &str) -> &str {
     if (s.starts_with('"') && s.ends_with('"')) || (s.starts_with('\'') && s.ends_with('\'')) {
         &s[1..s.len() - 1]
     } else {
@@ -113,7 +105,7 @@ fn strip_quotes(s: &str) -> &str {
 
 /// Extract the leading single-quoted string from `s`.
 /// Returns `(content, remainder_after_closing_quote)`.
-fn extract_quoted_string(s: &str) -> Result<(String, &str), SqlError> {
+pub(super) fn extract_quoted_string(s: &str) -> Result<(String, &str), SqlError> {
     if !s.starts_with('\'') {
         return Err(SqlError::Parse {
             detail: format!(
@@ -149,7 +141,9 @@ fn extract_quoted_string(s: &str) -> Result<(String, &str), SqlError> {
 }
 
 /// Parse `WITH (key value, ...)` or `WITH (key = value, ...)`.
-fn parse_with_clause(s: &str) -> Result<(Option<CopyFormat>, Option<char>, bool), SqlError> {
+pub(super) fn parse_with_clause(
+    s: &str,
+) -> Result<(Option<CopyFormat>, Option<char>, bool), SqlError> {
     let upper = s.to_uppercase();
     if !upper.starts_with("WITH") {
         return Err(SqlError::Parse {
@@ -280,7 +274,7 @@ fn parse_bool_value(s: &str) -> Option<bool> {
 ///
 /// Returns `Err` if the extension is unrecognised (suggests explicit WITH clause).
 /// Returns `Ok(None)` only if there is no extension at all (also suggests explicit WITH).
-fn detect_format_from_path(path: &str) -> Result<Option<CopyFormat>, SqlError> {
+pub(super) fn detect_format_from_path(path: &str) -> Result<Option<CopyFormat>, SqlError> {
     let lower = path.to_lowercase();
     if lower.ends_with(".ndjson") || lower.ends_with(".jsonl") {
         return Ok(Some(CopyFormat::Ndjson));
@@ -402,15 +396,28 @@ mod tests {
     }
 
     #[test]
-    fn copy_to_is_err() {
-        let e = err("COPY users TO '/tmp/out.csv'");
-        assert!(matches!(e, SqlError::Unsupported { .. }));
+    fn copy_to_handled_by_copy_to_parser() {
+        // COPY ... TO is handled by copy_to.rs — copy_from returns None.
+        // The dispatch layer routes it to copy_to::try_parse instead.
+        // Here we verify copy_from::try_parse does not claim this statement.
+        use super::super::copy_to::try_parse as copy_to_try_parse;
+        let sql = "COPY users TO '/tmp/out.csv'";
+        let upper = sql.to_uppercase();
+        let parts: Vec<&str> = sql.split_whitespace().collect();
+        // copy_from should return None.
+        assert!(try_parse(&upper, &parts, sql).is_none());
+        // copy_to should claim it.
+        assert!(copy_to_try_parse(&upper, sql).is_some());
     }
 
     #[test]
-    fn copy_query_form_is_err() {
-        let e = err("COPY (SELECT * FROM users) TO '/tmp/out.csv'");
-        assert!(matches!(e, SqlError::Unsupported { .. }));
+    fn copy_query_form_handled_by_copy_to_parser() {
+        use super::super::copy_to::try_parse as copy_to_try_parse;
+        let sql = "COPY (SELECT * FROM users) TO '/tmp/out.csv'";
+        let upper = sql.to_uppercase();
+        let parts: Vec<&str> = sql.split_whitespace().collect();
+        assert!(try_parse(&upper, &parts, sql).is_none());
+        assert!(copy_to_try_parse(&upper, sql).is_some());
     }
 
     #[test]

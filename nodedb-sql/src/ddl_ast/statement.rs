@@ -404,6 +404,31 @@ pub enum NodedbStatement {
         collection: String,
     },
 
+    // ── Custom types ─────────────────────────────────────────────
+    /// `CREATE TYPE <name> AS ENUM ('label1', 'label2', ...)`
+    CreateEnumType {
+        name: String,
+        labels: Vec<String>,
+    },
+    /// `CREATE TYPE <name> AS (<field1> <type1>, <field2> <type2>, ...)`
+    CreateCompositeType {
+        name: String,
+        /// `(field_name, type_name)` pairs.
+        fields: Vec<(String, String)>,
+    },
+    /// `DROP TYPE [IF EXISTS] <name>`
+    DropType {
+        name: String,
+        if_exists: bool,
+    },
+    /// `ALTER TYPE <name> ADD VALUE 'label'`
+    AlterTypeAddValue {
+        type_name: String,
+        label: String,
+    },
+    /// `SHOW TYPES`
+    ShowTypes,
+
     // ── Synonym groups ───────────────────────────────────────────
     /// `CREATE SYNONYM GROUP <name> AS ('term1', 'term2', ...)`
     CreateSynonymGroup {
@@ -489,6 +514,29 @@ pub enum NodedbStatement {
         delimiter: Option<char>,
         header: bool,
     },
+
+    // ── Bulk export ──────────────────────────────────────────────
+    /// `COPY <collection> TO '<path>' [WITH (FORMAT ..., DELIMITER ..., HEADER ...)]`
+    /// `COPY (SELECT ...) TO '<path>' [WITH (...)]`
+    ///
+    /// Server-side file-path bulk export. Streams scan results to a file.
+    CopyToFile {
+        /// The source: either a bare collection name or a SELECT query.
+        source: CopyToSource,
+        path: String,
+        format: Option<CopyFormat>,
+        delimiter: Option<char>,
+        header: bool,
+    },
+}
+
+/// Source for `COPY ... TO`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CopyToSource {
+    /// `COPY <collection> TO '<path>'` — export from a named collection.
+    Collection(String),
+    /// `COPY (SELECT ...) TO '<path>'` — export from an arbitrary query.
+    Query(String),
 }
 
 /// Format for `COPY ... FROM` bulk import.

@@ -7,12 +7,14 @@ use crate::functions::registry::FunctionRegistry;
 use crate::parser::normalize::{normalize_ident, normalize_object_name_checked};
 use crate::types::*;
 
+/// Default maximum recursion depth for WITH RECURSIVE queries.
+pub const DEFAULT_MAX_RECURSION_DEPTH: usize = 1000;
+
 /// Plan a WITH RECURSIVE query.
 ///
-/// Supports table-based recursive CTEs where the base case scans a real
-/// collection and the recursive step references both the collection and
-/// the CTE. Value-generating CTEs (no underlying collection) return an
-/// explicit unsupported error.
+/// Dispatches to either `plan_recursive_scan` (collection-backed) or
+/// `plan_recursive_value` (pure expression / value-generating) based on
+/// whether the anchor arm references a real collection.
 pub fn plan_recursive_cte(
     query: &Query,
     catalog: &dyn SqlCatalog,
@@ -28,10 +30,16 @@ pub fn plan_recursive_cte(
     })?;
 
     let cte_name = normalize_ident(&cte.alias.name);
+    let declared_columns: Vec<String> = cte
+        .alias
+        .columns
+        .iter()
+        .map(|c| normalize_ident(&c.name))
+        .collect();
 
     let cte_query = &cte.query;
 
-    // The CTE body should be a UNION of base case and recursive case.
+    // Validate set operator: only UNION / UNION ALL permitted.
     let (left, right, set_quantifier) = match &*cte_query.body {
         SetExpr::SetOperation {
             op: ast::SetOperator::Union,
@@ -39,55 +47,312 @@ pub fn plan_recursive_cte(
             right,
             set_quantifier,
         } => (left, right, set_quantifier),
+        SetExpr::SetOperation { op, .. } => {
+            return Err(SqlError::InvalidRecursiveSetOp {
+                op: format!("{op}"),
+            });
+        }
         _ => {
-            return Err(SqlError::Unsupported {
-                detail: "WITH RECURSIVE requires UNION in CTE body".into(),
+            return Err(SqlError::InvalidRecursiveSetOp {
+                op: "non-set-operation".into(),
             });
         }
     };
 
-    // UNION ALL → distinct = false; UNION → distinct = true.
+    // Validate self-reference count in the recursive arm.
+    validate_self_ref_count(right, &cte_name)?;
+
     let distinct = !matches!(set_quantifier, ast::SetQuantifier::All);
 
-    // Plan the base case (should not reference the CTE name).
-    let base = plan_cte_branch(left, catalog, functions, temporal)?;
+    // Try to detect whether this is a collection-backed or value-generating CTE
+    // by attempting to plan the anchor arm against the catalog.
+    match plan_cte_branch(left, catalog, functions, temporal) {
+        Ok(base) => {
+            let collection = extract_collection(&base);
+            if collection.is_empty() {
+                // Anchor planned but produced no collection → treat as value-gen.
+                plan_recursive_value(left, right, &cte_name, &declared_columns, distinct)
+            } else {
+                plan_recursive_scan_from_parts(
+                    &cte_name,
+                    &base,
+                    &RecursiveParts {
+                        left,
+                        right,
+                        declared_columns: &declared_columns,
+                        distinct,
+                    },
+                    catalog,
+                    functions,
+                    temporal,
+                )
+            }
+        }
+        Err(_) => {
+            // Anchor references CTE name or uses value expressions → value-gen.
+            plan_recursive_value(left, right, &cte_name, &declared_columns, distinct)
+        }
+    }
+}
 
-    // Extract the source collection from the base case.
-    let collection = extract_collection(&base).unwrap_or_default();
+// ── Collection-backed recursive scan ─────────────────────────────────────────
 
-    // Plan the recursive branch. The recursive branch references the CTE
-    // name in its FROM clause — either directly (value-gen) or via a JOIN
-    // with a real table. We attempt to plan it; if it fails because the
-    // CTE name isn't in the catalog, we try to extract the real table from
-    // a JOIN and use it with the CTE self-reference as the recursive filter.
+struct RecursiveParts<'a> {
+    left: &'a SetExpr,
+    right: &'a SetExpr,
+    declared_columns: &'a [String],
+    distinct: bool,
+}
+
+fn plan_recursive_scan_from_parts(
+    cte_name: &str,
+    base: &SqlPlan,
+    parts: &RecursiveParts<'_>,
+    catalog: &dyn SqlCatalog,
+    functions: &FunctionRegistry,
+    temporal: crate::TemporalScope,
+) -> Result<SqlPlan> {
+    let RecursiveParts {
+        left,
+        right,
+        declared_columns,
+        distinct,
+    } = parts;
+    let collection = extract_collection(base);
+
+    // Validate column count if columns were declared.
+    if !declared_columns.is_empty() {
+        let anchor_cols = count_select_cols(left);
+        if anchor_cols != 0 && anchor_cols != declared_columns.len() {
+            return Err(SqlError::RecursiveColumnMismatch {
+                cte_name: cte_name.to_owned(),
+                anchor_cols,
+                declared_cols: declared_columns.len(),
+            });
+        }
+    }
+
     let (recursive_filters, join_link) = match plan_cte_branch(right, catalog, functions, temporal)
     {
         Ok(plan) => (extract_filters(&plan), None),
-        Err(_) => {
-            // The recursive branch references the CTE name. Try to extract
-            // the real collection, filters, and join link from the AST.
-            extract_recursive_info(right, &cte_name)?
-        }
+        Err(_) => extract_recursive_info(right, cte_name)?,
     };
-
-    if collection.is_empty() {
-        return Err(SqlError::Unsupported {
-            detail: "WITH RECURSIVE requires a base case that scans a collection; \
-                     value-generating recursive CTEs are not yet supported"
-                .into(),
-        });
-    }
 
     Ok(SqlPlan::RecursiveScan {
         collection,
-        base_filters: extract_filters(&base),
+        base_filters: extract_filters(base),
         recursive_filters,
         join_link,
-        max_iterations: 100,
-        distinct,
+        max_iterations: DEFAULT_MAX_RECURSION_DEPTH,
+        distinct: *distinct,
         limit: 10000,
     })
 }
+
+// ── Value-generating recursive CTE ───────────────────────────────────────────
+
+/// Plan a value-generating WITH RECURSIVE CTE (no collection reference).
+///
+/// Produces a `SqlPlan::RecursiveValue` that carries the anchor and step
+/// expressions as raw SQL text for evaluation in the Data Plane.
+fn plan_recursive_value(
+    left: &SetExpr,
+    right: &SetExpr,
+    cte_name: &str,
+    declared_columns: &[String],
+    distinct: bool,
+) -> Result<SqlPlan> {
+    let init_exprs = extract_select_exprs_as_text(left).ok_or_else(|| SqlError::Parse {
+        detail: "WITH RECURSIVE anchor must be a SELECT".into(),
+    })?;
+
+    // Validate column count against declared columns list.
+    if !declared_columns.is_empty() && init_exprs.len() != declared_columns.len() {
+        return Err(SqlError::RecursiveColumnMismatch {
+            cte_name: cte_name.to_owned(),
+            anchor_cols: init_exprs.len(),
+            declared_cols: declared_columns.len(),
+        });
+    }
+
+    let (step_exprs, condition) =
+        extract_step_exprs_and_condition(right).ok_or_else(|| SqlError::Parse {
+            detail: "WITH RECURSIVE step must be a SELECT".into(),
+        })?;
+
+    // Infer column names from anchor if not declared.
+    let columns = if declared_columns.is_empty() {
+        // Default column names: col0, col1, ...
+        (0..init_exprs.len()).map(|i| format!("col{i}")).collect()
+    } else {
+        declared_columns.to_vec()
+    };
+
+    Ok(SqlPlan::RecursiveValue {
+        cte_name: cte_name.to_owned(),
+        columns,
+        init_exprs,
+        step_exprs,
+        condition,
+        max_depth: DEFAULT_MAX_RECURSION_DEPTH,
+        distinct,
+    })
+}
+
+/// Extract SELECT projection items as raw SQL text strings.
+fn extract_select_exprs_as_text(expr: &SetExpr) -> Option<Vec<String>> {
+    let select = match expr {
+        SetExpr::Select(s) => s,
+        _ => return None,
+    };
+    Some(
+        select
+            .projection
+            .iter()
+            .map(|item| match item {
+                ast::SelectItem::UnnamedExpr(e) => format!("{e}"),
+                ast::SelectItem::ExprWithAlias { expr: e, .. } => format!("{e}"),
+                ast::SelectItem::Wildcard(_) => "*".into(),
+                ast::SelectItem::QualifiedWildcard(name, _) => format!("{name}.*"),
+            })
+            .collect(),
+    )
+}
+
+/// Extract step SELECT expressions and optional WHERE condition as SQL text.
+///
+/// Returns `(step_exprs, condition)`.
+fn extract_step_exprs_and_condition(expr: &SetExpr) -> Option<(Vec<String>, Option<String>)> {
+    let select = match expr {
+        SetExpr::Select(s) => s,
+        _ => return None,
+    };
+    let step_exprs = select
+        .projection
+        .iter()
+        .map(|item| match item {
+            ast::SelectItem::UnnamedExpr(e) => format!("{e}"),
+            ast::SelectItem::ExprWithAlias { expr: e, .. } => format!("{e}"),
+            ast::SelectItem::Wildcard(_) => "*".into(),
+            ast::SelectItem::QualifiedWildcard(name, _) => format!("{name}.*"),
+        })
+        .collect();
+    let condition = select.selection.as_ref().map(|e| format!("{e}"));
+    Some((step_exprs, condition))
+}
+
+// ── Validation ────────────────────────────────────────────────────────────────
+
+/// Count SELECT projection columns; returns 0 if the expression is not a SELECT.
+fn count_select_cols(expr: &SetExpr) -> usize {
+    match expr {
+        SetExpr::Select(s) => s.projection.len(),
+        _ => 0,
+    }
+}
+
+/// Validate that the CTE name appears exactly once in the recursive arm and
+/// not inside a subquery, aggregate function, or the nullable side of an outer join.
+///
+/// Returns `Ok(())` if the reference is valid, or a typed error otherwise.
+fn validate_self_ref_count(expr: &SetExpr, cte_name: &str) -> Result<()> {
+    let select = match expr {
+        SetExpr::Select(s) => s,
+        // Non-SELECT arm: no self-ref needed.
+        _ => return Ok(()),
+    };
+
+    let mut count = 0usize;
+
+    for from in &select.from {
+        if table_ref_matches(&from.relation, cte_name) {
+            count += 1;
+        }
+        for join in &from.joins {
+            if table_ref_matches(&join.relation, cte_name) {
+                // Reject self-ref on the nullable side of an outer join.
+                if is_nullable_join_side(&join.join_operator) {
+                    return Err(SqlError::InvalidRecursiveSelfRef {
+                        cte_name: cte_name.to_owned(),
+                        reason: "self-reference on the nullable side of an outer join is not \
+                                 permitted; use INNER JOIN or move the CTE reference to the \
+                                 driving table position"
+                            .into(),
+                    });
+                }
+                count += 1;
+            }
+        }
+    }
+
+    // Subquery self-references are not permitted.
+    if where_contains_subquery_ref(&select.selection, cte_name) {
+        return Err(SqlError::InvalidRecursiveSelfRef {
+            cte_name: cte_name.to_owned(),
+            reason: "self-reference inside a subquery is not permitted".into(),
+        });
+    }
+
+    if count > 1 {
+        return Err(SqlError::InvalidRecursiveSelfRef {
+            cte_name: cte_name.to_owned(),
+            reason: format!("self-reference appears {count} times; exactly one is required"),
+        });
+    }
+
+    // count == 0 is fine for the value-generating case (no table ref at all).
+    Ok(())
+}
+
+fn table_ref_matches(factor: &ast::TableFactor, cte_name: &str) -> bool {
+    match factor {
+        ast::TableFactor::Table { name, .. } => normalize_object_name_checked(name)
+            .map(|n| n.eq_ignore_ascii_case(cte_name))
+            .unwrap_or(false),
+        _ => false,
+    }
+}
+
+fn is_nullable_join_side(op: &ast::JoinOperator) -> bool {
+    use ast::JoinOperator::*;
+    matches!(op, LeftOuter(_) | RightOuter(_) | FullOuter(_))
+}
+
+fn where_contains_subquery_ref(selection: &Option<ast::Expr>, cte_name: &str) -> bool {
+    match selection {
+        None => false,
+        Some(e) => expr_contains_subquery_ref(e, cte_name),
+    }
+}
+
+fn expr_contains_subquery_ref(expr: &ast::Expr, cte_name: &str) -> bool {
+    match expr {
+        ast::Expr::InSubquery { subquery, .. } | ast::Expr::Exists { subquery, .. } => {
+            query_references_cte(subquery, cte_name)
+        }
+        ast::Expr::Subquery(q) => query_references_cte(q, cte_name),
+        ast::Expr::BinaryOp { left, right, .. } => {
+            expr_contains_subquery_ref(left, cte_name)
+                || expr_contains_subquery_ref(right, cte_name)
+        }
+        ast::Expr::Nested(inner) => expr_contains_subquery_ref(inner, cte_name),
+        _ => false,
+    }
+}
+
+fn query_references_cte(query: &Query, cte_name: &str) -> bool {
+    match &*query.body {
+        SetExpr::Select(s) => s.from.iter().any(|f| {
+            table_ref_matches(&f.relation, cte_name)
+                || f.joins
+                    .iter()
+                    .any(|j| table_ref_matches(&j.relation, cte_name))
+        }),
+        _ => false,
+    }
+}
+
+// ── Helpers shared with collection-backed path ────────────────────────────────
 
 /// Extract recursive info from the AST when normal planning fails
 /// because the FROM clause references the CTE name.
@@ -95,11 +360,6 @@ pub fn plan_recursive_cte(
 /// Returns `(filters, join_link)` where `join_link` is the
 /// `(collection_field, working_table_field)` pair for the working-table
 /// hash-join.
-///
-/// Handles the common tree-traversal pattern:
-/// `SELECT t.id FROM tree t INNER JOIN cte_name d ON t.parent_id = d.id`
-/// → join_link = `("parent_id", "id")`
-/// `(filters, join_link)` where `join_link` is `(collection_field, working_table_field)`.
 type RecursiveInfo = (Vec<Filter>, Option<(String, String)>);
 
 fn extract_recursive_info(expr: &SetExpr, cte_name: &str) -> Result<RecursiveInfo> {
@@ -158,7 +418,6 @@ fn extract_recursive_info(expr: &SetExpr, cte_name: &str) -> Result<RecursiveInf
         None
     };
 
-    // Convert the WHERE clause to filters if present.
     let mut filters = Vec::new();
     if let Some(where_expr) = &select.selection {
         let converted = crate::resolver::expr::convert_expr(where_expr)?;
@@ -171,9 +430,6 @@ fn extract_recursive_info(expr: &SetExpr, cte_name: &str) -> Result<RecursiveInf
 }
 
 /// Extract `(collection_field, cte_field)` from an equi-join ON clause.
-///
-/// Given `t.parent_id = d.id` where `t` is the real table alias and `d`
-/// is the CTE alias, returns `("parent_id", "id")`.
 fn extract_equi_link(
     expr: &ast::Expr,
     real_alias: &str,
@@ -188,7 +444,6 @@ fn extract_equi_link(
             let left_parts = extract_qualified_column(left)?;
             let right_parts = extract_qualified_column(right)?;
 
-            // Determine which side is the real table and which is the CTE.
             if left_parts.0.eq_ignore_ascii_case(real_alias)
                 && right_parts.0.eq_ignore_ascii_case(cte_alias)
             {
@@ -201,7 +456,6 @@ fn extract_equi_link(
                 None
             }
         }
-        // For AND-combined conditions, take the first equi-link found.
         ast::Expr::BinaryOp {
             left,
             op: ast::BinaryOperator::And,
@@ -212,7 +466,6 @@ fn extract_equi_link(
     }
 }
 
-/// Extract `(table_or_alias, column)` from a qualified column reference.
 fn extract_qualified_column(expr: &ast::Expr) -> Option<(String, String)> {
     match expr {
         ast::Expr::CompoundIdentifier(parts) if parts.len() == 2 => {
@@ -276,10 +529,10 @@ fn plan_cte_branch(
     }
 }
 
-fn extract_collection(plan: &SqlPlan) -> Option<String> {
+fn extract_collection(plan: &SqlPlan) -> String {
     match plan {
-        SqlPlan::Scan { collection, .. } => Some(collection.clone()),
-        _ => None,
+        SqlPlan::Scan { collection, .. } => collection.clone(),
+        _ => String::new(),
     }
 }
 
