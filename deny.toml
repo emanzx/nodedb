@@ -1,0 +1,81 @@
+# cargo-deny configuration.
+#
+# Enforces three things at CI time:
+#   1. No security advisories (`cargo deny check advisories`)
+#   2. Only permissive OSS licenses in the dependency tree
+#      (`cargo deny check licenses`)
+#   3. Only crates.io and our own git repos as sources
+#      (`cargo deny check sources`)
+#
+# Run locally: `cargo deny check`
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = [
+    # rustls-pemfile is unmaintained as of August 2025. The crate is now a
+    # thin wrapper around rustls-pki-types::PemObject, so behavior is
+    # equivalent. Migrating off is tracked as a post-0.1.0 followup; the
+    # advisory has no security impact.
+    "RUSTSEC-2025-0134",
+    # Marvin Attack against RSA 0.9.10. No safe upgrade is available
+    # upstream. NodeDB does not perform RSA decryption with attacker-
+    # controlled ciphertexts on a network-observable timing path; the dep
+    # comes in via a transitive crate. Tracked as a post-0.1.0 followup
+    # to migrate the upstream away from `rsa`.
+    "RUSTSEC-2023-0071",
+    # The following crates are unmaintained but have no safe upgrade and
+    # arrive transitively. Each will be revisited as upstreams move off
+    # them; none has a known security impact.
+    "RUSTSEC-2023-0089", # atomic-polyfill
+    "RUSTSEC-2021-0153", # encoding
+    "RUSTSEC-2025-0057", # fxhash (rustc-hash 1.x)
+    "RUSTSEC-2025-0119", # number_prefix
+    "RUSTSEC-2024-0436", # paste
+]
+
+[licenses]
+version = 2
+# Confidence threshold for detecting a license from a license file.
+# Default is 0.8; we keep that.
+confidence-threshold = 0.8
+allow = [
+    # Workspace license — embedded as a self-license.
+    "BUSL-1.1",
+    # Permissive licenses commonly used by Rust ecosystem deps.
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "MPL-2.0",
+    # Microsoft-originated permissive license used by some Win32 crates.
+    "MIT-0",
+    # CDLA-Permissive-2.0: used by some dataset / schema crates.
+    "CDLA-Permissive-2.0",
+    # BSL-1.0 (Boost Software License): permissive, OSI/FSF-approved.
+    "BSL-1.0",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = [
+    # zerompk + zerompk_derive: pinned to a specific rev of the project's
+    # own MessagePack codec until it lands on crates.io for v0.1.x.
+    "https://github.com/farhan-syah/zerompk",
+]
