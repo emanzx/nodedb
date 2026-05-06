@@ -8,12 +8,15 @@ use nodedb_sql::ddl_ast::NodedbStatement;
 use crate::control::security::identity::AuthenticatedIdentity;
 use crate::control::server::pgwire::ddl::change_stream::create_change_stream;
 use crate::control::server::pgwire::ddl::collection::{
-    CreateCollectionRequest, CreateIndexRequest, copy_from_file, create_collection, create_index,
-    create_table, dispatch_register_by_name,
+    CreateCollectionRequest, CreateIndexRequest, copy_from_file, copy_to_file, create_collection,
+    create_index, create_table, dispatch_register_by_name,
 };
 use crate::control::server::pgwire::ddl::conflict_policy::show_conflict_policy;
 use crate::control::server::pgwire::ddl::continuous_agg::{
     CreateContinuousAggregateRequest, create_continuous_aggregate,
+};
+use crate::control::server::pgwire::ddl::custom_type::{
+    alter_type_add_value, create_composite_type, create_enum_type, drop_type, show_types,
 };
 use crate::control::server::pgwire::ddl::materialized_view::create_materialized_view;
 use crate::control::server::pgwire::ddl::retention_policy::create_retention_policy;
@@ -258,6 +261,24 @@ pub(super) async fn try_dispatch_async(
 
         NodedbStatement::ShowSynonymGroups => Some(show_synonym_groups(state, identity)),
 
+        NodedbStatement::CreateEnumType { name, labels } => {
+            Some(create_enum_type(state, identity, name, labels).await)
+        }
+
+        NodedbStatement::CreateCompositeType { name, fields } => {
+            Some(create_composite_type(state, identity, name, fields).await)
+        }
+
+        NodedbStatement::DropType { name, if_exists } => {
+            Some(drop_type(state, identity, name, *if_exists).await)
+        }
+
+        NodedbStatement::AlterTypeAddValue { type_name, label } => {
+            Some(alter_type_add_value(state, identity, type_name, label).await)
+        }
+
+        NodedbStatement::ShowTypes => Some(show_types(state, identity)),
+
         NodedbStatement::Reindex {
             collection,
             index_name,
@@ -284,6 +305,25 @@ pub(super) async fn try_dispatch_async(
                 state,
                 identity,
                 collection,
+                path,
+                format.as_ref(),
+                *delimiter,
+                *header,
+            )
+            .await,
+        ),
+
+        NodedbStatement::CopyToFile {
+            source,
+            path,
+            format,
+            delimiter,
+            header,
+        } => Some(
+            copy_to_file(
+                state,
+                identity,
+                source,
                 path,
                 format.as_ref(),
                 *delimiter,

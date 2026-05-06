@@ -29,6 +29,21 @@ pub(in crate::data::executor) fn row_matches_filters(
     true
 }
 
+/// Coerce a `Value` to f64 for numeric comparisons.
+///
+/// Accepts `Integer`, `Float`, and `String` (parsed) — the last case handles
+/// untyped `Type::UNKNOWN` bind parameters that arrive as text and survive
+/// planner normalization as `Value::String`.
+fn value_as_f64(v: &nodedb_types::value::Value) -> Option<f64> {
+    use nodedb_types::value::Value;
+    match v {
+        Value::Float(f) => Some(*f),
+        Value::Integer(i) => Some(*i as f64),
+        Value::String(s) => s.parse::<f64>().ok(),
+        _ => None,
+    }
+}
+
 /// Evaluate a single filter predicate against a row value.
 fn eval_filter(
     val: &nodedb_types::value::Value,
@@ -37,16 +52,8 @@ fn eval_filter(
 ) -> bool {
     use nodedb_types::value::Value;
 
-    let val_f64 = match val {
-        Value::Float(f) => Some(*f),
-        Value::Integer(i) => Some(*i as f64),
-        _ => None,
-    };
-    let filter_f64 = match filter_val {
-        Value::Float(f) => Some(*f),
-        Value::Integer(i) => Some(*i as f64),
-        _ => None,
-    };
+    let val_f64 = value_as_f64(val);
+    let filter_f64 = value_as_f64(filter_val);
 
     let val_str = match val {
         Value::String(s) => Some(s.as_str()),

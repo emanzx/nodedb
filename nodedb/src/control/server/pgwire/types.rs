@@ -203,6 +203,17 @@ pub fn error_code_to_sqlstate(code: &ErrorCode) -> (&'static str, &'static str, 
                 "collection '{collection}' is draining for hard-delete; retry after purge completes"
             ),
         ),
+        ErrorCode::RecursionDepthExceeded {
+            cte_name,
+            max_depth,
+        } => (
+            "ERROR",
+            sqlstate::PROGRAM_LIMIT_EXCEEDED,
+            format!(
+                "WITH RECURSIVE CTE '{cte_name}' exceeded max recursion depth {max_depth}; \
+                 add a stricter termination condition or raise max_recursion_depth"
+            ),
+        ),
         ErrorCode::Internal { detail } => ("ERROR", sqlstate::INTERNAL_ERROR, detail.clone()),
         ErrorCode::Unsupported { detail } => {
             ("ERROR", sqlstate::FEATURE_NOT_SUPPORTED, detail.clone())

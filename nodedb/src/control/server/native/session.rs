@@ -126,26 +126,37 @@ impl NativeSession {
             }
 
             // Read a frame with idle timeout.
-            let payload = if idle_timeout_secs > 0 {
+            let frame_result = if idle_timeout_secs > 0 {
                 match tokio::time::timeout(
                     Duration::from_secs(idle_timeout_secs),
                     codec::read_frame(&mut self.stream),
                 )
                 .await
                 {
-                    Ok(result) => result?,
+                    Ok(result) => result,
                     Err(_) => {
                         debug!("session idle timeout ({}s)", idle_timeout_secs);
                         return Ok(());
                     }
                 }
             } else {
-                codec::read_frame(&mut self.stream).await?
+                codec::read_frame(&mut self.stream).await
             };
 
-            let payload = match payload {
-                Some(p) => p,
-                None => return Ok(()), // clean EOF
+            let payload = match frame_result {
+                Ok(Some(p)) => p,
+                Ok(None) => return Ok(()), // clean EOF
+                Err(crate::Error::BadRequest { detail }) => {
+                    // Send a typed error before closing so the client knows why.
+                    let err_resp =
+                        NativeResponse::error(0, "54000", format!("frame rejected: {detail}"));
+                    let format = self.format.unwrap_or(FrameFormat::MessagePack);
+                    if let Ok(bytes) = codec::encode_response(&err_resp, format) {
+                        let _ = codec::write_frame(&mut self.stream, &bytes).await;
+                    }
+                    return Ok(());
+                }
+                Err(e) => return Err(e),
             };
 
             // Auto-detect format on first frame.

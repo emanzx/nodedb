@@ -17,7 +17,7 @@ use super::super::super::super::types::sqlstate_error;
 use super::super::super::schema_validation::{
     extract_vector_fields, parse_fields_clause_from_pairs,
 };
-use super::enforcement::parse_balanced_clause_from_raw;
+use super::enforcement::{parse_balanced_clause_from_raw, resolve_custom_type_columns};
 use super::engine_option::validate_engine_name;
 
 /// Handle `CREATE [IF NOT EXISTS] TABLE <name> (<col_list>) [WITH (engine='...')]`.
@@ -83,11 +83,16 @@ pub async fn create_table(
     // Validate engine name. Default for CREATE TABLE is document_strict (None maps to strict).
     let canonical_engine = validate_engine_name(engine, options)?;
 
+    // Resolve user-defined type names to TEXT for schema building.
+    // Original names are preserved in `fields` for drop-protection.
+    let resolved_columns: Vec<(String, String)> =
+        resolve_custom_type_columns(columns, state, tenant_id.as_u64());
+
     // Build CollectionType from the canonical engine name.
     // CREATE TABLE default (engine=None) → document_strict.
     let (collection_type, columnar_schema_columns) = nodedb_sql::ddl_ast::build_collection_type(
         canonical_engine,
-        columns,
+        &resolved_columns,
         options,
         bitemporal_flag,
         true, // CREATE TABLE: None → document_strict

@@ -350,7 +350,7 @@ pub fn touched_collections(plan: &PhysicalPlan) -> Vec<String> {
                 }
 
                 // No user-collection field.
-                InlineHashJoin { .. } => {}
+                InlineHashJoin { .. } | RecursiveValue { .. } => {}
             }
         }
 

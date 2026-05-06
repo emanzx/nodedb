@@ -193,5 +193,7 @@ pub(super) fn describe_entry(e: &catalog_entry::CatalogEntry) -> (String, u64, S
         E::DeleteOwner { object_name, .. } => (object_name.clone(), 0, String::new()),
         E::PutSynonymGroup(g) => (g.name.clone(), 0, String::new()),
         E::DeleteSynonymGroup { name, .. } => (name.clone(), 0, String::new()),
+        E::PutCustomType(t) => (t.name.clone(), 0, String::new()),
+        E::DeleteCustomType { name, .. } => (name.clone(), 0, String::new()),
     }
 }

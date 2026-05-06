@@ -91,6 +91,10 @@ impl NodeDbPgHandler {
         self.enforce_check_constraints_if_needed(&clean_sql, tenant_id)
             .await?;
 
+        // Validate enum-typed column values for INSERT/UPDATE before planning.
+        self.enforce_enum_labels_if_needed(&clean_sql, tenant_id)
+            .await?;
+
         // Check plan cache before full planning.
         let cached_tasks = {
             let state = Arc::clone(&self.state);

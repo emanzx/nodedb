@@ -142,6 +142,7 @@ pub(super) fn describe_plan(plan: &PhysicalPlan) -> PlanKind {
         | PhysicalPlan::Query(QueryOp::HashJoin { .. })
         | PhysicalPlan::Query(QueryOp::InlineHashJoin { .. })
         | PhysicalPlan::Query(QueryOp::RecursiveScan { .. })
+        | PhysicalPlan::Query(QueryOp::RecursiveValue { .. })
         | PhysicalPlan::Query(QueryOp::LateralTopK { .. })
         | PhysicalPlan::Query(QueryOp::LateralLoop { .. })
         | PhysicalPlan::Graph(GraphOp::Algo { .. })

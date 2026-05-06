@@ -205,6 +205,7 @@ pub fn required_permission(plan: &crate::bridge::envelope::PhysicalPlan) -> Perm
             | QueryOp::NestedLoopJoin { .. }
             | QueryOp::SortMergeJoin { .. }
             | QueryOp::RecursiveScan { .. }
+            | QueryOp::RecursiveValue { .. }
             | QueryOp::FacetCounts { .. }
             | QueryOp::LateralTopK { .. }
             | QueryOp::LateralLoop { .. },

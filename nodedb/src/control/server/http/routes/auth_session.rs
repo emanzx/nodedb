@@ -53,12 +53,24 @@ pub async fn create_session(
 ///
 /// ```text
 /// DELETE /v1/auth/session
+/// Authorization: Bearer <jwt-or-api-key>
 /// X-Session-Id: nds_...
 /// ```
+///
+/// The caller must present a valid bearer token. A session handle may only be
+/// invalidated by the authenticated caller — the identity is verified before
+/// any session state is read or mutated.
 pub async fn delete_session(
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, ApiError> {
+    // Auth check must come first — return 401/403 before touching session state.
+    let _identity = {
+        let peer_str = peer.to_string();
+        crate::control::server::http::auth::resolve_identity(&headers, &state, &peer_str)?
+    };
+
     let handle = headers
         .get("x-session-id")
         .and_then(|v| v.to_str().ok())

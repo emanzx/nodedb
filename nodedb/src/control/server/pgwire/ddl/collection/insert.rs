@@ -127,6 +127,30 @@ pub async fn insert_document(
         }
     }
 
+    // Validate enum-typed columns against the custom type registry.
+    // Collections with user-defined enum types store them physically as TEXT;
+    // label validation must happen here in the Control Plane since the Data
+    // Plane sees only TEXT.
+    if let Some(catalog) = state.credentials.catalog()
+        && let Ok(Some(coll_def)) = catalog.get_collection(tenant_id.as_u64(), &parsed.coll_name)
+    {
+        for (field_name, type_name) in &coll_def.fields {
+            if let Some(value) = fields.get(field_name.as_str()) {
+                let label = match value {
+                    nodedb_types::Value::String(s) => s.as_str(),
+                    _ => continue,
+                };
+                if let Err(msg) = state.custom_type_registry.validate_enum_label(
+                    tenant_id.as_u64(),
+                    type_name,
+                    label,
+                ) {
+                    return Some(Err(sqlstate_error("22P02", &msg)));
+                }
+            }
+        }
+    }
+
     // Build SQL from fields and route through nodedb-sql → sql_plan_convert.
     // This ensures all engine-type routing goes through the shared EngineRules.
     let insert_sql = fields_to_insert_sql(&parsed.coll_name, &fields);

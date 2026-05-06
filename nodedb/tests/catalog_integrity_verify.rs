@@ -152,5 +152,9 @@ fn classify(entry: &CatalogEntry) -> VariantClass {
 
         CatalogEntry::PutSynonymGroup(_) => VariantClass::Exempt,
         CatalogEntry::DeleteSynonymGroup { .. } => VariantClass::Exempt,
+
+        // Custom types are registry-only objects (no owner row required).
+        CatalogEntry::PutCustomType(_) => VariantClass::Exempt,
+        CatalogEntry::DeleteCustomType { .. } => VariantClass::Exempt,
     }
 }

@@ -17,8 +17,8 @@ use std::sync::Arc;
 
 use super::gateway_invalidation::invalidate_gateway_cache_for_entry;
 use super::{
-    api_key, change_stream, collection, function, materialized_view, owner, permission, procedure,
-    rls, role, schedule, sequence, synonym_group, tenant, trigger, user,
+    api_key, change_stream, collection, custom_type, function, materialized_view, owner,
+    permission, procedure, rls, role, schedule, sequence, synonym_group, tenant, trigger, user,
 };
 use crate::control::catalog_entry::entry::CatalogEntry;
 use crate::control::state::SharedState;
@@ -166,6 +166,12 @@ pub fn apply_post_apply_side_effects_sync(entry: &CatalogEntry, shared: &Arc<Sha
         }
         CatalogEntry::DeleteSynonymGroup { tenant_id, name } => {
             synonym_group::delete(*tenant_id, name.clone(), Arc::clone(shared));
+        }
+        CatalogEntry::PutCustomType(stored) => {
+            custom_type::put((**stored).clone(), Arc::clone(shared));
+        }
+        CatalogEntry::DeleteCustomType { tenant_id, name } => {
+            custom_type::delete(*tenant_id, name.clone(), Arc::clone(shared));
         }
     }
 }

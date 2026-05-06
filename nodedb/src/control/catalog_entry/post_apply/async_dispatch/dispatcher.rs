@@ -99,7 +99,9 @@ pub fn spawn_post_apply_async_side_effects(
         | CatalogEntry::PutOwner(_)
         | CatalogEntry::DeleteOwner { .. }
         | CatalogEntry::PutSynonymGroup(_)
-        | CatalogEntry::DeleteSynonymGroup { .. } => {
+        | CatalogEntry::DeleteSynonymGroup { .. }
+        | CatalogEntry::PutCustomType(_)
+        | CatalogEntry::DeleteCustomType { .. } => {
             let _ = shared;
             let _ = raft_index;
         }

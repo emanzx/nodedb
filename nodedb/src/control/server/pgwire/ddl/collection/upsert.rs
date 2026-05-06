@@ -89,6 +89,28 @@ pub async fn upsert_document(
         }
     }
 
+    // Validate enum-typed columns against the custom type registry.
+    if let Some(catalog) = state.credentials.catalog()
+        && let Ok(Some(coll_def)) = catalog.get_collection(tenant_id.as_u64(), &parsed.coll_name)
+    {
+        for (field_name, type_name) in &coll_def.fields {
+            if let Some(value) = fields.get(field_name.as_str()) {
+                let label = match value {
+                    nodedb_types::Value::String(s) => s.as_str(),
+                    _ => continue,
+                };
+                if let Err(msg) = state.custom_type_registry.validate_enum_label(
+                    tenant_id.as_u64(),
+                    type_name,
+                    label,
+                ) {
+                    use crate::control::server::pgwire::types::sqlstate_error;
+                    return Some(Err(sqlstate_error("22P02", &msg)));
+                }
+            }
+        }
+    }
+
     // Probe for an existing row BEFORE dispatch so the correct AFTER
     // trigger class fires: UPSERT onto an existing primary key is an
     // UPDATE from every downstream consumer's perspective (AFTER UPDATE

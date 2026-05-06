@@ -241,6 +241,7 @@ impl NodeDbPgHandler {
             && !upper.starts_with("SHOW CONSTRAINTS")
             && !upper.starts_with("SHOW CONFLICT POLICY")
             && upper != "SHOW SYNONYM GROUPS"
+            && upper != "SHOW TYPES"
         {
             return self.handle_show(addr, sql_trimmed);
         }
@@ -277,6 +278,20 @@ impl NodeDbPgHandler {
 
         if upper.starts_with("LIVE SELECT ") {
             return self.handle_live_select(identity, addr, sql_trimmed);
+        }
+
+        // ── LISTEN / NOTIFY / UNLISTEN ────────────────────────────────
+
+        if upper.starts_with("LISTEN ") {
+            return self.handle_listen(identity, addr, sql_trimmed);
+        }
+
+        if upper.starts_with("NOTIFY ") {
+            return self.handle_notify(identity, addr, sql_trimmed);
+        }
+
+        if upper.starts_with("UNLISTEN ") || upper == "UNLISTEN *" {
+            return self.handle_unlisten(identity, addr, sql_trimmed);
         }
 
         if upper.starts_with("SELECT FACET_COUNTS") {

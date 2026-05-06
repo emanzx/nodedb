@@ -17,7 +17,7 @@ use super::super::super::super::types::sqlstate_error;
 use super::super::super::schema_validation::{
     extract_vector_fields, parse_fields_clause_from_pairs,
 };
-use super::enforcement::parse_balanced_clause_from_raw;
+use super::enforcement::{parse_balanced_clause_from_raw, resolve_custom_type_columns};
 use super::engine_option::validate_engine_name;
 
 /// CREATE COLLECTION <name> [(<col> <type>, ...)] [WITH (engine='...')]
@@ -77,11 +77,18 @@ pub fn create_collection(
 
     let bitemporal_flag = flags.iter().any(|f| f == "BITEMPORAL");
 
+    // Resolve user-defined type names to their physical storage type (TEXT)
+    // so that `build_collection_type` can build a valid strict schema.
+    // The original type names are preserved in `fields` (Vec<(name, type_str)>)
+    // for drop-protection and SHOW COLLECTIONS output.
+    let resolved_columns: Vec<(String, String)> =
+        resolve_custom_type_columns(columns, state, tenant_id.as_u64());
+
     // Build CollectionType from the canonical engine name.
     // CREATE COLLECTION default (engine=None) → schemaless.
     let (collection_type, columnar_schema_columns) = nodedb_sql::ddl_ast::build_collection_type(
         canonical_engine,
-        columns,
+        &resolved_columns,
         options,
         bitemporal_flag,
         false, // CREATE COLLECTION: None → schemaless
