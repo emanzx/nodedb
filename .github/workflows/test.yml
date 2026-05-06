@@ -46,6 +46,8 @@ jobs:
         run: bash scripts/ci/check_format_expects.sh
       - name: Calvin determinism gate
         run: bash scripts/ci/check_calvin_determinism.sh
+      - name: Plane-separation gate
+        run: bash scripts/ci/check_plane_separation.sh
 
   test:
     name: Test
