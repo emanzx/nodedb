@@ -360,4 +360,20 @@ pub enum MetaOp {
         index_name: Option<String>,
         concurrent: bool,
     },
+
+    /// Persist a synonym group to the FTS backend on this core.
+    ///
+    /// Called after the Control Plane has already written to the catalog and
+    /// updated the in-memory registry. The Data Plane handler writes the group
+    /// to the `FtsIndex` meta store so query-time expansion can find it.
+    PutSynonymGroup {
+        tenant_id: u64,
+        /// Serialized `SynonymGroupRecord` (JSON).
+        record_json: String,
+    },
+
+    /// Remove a synonym group from the FTS backend on this core.
+    ///
+    /// Called after the Control Plane has already removed it from the catalog.
+    DeleteSynonymGroup { tenant_id: u64, name: String },
 }

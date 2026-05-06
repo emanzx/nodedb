@@ -181,6 +181,15 @@ impl CoreLoop {
                 index_name.as_deref(),
                 *concurrent,
             ),
+
+            MetaOp::PutSynonymGroup {
+                tenant_id,
+                record_json,
+            } => self.execute_put_synonym_group(task, *tenant_id, record_json),
+
+            MetaOp::DeleteSynonymGroup { tenant_id, name } => {
+                self.execute_delete_synonym_group(task, *tenant_id, name)
+            }
         }
     }
 }
