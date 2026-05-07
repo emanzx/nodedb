@@ -4,8 +4,8 @@ Parameters
 
 Licensor:             Farhan Syah
 Licensed Work:        NodeDB
-                      The Licensed Work is (c) 2024 Farhan Syah
-Change Date:          2030-01-01
+                      The Licensed Work is (c) 2026 Farhan Syah
+Change Date:          2030-05-01
 Change License:       Apache License, Version 2.0
 
 Additional Use Grant: You may make use of the Licensed Work, provided that
