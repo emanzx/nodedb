@@ -14,6 +14,7 @@
 
 pub mod args;
 pub mod dispatch;
+pub mod healthcheck;
 pub mod join_token;
 pub mod regen_certs;
 pub mod rotate_ca;

@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use super::args::parse_flags;
-use super::{join_token, regen_certs, rotate_ca};
+use super::{healthcheck, join_token, regen_certs, rotate_ca};
 
 /// All operator subcommands. Constructed by [`parse_subcommand`] from
 /// the raw `std::env::args()` tail so `main()` can decide before it
@@ -24,6 +24,10 @@ pub enum Subcommand {
         for_node: u64,
         ttl: std::time::Duration,
     },
+    /// Probe the local HTTP `/health` endpoint and exit 0/1.
+    /// Used by container `HEALTHCHECK` directives so distroless /
+    /// Chainguard runtime images don't need to ship `curl`.
+    Healthcheck { port: u16 },
     /// Print the version string and exit 0.
     PrintVersion,
     /// Reserved subcommand that is not yet implemented.
@@ -60,6 +64,7 @@ pub fn parse_subcommand(args: &[String]) -> Result<Option<Subcommand>, String> {
         "regen-certs"
             | "rotate-ca"
             | "join-token"
+            | "healthcheck"
             | "help"
             | "--help"
             | "-h"
@@ -119,6 +124,10 @@ pub fn parse_subcommand(args: &[String]) -> Result<Option<Subcommand>, String> {
             } else {
                 Err("rotate-ca requires --stage or --finalize --remove <fingerprint>".into())
             }
+        }
+        "healthcheck" => {
+            let port = healthcheck::parse_port(tail)?;
+            Ok(Some(Subcommand::Healthcheck { port }))
         }
         "join-token" => {
             let flags = parse_flags(tail)?;
@@ -180,6 +189,7 @@ pub fn run_subcommand(cmd: Subcommand) -> i32 {
                 1
             }
         },
+        Subcommand::Healthcheck { port } => healthcheck::run(port),
         Subcommand::PrintVersion => {
             print!("{}", format_version_block());
             0
@@ -218,6 +228,7 @@ USAGE:
     nodedb rotate-ca --finalize --remove FP  Ask the running node to remove CA with fingerprint FP
     nodedb join-token --create --data-dir D --for-node N [--ttl 10m]
                                              Emit a one-time HMAC token for a joining node
+    nodedb healthcheck [--port N]            Probe local HTTP /health (exit 0=healthy, 1=unhealthy)
     nodedb help                              Print this message
 
 RESERVED (not yet implemented):
