@@ -35,22 +35,7 @@ test-threads = "num-cpus"
 # strictly alone, and the rest of the suite gets full parallelism
 # the moment the cluster test finishes.
 [[profile.default.overrides]]
-filter = '''
-binary(/cluster/)
-| binary(/cross_node/)
-| binary(/_lease_/)
-| binary(descriptor_lease_drain)
-| binary(descriptor_lease_forwarding_and_renewal)
-| binary(descriptor_lease_planner_integration)
-| binary(descriptor_versioning_cross_node)
-| binary(prepared_cache_invalidation)
-| binary(sql_cluster_cross_node_dml)
-| binary(pgwire_gateway_migration)
-| binary(ilp_gateway_migration)
-| binary(resp_gateway_migration)
-| binary(surrogate_raft)
-| binary(surrogate_vshard_transfer)
-'''
+filter = 'package(nodedb-cluster-tests)'
 test-group = 'cluster'
 threads-required = 'num-test-threads'
 # Cluster tests bring up real Raft nodes and racy multi-node

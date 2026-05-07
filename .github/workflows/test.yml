@@ -48,9 +48,17 @@ jobs:
         run: bash scripts/ci/check_calvin_determinism.sh
       - name: Plane-separation gate
         run: bash scripts/ci/check_plane_separation.sh
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Dependency audit
+        run: cargo deny check
 
+  # Stage 1 — fast tests (everything except 3-node cluster suite).
+  # `--no-fail-fast` so a regression surfaces every failure in one run.
   test:
-    name: Test
+    name: Test (fast)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -65,21 +73,61 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             cmake clang libclang-dev pkg-config protobuf-compiler perl \
             libcurl4-openssl-dev libsasl2-dev
-      # nextest is required — `.config/nextest.toml` defines the
-      # `cluster` test-group that serializes 3-node integration tests
-      # and the `ci` profile that retries flaky cluster tests once and
-      # writes a JUnit report. Plain `cargo test` ignores all of that
-      # and will hang/fail on the cluster suite.
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2
         with:
           tool: nextest
       - name: Run tests
-        run: cargo nextest run --all-features --cargo-profile ci --profile ci
+        run: |
+          cargo nextest run \
+            --workspace --exclude nodedb-cluster-tests \
+            --all-features \
+            --cargo-profile ci --profile ci \
+            --no-fail-fast
       - name: Upload JUnit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: junit-report
+          name: junit-report-fast
+          path: target/nextest/ci/junit.xml
+          if-no-files-found: ignore
+
+  # Stage 2 — 3-node cluster integration suite. Lives in its own crate
+  # (`nodedb-cluster-tests`) so there is no overlap with stage 1.
+  # Sequenced via `needs: test` — no point spending ~20 min here when
+  # the basics already broke.
+  test-cluster:
+    name: Test (cluster)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: test-cluster
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake clang libclang-dev pkg-config protobuf-compiler perl \
+            libcurl4-openssl-dev libsasl2-dev
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
+      - name: Run cluster tests
+        run: |
+          cargo nextest run \
+            -p nodedb-cluster-tests \
+            --all-features \
+            --cargo-profile ci --profile ci \
+            --no-fail-fast
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-report-cluster
           path: target/nextest/ci/junit.xml
           if-no-files-found: ignore
