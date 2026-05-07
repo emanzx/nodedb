@@ -4,10 +4,13 @@ description = "Portable type definitions shared between NodeDB Origin and NodeDB
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
-readme.workspace = true
+license = "Apache-2.0"
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-types"
+keywords = ["types", "ids", "errors", "shared", "nodedb"]
+categories = ["data-structures", "no-std"]
 
 [dependencies]
 serde = { workspace = true }

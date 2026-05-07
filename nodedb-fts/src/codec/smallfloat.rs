@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! SmallFloat: 1-byte quantized document lengths for BM25 fieldnorms.
 //!

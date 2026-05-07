@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Shared query-execution utilities used by every engine: BM25 scoring,
 //! text analysis (tokenization / normalization / stop words), expression

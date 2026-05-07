@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! PostgreSQL JSON operator and SQL/JSON standard scalar function registrations.
 

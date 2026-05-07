@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! SqlExpr AST, on-wire codec, and row-scope evaluator.
 //!

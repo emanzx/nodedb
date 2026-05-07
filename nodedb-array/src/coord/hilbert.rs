@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! ND Hilbert curve encode/decode (Skilling 2004 transposed-form).
 //!

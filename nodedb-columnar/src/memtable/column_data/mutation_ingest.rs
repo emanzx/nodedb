@@ -1,8 +1,6 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! `push_ref` and `backfill_nulls` methods on `ColumnData`.
-//!
-//! Extracted from `mutation.rs` to keep that file under 500 lines.
 
 use crate::error::ColumnarError;
 use crate::memtable::IngestValue;

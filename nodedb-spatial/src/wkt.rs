@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Well-Known Text (WKT) serialization and parsing for Geometry types.
 //!

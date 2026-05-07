@@ -5,9 +5,12 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-readme.workspace = true
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-bridge"
+keywords = ["spsc", "ring-buffer", "lock-free", "ipc", "bridge"]
+categories = ["concurrency", "data-structures"]
 
 [features]
 default = []

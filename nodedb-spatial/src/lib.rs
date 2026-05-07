@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Spatial engine primitives shared by Origin, Lite, and WASM: R*-tree with
 //! bulk load and nearest-neighbor / range queries, geohash and H3 hex

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Strictly-monotonic `i64` ordinal clock for bitemporal `system_from` keys.
 //!

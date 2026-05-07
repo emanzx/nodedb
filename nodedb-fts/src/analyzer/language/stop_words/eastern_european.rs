@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Stop word lists for Eastern European, Turkic, and Hellenic languages.
 //! Source: Snowball project official lists + NLTK corpora.

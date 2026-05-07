@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Block-level encode and decode for the FastLanes FOR + bit-packing codec.
 

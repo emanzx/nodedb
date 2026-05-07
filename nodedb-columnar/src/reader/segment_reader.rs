@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Segment reader: decode compressed columns from a segment into typed vectors,
 //! with column projection and block predicate pushdown.

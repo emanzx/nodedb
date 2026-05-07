@@ -60,9 +60,7 @@ pub enum MigrationPhaseTag {
 /// Payload written to the metadata Raft group at each phase boundary.
 ///
 /// Each variant carries enough information to resume the migration from
-/// scratch if the coordinator crashes between two phases.  The audit's
-/// "Recommended `MigrationCheckpoint` payload fields" section specifies
-/// the fields; see `resource/MIGRATION_ATOMICITY_AUDIT.md`.
+/// scratch if the coordinator crashes between two phases.
 #[derive(
     Debug,
     Clone,

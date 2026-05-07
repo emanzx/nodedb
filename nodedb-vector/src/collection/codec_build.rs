@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Methods on `VectorCollection` for building the collection-level
 //! codec-dispatch index (RaBitQ, BBQ).
 //!
-//! Split from `lifecycle.rs` to keep that file under the 500-line limit.
 //! All `impl VectorCollection` blocks in `collection/` extend the same type.
 
 use super::codec_dispatch::{CollectionCodec, build_collection_codec};

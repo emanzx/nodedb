@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Existing JSON manipulation scalar functions (json_extract, json_set, etc.)
 

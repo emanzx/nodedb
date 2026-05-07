@@ -4,10 +4,13 @@ description = "Columnar segment format and memtable for NodeDB analytical storag
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
-readme.workspace = true
+license = "Apache-2.0"
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-columnar"
+keywords = ["columnar", "segment", "compression", "olap", "analytics"]
+categories = ["database-implementations", "compression"]
 
 [dependencies]
 nodedb-types = { workspace = true }

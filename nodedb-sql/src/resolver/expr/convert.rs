@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Convert sqlparser AST expressions to our SqlExpr IR.
 
@@ -15,6 +15,25 @@ use super::value::{convert_value, parse_interval_to_micros};
 /// Maximum AST nesting depth accepted by `convert_expr`.
 /// Exceeding this limit returns `Err` instead of overflowing the stack.
 const MAX_CONVERT_DEPTH: usize = 128;
+
+/// SQL-standard niladic functions: written without parentheses. Parsers
+/// emit them as bare identifiers; we promote them to function calls so
+/// they fold to a value at plan time instead of resolving to a column.
+fn is_zero_arg_keyword_function(name: &str) -> bool {
+    matches!(
+        name,
+        "current_timestamp"
+            | "current_date"
+            | "current_time"
+            | "localtime"
+            | "localtimestamp"
+            | "current_user"
+            | "current_role"
+            | "current_schema"
+            | "session_user"
+            | "user"
+    )
+}
 
 /// Convert a sqlparser `Expr` to our `SqlExpr`.
 pub fn convert_expr(expr: &Expr) -> Result<SqlExpr> {
@@ -37,10 +56,21 @@ pub(super) fn convert_expr_depth(expr: &Expr, depth: &mut usize) -> Result<SqlEx
 
 fn convert_expr_inner(expr: &Expr, depth: &mut usize) -> Result<SqlExpr> {
     match expr {
-        Expr::Identifier(ident) => Ok(SqlExpr::Column {
-            table: None,
-            name: normalize_ident(ident),
-        }),
+        Expr::Identifier(ident) => {
+            let name = normalize_ident(ident);
+            // SQL-standard zero-arg keyword functions parse as bare
+            // identifiers (no parentheses): `SELECT current_timestamp`,
+            // `SELECT current_user`, etc. Promote them to function calls
+            // so const folding evaluates them like the parenthesised form.
+            if is_zero_arg_keyword_function(&name) {
+                return Ok(SqlExpr::Function {
+                    name,
+                    args: vec![],
+                    distinct: false,
+                });
+            }
+            Ok(SqlExpr::Column { table: None, name })
+        }
         Expr::CompoundIdentifier(parts) if parts.len() >= 3 => {
             let qualified: String = parts
                 .iter()

@@ -5,9 +5,12 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-readme.workspace = true
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-crdt"
+keywords = ["crdt", "loro", "sync", "conflict-resolution", "distributed"]
+categories = ["data-structures", "algorithms"]
 
 [dependencies]
 thiserror = { workspace = true }

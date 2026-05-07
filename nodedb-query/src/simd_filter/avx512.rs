@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // ---------------------------------------------------------------------------
 // AVX-512 (x86_64) filter kernels

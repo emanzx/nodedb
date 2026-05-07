@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! WorkloadAnalyzer — tracks historical query predicates and exposes a 3D cost
 //! model (memory × latency × recall) to guide SIEVE subindex build decisions.

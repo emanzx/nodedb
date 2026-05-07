@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Shared NodeDB type definitions: strong IDs (TenantId, VShardId, RequestId,
 //! Lsn, Surrogate), error types (NodeDbError + ErrorCode + ErrorDetails), wire

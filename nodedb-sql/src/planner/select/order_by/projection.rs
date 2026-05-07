@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! SELECT-projection fallback for hybrid-search and text-search trigger detection.
 //!

@@ -1,13 +1,6 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! `SqlCatalog` trait + descriptor-resolution error type.
-//!
-//! The SQL planner resolves collection metadata through the
-//! `SqlCatalog` trait. Both Origin (via the host-side
-//! `CredentialStore` + `SystemCatalog`) and Lite (via the embedded
-//! redb catalog) implement it. The trait lives in its own file so
-//! `types.rs` stays under the 500-line limit and so the error
-//! surface has headroom for additional variants.
 
 use thiserror::Error;
 

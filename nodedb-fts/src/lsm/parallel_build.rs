@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Parallel index build: workers scan disjoint document ranges, build
 //! local memtables, flush to temporary segments. Leader performs N-way

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Core value operations on `nodedb_types::Value`: comparison, coercion, truthiness.
 //!

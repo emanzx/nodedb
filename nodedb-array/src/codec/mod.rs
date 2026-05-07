@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Structural sparse-tile codec. Dense tiles retain zerompk serialization;
 // this module covers sparse tiles only. See tile_encode / tile_decode for

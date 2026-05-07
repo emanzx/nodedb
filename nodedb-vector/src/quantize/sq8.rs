@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Scalar Quantization (SQ8): FP32 → INT8 per-dimension.
 //!

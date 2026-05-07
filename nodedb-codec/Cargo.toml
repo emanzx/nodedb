@@ -4,10 +4,13 @@ description = "Compression codecs for NodeDB timeseries columnar storage"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
-readme.workspace = true
+license = "Apache-2.0"
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-codec"
+keywords = ["compression", "codec", "alp", "fastlanes", "gorilla"]
+categories = ["compression", "encoding"]
 
 [dependencies]
 thiserror = { workspace = true }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Engine-name → `CollectionType` mapping for `CREATE COLLECTION` / `CREATE TABLE` DDL.
 //!

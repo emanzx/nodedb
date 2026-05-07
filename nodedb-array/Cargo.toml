@@ -4,10 +4,13 @@ description = "Shared ND sparse array engine (coordinate-tuple indexed, tile-bas
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
-readme.workspace = true
+license = "Apache-2.0"
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-array"
+keywords = ["array", "ndarray", "sparse", "tiledb", "scientific"]
+categories = ["science", "database-implementations"]
 
 [dependencies]
 nodedb-types = { workspace = true }

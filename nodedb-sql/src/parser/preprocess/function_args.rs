@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Rewrite `{ key: val }` object literals appearing inside function-call
 //! argument positions to JSON string literals: `'{"key": val}'`.

@@ -4,10 +4,13 @@ description = "Shared full-text search engine for NodeDB — inverted index, BM2
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
-readme.workspace = true
+license = "Apache-2.0"
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-fts"
+keywords = ["fts", "search", "bm25", "full-text", "lucene"]
+categories = ["text-processing", "algorithms"]
 
 [features]
 default = []

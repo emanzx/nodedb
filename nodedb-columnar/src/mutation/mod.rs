@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Columnar mutation engine: coordinates PK index, delete bitmaps,
 //! memtable, and WAL records for full INSERT/UPDATE/DELETE.

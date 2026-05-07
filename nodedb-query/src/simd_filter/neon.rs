@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // ---------------------------------------------------------------------------
 // NEON (AArch64) filter kernels — 4 u32 / 2 f64 / 2 i64 per instruction

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Unified Quantized Vector layout — the cache-aligned superset format that
 //! absorbs binary / ternary (BitNet 1.58) / 4-bit scalar / residual codecs

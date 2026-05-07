@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Shutdown tuning — deadlines applied to the graceful shutdown
 //! path by `main.rs` and `control::shutdown::LoopRegistry`.

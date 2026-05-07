@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Level-based compaction for the FTS LSM engine.
 //!
@@ -111,10 +111,26 @@ pub fn compact_level<B: FtsBackend>(
         return Ok(None);
     }
 
-    let _readers_guard = governor.map(|gov| gov.reserve(EngineId::Fts, to_merge.len() * std::mem::size_of::<SegmentReader>()).map_err(CompactError::Budget)).transpose()?;
+    let _readers_guard = governor
+        .map(|gov| {
+            gov.reserve(
+                EngineId::Fts,
+                to_merge.len() * std::mem::size_of::<SegmentReader>(),
+            )
+            .map_err(CompactError::Budget)
+        })
+        .transpose()?;
     let mut readers = Vec::with_capacity(to_merge.len());
 
-    let _ids_guard = governor.map(|gov| gov.reserve(EngineId::Fts, to_merge.len() * std::mem::size_of::<String>()).map_err(CompactError::Budget)).transpose()?;
+    let _ids_guard = governor
+        .map(|gov| {
+            gov.reserve(
+                EngineId::Fts,
+                to_merge.len() * std::mem::size_of::<String>(),
+            )
+            .map_err(CompactError::Budget)
+        })
+        .transpose()?;
     let mut merged_ids = Vec::with_capacity(to_merge.len());
 
     for meta in &to_merge {

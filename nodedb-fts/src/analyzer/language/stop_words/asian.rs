@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Stop word lists for Asian languages.
 //! CJK languages (Chinese, Japanese, Korean) primarily use particles/function words.

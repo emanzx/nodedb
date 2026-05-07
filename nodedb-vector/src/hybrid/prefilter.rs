@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Pre-filter bitmap composition for cross-engine hybrid retrieval.
 //!

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Tag byte identifying the tile codec on the wire. Sits as the very first
 // byte of every tile payload (after BlockFraming unwraps).

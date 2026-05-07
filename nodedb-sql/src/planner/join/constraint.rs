@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! ON-clause / USING-clause extraction: equi-join keys + non-equi residual.
 

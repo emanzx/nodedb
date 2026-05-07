@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Optimized Product Quantization (OPQ) — Non-Para OPQ via iterative
 //! SVD-Procrustes rotation that minimizes PQ reconstruction error, yielding

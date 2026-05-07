@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! ACORN-1 static 2-hop filtered traversal — feature-flagged baseline.
 //!

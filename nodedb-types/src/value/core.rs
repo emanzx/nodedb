@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Dynamic value type for document fields and SQL parameters.
 //!
@@ -43,7 +43,8 @@ use crate::geometry::Geometry;
 /// in `value/msgpack.rs`) — internal transport format, lossless.**
 /// Every variant round-trips through MessagePack without loss. All
 /// internal paths (Data Plane, SPSC bridge, WAL payloads) MUST use
-/// zerompk. JSON is forbidden in these contexts (CLAUDE.md rule #12).
+/// zerompk. JSON is reserved for the API boundary and forbidden in
+/// these contexts.
 ///
 /// `#[non_exhaustive]` — new value kinds will be added in future releases
 /// (e.g. `Vector`, typed collections). This attribute enforces Rust API

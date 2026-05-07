@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Vector search primitives shared by Origin, Lite, and WASM: HNSW + Vamana
 //! indexes, scalar / SIMD distance kernels, the quantization codec frontier

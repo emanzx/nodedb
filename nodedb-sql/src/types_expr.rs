@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! SQL value / expression / operator types.
 //!
-//! Extracted from `types.rs` to keep both files under the 500-line limit.
 //! Re-exported from `types` so downstream `use crate::types::*` continues
 //! to resolve these symbols without change.
 

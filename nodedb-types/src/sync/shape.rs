@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Shape definition schema: parameterized boundaries for sync subscriptions.
 //!
@@ -41,7 +41,7 @@ pub struct ShapeDefinition {
 /// Coordinate range filter for array shapes.
 ///
 /// Tile-aligned: subscriptions cover whole tiles; sub-tile filtering
-/// happens at receive time (per the checklist "Out of scope" declaration).
+/// happens at receive time.
 /// Both `start` and `end` are inclusive, with `end` of `None` meaning
 /// "all coords from `start` onwards".
 ///

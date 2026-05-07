@@ -3,8 +3,14 @@ name = "nodedb-sql"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "Apache-2.0"
+readme = "README.md"
+repository.workspace = true
+homepage.workspace = true
 description = "SQL parser, planner, and optimizer for NodeDB"
+documentation = "https://docs.rs/nodedb-sql"
+keywords = ["sql", "planner", "parser", "postgres", "query"]
+categories = ["database", "parser-implementations"]
 
 [dependencies]
 nodedb-types = { workspace = true }

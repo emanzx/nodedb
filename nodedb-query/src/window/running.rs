@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Peer-aware running-aggregate for RANGE BETWEEN UNBOUNDED PRECEDING AND
 //! CURRENT ROW.

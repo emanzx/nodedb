@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Rewrite `SEARCH <coll> USING VECTOR(<field>, ARRAY[...], <k>)` to the
 //! canonical `SELECT * FROM <coll> ORDER BY vector_distance(<field>, ARRAY[...]) LIMIT <k>`.

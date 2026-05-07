@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Low-level MessagePack binary reader: tag parsing, value skipping, and typed reads.
 //!

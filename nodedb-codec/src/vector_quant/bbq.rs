@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! BBQ — Better Binary Quantization (Elasticsearch 9.1, mid-2025).
 //!

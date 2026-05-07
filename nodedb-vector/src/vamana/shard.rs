@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! `Shard` trait — abstracts local-mmap vs future remote-RPC partition fetch.
 //!

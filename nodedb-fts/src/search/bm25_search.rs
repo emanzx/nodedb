@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! BM25 search over the FtsIndex with AND-first OR-fallback, phrase boost,
 //! and NOT-term exclusion.
@@ -133,10 +133,6 @@ impl<B: FtsBackend> FtsIndex<B> {
         if let Ok(Some(bmw_results)) =
             super::bmw::query::bmw_search(self, tid, collection, &bmw_params)
         {
-            eprintln!(
-                "[bm25_debug] BMW returned {} results for tokens={query_tokens:?} and_threshold={and_threshold}",
-                bmw_results.len()
-            );
             if mode == QueryMode::Or || and_threshold == 1 {
                 let mut results: Vec<TextSearchResult> = bmw_results
                     .into_iter()

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Per-segment delete bitmap for columnar UPDATE/DELETE.
 //!

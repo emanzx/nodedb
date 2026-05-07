@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Statistics computation helpers: numeric min/max, string zone-maps, bloom filters.
 

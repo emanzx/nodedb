@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Sparse → dense promotion at fill ratio > [`DENSE_PROMOTION_THRESHOLD`].
 //!
@@ -15,8 +15,7 @@ use crate::schema::ArraySchema;
 use crate::types::cell_value::value::CellValue;
 
 /// Fill ratio above which a sparse tile is rewritten into a dense
-/// tile. From the checklist: "auto-promotion from sparse at fill ratio
-/// > 0.7".
+/// tile (auto-promotion threshold).
 pub const DENSE_PROMOTION_THRESHOLD: f64 = 0.7;
 
 /// True if `nnz / cells_per_tile > threshold`.

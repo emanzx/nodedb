@@ -27,8 +27,7 @@ pub struct ConflictKey {
 /// Histogram bucket boundaries (ms) for epoch duration.
 ///
 /// Used by `render_prometheus` to emit the `nodedb_sequencer_epoch_duration_ms`
-/// histogram.  Buckets mirror the checklist spec: [1, 5, 10, 20, 50, 100, 250,
-/// 500, 1000] ms.
+/// histogram.
 pub const EPOCH_DURATION_BUCKETS: &[u64] = &[1, 5, 10, 20, 50, 100, 250, 500, 1000];
 
 /// Metrics for the sequencer epoch loop.

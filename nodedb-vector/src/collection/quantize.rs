@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Quantizer training helpers for `VectorCollection`.
 //!
-//! Split from `lifecycle.rs` to keep that file under the 500-line cap.
 //! All methods here are `impl VectorCollection` blocks — Rust allows a
 //! type's impl to be split across files.
 

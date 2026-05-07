@@ -1,12 +1,11 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Typed error enum for the shared graph engine.
 //!
 //! Every fallible operation on `CsrIndex` (label interning, edge insert,
-//! edge delete) returns `Result<T, GraphError>`. The skill / CLAUDE.md
-//! discipline is explicit: silent casts or `debug_assert!` at capacity
-//! boundaries reproduce the same class of bug as the one being fixed —
-//! loud, typed errors only.
+//! edge delete) returns `Result<T, GraphError>`. Silent casts or
+//! `debug_assert!` at capacity boundaries reproduce the same class of
+//! bug they are trying to catch — loud, typed errors only.
 
 use nodedb_mem::MemError;
 use thiserror::Error;

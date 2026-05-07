@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Rewrite `INSERT/UPSERT INTO coll { ... }` (and `[{ ... }, ...]`) into
 //! standard `INSERT INTO coll (cols) VALUES (row), ...`.

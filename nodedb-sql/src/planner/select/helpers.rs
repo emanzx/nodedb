@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Shared helpers for SELECT planning: projection conversion, WHERE
 //! filter conversion, and AST literal extraction utilities.

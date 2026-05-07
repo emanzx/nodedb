@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! `SELECT * FROM ARRAY_*(...)` table-valued function planning:
 //! slice / project / aggregate / elementwise.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! String-dim hashing helper shared between curve normalization and
 //! tile-index bucketing.

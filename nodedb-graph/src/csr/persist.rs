@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! CSR checkpoint serialization via rkyv. On little-endian platforms
 //! dense arrays are restored zero-copy by pointing `DenseArray` at the

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! `HnswCodecIndex<C>` — generic HNSW graph parameterised on any `VectorCodec`.
 //!

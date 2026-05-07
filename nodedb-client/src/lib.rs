@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! NodeDB client SDK: the [`NodeDb`](traits::NodeDb) trait, the
 //! `NodeDbRemote` client (native MessagePack via TLS, opt-in via the

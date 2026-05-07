@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! `SurrogateBitmap` — a roaring bitmap of `Surrogate` values used as the
 //! universal cross-engine prefilter currency.

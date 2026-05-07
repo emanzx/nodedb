@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! JOIN planning entry: builds left + right scans (or array-TVF arms),
 //! attaches projection/filters/aggregation.

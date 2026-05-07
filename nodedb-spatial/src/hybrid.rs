@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Hybrid spatial-vector search: spatial R-tree as a pre-filter for
 //! HNSW vector search.

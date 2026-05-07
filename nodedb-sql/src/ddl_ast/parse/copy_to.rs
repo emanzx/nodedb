@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Parse `COPY <collection> TO '<path>' [WITH (...)]` and
 //! `COPY (SELECT ...) TO '<path>' [WITH (...)]`.

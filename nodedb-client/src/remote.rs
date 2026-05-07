@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! `NodeDbRemote` — pgwire client that translates `NodeDb` trait calls
 //! into SQL/DSL and sends them to the NodeDB Origin.

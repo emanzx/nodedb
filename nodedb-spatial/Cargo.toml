@@ -4,10 +4,13 @@ description = "Spatial indexing and query operations shared between NodeDB Origi
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
-readme.workspace = true
+license = "Apache-2.0"
+readme = "README.md"
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/nodedb-spatial"
+keywords = ["spatial", "geospatial", "rtree", "geohash", "h3"]
+categories = ["science::geo", "algorithms"]
 
 [features]
 default = []

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! BMW query entry point: merges memtable + segments via LSM layer,
 //! runs BMW scoring on `Surrogate` row identities.

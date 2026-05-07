@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! ALP-RD (Real Doubles) codec for true arbitrary f64 values.
 //!

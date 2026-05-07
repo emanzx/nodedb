@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Runtime ANN tuning options threaded from SQL planner → Data Plane.
 //!

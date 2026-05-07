@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! [`ColumnDef`] and [`ColumnModifier`] — typed column definitions for strict
 //! document and columnar collections.

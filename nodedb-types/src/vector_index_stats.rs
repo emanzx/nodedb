@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Vector index statistics returned by `SHOW VECTOR INDEX status ON collection.column`.
 //!

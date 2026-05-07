@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! The `SqlPlan` enum — top-level plan produced by the SQL planner.
 

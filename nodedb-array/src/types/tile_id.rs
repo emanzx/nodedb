@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! Tile identifier — `(hilbert_prefix, system_from_ms)`.
 //!

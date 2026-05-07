@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! CAGRA fixed-degree flat-graph index — GPU-resident inference.
 //!

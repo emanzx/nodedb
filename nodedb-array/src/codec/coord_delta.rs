@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Per-axis zigzag-varint delta encode/decode over a `DimDict`'s index stream.
 //

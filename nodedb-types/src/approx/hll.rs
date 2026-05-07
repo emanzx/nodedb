@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 //! HyperLogLog — approximate count distinct (12 KB memory, ~0.8% error).
 
