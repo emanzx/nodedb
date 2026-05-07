@@ -113,22 +113,16 @@ pub fn compact_level<B: FtsBackend>(
 
     let _readers_guard = governor
         .map(|gov| {
-            gov.reserve(
-                EngineId::Fts,
-                to_merge.len() * std::mem::size_of::<SegmentReader>(),
-            )
-            .map_err(CompactError::Budget)
+            gov.reserve(EngineId::Fts, to_merge.len() * size_of::<SegmentReader>())
+                .map_err(CompactError::Budget)
         })
         .transpose()?;
     let mut readers = Vec::with_capacity(to_merge.len());
 
     let _ids_guard = governor
         .map(|gov| {
-            gov.reserve(
-                EngineId::Fts,
-                to_merge.len() * std::mem::size_of::<String>(),
-            )
-            .map_err(CompactError::Budget)
+            gov.reserve(EngineId::Fts, to_merge.len() * size_of::<String>())
+                .map_err(CompactError::Budget)
         })
         .transpose()?;
     let mut merged_ids = Vec::with_capacity(to_merge.len());
