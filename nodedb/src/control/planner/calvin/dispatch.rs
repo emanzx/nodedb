@@ -18,8 +18,7 @@
 //! or `zerompk::FromMessagePack`. As a declared fallback, `predicate_class`
 //! accepts the canonical SQL text string (post-parse-canonicalization) and
 //! normalizes numeric and string literals to their type tags before hashing.
-//! This is a degraded path relative to AST-level hashing — see the
-//! stop-and-report note in the checklist.
+//! This is a degraded path relative to AST-level hashing.
 
 use std::collections::BTreeSet;
 use std::sync::Arc;

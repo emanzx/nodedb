@@ -247,10 +247,35 @@ impl CoreLoop {
             }
         };
 
+        // Strict collections store Binary Tuple bytes; the response codec
+        // expects msgpack maps. Decode-then-encode here so cross-engine
+        // result framing (encode_raw_document_rows) sees valid msgpack.
+        let config_key = (crate::types::TenantId::new(tid), collection.to_string());
+        let strict_schema = self.doc_configs.get(&config_key).and_then(|c| {
+            if let crate::bridge::physical_plan::StorageMode::Strict { ref schema } = c.storage_mode
+            {
+                Some(schema.clone())
+            } else {
+                None
+            }
+        });
+
         let mut rows: Vec<(String, Vec<u8>)> = Vec::new();
         for doc_id in doc_ids.iter().skip(offset).take(limit) {
             match self.sparse.get(tid, collection, doc_id) {
-                Ok(Some(bytes)) => rows.push((doc_id.clone(), bytes)),
+                Ok(Some(bytes)) => {
+                    let payload = if let Some(ref schema) = strict_schema {
+                        match super::super::super::strict_format::binary_tuple_to_msgpack(
+                            &bytes, schema,
+                        ) {
+                            Some(mp) => mp,
+                            None => bytes,
+                        }
+                    } else {
+                        bytes
+                    };
+                    rows.push((doc_id.clone(), payload));
+                }
                 Ok(None) => {
                     // Index entry pointed at a deleted doc — skip, don't
                     // fail. A future compaction will purge the orphan.

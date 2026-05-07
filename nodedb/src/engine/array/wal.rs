@@ -13,8 +13,9 @@
 //!   `ArrayPut`/`ArrayDelete` whose LSN <= this record's LSN is already
 //!   captured in the segment and must not be reapplied.
 //!
-//! All three are zerompk-encoded — never JSON between planes (CLAUDE.md
-//! rule #11). LSNs are allocated by the Control Plane WAL writer; the
+//! All three are zerompk-encoded — JSON is reserved for the API
+//! boundary, never used between planes. LSNs are allocated by the
+//! Control Plane WAL writer; the
 //! Data Plane just stamps the supplied LSN, so there is no engine-side
 //! "appender" trait — these payload types are consumed by recovery and
 //! by the WAL record types directly.

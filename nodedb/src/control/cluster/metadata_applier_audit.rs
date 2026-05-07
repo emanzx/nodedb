@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! Audit and CA-trust helpers for `MetadataCommitApplier`.
-//!
-//! Extracted from `metadata_applier.rs` to stay under the 500-line cap.
 
 use crate::control::catalog_entry;
 use crate::control::state::SharedState;

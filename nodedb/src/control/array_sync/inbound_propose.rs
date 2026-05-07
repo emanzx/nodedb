@@ -2,7 +2,6 @@
 
 //! Raft propose / single-node dispatch helpers for [`OriginArrayInbound`].
 //!
-//! Split out of `inbound.rs` to keep that file under the 500-line limit.
 //! These methods handle the multi-node Raft path (`propose_and_await`) and
 //! the single-node fallback (`apply_op_direct`), plus the small helpers for
 //! computing the destination vShard and converting an `ArrayOp` into a

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! Supporting types and low-level routines for columnar aggregation.
-//!
-//! Extracted from `columnar_agg.rs` to keep that file under 500 lines.
 
 use crate::engine::timeseries::columnar_memtable::{ColumnData, ColumnType, ColumnarMemtable};
 

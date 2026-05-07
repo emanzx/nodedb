@@ -2,12 +2,6 @@
 
 //! Constraint definition types for collections.
 //!
-//! These are the per-collection constraint descriptors stored inline
-//! on a [`super::StoredCollection`] (balanced, period lock, CHECK,
-//! state transition, materialized sum, etc.). Extracted out of
-//! `types.rs` to keep that file under the 500-line hard limit and
-//! to colocate semantically-related constraint types.
-//!
 //! Field/event definitions for individual columns live here too
 //! because they share the same lifecycle (defined at DDL time,
 //! carried on the collection record, evaluated at write time).

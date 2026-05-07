@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-//! Array-plan arms for `convert_one`, extracted to keep `convert.rs` under 500 lines.
-
 use nodedb_sql::types::SqlPlan;
 
 use crate::control::planner::physical::PhysicalTask;

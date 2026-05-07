@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! Savepoint and deferred-offset handlers for `NodeDbPgHandler`.
-//!
-//! Extracted from `transaction_cmds.rs` to keep that file under 500 lines.
 
 use pgwire::api::results::{Response, Tag};
 use pgwire::error::{ErrorInfo, PgWireError, PgWireResult};

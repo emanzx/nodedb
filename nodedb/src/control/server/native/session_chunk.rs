@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! Response chunking for the native binary protocol.
-//!
-//! Extracted from `session.rs` to keep that file under the 500-line cap.
 
 use nodedb_types::protocol::{MAX_FRAME_SIZE, NativeResponse, ResponseStatus};
 

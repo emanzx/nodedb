@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! ILP batch dispatch and adaptive rate estimation.
-//!
-//! Extracted from `ilp_listener.rs` to keep that file under 500 lines.
 
 use sonic_rs;
 use tracing::warn;

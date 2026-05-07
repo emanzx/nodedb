@@ -2,7 +2,7 @@
 
 //! OLLP orchestrator metrics.
 //!
-//! Three metrics per the checklist spec:
+//! Exported metrics:
 //!
 //! - `nodedb_calvin_ollp_retries_total{predicate_class, outcome}` — counter.
 //!   Outcomes: `succeeded`, `retried`, `exhausted`, `circuit_open`,

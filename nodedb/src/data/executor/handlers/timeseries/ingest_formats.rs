@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! MessagePack + JSON ingest formats for timeseries.
-//!
-//! Both paths normalize their payload into ILP text and delegate to
-//! `execute_ilp_ingest`. Kept separate from `ingest.rs` to keep each
-//! file under the 500-line limit.
 
 use sonic_rs::{JsonContainerTrait, JsonValueTrait};
 

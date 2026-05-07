@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-//! Per-tenant CSR-partition and deleted-node-tracker helpers on
-//! `CoreLoop`. Extracted from `mod.rs` so the main file stays under the
-//! 500-LOC ceiling while leaving the two-field group cohesive here —
-//! both concerns address the same `(TenantId, node_id)` key space and
-//! always move together when graph write paths evolve.
-
 use nodedb_graph::CsrIndex;
 
 use crate::types::TenantId;

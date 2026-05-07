@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-//! Helper functions extracted from `start_raft` to keep that function
-//! within the 500-line production-code limit.
-
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 

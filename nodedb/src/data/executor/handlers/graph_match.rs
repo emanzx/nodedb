@@ -60,7 +60,7 @@ impl CoreLoop {
                             // Surface via the envelope's `partial` flag
                             // so merging / client response paths can see
                             // the incomplete result — silent truncation
-                            // is not allowed (§CLAUDE.md "Do the Ripple").
+                            // is not allowed.
                             self.response_partial(task, payload)
                         } else {
                             self.response_with_payload(task, payload)

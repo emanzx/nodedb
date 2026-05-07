@@ -50,8 +50,8 @@ pub async fn cluster_status(
 /// Build a JSON response with the given status and pre-serialised
 /// body. Centralised so every branch uses the same content-type and
 /// so `axum::Json` (which calls `serde_json::to_vec` internally) is
-/// not on any hot path — runtime JSON is owned by `sonic_rs` per
-/// CLAUDE.md.
+/// not on any hot path — runtime JSON serialization goes through
+/// `sonic_rs`.
 fn json_response(status: StatusCode, body: String) -> Response {
     (status, [(header::CONTENT_TYPE, "application/json")], body).into_response()
 }

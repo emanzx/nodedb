@@ -1,10 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-//! Small accessor impls on `CoreLoop`: scan-quiesce install + acquire,
-//! test-only inspection helpers. Extracted from `mod.rs` to keep the
-//! main file under the 500-LOC ceiling while leaving the struct
-//! definition in one place.
-
 use std::sync::Arc;
 
 #[cfg(test)]

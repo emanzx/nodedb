@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! Quarantine object-store backend construction.
-//!
-//! `QuarantineStorageConfig` + `build_quarantine_store` are extracted here
-//! so `registry.rs` stays under the 500-line production-code cap.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

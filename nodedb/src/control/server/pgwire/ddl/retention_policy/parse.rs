@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! SQL parsing helpers for retention policy DDL.
-//!
-//! Extracted from create.rs to keep files under the 500-line limit.
 
 use pgwire::error::PgWireResult;
 

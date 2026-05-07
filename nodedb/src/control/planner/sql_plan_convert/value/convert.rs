@@ -30,8 +30,22 @@ pub(crate) fn sql_value_to_string(v: &SqlValue) -> String {
         SqlValue::Float(f) => f.to_string(),
         SqlValue::Decimal(d) => d.to_string(),
         SqlValue::Bool(b) => b.to_string(),
-        _ => String::new(),
+        SqlValue::Timestamp(dt) | SqlValue::Timestamptz(dt) => dt.to_iso8601(),
+        SqlValue::Bytes(b) => format!("\\x{}", hex_encode(b)),
+        SqlValue::Array(arr) => {
+            let parts: Vec<String> = arr.iter().map(sql_value_to_string).collect();
+            format!("[{}]", parts.join(","))
+        }
+        SqlValue::Null => String::new(),
     }
+}
+
+fn hex_encode(bytes: &[u8]) -> String {
+    let mut s = String::with_capacity(bytes.len() * 2);
+    for b in bytes {
+        s.push_str(&format!("{b:02x}"));
+    }
+    s
 }
 
 pub(crate) fn sql_value_to_bytes(v: &SqlValue) -> Vec<u8> {

@@ -5,8 +5,6 @@
 //! Evaluates `ScanFilter` predicates directly on typed column vectors,
 //! returning packed `Vec<u64>` bitmasks. Uses SIMD kernels from
 //! `nodedb_query::simd_filter` for numeric and symbol comparisons.
-//!
-//! Extracted from `grouped_scan.rs` to keep file sizes under 500 lines.
 
 use nodedb_query::simd_filter;
 

@@ -9,9 +9,8 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// Histogram bucket boundaries (ms) for `nodedb_calvin_executor_txn_duration_ms`.
-///
-/// Buckets from the checklist spec: [1, 5, 10, 50, 100, 500, 1000, 5000, 30000] ms.
+/// Histogram bucket boundaries (ms) for `nodedb_calvin_executor_txn_duration_ms`:
+/// `[1, 5, 10, 50, 100, 500, 1000, 5000, 30000]`.
 pub const EXECUTOR_TXN_DURATION_BUCKETS: &[u64] = &[1, 5, 10, 50, 100, 500, 1000, 5000, 30_000];
 
 /// Per-vshard Calvin scheduler metrics.

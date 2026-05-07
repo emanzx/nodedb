@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 //! GraphPath and GraphSubgraph handlers for `CoreLoop`.
-//!
-//! Extracted from `graph.rs` to keep that file under 500 lines.
 
 use tracing::{debug, warn};
 
