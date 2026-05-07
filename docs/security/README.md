@@ -9,10 +9,11 @@ NodeDB has a defense-in-depth security model covering authentication, authorizat
 - [Row-Level Security (RLS)](rls.md) — Per-row filtering based on auth context
 - [Audit Log](audit.md) — Hash-chained audit trail, change tracking, SIEM export
 - [Multi-Tenancy](tenants.md) — Tenant isolation, quotas, purge
+- [Encryption](encryption.md) — At-rest cipher per storage tier, key management, TLS
 
-## Encryption
+## Encryption (summary)
 
-- **At rest** — AES-256-XTS for data volumes, AES-256-GCM for WAL segments, per-file data encryption keys
+- **At rest** — AES-256-GCM for WAL and columnar/timeseries segments (per-collection KEK + per-segment SEGP envelope). Filesystem-level encryption (LUKS / dm-crypt / FileVault) covers redb catalogs and HNSW / Vamana mmap segments. Full per-tier breakdown: [`encryption.md`](encryption.md).
 - **In transit** — TLS for all protocols (pgwire, HTTP, WebSocket, native)
 - **Lite devices** — AES-256-GCM + Argon2id key derivation for on-device encryption
 

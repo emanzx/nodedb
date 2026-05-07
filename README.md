@@ -1,5 +1,5 @@
 <div align="center">
-
+ 
 <img src="assets/wordmark.svg" alt="NodeDB" width="420">
 
 <h3>The distributed multi-model database for AI and agent workloads.</h3>
@@ -192,6 +192,10 @@ In-repo references:
 - [NodeDB-Lite](https://github.com/NodeDB-Lab/nodedb-lite) -- Embedded edge database
 - [AI Patterns](docs/ai/README.md) -- RAG, GraphRAG, agent memory, feature store
 
+## Contributing
+
+We welcome bug fixes, engine improvements, new codecs and analyzers, test coverage, and documentation. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR — NodeDB's Three-Plane execution model has hard rules that reviewers enforce.
+
 ## Building from Source
 
 For development or contributing:
@@ -228,8 +232,7 @@ Pre-1.0 versions may change internals between releases — those changes are cri
 
 ## License
 
-NodeDB is licensed under the [Business Source License 1.1](LICENSE.md). You can use NodeDB for any commercial purpose — SaaS products, AI platforms, internal tools, self-hosted deployments, anything. The only restriction is offering NodeDB itself as a hosted database service (DBaaS) or commercial database tooling; that requires a [commercial license](LICENSE.md). Converts to Apache 2.0 on 2030-01-01.
+NodeDB uses a dual-license model:
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=nodedb-lab/nodedb&type=date&legend=top-left)](https://www.star-history.com/?repos=nodedb-lab%2Fnodedb&type=date&legend=top-left)
+- **Shared engine crates** (`nodedb-types`, `nodedb-vector`, `nodedb-graph`, `nodedb-fts`, `nodedb-spatial`, `nodedb-codec`, `nodedb-columnar`, `nodedb-array`, `nodedb-sql`, `nodedb-client`, `nodedb-query`, `nodedb-strict`) — [Apache 2.0](LICENSE-APACHE). Use them freely in your own projects, SDKs, and tools.
+- **Server crates** (`nodedb`, `nodedb-wal`, `nodedb-raft`, `nodedb-cluster`, `nodedb-bridge`, `nodedb-mem`, `nodedb-crdt`) — [Business Source License 1.1](LICENSE.md). Free for any use except offering NodeDB as a hosted database service (DBaaS). Converts to Apache 2.0 on 2030-01-01.
